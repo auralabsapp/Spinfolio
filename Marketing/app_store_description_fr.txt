@@ -1,0 +1,23 @@
+Diggr est le carnet de collection pensé pour les passionnés de vinyles, CD et cassettes. Scanne, classe et retrouve chaque album de ta discothèque en quelques secondes, grâce à la base de données Discogs.
+
+GRATUIT
+• Recherche et scan de codes-barres pour identifier n'importe quel disque en un instant
+• Ajout illimité à ta collection et à ta liste d'envies (wantlist)
+• Fiches détaillées : artiste, label, année, pays, format, tracklist, pochette haute résolution
+• Tri et filtres avancés (artiste, année, genre, label, support...)
+• Barre de navigation alphabétique pour naviguer d'un coup d'œil dans une grande collection
+• Statistiques de base sur ta discothèque
+• Notes et tags personnalisés sur chaque album
+
+PREMIUM
+• Suivi de cote : renseigne le prix payé pour chaque album et compare-le à sa cote Discogs en temps réel pour voir si tes disques ont pris de la valeur
+• Synchronisation iCloud : tags, journal d'écoute, préférences et tris personnalisés partagés entre tous tes appareils
+• Mode hors ligne : toute ta collection et les pochettes en haute résolution téléchargées sur l'appareil, pour fouiner en brocante sans réseau
+• Scan par lot : enchaîne plusieurs codes-barres à la suite en brocante ou chez le disquaire, et ajoute-les en une fois
+• Alertes de prix sur la wantlist : sois averti quand un disque de ta liste d'envies apparaît à bon prix sur le marketplace Discogs
+• Où ranger son album : retrouve instantanément l'emplacement d'un disque dans ton meuble, avec ses voisins immédiats selon ton tri
+• Palmarès d'écoute & Podiums : albums et artistes les plus écoutés, podiums du mois et de l'année, analyse complète de tes sessions
+• Thèmes et palettes de couleurs : personnalise l'app avec 8 palettes exclusives (Bleu Cobalt, Vert Émeraude, Orange Crépuscule, Rouge Rubis, Violet Améthyste, Cuivre & Or...)
+• Export CSV complet : toute ta discothèque au format tableur (Excel, Numbers, Sheets), avec métadonnées, notes et tags
+
+Diggr utilise l'API publique Discogs mais n'est ni affilié à ni approuvé par Discogs.

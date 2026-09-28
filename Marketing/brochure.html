@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Spinlog — Plaquette commerciale</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: -apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+    color: #1c1c1e;
+    background: #ffffff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  :root {
+    --pink: #BB5CE8;
+    --pink-dark: #8f3fc0;
+    --gold: #F2AD2E;
+    --gold-dark: #E0851F;
+    --gray-bg: #F5F3F8;
+    --text-secondary: #6b6b70;
+  }
+
+  .page {
+    width: 210mm;
+    height: 297mm;
+    padding: 10mm 14mm;
+    display: flex;
+    flex-direction: column;
+    gap: 3.5mm;
+    break-after: page;
+    overflow: hidden;
+  }
+  .page:last-child { break-after: auto; }
+
+  /* ---------- Header ---------- */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .brand { display: flex; align-items: center; gap: 4mm; }
+  .brand img.icon { width: 15mm; height: 15mm; border-radius: 3.4mm; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+  .brand-name { font-size: 22pt; font-weight: 800; letter-spacing: -0.5pt; }
+  .brand-tagline { font-size: 9pt; color: var(--text-secondary); font-weight: 500; }
+
+  /* Badge App Store (recréation fidèle du badge officiel Apple) */
+  .appstore-badge {
+    display: flex; align-items: center; gap: 2.4mm;
+    background: #000; color: #fff; border-radius: 2.6mm;
+    padding: 2mm 4mm;
+  }
+  .appstore-badge svg { width: 6mm; height: 6mm; fill: #fff; flex-shrink: 0; }
+  .appstore-badge .badge-text { line-height: 1.05; }
+  .appstore-badge .l1 { font-size: 6pt; font-weight: 400; }
+  .appstore-badge .l2 { font-size: 11pt; font-weight: 700; font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; letter-spacing: 0.2pt; }
+
+  .page-title { font-size: 15pt; font-weight: 800; margin: 0; letter-spacing: -0.2pt; }
+  .page-subtitle { font-size: 8.5pt; color: var(--text-secondary); margin: 0; line-height: 1.5; }
+
+  .section {
+    background: var(--gray-bg);
+    border-radius: 4mm;
+    padding: 3.5mm 4mm;
+  }
+  .section.premium {
+    background: #fff8ea;
+    border: 0.4pt solid #f0d49a;
+  }
+  .section-head {
+    display: flex; align-items: baseline; gap: 2.5mm; margin-bottom: 2.2mm;
+  }
+  .section-head h2 { font-size: 11pt; font-weight: 800; margin: 0; }
+  .tag-free {
+    font-size: 6.3pt; font-weight: 800; color: #2e8b57;
+    background: #e3f5ea; padding: 0.5mm 1.8mm; border-radius: 2mm; letter-spacing: 0.3pt;
+  }
+  .tag-premium {
+    font-size: 6.3pt; font-weight: 800; color: var(--gold-dark);
+    background: #fdecc8; padding: 0.5mm 1.8mm; border-radius: 2mm; letter-spacing: 0.3pt;
+  }
+  .section-desc { font-size: 7.6pt; color: var(--text-secondary); margin: 0 0 2.4mm 0; line-height: 1.45; }
+
+  /* ---------- Shot grid ---------- */
+  .shot-row { display: flex; gap: 3mm; margin-bottom: 2mm; }
+  .shot-col { flex: 1; display: flex; flex-direction: column; gap: 1.4mm; min-width: 0; }
+  .shot-frame {
+    width: 100%;
+    aspect-ratio: 1206 / 2622;
+    background: #111;
+    border-radius: 3mm;
+    padding: 1.1mm;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+  }
+  .shot-frame .inner {
+    width: 100%; height: 100%; border-radius: 2.2mm; overflow: hidden; background: #fff;
+  }
+  .shot-frame img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .shot-frame.missing {
+    background: #eceaf2; border: 0.6pt dashed #b9b3c9; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .shot-frame.missing .missing-label {
+    font-size: 6.6pt; font-weight: 700; color: #8a839a; text-align: center; padding: 3mm; line-height: 1.4;
+  }
+  .shot-caption { font-size: 7pt; font-weight: 700; text-align: center; }
+  .shot-caption-sub { font-size: 6.2pt; color: var(--text-secondary); text-align: center; margin-top: -1mm; }
+
+  .bullets { margin: 0; padding: 0; list-style: none; font-size: 7.6pt; line-height: 1.7; columns: 2; column-gap: 6mm; }
+  .bullets li { display: flex; gap: 1.6mm; align-items: baseline; break-inside: avoid; }
+  .bullets li::before { content: "•"; color: var(--pink); font-weight: 800; }
+  .section.premium .bullets li::before { color: var(--gold-dark); }
+
+  /* ---------- Comparison table (page 3) ---------- */
+  .compare { display: flex; gap: 3mm; }
+  .compare-col { flex: 1; border-radius: 4mm; padding: 3.5mm 4.5mm; }
+  .compare-col.free { background: var(--gray-bg); }
+  .compare-col.premium { background: #241b2c; color: #fff; }
+  .compare-col h3 { font-size: 10.5pt; margin: 0 0 2mm 0; font-weight: 800; display: flex; align-items: center; gap: 2mm; }
+  .compare-col.premium h3 { color: var(--gold); }
+  .compare-list { margin: 0; padding: 0; list-style: none; font-size: 7.6pt; line-height: 1.65; }
+  .compare-list li { display: flex; gap: 1.8mm; align-items: baseline; }
+  .compare-col.free .compare-list li::before { content: "✓"; color: #2e8b57; font-weight: 800; }
+  .compare-col.premium .compare-list li::before { content: "✓"; color: var(--gold); font-weight: 800; }
+  .price-tag { margin-top: 2.4mm; font-size: 8pt; font-weight: 700; color: #f5c661; }
+
+  .footer {
+    margin-top: auto;
+    display: flex; align-items: center; justify-content: space-between;
+    border-top: 0.5pt solid #e5e5ea; padding-top: 2.5mm;
+  }
+  .footer-cta { font-size: 8.5pt; font-weight: 700; }
+  .footer-meta { font-size: 6.5pt; color: var(--text-secondary); text-align: right; }
+  .page-number { font-size: 7pt; color: var(--text-secondary); }
+</style>
+</head>
+<body>
+
+  <!-- ================= PAGE 1 : GRATUIT ================= -->
+  <div class="page">
+    <div class="header">
+      <div class="brand">
+        <img class="icon" src="assets/app-icon.png" alt="Spinlog">
+        <div>
+          <div class="brand-name">Spinlog</div>
+          <div class="brand-tagline">Le carnet de votre discothèque physique</div>
+        </div>
+      </div>
+      <div class="appstore-badge">
+        <svg viewBox="0 0 384 512"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>
+        <div class="badge-text">
+          <div class="l1">Télécharger sur l'</div>
+          <div class="l2">App Store</div>
+        </div>
+      </div>
+    </div>
+
+    <h1 class="page-title">Cataloguez, retrouvez et valorisez vos vinyles, CD et cassettes</h1>
+    <p class="page-subtitle">
+      Spinlog connecte votre collection Discogs à une expérience mobile pensée pour les collectionneurs.
+      Tout ce qu'il faut pour organiser sa discothèque est gratuit ; les outils de valorisation, de rangement
+      et de statistiques avancées font partie de l'offre Premium.
+    </p>
+
+    <div class="section">
+      <div class="section-head"><h2>Votre collection, organisée à votre façon</h2><span class="tag-free">GRATUIT</span></div>
+      <p class="section-desc">Trois affichages au choix, une recherche instantanée et un tri entièrement personnalisable (artiste, titre, année, genre, support, label, note...).</p>
+      <div class="shot-row">
+        <div class="shot-col">
+          <div class="shot-frame"><div class="inner"><img src="assets/full-5613.png" alt="Vue liste"></div></div>
+          <div class="shot-caption">Vue Liste</div>
+          <div class="shot-caption-sub">Alphabétique, avec index rapide</div>
+        </div>
+        <div class="shot-col">
+          <div class="shot-frame"><div class="inner"><img src="assets/full-5614.png" alt="Vue carrousel"></div></div>
+          <div class="shot-caption">Vue Carrousel</div>
+          <div class="shot-caption-sub">Immersive, pochette en avant</div>
+        </div>
+        <div class="shot-col">
+          <div class="shot-frame missing"><div class="missing-label">CAPTURE MANQUANTE<br>Vue Mosaïque<br>(grille de pochettes)</div></div>
+          <div class="shot-caption">Vue Mosaïque</div>
+          <div class="shot-caption-sub">Grille façon Apple Music</div>
+        </div>
+        <div class="shot-col">
+          <div class="shot-frame missing"><div class="missing-label">CAPTURE MANQUANTE<br>Menu de tri<br>(options de tri ouvertes)</div></div>
+          <div class="shot-caption">Tri personnalisable</div>
+          <div class="shot-caption-sub">Artiste, titre, année, genre...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>Rechercher, ajouter &amp; organiser</h2><span class="tag-free">GRATUIT</span></div>
+      <p class="section-desc">Ajoutez un disque en un instant par recherche ou scan de code-barres, et gardez votre collection organisée grâce à des tags personnalisés.</p>
+      <div class="shot-row">
+        <div class="shot-col">
+          <div class="shot-frame missing"><div class="missing-label">CAPTURE MANQUANTE<br>Recherche / scan<br>de code-barres</div></div>
+          <div class="shot-caption">Recherche &amp; scan</div>
+          <div class="shot-caption-sub">Ajout instantané à la collection</div>
+        </div>
+        <div class="shot-col">
+          <div class="shot-frame missing"><div class="missing-label">CAPTURE MANQUANTE<br>Réglages → Gestion<br>des tags</div></div>
+          <div class="shot-caption">Gestion des tags</div>
+          <div class="shot-caption-sub">Créer, renommer, fusionner</div>
+        </div>
+        <div class="shot-col">
+          <div class="shot-frame"><div class="inner"><img src="assets/full-5620.png" alt="Wantlist"></div></div>
+          <div class="shot-caption">Wantlist</div>
+          <div class="shot-caption-sub">Liste de souhaits synchronisée Discogs</div>
+        </div>
+      </div>
+      <ul class="bullets">
+        <li>Fiches Discogs complètes : tracklist, crédits, pressages, labels</li>
+        <li>Estimation marketplace en lecture (prix le plus bas, offres)</li>
+        <li>Notes personnelles et notation par disque</li>
+        <li>Thème visuel "Spinlog Signature" (rose néon)</li>
+      </ul>
+    </div>
+
+    <div class="footer">
+      <div class="footer-cta">Téléchargez Spinlog gratuitement sur l'App Store</div>
+      <div class="page-number">1 / 3</div>
+    </div>
+  </div>
+
+  <!-- ================= PAGE 2 : PREMIUM — VALEUR & RANGEMENT ================= -->
+  <div class="page">
+    <div class="header">
+      <div class="brand">
+        <img class="icon" src="assets/app-icon.png" alt="Spinlog">
+        <div>
+          <div class="brand-name">Spinlog Premium</div>
+          <div class="brand-tagline">Pour les collectionneurs qui veulent aller plus loin</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section premium">
+      <div class="section-head"><h2>Suivi de la cote &amp; plus-value</h2><span class="tag-premium">PREMIUM</span></div>
+      <p class="section-desc">Renseignez le prix payé pour chaque exemplaire : Spinlog le compare en temps réel à la cote Discogs, disque par disque et sur l'ensemble de la collection.</p>
+      <div class="shot-row">
+        <div class="shot-col" style="flex: 0.85;">
+          <div class="shot-frame"><div class="inner"><img src="assets/full-5615.png" alt="Fiche disque avec plus-value"></div></div>
+          <div class="shot-caption">Fiche disque</div>
+          <div class="shot-caption-sub">Plus-value par exemplaire (+8 €, +38 %)</div>
+        </div>
+        <div class="shot-col" style="flex: 0.85;">
+          <div class="shot-frame"><div class="inner"><img src="assets/full-5617.png" alt="Investi vs cote actuelle"></div></div>
+          <div class="shot-caption">Vue globale</div>
+          <div class="shot-caption-sub">Total investi vs cote actuelle de la collection</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section premium">
+      <div class="section-head"><h2>Où ranger cet album ?</h2><span class="tag-premium">PREMIUM</span></div>
+      <p class="section-desc">Spinlog calcule l'emplacement exact de chaque disque dans votre meuble physique selon votre règle de tri (artiste, année originale, personnalisations par artiste...) et affiche ses deux voisins immédiats.</p>
+      <div class="shot-row">
+        <div class="shot-col" style="flex: 0.85; margin: 0 auto;">
+          <div class="shot-frame"><div class="inner"><img src="assets/full-5619.png" alt="Guide de rangement"></div></div>
+          <div class="shot-caption">Guide de rangement</div>
+          <div class="shot-caption-sub">Position exacte + disques repères gauche/droite</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="footer-cta">Suivi de cote, rangement intelligent, statistiques avancées...</div>
+      <div class="page-number">2 / 3</div>
+    </div>
+  </div>
+
+  <!-- ================= PAGE 3 : PREMIUM — ÉCOUTE & PERSONNALISATION + COMPARATIF ================= -->
+  <div class="page">
+    <div class="header">
+      <div class="brand">
+        <img class="icon" src="assets/app-icon.png" alt="Spinlog">
+        <div>
+          <div class="brand-name">Spinlog Premium</div>
+          <div class="brand-tagline">Statistiques, alertes &amp; personnalisation</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section premium">
+      <div class="section-head"><h2>Palmarès d'écoute &amp; statistiques</h2><span class="tag-premium">PREMIUM</span></div>
+      <p class="section-desc">Chaque écoute est enregistrée : retrouvez vos tops albums et artistes, vos podiums du mois et de l'année, et l'évolution de votre collection dans le temps.</p>
+      <div class="shot-row">
+        <div class="shot-col">
+          <div class="shot-frame"><div class="inner"><img src="assets/full-5616.png" alt="Statistiques générales"></div></div>
+          <div class="shot-caption">Vue d'ensemble</div>
+          <div class="shot-caption-sub">Albums, artistes, exemplaires ajoutés par année</div>
+        </div>
+        <div class="shot-col">
+          <div class="shot-frame"><div class="inner"><img src="assets/full-5618.png" alt="Podium d'écoute"></div></div>
+          <div class="shot-caption">Podium</div>
+          <div class="shot-caption-sub">Top albums écoutés du mois / de l'année</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section premium">
+      <div class="section-head"><h2>Alertes de prix &amp; personnalisation</h2><span class="tag-premium">PREMIUM</span></div>
+      <p class="section-desc">Sois averti quand un disque de ta wantlist apparaît à bon prix, et personnalise l'app avec 8 palettes de couleurs exclusives.</p>
+      <div class="shot-row">
+        <div class="shot-col">
+          <div class="shot-frame"><div class="inner"><img src="assets/full-5620.png" alt="Alertes wantlist"></div></div>
+          <div class="shot-caption">Alertes de prix</div>
+          <div class="shot-caption-sub">Wantlist avec seuils déclenchés (🔥) et actifs (🔔)</div>
+        </div>
+        <div class="shot-col">
+          <div class="shot-frame"><div class="inner"><img src="assets/full-5621.png" alt="Thèmes de couleur"></div></div>
+          <div class="shot-caption">Thèmes de couleur</div>
+          <div class="shot-caption-sub">8 palettes exclusives</div>
+        </div>
+      </div>
+      <ul class="bullets">
+        <li>Synchronisation iCloud : tags, écoutes et préférences entre tous tes appareils</li>
+        <li>Mode hors ligne : collection et pochettes HD téléchargées</li>
+        <li>Scan par lot pour les sessions brocante / disquaire</li>
+        <li>Export CSV complet (Excel, Numbers, Sheets)</li>
+      </ul>
+    </div>
+
+    <div class="compare">
+      <div class="compare-col free">
+        <h3>🆓 Gratuit</h3>
+        <ul class="compare-list">
+          <li>Collection &amp; wantlist illimitées</li>
+          <li>Recherche &amp; scan de codes-barres</li>
+          <li>Vues Liste, Mosaïque, Carrousel</li>
+          <li>Tri personnalisable</li>
+          <li>Tags personnalisés</li>
+          <li>Fiches Discogs complètes</li>
+        </ul>
+      </div>
+      <div class="compare-col premium">
+        <h3>⭐ Premium</h3>
+        <ul class="compare-list">
+          <li>Suivi de la cote &amp; plus-value</li>
+          <li>Scan par lot (brocante, disquaire)</li>
+          <li>Alertes de prix sur la wantlist</li>
+          <li>Où ranger son album dans le meuble</li>
+          <li>Palmarès d'écoute &amp; statistiques</li>
+          <li>Synchronisation iCloud multi-appareils</li>
+          <li>Mode hors ligne &amp; export CSV complet</li>
+          <li>8 thèmes de couleurs exclusifs</li>
+        </ul>
+        <div class="price-tag">À partir de 2,99 €/mois — essai gratuit disponible</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="footer-cta">Téléchargez Spinlog gratuitement sur l'App Store</div>
+      <div class="footer-meta">spinlog-app.com · Données de collection propulsées par Discogs®</div>
+    </div>
+  </div>
+
+</body>
+</html>

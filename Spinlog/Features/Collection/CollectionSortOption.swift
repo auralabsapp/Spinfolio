@@ -1,0 +1,284 @@
+import Foundation
+
+/// Options de tri de la collection. Quand l'API Discogs le permet, le tri se fait côté serveur
+/// via `sort`/`sort_order` de `GET /collection/folders/{id}/releases` (valeurs acceptées :
+/// `label, artist, title, catno, format, rating, added, year`). Discogs n'a pas de tri "genre" :
+/// pour cette option, on garde l'ordre par défaut du serveur (`added`) et on ne fait que
+/// regrouper l'affichage par genre, sur les éléments déjà chargés.
+///
+/// Réutilisé tel quel par l'onglet Wantlist (voir `SortableLibraryItem`) : les deux écrans
+/// ont la même construction (tri, filtres, sections, barre d'index).
+enum CollectionSortOption: String, CaseIterable, Identifiable, Codable {
+    case artist = "Artiste"
+    case title = "Album"
+    case added = "Date d'ajout"
+    case year = "Année"
+    case genre = "Genre"
+    case format = "Support"
+    case label = "Label"
+    case rating = "Note"
+    case catalogNumber = "Référence"
+
+    var id: String { rawValue }
+
+    var systemImage: String {
+        switch self {
+        case .artist: return "person"
+        case .title: return "opticaldisc"
+        case .added: return "calendar.badge.clock"
+        case .year: return "calendar"
+        case .genre: return "guitars"
+        case .format: return "square.stack.3d.up"
+        case .label: return "building.2"
+        case .rating: return "star"
+        case .catalogNumber: return "number"
+        }
+    }
+
+    /// `nil` pour `.genre` : pas de valeur `sort` Discogs correspondante, on n'envoie rien
+    /// (le serveur retombe sur son tri par défaut).
+    var apiSortValue: String? {
+        switch self {
+        case .artist: return "artist"
+        case .title: return "title"
+        case .added: return "added"
+        case .year: return "year"
+        case .genre: return nil
+        case .format: return "format"
+        case .label: return "label"
+        case .rating: return "rating"
+        case .catalogNumber: return "catno"
+        }
+    }
+
+    /// Les disques ajoutés récemment (ou les mieux notés) sont plus pertinents en premier ;
+    /// le reste s'affiche A→Z (ou année croissante).
+    var apiSortOrder: String {
+        (self == .added || self == .rating) ? "desc" : "asc"
+    }
+}
+
+/// Ce que le tri/regroupement partagé entre Collection et Wantlist a besoin de lire sur un
+/// élément — `CollectionItem` et `WantlistItem` s'y conforment, ce qui permet à l'onglet
+/// Wantlist de réutiliser exactement la même logique de tri/sections que la Collection.
+protocol SortableLibraryItem {
+    var basicInformation: BasicInformation { get }
+    var rating: Int { get }
+    var dateAddedDate: Date? { get }
+}
+
+extension CollectionItem: SortableLibraryItem {}
+
+extension SortableLibraryItem {
+    /// Clé de regroupement : une section par valeur distincte (pas juste par lettre), pour
+    /// que la ligne 2 de l'en-tête puisse afficher la valeur complète.
+    func sectionKey(for sort: CollectionSortOption) -> String {
+        switch sort {
+        case .artist:
+            let name = basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
+            return name.isEmpty ? "?" : name
+        case .title:
+            let title = basicInformation.title.trimmingCharacters(in: .whitespacesAndNewlines)
+            return title.isEmpty ? "?" : title
+        case .added:
+            guard let date = dateAddedDate else { return "?" }
+            return date.formatted(.dateTime.month(.wide).year().locale(Locale(identifier: "fr_FR")))
+        case .year:
+            guard let year = basicInformation.year, year > 0 else { return "?" }
+            return String(year)
+        case .genre:
+            let genre = basicInformation.genres?.first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return genre.isEmpty ? "Genre inconnu" : genre
+        case .format:
+            let format = basicInformation.formats?.first?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return format.isEmpty ? "Autre" : format
+        case .label:
+            let label = basicInformation.labels?.first?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return label.isEmpty ? "Label inconnu" : label
+        case .rating:
+            return rating > 0 ? "\(rating) étoile\(rating > 1 ? "s" : "")" : "Sans note"
+        case .catalogNumber:
+            let catno = basicInformation.labels?.first?.catno?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return catno.isEmpty ? "Sans référence" : catno
+        }
+    }
+
+    /// Compare deux éléments selon le critère de tri choisi afin de garantir un classement
+    /// parfait et déterministe tant en local qu'en ligne.
+    func isOrderedBefore(_ other: Self, for sort: CollectionSortOption) -> Bool {
+        switch sort {
+        case .artist:
+            let a1 = basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
+            let a2 = other.basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
+            let cmp = a1.localizedStandardCompare(a2)
+            if cmp != .orderedSame {
+                return cmp == .orderedAscending
+            }
+            let t1 = basicInformation.title.trimmingCharacters(in: .whitespacesAndNewlines)
+            let t2 = other.basicInformation.title.trimmingCharacters(in: .whitespacesAndNewlines)
+            let tCmp = t1.localizedStandardCompare(t2)
+            if tCmp != .orderedSame {
+                return tCmp == .orderedAscending
+            }
+            return (basicInformation.year ?? 0) < (other.basicInformation.year ?? 0)
+
+        case .title:
+            let t1 = basicInformation.title.trimmingCharacters(in: .whitespacesAndNewlines)
+            let t2 = other.basicInformation.title.trimmingCharacters(in: .whitespacesAndNewlines)
+            let cmp = t1.localizedStandardCompare(t2)
+            if cmp != .orderedSame {
+                return cmp == .orderedAscending
+            }
+            let a1 = basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
+            let a2 = other.basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
+            let aCmp = a1.localizedStandardCompare(a2)
+            if aCmp != .orderedSame {
+                return aCmp == .orderedAscending
+            }
+            return (basicInformation.year ?? 0) < (other.basicInformation.year ?? 0)
+
+        case .added:
+            let d1 = dateAddedDate ?? .distantPast
+            let d2 = other.dateAddedDate ?? .distantPast
+            if d1 != d2 {
+                return d1 > d2 // Plus récent en premier
+            }
+            return basicInformation.title.localizedStandardCompare(other.basicInformation.title) == .orderedAscending
+
+        case .year:
+            let y1 = basicInformation.year ?? 0
+            let y2 = other.basicInformation.year ?? 0
+            if y1 == 0 && y2 != 0 { return false }
+            if y1 != 0 && y2 == 0 { return true }
+            if y1 != y2 {
+                return y1 < y2 // Année croissante
+            }
+            let a1 = basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
+            let a2 = other.basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
+            let aCmp = a1.localizedStandardCompare(a2)
+            if aCmp != .orderedSame {
+                return aCmp == .orderedAscending
+            }
+            return basicInformation.title.localizedStandardCompare(other.basicInformation.title) == .orderedAscending
+
+        case .genre:
+            let g1 = basicInformation.genres?.first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let g2 = other.basicInformation.genres?.first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            if g1.isEmpty && !g2.isEmpty { return false }
+            if !g1.isEmpty && g2.isEmpty { return true }
+            let cmp = g1.localizedStandardCompare(g2)
+            if cmp != .orderedSame {
+                return cmp == .orderedAscending
+            }
+            let a1 = basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
+            let a2 = other.basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
+            let aCmp = a1.localizedStandardCompare(a2)
+            if aCmp != .orderedSame {
+                return aCmp == .orderedAscending
+            }
+            return basicInformation.title.localizedStandardCompare(other.basicInformation.title) == .orderedAscending
+
+        case .format:
+            let f1 = basicInformation.formats?.first?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let f2 = other.basicInformation.formats?.first?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            if f1.isEmpty && !f2.isEmpty { return false }
+            if !f1.isEmpty && f2.isEmpty { return true }
+            let cmp = f1.localizedStandardCompare(f2)
+            if cmp != .orderedSame {
+                return cmp == .orderedAscending
+            }
+            let a1 = basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
+            let a2 = other.basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
+            let aCmp = a1.localizedStandardCompare(a2)
+            if aCmp != .orderedSame {
+                return aCmp == .orderedAscending
+            }
+            return basicInformation.title.localizedStandardCompare(other.basicInformation.title) == .orderedAscending
+
+        case .label:
+            let l1 = basicInformation.labels?.first?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let l2 = other.basicInformation.labels?.first?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            if l1.isEmpty && !l2.isEmpty { return false }
+            if !l1.isEmpty && l2.isEmpty { return true }
+            let cmp = l1.localizedStandardCompare(l2)
+            if cmp != .orderedSame {
+                return cmp == .orderedAscending
+            }
+            let a1 = basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
+            let a2 = other.basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
+            let aCmp = a1.localizedStandardCompare(a2)
+            if aCmp != .orderedSame {
+                return aCmp == .orderedAscending
+            }
+            return basicInformation.title.localizedStandardCompare(other.basicInformation.title) == .orderedAscending
+
+        case .rating:
+            if rating != other.rating {
+                return rating > other.rating // Meilleure note en premier
+            }
+            let a1 = basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
+            let a2 = other.basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
+            let aCmp = a1.localizedStandardCompare(a2)
+            if aCmp != .orderedSame {
+                return aCmp == .orderedAscending
+            }
+            return basicInformation.title.localizedStandardCompare(other.basicInformation.title) == .orderedAscending
+
+        case .catalogNumber:
+            let c1 = basicInformation.labels?.first?.catno?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let c2 = other.basicInformation.labels?.first?.catno?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            if c1.isEmpty && !c2.isEmpty { return false }
+            if !c1.isEmpty && c2.isEmpty { return true }
+            let cmp = c1.localizedStandardCompare(c2)
+            if cmp != .orderedSame {
+                return cmp == .orderedAscending
+            }
+            let a1 = basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
+            let a2 = other.basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
+            let aCmp = a1.localizedStandardCompare(a2)
+            if aCmp != .orderedSame {
+                return aCmp == .orderedAscending
+            }
+            return basicInformation.title.localizedStandardCompare(other.basicInformation.title) == .orderedAscending
+        }
+    }
+
+    /// Valeur affichée sur la 2e ligne de l'en-tête sticky. Identique à `sectionKey` sauf pour
+    /// le tri par date, où l'année est déjà sur la 1re ligne (le jeton) et n'a pas besoin d'être répétée.
+    func sectionDisplayTitle(for sort: CollectionSortOption) -> String {
+        switch sort {
+        case .added:
+            guard let date = dateAddedDate else { return "?" }
+            return date.formatted(.dateTime.month(.wide).locale(Locale(identifier: "fr_FR")))
+        default:
+            return sectionKey(for: sort)
+        }
+    }
+}
+
+/// Jeton (lettre ou année sur 2 chiffres) pour la 1re ligne de l'en-tête d'une section et pour
+/// la barre de navigation rapide — partagé par Collection et Wantlist.
+func libraryIndexToken<Item: SortableLibraryItem>(for section: (key: String, items: [Item]), sort: CollectionSortOption) -> String {
+    switch sort {
+    case .added:
+        guard let date = section.items.first?.dateAddedDate else { return "?" }
+        let year = Calendar.current.component(.year, from: date) % 100
+        return String(format: "%02d", year)
+    case .year:
+        guard section.key != "?" else { return "?" }
+        return String(section.key.suffix(2))
+    case .rating:
+        guard let rating = section.items.first?.rating, rating > 0 else { return "–" }
+        return String(rating)
+    case .artist, .title, .format, .genre, .label, .catalogNumber:
+        let folded = section.key.folding(options: .diacriticInsensitive, locale: .current).trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let firstChar = folded.first else { return "?" }
+        if firstChar.isNumber {
+            return "#"
+        }
+        if firstChar.isLetter {
+            return String(firstChar).uppercased()
+        }
+        return "#"
+    }
+}

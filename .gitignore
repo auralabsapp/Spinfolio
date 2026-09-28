@@ -1,0 +1,9 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+.DS_Store
+
+# Secrets Discogs (identifiants d'app OAuth) — à renseigner localement
+Spinlog/Spinlog/Secrets.swift

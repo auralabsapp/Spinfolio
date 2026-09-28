@@ -1,0 +1,18 @@
+{
+  "sourceLanguage" : "fr",
+  "strings" : {
+    "Album du jour" : {
+
+    },
+    "ALBUM DU JOUR" : {
+
+    },
+    "EN COURS D'ÉCOUTE" : {
+
+    },
+    "Un disque de ta collection Discogs tiré au hasard chaque jour." : {
+
+    }
+  },
+  "version" : "1.3"
+}

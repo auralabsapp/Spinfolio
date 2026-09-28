@@ -1,0 +1,368 @@
+import Foundation
+import Observation
+
+/// Tags personnels sur les exemplaires de la collection (niveau `instanceId`).
+/// Discogs n'expose aucune API de tags libres (seulement des dossiers de collection, dans lesquels
+/// une release ne peut être que dans un seul à la fois) : ces tags sont donc une fonctionnalité propre
+/// à l'app, stockée uniquement sur cet appareil et jamais synchronisée avec Discogs.
+///
+/// La gestion s'effectue par exemplaire (`instanceId`), avec migration transparente et compatibilité
+/// pour les anciens tags configurés par `releaseId`.
+///
+/// Les données sont isolées par compte Discogs (`setActiveUsername`) : se déconnecter puis se
+/// reconnecter avec un autre compte donne un espace de tags totalement séparé, et revenir au
+/// premier compte restaure les siens.
+@Observable
+@MainActor
+final class TagStore {
+    static let shared = TagStore()
+
+    /// Un tag appliqué à un exemplaire, avec sa date d'ajout. Cette date sert à départager quels
+    /// tags conserver si une future fusion multi-appareils (iCloud) fait dépasser la limite de
+    /// `TagConstants.maxTagsPerInstance` sur un même exemplaire : on garde alors les plus récents.
+    private struct TimestampedTag: Codable, Hashable {
+        let name: String
+        let addedAt: Date
+    }
+
+    private var timestampedTagsByInstance: [String: [TimestampedTag]] = [:]
+    private(set) var legacyTagsByRelease: [String: [String]] = [:]
+    private(set) var standaloneTags: Set<String> = []
+
+    /// Compte Discogs actuellement actif, ou `nil` si personne n'est connecté.
+    /// Piloté exclusivement par `DiscogsAuthManager` via `setActiveUsername`.
+    private(set) var activeUsername: String?
+
+    /// Tags par exemplaire, exposés sous la forme historique `[instanceId: [nom]]` (sans les dates
+    /// d'ajout) pour les consommateurs existants (ex: export de sauvegarde JSON).
+    var tagsByInstance: [String: [String]] {
+        timestampedTagsByInstance.mapValues { $0.map(\.name) }
+    }
+
+    private let instanceStorageKey = "com.spinlog.instanceTags"
+    private let legacyReleaseStorageKey = "com.spinlog.releaseTags"
+    private let standaloneKey = "com.spinlog.standaloneTags"
+    /// Garantit que la migration depuis l'ancien stockage global (avant l'isolation par compte)
+    /// ne se produit qu'une seule fois, vers le premier compte activé après cette mise à jour.
+    private static let legacyMigrationFlagKey = "com.spinlog.tagStore.migratedToPerAccount"
+
+    private init() {}
+
+    /// Bascule ce store sur les données propres au compte Discogs indiqué : sauvegarde déjà à
+    /// jour (chaque mutation persiste immédiatement), donc il suffit de recharger l'état en
+    /// mémoire depuis le stockage propre à ce compte. Appelé par `DiscogsAuthManager` au
+    /// lancement de l'app, à la connexion et à la déconnexion.
+    func setActiveUsername(_ username: String?) {
+        let normalized = Self.normalize(username)
+        guard normalized != activeUsername else { return }
+        activeUsername = normalized
+        guard let normalized else {
+            // Déconnecté : on vide l'état en mémoire sans toucher au disque, pour ne pas laisser
+            // les tags d'un compte visibles tant qu'aucun compte n'est actif.
+            timestampedTagsByInstance = [:]
+            legacyTagsByRelease = [:]
+            standaloneTags = []
+            return
+        }
+        load(for: normalized)
+    }
+
+    private static func normalize(_ username: String?) -> String? {
+        guard let trimmed = username?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+              !trimmed.isEmpty else { return nil }
+        return trimmed
+    }
+
+    private func key(_ base: String, for username: String) -> String {
+        "\(base)_\(username)"
+    }
+
+    private func load(for username: String) {
+        if let data = UserDefaults.standard.data(forKey: key(instanceStorageKey, for: username)),
+           let decoded = try? JSONDecoder().decode([String: [TimestampedTag]].self, from: data) {
+            timestampedTagsByInstance = decoded
+        } else {
+            timestampedTagsByInstance = [:]
+        }
+
+        if let data = UserDefaults.standard.data(forKey: key(legacyReleaseStorageKey, for: username)),
+           let decoded = try? JSONDecoder().decode([String: [String]].self, from: data) {
+            legacyTagsByRelease = decoded
+        } else {
+            legacyTagsByRelease = [:]
+        }
+
+        if let data = UserDefaults.standard.data(forKey: key(standaloneKey, for: username)),
+           let decoded = try? JSONDecoder().decode(Set<String>.self, from: data) {
+            standaloneTags = decoded
+        } else {
+            standaloneTags = []
+        }
+
+        migrateLegacyDataIfNeeded()
+    }
+
+    /// Reprend, une seule fois au total, les données créées avant l'isolation par compte
+    /// (stockées sous les clés globales non préfixées) pour le premier compte activé.
+    private func migrateLegacyDataIfNeeded() {
+        guard !UserDefaults.standard.bool(forKey: Self.legacyMigrationFlagKey) else { return }
+        UserDefaults.standard.set(true, forKey: Self.legacyMigrationFlagKey)
+
+        var didMigrate = false
+
+        if timestampedTagsByInstance.isEmpty,
+           let data = UserDefaults.standard.data(forKey: instanceStorageKey),
+           let decoded = try? JSONDecoder().decode([String: [String]].self, from: data),
+           !decoded.isEmpty {
+            let now = Date()
+            timestampedTagsByInstance = decoded.mapValues { names in
+                names.map { TimestampedTag(name: $0, addedAt: now) }
+            }
+            didMigrate = true
+        }
+
+        if legacyTagsByRelease.isEmpty,
+           let data = UserDefaults.standard.data(forKey: legacyReleaseStorageKey),
+           let decoded = try? JSONDecoder().decode([String: [String]].self, from: data),
+           !decoded.isEmpty {
+            legacyTagsByRelease = decoded
+            didMigrate = true
+        }
+
+        if standaloneTags.isEmpty,
+           let data = UserDefaults.standard.data(forKey: standaloneKey),
+           let decoded = try? JSONDecoder().decode(Set<String>.self, from: data),
+           !decoded.isEmpty {
+            standaloneTags = decoded
+            didMigrate = true
+        }
+
+        if didMigrate {
+            persist()
+        }
+    }
+
+    /// Tags associés à un exemplaire physique précis (`instanceId`).
+    /// Si aucun tag n'est encore enregistré pour cet exemplaire mais qu'un `releaseId` est fourni,
+    /// effectue une migration transparente depuis les anciens tags de la release.
+    func tags(for instanceId: Int, releaseId: Int? = nil) -> [String] {
+        let instanceKey = String(instanceId)
+        if let existing = timestampedTagsByInstance[instanceKey] {
+            return existing.map(\.name)
+        }
+        if let releaseId {
+            let releaseKey = String(releaseId)
+            if let legacy = legacyTagsByRelease[releaseKey], !legacy.isEmpty {
+                return legacy
+            }
+        }
+        return []
+    }
+
+    /// Enregistre explicitement une liste de tags (y compris vide) pour un exemplaire précis.
+    /// Préserve la date d'ajout des tags déjà présents ; les nouveaux reçoivent la date actuelle.
+    func setTags(_ tags: [String], for instanceId: Int) {
+        let instanceKey = String(instanceId)
+        let existingByName = Dictionary(
+            uniqueKeysWithValues: (timestampedTagsByInstance[instanceKey] ?? []).map { ($0.name, $0.addedAt) }
+        )
+        let now = Date()
+        timestampedTagsByInstance[instanceKey] = tags.map { name in
+            TimestampedTag(name: name, addedAt: existingByName[name] ?? now)
+        }
+        persist()
+    }
+
+    /// Rétrocompatibilité / interrogation au niveau release.
+    func tags(for releaseId: Int) -> [String] {
+        if let legacy = legacyTagsByRelease[String(releaseId)], !legacy.isEmpty {
+            return legacy
+        }
+        return []
+    }
+
+    /// Réassigne les tags d'un identifiant d'exemplaire temporaire vers l'identifiant définitif Discogs.
+    func remapInstanceId(from oldInstanceId: Int, to newInstanceId: Int) {
+        let oldKey = String(oldInstanceId)
+        let newKey = String(newInstanceId)
+        if let entries = timestampedTagsByInstance[oldKey] {
+            timestampedTagsByInstance[newKey] = entries
+            timestampedTagsByInstance.removeValue(forKey: oldKey)
+            persist()
+        }
+    }
+
+    /// Nombre d'exemplaires physiques sur lesquels ce tag est appliqué.
+    func instanceCount(for tag: String) -> Int {
+        let fromInstances = timestampedTagsByInstance.values.filter { entries in
+            entries.contains { $0.name == tag }
+        }.count
+        if fromInstances > 0 {
+            return fromInstances
+        }
+        return legacyTagsByRelease.values.filter { $0.contains(tag) }.count
+    }
+
+    /// Alias pour rétrocompatibilité
+    func releaseCount(for tag: String) -> Int {
+        instanceCount(for: tag)
+    }
+
+    /// Tous les tags créés (associés à des exemplaires ou créés de façon autonome), triés alphabétiquement.
+    var allTags: [String] {
+        let fromInstances = timestampedTagsByInstance.values.flatMap { $0.map(\.name) }
+        let fromReleases = legacyTagsByRelease.values.flatMap { $0 }
+        return Set(fromInstances).union(fromReleases).union(standaloneTags)
+            .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+    }
+
+    /// Renvoie le nom exact d'un tag existant correspondant (insensible à la casse).
+    func existingTag(matching name: String) -> String? {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return allTags.first { $0.caseInsensitiveCompare(trimmed) == .orderedSame }
+    }
+
+    /// Crée un nouveau tag dans la bibliothèque sans nécessairement l'associer immédiatement à un disque.
+    func createTag(_ tag: String) {
+        let trimmed = String(tag.trimmingCharacters(in: .whitespacesAndNewlines).prefix(TagConstants.maxNameLength))
+        guard !trimmed.isEmpty else { return }
+        guard !allTags.contains(where: { $0.caseInsensitiveCompare(trimmed) == .orderedSame }) else { return }
+        standaloneTags.insert(trimmed)
+        persist()
+    }
+
+    /// Ajoute un tag à un exemplaire spécifique (`instanceId`).
+    func addTag(_ tag: String, to instanceId: Int, releaseId: Int? = nil) {
+        let trimmed = String(tag.trimmingCharacters(in: .whitespacesAndNewlines).prefix(TagConstants.maxNameLength))
+        guard !trimmed.isEmpty else { return }
+        let instanceKey = String(instanceId)
+        let currentNames = tags(for: instanceId, releaseId: releaseId)
+        guard !currentNames.contains(where: { $0.caseInsensitiveCompare(trimmed) == .orderedSame }) else { return }
+
+        let existingByName = Dictionary(
+            uniqueKeysWithValues: (timestampedTagsByInstance[instanceKey] ?? []).map { ($0.name, $0.addedAt) }
+        )
+        let now = Date()
+        var updated = currentNames.map { name in TimestampedTag(name: name, addedAt: existingByName[name] ?? now) }
+        updated.append(TimestampedTag(name: trimmed, addedAt: now))
+        timestampedTagsByInstance[instanceKey] = updated
+        persist()
+    }
+
+    /// Retire un tag d'un exemplaire spécifique (`instanceId`).
+    func removeTag(_ tag: String, from instanceId: Int, releaseId: Int? = nil) {
+        let instanceKey = String(instanceId)
+        var currentNames = tags(for: instanceId, releaseId: releaseId)
+        currentNames.removeAll { $0 == tag }
+        if currentNames.isEmpty {
+            timestampedTagsByInstance.removeValue(forKey: instanceKey)
+        } else {
+            let existingByName = Dictionary(
+                uniqueKeysWithValues: (timestampedTagsByInstance[instanceKey] ?? []).map { ($0.name, $0.addedAt) }
+            )
+            let now = Date()
+            timestampedTagsByInstance[instanceKey] = currentNames.map { name in
+                TimestampedTag(name: name, addedAt: existingByName[name] ?? now)
+            }
+        }
+        persist()
+    }
+
+    /// Supprime tous les tags associés à un exemplaire supprimé.
+    func removeTags(for instanceId: Int) {
+        let instanceKey = String(instanceId)
+        if timestampedTagsByInstance.removeValue(forKey: instanceKey) != nil {
+            persist()
+        }
+    }
+
+    /// Renomme un tag partout où il est utilisé et dans les tags autonomes.
+    func renameTag(_ oldTag: String, to newName: String) {
+        let trimmed = String(newName.trimmingCharacters(in: .whitespacesAndNewlines).prefix(TagConstants.maxNameLength))
+        guard !trimmed.isEmpty, trimmed != oldTag else { return }
+
+        if standaloneTags.contains(oldTag) {
+            standaloneTags.remove(oldTag)
+            standaloneTags.insert(trimmed)
+        }
+
+        for (key, entries) in timestampedTagsByInstance {
+            if entries.contains(where: { $0.name == oldTag }) {
+                var updated = entries.map { entry in
+                    entry.name == oldTag ? TimestampedTag(name: trimmed, addedAt: entry.addedAt) : entry
+                }
+                var seen = Set<String>()
+                updated = updated.filter { seen.insert($0.name.lowercased()).inserted }
+                timestampedTagsByInstance[key] = updated
+            }
+        }
+
+        for (key, tags) in legacyTagsByRelease {
+            if tags.contains(oldTag) {
+                var updated = tags.map { $0 == oldTag ? trimmed : $0 }
+                var seen = Set<String>()
+                updated = updated.filter { seen.insert($0.lowercased()).inserted }
+                legacyTagsByRelease[key] = updated
+            }
+        }
+
+        persist()
+    }
+
+    /// Supprime définitivement un tag : retiré de tous les exemplaires et de la liste globale.
+    func deleteTag(_ tag: String) {
+        standaloneTags.remove(tag)
+
+        for (key, entries) in timestampedTagsByInstance {
+            let updated = entries.filter { $0.name != tag }
+            if updated.isEmpty {
+                timestampedTagsByInstance.removeValue(forKey: key)
+            } else if updated.count != entries.count {
+                timestampedTagsByInstance[key] = updated
+            }
+        }
+
+        for (key, tags) in legacyTagsByRelease {
+            var updated = tags
+            updated.removeAll { $0 == tag }
+            if updated.isEmpty {
+                legacyTagsByRelease.removeValue(forKey: key)
+            } else {
+                legacyTagsByRelease[key] = updated
+            }
+        }
+
+        persist()
+    }
+
+    /// Restauration des données de tags à partir d'une sauvegarde. Les tags importés reçoivent
+    /// la date de restauration comme date d'ajout (une sauvegarde JSON ne porte pas cette info).
+    func restoreData(
+        tagsByInstance: [String: [String]]?,
+        tagsByRelease: [String: [String]],
+        standaloneTags: Set<String>
+    ) {
+        if let tagsByInstance {
+            let now = Date()
+            self.timestampedTagsByInstance = tagsByInstance.mapValues { names in
+                names.map { TimestampedTag(name: $0, addedAt: now) }
+            }
+        }
+        self.legacyTagsByRelease = tagsByRelease
+        self.standaloneTags = standaloneTags
+        persist()
+    }
+
+    private func persist() {
+        guard let activeUsername else { return }
+        if let data = try? JSONEncoder().encode(timestampedTagsByInstance) {
+            UserDefaults.standard.set(data, forKey: key(instanceStorageKey, for: activeUsername))
+        }
+        if let data = try? JSONEncoder().encode(legacyTagsByRelease) {
+            UserDefaults.standard.set(data, forKey: key(legacyReleaseStorageKey, for: activeUsername))
+        }
+        if let data = try? JSONEncoder().encode(standaloneTags) {
+            UserDefaults.standard.set(data, forKey: key(standaloneKey, for: activeUsername))
+        }
+    }
+}

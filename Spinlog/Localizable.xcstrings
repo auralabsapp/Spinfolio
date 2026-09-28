@@ -1,0 +1,627 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "—" : {
+
+    },
+    "·" : {
+
+    },
+    "· %@" : {
+
+    },
+    "@%@" : {
+
+    },
+    "%@ · %lld %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$lld %3$@"
+          }
+        }
+      }
+    },
+    "%@ (%lld)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ (%2$lld)"
+          }
+        }
+      }
+    },
+    "%lld" : {
+
+    },
+    "%lld / %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld / %2$lld"
+          }
+        }
+      }
+    },
+    "%lld %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld %2$@"
+          }
+        }
+      }
+    },
+    "%lld avis" : {
+
+    },
+    "%lld exemplaire" : {
+
+    },
+    "%lld exemplaire%@ en vente" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld exemplaire%2$@ en vente"
+          }
+        }
+      }
+    },
+    "%lld exemplaire%@ en vente dès %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld exemplaire%2$@ en vente dès %3$@"
+          }
+        }
+      }
+    },
+    "%lld exemplaires" : {
+
+    },
+    "%lld infos perso" : {
+
+    },
+    "%lld tags" : {
+
+    },
+    "%lld/5" : {
+
+    },
+    "• %@" : {
+
+    },
+    "1 info perso" : {
+
+    },
+    "1 tag" : {
+
+    },
+    "À propos" : {
+
+    },
+    "Afficher moins" : {
+
+    },
+    "Afficher plus" : {
+
+    },
+    "Ajoute des disques depuis la recherche ou le scan." : {
+
+    },
+    "Ajoute des disques que tu recherches depuis la recherche ou le scan." : {
+
+    },
+    "Ajouter" : {
+
+    },
+    "Ajouter dans quel dossier ?" : {
+
+    },
+    "Ajouter un autre exemplaire" : {
+
+    },
+    "Ajouter un tag" : {
+
+    },
+    "Ajouts" : {
+
+    },
+    "Année" : {
+
+    },
+    "Annuler" : {
+
+    },
+    "Apparence" : {
+
+    },
+    "Artiste, disque, label…" : {
+
+    },
+    "Aucun" : {
+
+    },
+    "Aucun champ personnalisé configuré" : {
+
+    },
+    "Aucun élément" : {
+
+    },
+    "Aucun élément trouvé pour cette année." : {
+
+    },
+    "Aucun tag" : {
+
+    },
+    "Aucun tag créé" : {
+
+    },
+    "Autres informations" : {
+
+    },
+    "Basée sur l'historique réel des ventes Discogs pour les disques de ta collection." : {
+
+    },
+    "Bibliothèque" : {
+
+    },
+    "Ce tag sera disponible dans les suggestions pour tous vos disques." : {
+
+    },
+    "Cet exemplaire sera définitivement retiré de votre collection Discogs." : {
+
+    },
+    "Cette release ne peut pas être vendue actuellement." : {
+
+    },
+    "Champs personnalisés Discogs" : {
+
+    },
+    "Collection" : {
+
+    },
+    "Collection vide" : {
+
+    },
+    "Connecté à Discogs" : {
+
+    },
+    "Connecte-toi à Discogs" : {
+
+    },
+    "Connecte-toi à Discogs pour voir une estimation de prix par état." : {
+
+    },
+    "Contrairement aux tags qui sont des données locales à l'application et non sauvegardées sur Discogs, ces champs sont synchronisés avec votre compte. Discogs ne permet pas de créer ou supprimer des champs personnalisés en dehors de son site web : pour en créer, rendez-vous sur le site Discogs (Paramètres de collection) ; ils seront ensuite visibles dans l'application." : {
+
+    },
+    "Créer" : {
+
+    },
+    "Créer et ajouter « %@ »" : {
+
+    },
+    "Créer un tag" : {
+
+    },
+    "Créez des tags ici ou attribuez-en à vos disques depuis la fiche détaillée d'un vinyle." : {
+
+    },
+    "Créez votre premier tag pour organiser vos vinyles selon vos critères." : {
+
+    },
+    "Discogs" : {
+
+    },
+    "Disque" : {
+
+    },
+    "Données et sauvegarde" : {
+
+    },
+    "Dossier : %@" : {
+
+    },
+    "Dossier d'ajout" : {
+
+    },
+    "Dossier dans lequel ranger vos vinyles lors de l'ajout, ou « Toujours demander » pour sélectionner à chaque ajout." : {
+
+    },
+    "Durée totale" : {
+
+    },
+    "Effacer les filtres" : {
+
+    },
+    "En vente" : {
+
+    },
+    "En wantlist" : {
+
+    },
+    "Enregistrer" : {
+
+    },
+    "Erreur" : {
+
+    },
+    "Estimation indisponible pour le moment." : {
+
+    },
+    "Êtes-vous sûr de vouloir supprimer « %@ » ? Ce tag sera retiré de %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Êtes-vous sûr de vouloir supprimer « %1$@ » ? Ce tag sera retiré de %2$@."
+          }
+        }
+      }
+    },
+    "Êtes-vous sûr de vouloir vous déconnecter de votre compte Discogs ?" : {
+
+    },
+    "Exemplaire %lld" : {
+
+    },
+    "Exporter la collection (CSV)" : {
+
+    },
+    "Fermer" : {
+
+    },
+    "Filtrer" : {
+
+    },
+    "Filtrer par format" : {
+
+    },
+    "Filtrer par tag" : {
+
+    },
+    "Format : %@" : {
+
+    },
+    "Gérer les champs sur discogs.com" : {
+
+    },
+    "Gérer les exemplaires" : {
+
+    },
+    "Gestion des tags" : {
+
+    },
+    "ID: %lld" : {
+
+    },
+    "Impossible de charger ce label" : {
+
+    },
+    "Impossible de charger ce master" : {
+
+    },
+    "Impossible de charger cet artiste" : {
+
+    },
+    "Impossible de charger la release" : {
+
+    },
+    "Indisponible" : {
+
+    },
+    "L'export CSV regroupe tous vos vinyles (tous dossiers confondus) avec leurs métadonnées, tags et notes. La sauvegarde JSON conserve vos tags et réglages pour restauration." : {
+
+    },
+    "Le renommage s'appliquera à %@." : {
+
+    },
+    "Le tag sera créé et associé à cet exemplaire." : {
+
+    },
+    "Les tags sont des données locales à l'application et ne sont pas sauvegardés sur Discogs." : {
+
+    },
+    "Marketplace" : {
+
+    },
+    "Marketplace Discogs" : {
+
+    },
+    "Membres" : {
+
+    },
+    "Modifier" : {
+
+    },
+    "Modifier cet exemplaire" : {
+
+    },
+    "Nom du tag" : {
+
+    },
+    "Note" : {
+
+    },
+    "Note, tags et infos" : {
+
+    },
+    "Nouveau nom" : {
+
+    },
+    "Nouveau tag" : {
+
+    },
+    "OK" : {
+
+    },
+    "Options des tags" : {
+
+    },
+    "Ouvrir sur Discogs" : {
+
+    },
+    "Partager la release" : {
+
+    },
+    "Pas encore assez de données." : {
+
+    },
+    "Photos et vidéos" : {
+
+    },
+    "Possesseurs" : {
+
+    },
+    "Pressages (%lld)" : {
+
+    },
+    "Prix le plus bas" : {
+
+    },
+    "Profil Discogs" : {
+
+    },
+    "Recherche" : {
+
+    },
+    "Recherche Discogs" : {
+
+    },
+    "Recherche impossible" : {
+
+    },
+    "Rechercher dans ta collection" : {
+
+    },
+    "Rechercher dans ta wantlist" : {
+
+    },
+    "Rechercher ou créer un tag" : {
+
+    },
+    "Rechercher par scan" : {
+
+    },
+    "Rechercher un tag" : {
+
+    },
+    "Réglages" : {
+
+    },
+    "Remplacer les données locales" : {
+
+    },
+    "Renommer" : {
+
+    },
+    "Renommer ce tag" : {
+
+    },
+    "Renommer le tag" : {
+
+    },
+    "Restaure tags et métadonnées locales" : {
+
+    },
+    "Restaurer la sauvegarde ?" : {
+
+    },
+    "Restaurer une sauvegarde" : {
+
+    },
+    "Retirer de la collection ?" : {
+
+    },
+    "Retirer de la wantlist" : {
+
+    },
+    "Retirer de la wantlist ?" : {
+
+    },
+    "Retirer le tag %@" : {
+
+    },
+    "Retour" : {
+
+    },
+    "Sauvegarde du %@ pour le compte Discogs « %@ ».\n\nElle contient %lld tag%@ et %lld disque%@ étiqueté%@.\n\nVos tags actuels seront remplacés par ceux du fichier." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sauvegarde du %1$@ pour le compte Discogs « %2$@ ».\n\nElle contient %3$lld tag%4$@ et %5$lld disque%6$@ étiqueté%7$@.\n\nVos tags actuels seront remplacés par ceux du fichier."
+          }
+        }
+      }
+    },
+    "Sauvegarder mes données" : {
+
+    },
+    "Se connecter" : {
+
+    },
+    "Se connecter à Discogs" : {
+
+    },
+    "Se déconnecter" : {
+
+    },
+    "Site personnel" : {
+
+    },
+    "Site web Discogs" : {
+
+    },
+    "Souhaits" : {
+
+    },
+    "Spinlog utilise l'API publique Discogs mais n'est ni affilié à ni approuvé par Discogs." : {
+
+    },
+    "Statistiques" : {
+
+    },
+    "Stats" : {
+
+    },
+    "Supprimer" : {
+
+    },
+    "Supprimer ce tag" : {
+
+    },
+    "Supprimer cet exemplaire" : {
+
+    },
+    "Supprimer cet exemplaire ?" : {
+
+    },
+    "Supprimer de la collection" : {
+
+    },
+    "Supprimer de la collection ?" : {
+
+    },
+    "Supprimer exemplaire %lld (%@)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Supprimer exemplaire %1$lld (%2$@)"
+          }
+        }
+      }
+    },
+    "Supprimer l'exemplaire" : {
+
+    },
+    "Supprimer le tag" : {
+
+    },
+    "Supprimer tous les exemplaires" : {
+
+    },
+    "Supprimer tous les exemplaires ?" : {
+
+    },
+    "Supprimer tous les tags" : {
+
+    },
+    "Supprimer tous les tags ?" : {
+
+    },
+    "Synchronisez votre collection et vos souhaits" : {
+
+    },
+    "Tag : %@" : {
+
+    },
+    "Tags de l'exemplaire" : {
+
+    },
+    "Tags disponibles (%lld)" : {
+
+    },
+    "Terminé" : {
+
+    },
+    "Thème" : {
+
+    },
+    "Touchez un tag ou glissez vers la gauche pour le renommer ou le supprimer. La modification sera répercutée sur tous les disques associés." : {
+
+    },
+    "Touchez un tag pour l'attribuer ou le retirer de cet exemplaire." : {
+
+    },
+    "Toujours demander" : {
+
+    },
+    "Tous les formats" : {
+
+    },
+    "Tous les tags" : {
+
+    },
+    "Tous les tags seront définitivement supprimés et retirés de vos disques. Cette action est irréversible." : {
+
+    },
+    "Tous vos exemplaires de cet album seront retirés de votre collection Discogs." : {
+
+    },
+    "Tout effacer" : {
+
+    },
+    "Trier par" : {
+
+    },
+    "Trouve un disque, un artiste, un label, ou scanne un code-barres." : {
+
+    },
+    "Vers la collection" : {
+
+    },
+    "Version" : {
+
+    },
+    "Voir le profil sur Discogs.com" : {
+
+    },
+    "Voir les annonces sur Discogs.com" : {
+
+    },
+    "Vos données locales seront remplacées." : {
+
+    },
+    "Voulez-vous retirer « %@ » de votre collection Discogs ?" : {
+
+    },
+    "Voulez-vous retirer « %@ » de votre wantlist Discogs ?" : {
+
+    },
+    "Voulez-vous retirer cet album de votre collection Discogs ?" : {
+
+    },
+    "Voulez-vous retirer cet album de votre wantlist Discogs ?" : {
+
+    },
+    "Voulez-vous retirer cet exemplaire (dossier « %@ ») de votre collection Discogs ?" : {
+
+    },
+    "Wantlist" : {
+
+    },
+    "Wantlist vide" : {
+
+    }
+  },
+  "version" : "1.3"
+}
