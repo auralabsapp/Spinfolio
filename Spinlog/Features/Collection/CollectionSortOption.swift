@@ -18,6 +18,7 @@ enum CollectionSortOption: String, CaseIterable, Identifiable, Codable {
     case label = "Label"
     case rating = "Note"
     case catalogNumber = "Référence"
+    case shelf = "Meuble"
 
     var id: String { rawValue }
 
@@ -32,6 +33,16 @@ enum CollectionSortOption: String, CaseIterable, Identifiable, Codable {
         case .label: return "building.2"
         case .rating: return "star"
         case .catalogNumber: return "number"
+        case .shelf: return "books.vertical.fill"
+        }
+    }
+
+    var defaultAscending: Bool {
+        switch self {
+        case .added, .rating:
+            return false
+        default:
+            return true
         }
     }
 
@@ -48,6 +59,7 @@ enum CollectionSortOption: String, CaseIterable, Identifiable, Codable {
         case .label: return "label"
         case .rating: return "rating"
         case .catalogNumber: return "catno"
+        case .shelf: return "artist"
         }
     }
 
@@ -56,18 +68,28 @@ enum CollectionSortOption: String, CaseIterable, Identifiable, Codable {
     var apiSortOrder: String {
         (self == .added || self == .rating) ? "desc" : "asc"
     }
+
+    func apiSortOrder(ascending: Bool) -> String {
+        ascending ? "asc" : "desc"
+    }
 }
 
 /// Ce que le tri/regroupement partagé entre Collection et Wantlist a besoin de lire sur un
 /// élément — `CollectionItem` et `WantlistItem` s'y conforment, ce qui permet à l'onglet
 /// Wantlist de réutiliser exactement la même logique de tri/sections que la Collection.
-protocol SortableLibraryItem {
+protocol SortableLibraryItem: Identifiable {
+    var id: Int { get }
     var basicInformation: BasicInformation { get }
     var rating: Int { get }
     var dateAddedDate: Date? { get }
+    var libraryItemTags: [String] { get }
 }
 
-extension CollectionItem: SortableLibraryItem {}
+extension CollectionItem: SortableLibraryItem {
+    var libraryItemTags: [String] {
+        TagStore.shared.tags(for: instanceId, releaseId: releaseId)
+    }
+}
 
 extension SortableLibraryItem {
     /// Clé de regroupement : une section par valeur distincte (pas juste par lettre), pour
@@ -77,6 +99,17 @@ extension SortableLibraryItem {
         case .artist:
             let name = basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
             return name.isEmpty ? "?" : name
+        case .shelf:
+            let artist = basicInformation.artistNames.shelfArtistSortKey(
+                ignoreArticles: ShelfPreferencesStore.shared.ignoreArticles,
+                sortByLastName: ShelfPreferencesStore.shared.sortByLastName,
+                overrides: ShelfPreferencesStore.shared.customArtistSortOverrides
+            )
+            let trimmed = artist.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard let firstChar = trimmed.first else { return "#" }
+            let s = String(firstChar).uppercased()
+            guard let scalar = s.unicodeScalars.first, CharacterSet.letters.contains(scalar) else { return "#" }
+            return s.folding(options: .diacriticInsensitive, locale: .current)
         case .title:
             let title = basicInformation.title.trimmingCharacters(in: .whitespacesAndNewlines)
             return title.isEmpty ? "?" : title
@@ -106,13 +139,24 @@ extension SortableLibraryItem {
     /// Compare deux éléments selon le critère de tri choisi afin de garantir un classement
     /// parfait et déterministe tant en local qu'en ligne.
     func isOrderedBefore(_ other: Self, for sort: CollectionSortOption) -> Bool {
+        isOrderedBefore(other, for: sort, ascending: sort.defaultAscending)
+    }
+
+    func isOrderedBefore(_ other: Self, for sort: CollectionSortOption, ascending: Bool) -> Bool {
         switch sort {
+        case .shelf:
+            if ascending {
+                return compareShelf(to: other)
+            } else {
+                return other.compareShelf(to: self)
+            }
+
         case .artist:
             let a1 = basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
             let a2 = other.basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
             let cmp = a1.localizedStandardCompare(a2)
             if cmp != .orderedSame {
-                return cmp == .orderedAscending
+                return ascending ? (cmp == .orderedAscending) : (cmp == .orderedDescending)
             }
             let t1 = basicInformation.title.trimmingCharacters(in: .whitespacesAndNewlines)
             let t2 = other.basicInformation.title.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -127,7 +171,7 @@ extension SortableLibraryItem {
             let t2 = other.basicInformation.title.trimmingCharacters(in: .whitespacesAndNewlines)
             let cmp = t1.localizedStandardCompare(t2)
             if cmp != .orderedSame {
-                return cmp == .orderedAscending
+                return ascending ? (cmp == .orderedAscending) : (cmp == .orderedDescending)
             }
             let a1 = basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
             let a2 = other.basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -141,23 +185,17 @@ extension SortableLibraryItem {
             let d1 = dateAddedDate ?? .distantPast
             let d2 = other.dateAddedDate ?? .distantPast
             if d1 != d2 {
-                return d1 > d2 // Plus récent en premier
+                return ascending ? (d1 < d2) : (d1 > d2)
             }
             return basicInformation.title.localizedStandardCompare(other.basicInformation.title) == .orderedAscending
 
         case .year:
             let y1 = basicInformation.year ?? 0
             let y2 = other.basicInformation.year ?? 0
-            if y1 == 0 && y2 != 0 { return false }
-            if y1 != 0 && y2 == 0 { return true }
             if y1 != y2 {
-                return y1 < y2 // Année croissante
-            }
-            let a1 = basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
-            let a2 = other.basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
-            let aCmp = a1.localizedStandardCompare(a2)
-            if aCmp != .orderedSame {
-                return aCmp == .orderedAscending
+                if y1 == 0 { return false }
+                if y2 == 0 { return true }
+                return ascending ? (y1 < y2) : (y1 > y2)
             }
             return basicInformation.title.localizedStandardCompare(other.basicInformation.title) == .orderedAscending
 
@@ -168,13 +206,7 @@ extension SortableLibraryItem {
             if !g1.isEmpty && g2.isEmpty { return true }
             let cmp = g1.localizedStandardCompare(g2)
             if cmp != .orderedSame {
-                return cmp == .orderedAscending
-            }
-            let a1 = basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
-            let a2 = other.basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
-            let aCmp = a1.localizedStandardCompare(a2)
-            if aCmp != .orderedSame {
-                return aCmp == .orderedAscending
+                return ascending ? (cmp == .orderedAscending) : (cmp == .orderedDescending)
             }
             return basicInformation.title.localizedStandardCompare(other.basicInformation.title) == .orderedAscending
 
@@ -185,13 +217,7 @@ extension SortableLibraryItem {
             if !f1.isEmpty && f2.isEmpty { return true }
             let cmp = f1.localizedStandardCompare(f2)
             if cmp != .orderedSame {
-                return cmp == .orderedAscending
-            }
-            let a1 = basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
-            let a2 = other.basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
-            let aCmp = a1.localizedStandardCompare(a2)
-            if aCmp != .orderedSame {
-                return aCmp == .orderedAscending
+                return ascending ? (cmp == .orderedAscending) : (cmp == .orderedDescending)
             }
             return basicInformation.title.localizedStandardCompare(other.basicInformation.title) == .orderedAscending
 
@@ -202,7 +228,7 @@ extension SortableLibraryItem {
             if !l1.isEmpty && l2.isEmpty { return true }
             let cmp = l1.localizedStandardCompare(l2)
             if cmp != .orderedSame {
-                return cmp == .orderedAscending
+                return ascending ? (cmp == .orderedAscending) : (cmp == .orderedDescending)
             }
             let a1 = basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
             let a2 = other.basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -214,7 +240,7 @@ extension SortableLibraryItem {
 
         case .rating:
             if rating != other.rating {
-                return rating > other.rating // Meilleure note en premier
+                return ascending ? (rating < other.rating) : (rating > other.rating)
             }
             let a1 = basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
             let a2 = other.basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -231,7 +257,7 @@ extension SortableLibraryItem {
             if !c1.isEmpty && c2.isEmpty { return true }
             let cmp = c1.localizedStandardCompare(c2)
             if cmp != .orderedSame {
-                return cmp == .orderedAscending
+                return ascending ? (cmp == .orderedAscending) : (cmp == .orderedDescending)
             }
             let a1 = basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
             let a2 = other.basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -243,6 +269,25 @@ extension SortableLibraryItem {
         }
     }
 
+    private func compareShelf(to other: Self) -> Bool {
+        let yA = basicInformation.year
+        let yB = other.basicInformation.year
+        return ShelfPlacementService.compare(
+            artistA: basicInformation.artistNames,
+            titleA: basicInformation.title,
+            yearA: yA,
+            idA: id,
+            artistB: other.basicInformation.artistNames,
+            titleB: other.basicInformation.title,
+            yearB: yB,
+            idB: other.id,
+            strategy: ShelfPreferencesStore.shared.sortStrategy,
+            ignoreArticles: ShelfPreferencesStore.shared.ignoreArticles,
+            sortByLastName: ShelfPreferencesStore.shared.sortByLastName,
+            customOverrides: ShelfPreferencesStore.shared.customArtistSortOverrides
+        )
+    }
+
     /// Valeur affichée sur la 2e ligne de l'en-tête sticky. Identique à `sectionKey` sauf pour
     /// le tri par date, où l'année est déjà sur la 1re ligne (le jeton) et n'a pas besoin d'être répétée.
     func sectionDisplayTitle(for sort: CollectionSortOption) -> String {
@@ -250,6 +295,8 @@ extension SortableLibraryItem {
         case .added:
             guard let date = dateAddedDate else { return "?" }
             return date.formatted(.dateTime.month(.wide).locale(Locale(identifier: "fr_FR")))
+        case .shelf:
+            return basicInformation.artistNames
         default:
             return sectionKey(for: sort)
         }
@@ -270,6 +317,13 @@ func libraryIndexToken<Item: SortableLibraryItem>(for section: (key: String, ite
     case .rating:
         guard let rating = section.items.first?.rating, rating > 0 else { return "–" }
         return String(rating)
+    case .shelf:
+        let folded = section.key.folding(options: .diacriticInsensitive, locale: .current).trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let firstChar = folded.first else { return "#" }
+        if firstChar.isLetter {
+            return String(firstChar).uppercased()
+        }
+        return "#"
     case .artist, .title, .format, .genre, .label, .catalogNumber:
         let folded = section.key.folding(options: .diacriticInsensitive, locale: .current).trimmingCharacters(in: .whitespacesAndNewlines)
         guard let firstChar = folded.first else { return "?" }
@@ -280,5 +334,53 @@ func libraryIndexToken<Item: SortableLibraryItem>(for section: (key: String, ite
             return String(firstChar).uppercased()
         }
         return "#"
+    }
+}
+
+extension SortableLibraryItem {
+    func matchesLibraryFilters(tags: Set<String> = [], format: String?, searchText: String) -> Bool {
+        if !tags.isEmpty {
+            let itemTags = Set(libraryItemTags.map { $0.folding(options: .diacriticInsensitive, locale: .current).lowercased() })
+            let normalizedSelectedTags = Set(tags.map { $0.folding(options: .diacriticInsensitive, locale: .current).lowercased() })
+            guard normalizedSelectedTags.isSubset(of: itemTags) else { return false }
+        }
+
+        if let format, !format.isEmpty {
+            let matchesFormat = basicInformation.formats?.contains(where: {
+                $0.name.localizedCaseInsensitiveCompare(format) == .orderedSame
+                || ($0.descriptions ?? []).contains(where: { $0.localizedCaseInsensitiveCompare(format) == .orderedSame })
+            }) ?? false
+            guard matchesFormat else { return false }
+        }
+
+        let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return true }
+        return basicInformation.title.localizedCaseInsensitiveContains(trimmed)
+            || basicInformation.artistNames.localizedCaseInsensitiveContains(trimmed)
+    }
+}
+
+func tagFilterMenuTitle(_ selectedTags: Set<String>) -> String {
+    if selectedTags.isEmpty {
+        return "Filtrer par tag"
+    } else if selectedTags.count == 1 {
+        return "Tag : \(selectedTags.first!)"
+    } else {
+        return "Tags (\(selectedTags.count))"
+    }
+}
+
+extension Sequence where Element: SortableLibraryItem {
+    var availableLibraryFormats: [String] {
+        var set = Set<String>()
+        for item in self {
+            if let formats = item.basicInformation.formats {
+                for f in formats {
+                    let name = f.name.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !name.isEmpty { set.insert(name) }
+                }
+            }
+        }
+        return set.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
     }
 }

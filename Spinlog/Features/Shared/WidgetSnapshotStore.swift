@@ -15,8 +15,9 @@ struct RandomAlbumSnapshotItem: Codable, Sendable {
 /// de l'app. Le tirage du jour est calculé à partir d'un hash stable de la date plutôt que
 /// stocké, pour éviter tout aller-retour d'écriture depuis l'extension.
 enum WidgetSnapshotStore {
-    private static let appGroupID = "group.com.aurelienscarpa.Spinlog"
+    private static let appGroupID = "group.com.auralabs.Spinlog"
     private static let collectionKey = "com.spinlog.widgetCollectionSnapshot"
+    private static let isPremiumKey = "com.spinlog.isPremium"
 
     private static var defaults: UserDefaults {
         UserDefaults(suiteName: appGroupID) ?? .standard
@@ -33,6 +34,14 @@ enum WidgetSnapshotStore {
             return []
         }
         return items
+    }
+
+    static var isPremium: Bool {
+        defaults.bool(forKey: isPremiumKey)
+    }
+
+    static var hasReceivedDataFromApp: Bool {
+        defaults.object(forKey: collectionKey) != nil || defaults.object(forKey: isPremiumKey) != nil
     }
 
     /// Choix stable pour une journée donnée : même date + même liste => même résultat.

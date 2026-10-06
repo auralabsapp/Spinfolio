@@ -4,15 +4,16 @@ import Kingfisher
 
 @MainActor
 enum KingfisherConfig {
-    /// Configure Kingfisher pour le chargement et la mise en cache des pochettes d'albums
-    /// avec une durée d'expiration maximale de 6 heures (21600s), stockage dans Library/Caches,
-    /// et injection des headers User-Agent et Authorization OAuth Discogs.
+    /// Configure Kingfisher pour le chargement et la mise en cache des pochettes d'albums.
+    /// Pour supporter le Mode Hors Ligne sans perte de jaquettes sans réseau, le stockage
+    /// disque est conservé sur 30 jours (ou jusqu'à vidage manuel du cache), tandis que le
+    /// cache mémoire utilise la fenêtre de 6 heures.
     static func configure() {
         let cache = ImageCache.default
 
-        // Répertoire Library/Caches avec expiration max de 6 heures (21600s)
-        cache.diskStorage.config.expiration = .seconds(21600)
-        cache.memoryStorage.config.expiration = .seconds(21600)
+        // Répértoire Library/Caches : 30 jours de persistance pour consultation hors ligne
+        cache.diskStorage.config.expiration = .days(30)
+        cache.memoryStorage.config.expiration = .seconds(DiscogsConstants.sixHoursTTL)
 
         // Downloader : injection automatique des headers requis par Discogs
         let modifier = AnyModifier { request in
@@ -40,9 +41,32 @@ enum KingfisherConfig {
 
         KingfisherManager.shared.defaultOptions = [
             .requestModifier(modifier),
-            .diskCacheExpiration(.seconds(21600)),
-            .memoryCacheExpiration(.seconds(21600)),
+            .diskCacheExpiration(.days(30)),
+            .memoryCacheExpiration(.seconds(DiscogsConstants.sixHoursTTL)),
             .cacheOriginalImage
         ]
+    }
+
+    /// Vide le cache disque de Kingfisher à la demande de l'utilisateur pour libérer de l'espace.
+    static func clearDiskCache() {
+        ImageCache.default.clearDiskCache()
+        ImageCache.default.clearMemoryCache()
+    }
+
+    /// Calcule la taille occupée par le cache des images sur le disque.
+    static func calculateDiskCacheSize() async -> String {
+        await withCheckedContinuation { continuation in
+            ImageCache.default.calculateDiskStorageSize { result in
+                switch result {
+                case .success(let size):
+                    let formatter = ByteCountFormatter()
+                    formatter.allowedUnits = [.useMB, .useGB]
+                    formatter.countStyle = .file
+                    continuation.resume(returning: formatter.string(fromByteCount: Int64(size)))
+                case .failure:
+                    continuation.resume(returning: "0 Mo")
+                }
+            }
+        }
     }
 }

@@ -35,6 +35,11 @@ struct LabelDetailView: View {
                     if let profile = label.profile, !profile.isEmpty {
                         Text(profile).font(.body)
                     }
+
+                    if let url = label.discogsWebURL {
+                        DiscogsAttributionLink(url: url)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    }
                 }
                 .padding()
             }

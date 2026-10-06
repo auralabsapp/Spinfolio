@@ -7,8 +7,8 @@ extension View {
     func searchDestinations() -> some View {
         navigationDestination(for: SearchDestination.self) { destination in
             switch destination {
-            case .release(let id):
-                ReleaseDetailView(releaseId: id)
+            case .release(let id, let coverURL):
+                ReleaseDetailView(releaseId: id, initialCoverURL: coverURL)
             case .master(let id):
                 MasterDetailView(masterId: id)
             case .artist(let id):

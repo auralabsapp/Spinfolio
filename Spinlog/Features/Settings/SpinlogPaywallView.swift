@@ -1,431 +1,281 @@
 import SwiftUI
+import StoreKit
 
-/// Fenêtre d'incitation à l'abonnement Spinlog Premium (Paywall),
-/// affichée au lancement pour les utilisateurs non-premium et accessible depuis les réglages.
+// MARK: - Palette Or Hifi / Ambre Collector (identique aux bannières Premium)
+
+private let goldAccent = Color(red: 0.95, green: 0.68, blue: 0.18)
+private let goldWarm = Color(red: 0.88, green: 0.52, blue: 0.12)
+private let goldDeep = Color(red: 0.72, green: 0.40, blue: 0.08)
+private let goldLight = Color(red: 0.98, green: 0.78, blue: 0.28)
+private let goldBadgeBg = Color(red: 0.95, green: 0.68, blue: 0.18).opacity(0.16)
+
+private var goldButtonGradient: LinearGradient {
+    LinearGradient(
+        colors: [
+            Color(red: 0.98, green: 0.78, blue: 0.28),
+            Color(red: 0.88, green: 0.52, blue: 0.12)
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+}
+
+private var goldHeaderGradient: LinearGradient {
+    LinearGradient(
+        colors: [
+            Color(red: 0.65, green: 0.36, blue: 0.07),
+            Color(red: 0.85, green: 0.50, blue: 0.12),
+            Color(red: 0.95, green: 0.68, blue: 0.18)
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+}
+
+/// Description d'une fonctionnalité premium (icône, couleur, titre, résumé) — même contenu que
+/// `PremiumFeaturesSheet`, avec la charte Or Hifi / Ambre Collector.
+private struct PaywallFeatureInfo: Identifiable {
+    let id = UUID()
+    let icon: String
+    let color: Color
+    let title: String
+    let description: String
+}
+
+private let paywallFeatures: [PaywallFeatureInfo] = [
+    PaywallFeatureInfo(
+        icon: "banknote.fill",
+        color: .green,
+        title: "Suivi de cote",
+        description: "Renseigne le prix payé pour chaque album et compare-le à sa cote Discogs en temps réel pour voir si tes albums ont pris de la valeur."
+    ),
+    PaywallFeatureInfo(
+        icon: "icloud.fill",
+        color: .cyan,
+        title: "Synchronisation iCloud",
+        description: "Synchronise tags, journal d'écoutes, préférences et personnalisations de tri entre tous tes appareils connectés au même compte."
+    ),
+    PaywallFeatureInfo(
+        icon: "rectangle.stack.badge.plus",
+        color: .blue,
+        title: "Scan par lot",
+        description: "Scanne plusieurs codes-barres à la suite (brocante, disquaire) et ajoute-les en une fois à ta collection ou ta wantlist."
+    ),
+    PaywallFeatureInfo(
+        icon: "bell.fill",
+        color: .orange,
+        title: "Alertes de prix sur la wantlist",
+        description: "Sois averti quand un disque de ta wantlist apparaît à bon prix sur le marketplace Discogs (vérification à l'ouverture de l'app et occasionnellement en arrière-plan, pas en temps réel)."
+    ),
+    PaywallFeatureInfo(
+        icon: "arrow.down.circle.fill",
+        color: .teal,
+        title: "Mode hors ligne",
+        description: "Télécharge toute ta collection et les pochettes en haute résolution pour fouiner en brocante sans aucun réseau."
+    ),
+    PaywallFeatureInfo(
+        icon: "books.vertical.fill",
+        color: .purple,
+        title: "Où ranger son album",
+        description: "Retrouve instantanément où ranger un album dans ton meuble, avec ses voisins immédiats selon ton tri personnalisé."
+    ),
+    PaywallFeatureInfo(
+        icon: "waveform",
+        color: goldWarm,
+        title: "Palmarès d'écoute & Podiums",
+        description: "Découvre tes albums et artistes les plus écoutés, tes podiums du mois et de l'année et l'analyse complète de tes sessions dans Statistiques."
+    ),
+    PaywallFeatureInfo(
+        icon: "paintpalette.fill",
+        color: goldAccent,
+        title: "Thèmes et palettes de couleurs",
+        description: "Personnalise l'ambiance visuelle de l'app selon tes goûts avec 8 palettes exclusives (Bleu Cobalt, Vert Émeraude, Orange Crépuscule, Rouge Rubis, Violet Améthyste, Cuivre & Or...)."
+    ),
+    PaywallFeatureInfo(
+        icon: "tablecells.fill",
+        color: .mint,
+        title: "Export CSV complet",
+        description: "Exporte toute ta discothèque au format tableur (Excel, Numbers, Sheets) avec métadonnées, notes et tags."
+    )
+]
+
+/// Fenêtre d'incitation à l'abonnement Spinlog Premium (Paywall), basée sur `SubscriptionStoreView`
+/// (StoreKit) pour bénéficier des mécanismes natifs d'achat/restauration/mentions légales, avec
+/// notre contenu marketing (bannière, liste de fonctionnalités) au-dessus des forfaits.
 struct SpinlogPaywallView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var premiumStore = PremiumStore.shared
+    @State private var showsAllFeatures: Bool = false
+    @State private var purchaseErrorMessage: String? = nil
+    @State private var showingPurchaseErrorAlert: Bool = false
 
-    enum SubscriptionPlan {
-        case yearly
-        case monthly
+    /// CLUF standard d'Apple : couvre les conditions d'utilisation de l'app en l'absence de
+    /// conditions personnalisées renseignées dans App Store Connect.
+    private let termsURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
+    private let privacyURL = URL(string: "https://auralabsapp.github.io/Spinfolio/privacy.html")!
+
+    /// Identifiant du groupe d'abonnement (voir `Spinlog.storekit` pour les tests locaux — doit
+    /// correspondre au groupe réel créé dans App Store Connect pour fonctionner en sandbox/prod).
+    private let subscriptionGroupID = "21482819"
+
+    private var isIPad: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad
     }
 
-    @State private var selectedPlan: SubscriptionPlan = .yearly
-    @State private var showAllPlans: Bool = false
-    @State private var showsAllFeatures: Bool = false
-    @State private var showingRestoreAlert: Bool = false
+    private var initialFeaturesCount: Int {
+        isIPad ? paywallFeatures.count : 4
+    }
 
     var body: some View {
-        ZStack(alignment: .top) {
-            Color(uiColor: .systemGroupedBackground)
-                .ignoresSafeArea()
-
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 0) {
-                    // 1. Bannière artistique avec vinyles et pochettes, dans les tons du thème actif
-                    PaywallHeaderGraphicView()
-
-                    VStack(spacing: 18) {
-                        // 2. Titres d'en-tête
-                        VStack(spacing: 6) {
-                            Text("Obtenez un accès illimité")
-                                .font(.system(size: 27, weight: .bold))
-                                .foregroundStyle(.primary)
-                                .multilineTextAlignment(.center)
-
-                            HStack(spacing: 6) {
-                                Text("Essayer Spinlog")
-                                    .font(.subheadline.weight(.semibold))
-                                    .foregroundStyle(Color.appSecondaryText)
-
-                                Text("Premium")
-                                    .font(.system(size: 11, weight: .heavy))
-                                    .foregroundStyle(.white)
-                                    .padding(.horizontal, 7)
-                                    .padding(.vertical, 3)
-                                    .background(Color.spinlogPinkButtonGradient, in: Capsule())
-                            }
-                        }
-                        .padding(.top, 4)
-
-                        // 3. Liste des fonctionnalités
-                        VStack(alignment: .leading, spacing: 14) {
-                            featureRow(
-                                regularPrefix: "Scannez un nombre illimité d'albums et ",
-                                boldText: "ajoutez toute votre collection"
-                            )
-                            featureRow(
-                                regularPrefix: "Organisez votre collection avec des ",
-                                boldText: "dossiers et des tags"
-                            )
-                            featureRow(
-                                regularPrefix: "Consultez les ",
-                                boldText: "statistiques détaillées et tops d'écoute"
-                            )
-                            featureRow(
-                                regularPrefix: "Suivez la cote et la ",
-                                boldText: "valeur marchande de vos disques"
-                            )
-
-                            if showsAllFeatures {
-                                featureRow(
-                                    regularPrefix: "Recevez des ",
-                                    boldText: "alertes de prix wantlist en direct"
-                                )
-                                featureRow(
-                                    regularPrefix: "Guide de ",
-                                    boldText: "rangement physique dans vos meubles"
-                                )
-                                featureRow(
-                                    regularPrefix: "Personnalisez l'ambiance avec les ",
-                                    boldText: "8 thèmes de couleurs"
-                                )
-                            } else {
-                                Button {
-                                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                                        showsAllFeatures = true
-                                    }
-                                } label: {
-                                    HStack(spacing: 8) {
-                                        Image(systemName: "plus")
-                                            .font(.system(size: 13, weight: .bold))
-                                            .foregroundStyle(Color.spinlogPink)
-
-                                        Text("et 3 fonctionnalités supplémentaires")
-                                            .font(.subheadline.weight(.medium))
-                                            .foregroundStyle(Color.spinlogPink)
-                                    }
-                                    .padding(.top, 2)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 22)
-                        .padding(.top, 6)
-
-                        // 4. Cartes de réassurance / Preuves sociales
-                        HStack(spacing: 12) {
-                            VStack(spacing: 5) {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "laurel.leading")
-                                        .font(.system(size: 17, weight: .bold))
-                                    Image(systemName: "apple.logo")
-                                        .font(.system(size: 14, weight: .bold))
-                                    Image(systemName: "laurel.trailing")
-                                        .font(.system(size: 17, weight: .bold))
-                                }
-                                .foregroundStyle(Color.spinlogPink)
-
-                                Text("Sélection Vinyle")
-                                    .font(.caption2.weight(.medium))
-                                    .foregroundStyle(Color.appSecondaryText)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .appleMusicGroupedCard(cornerRadius: 16)
-
-                            VStack(spacing: 5) {
-                                HStack(spacing: 3) {
-                                    ForEach(0..<5) { _ in
-                                        Image(systemName: "star.fill")
-                                            .font(.system(size: 12))
-                                            .foregroundStyle(Color.spinlogPink)
-                                    }
-                                }
-
-                                Text("4,9 / 5 sur l'App Store")
-                                    .font(.caption2.weight(.medium))
-                                    .foregroundStyle(Color.appSecondaryText)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .appleMusicGroupedCard(cornerRadius: 16)
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.top, 4)
-
-                        // 5. Plans d'abonnement
-                        VStack(spacing: 10) {
-                            annualPlanCard
-
-                            if showAllPlans {
-                                monthlyPlanCard
-                                    .transition(.opacity.combined(with: .move(edge: .top)))
-                            }
-
-                            if !showAllPlans {
-                                Button {
-                                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                                    withAnimation(.spring(response: 0.38, dampingFraction: 0.82)) {
-                                        showAllPlans = true
-                                    }
-                                } label: {
-                                    Text("Afficher tous les forfaits")
-                                        .font(.subheadline.weight(.medium))
-                                        .foregroundStyle(Color.appSecondaryText)
-                                        .padding(.vertical, 6)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.top, 6)
-
-                        // 6. Bouton Continuer principal (CTA)
-                        Button {
-                            handleContinue()
-                        } label: {
-                            Text("Continuer")
-                                .font(.headline.weight(.bold))
-                                .foregroundStyle(.white)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 54)
-                                .background(Color.spinlogPinkButtonGradient, in: Capsule())
-                                .shadow(color: Color.spinlogPink.opacity(0.35), radius: 14, y: 6)
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.horizontal, 20)
-                        .padding(.top, 6)
-
-                        // 7. Mention réassurance & Liens légaux
-                        VStack(spacing: 8) {
-                            HStack(spacing: 5) {
-                                Image(systemName: "lock.fill")
-                                    .font(.system(size: 9))
-                                Text("Paiement sécurisé par Apple. Annulez à tout moment.")
-                                    .font(.caption2)
-                            }
-                            .foregroundStyle(Color.appSecondaryText)
-
-                            HStack(spacing: 14) {
-                                Button("Restaurer les achats") {
-                                    showingRestoreAlert = true
-                                }
-                                Text("•").opacity(0.3)
-                                Button("Conditions d'utilisation") {}
-                                Text("•").opacity(0.3)
-                                Button("Confidentialité") {}
-                            }
-                            .font(.system(size: 10, weight: .regular))
-                            .foregroundStyle(Color.appTertiaryText)
-                        }
-                        .padding(.top, 4)
-                        .padding(.bottom, 24)
-                    }
-                }
-            }
-
-            // Bouton Fermer (X) en haut à gauche
-            HStack {
-                Button {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    dismiss()
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(width: 36, height: 36)
-                        .background(Color.black.opacity(0.35), in: Circle())
-                        .overlay(Circle().stroke(Color.white.opacity(0.18), lineWidth: 1))
-                }
-                .buttonStyle(.plain)
-                .padding(.leading, 18)
-                .padding(.top, 14)
-
-                Spacer()
+        SubscriptionStoreView(groupID: subscriptionGroupID) {
+            marketingContent
+        }
+        .subscriptionStoreControlStyle(.prominentPicker)
+        .storeButton(.visible, for: .restorePurchases, .policies)
+        .subscriptionStorePolicyDestination(url: termsURL, for: .termsOfService)
+        .subscriptionStorePolicyDestination(url: privacyURL, for: .privacyPolicy)
+        .tint(goldWarm)
+        .background(Color(uiColor: .systemGroupedBackground))
+        .onInAppPurchaseCompletion { _, result in
+            switch result {
+            case .success(.success):
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                dismiss()
+            case .success:
+                break
+            case .failure(let error):
+                purchaseErrorMessage = error.localizedDescription
+                showingPurchaseErrorAlert = true
             }
         }
-        .alert("Achats restaurés", isPresented: $showingRestoreAlert) {
+        .alert("Information", isPresented: $showingPurchaseErrorAlert) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text("Si vous aviez un abonnement actif, votre accès Premium a été restauré.")
+            Text(purchaseErrorMessage ?? "Une erreur inattendue est survenue lors de la communication avec l'App Store.")
         }
     }
 
-    // MARK: - Carte Annuel
+    // MARK: - Contenu marketing (bannière + fonctionnalités, affiché au-dessus des forfaits)
 
-    private var annualPlanCard: some View {
-        let isSelected = selectedPlan == .yearly
-        return Button {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                selectedPlan = .yearly
+    private var marketingContent: some View {
+        VStack(spacing: 18) {
+            PaywallHeaderGraphicView()
+
+            VStack(spacing: 6) {
+                Text("Obtenez un accès complet")
+                    .font(.system(size: 27, weight: .bold))
+                    .foregroundStyle(.primary)
+                    .multilineTextAlignment(.center)
+
+                HStack(spacing: 6) {
+                    Text("Passez à \(AppInfo.name)")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color.appSecondaryText)
+
+                    HStack(spacing: 4) {
+                        Image(systemName: "crown.fill")
+                            .font(.system(size: 9, weight: .bold))
+                        Text("PREMIUM")
+                            .font(.system(size: 10, weight: .heavy))
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(goldButtonGradient, in: Capsule())
+                    .shadow(color: goldWarm.opacity(0.35), radius: 4, y: 1)
+                }
             }
-        } label: {
-            ZStack(alignment: .topTrailing) {
-                HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("Annuel")
-                            .font(.headline.weight(.semibold))
-                            .foregroundStyle(.primary)
+            .padding(.top, 4)
 
-                        HStack(alignment: .firstTextBaseline, spacing: 4) {
-                            Text("30,00 € / an")
-                                .font(.subheadline.weight(.bold))
-                                .foregroundStyle(.primary)
+            VStack(alignment: .leading, spacing: 10) {
+                let visibleFeatures = (showsAllFeatures || isIPad) ? paywallFeatures : Array(paywallFeatures.prefix(initialFeaturesCount))
 
-                            Text("(2,50 €/mois)")
-                                .font(.caption.weight(.regular))
-                                .foregroundStyle(Color.appSecondaryText)
+                VStack(spacing: 0) {
+                    ForEach(Array(visibleFeatures.enumerated()), id: \.element.id) { index, feature in
+                        featureRow(feature)
+                        if index < visibleFeatures.count - 1 {
+                            Divider().opacity(0.15).padding(.leading, 58)
                         }
                     }
-
-                    Spacer()
-
-                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                        .font(.system(size: 22, weight: .semibold))
-                        .foregroundStyle(isSelected ? Color.spinlogPink : Color.appTertiaryText)
                 }
-                .padding(.horizontal, 18)
-                .padding(.vertical, 16)
-                .background(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .fill(isSelected ? Color.spinlogPinkBadge : Color(uiColor: .secondarySystemGroupedBackground))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .strokeBorder(
-                            isSelected ? Color.spinlogPink : Color.primary.opacity(0.08),
-                            lineWidth: isSelected ? 2 : 1
-                        )
-                )
+                .padding(.vertical, 4)
+                .appleMusicGroupedCard()
 
-                // Badge "ÉCONOMISEZ 16%"
-                Text("ÉCONOMISEZ 16%")
-                    .font(.system(size: 10, weight: .heavy))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 9)
-                    .padding(.vertical, 4)
-                    .background(Color.spinlogPink, in: Capsule())
-                    .offset(x: -16, y: -10)
-            }
-        }
-        .buttonStyle(.plain)
-    }
+                if !showsAllFeatures && visibleFeatures.count < paywallFeatures.count {
+                    Button {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                            showsAllFeatures = true
+                        }
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundStyle(goldWarm)
 
-    // MARK: - Carte Mensuel
-
-    private var monthlyPlanCard: some View {
-        let isSelected = selectedPlan == .monthly
-        return Button {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                selectedPlan = .monthly
-            }
-        } label: {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Mensuel")
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(.primary)
-
-                    Text("2,99 € / mois")
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(.primary)
+                            Text("et \(paywallFeatures.count - visibleFeatures.count) fonctionnalités supplémentaires")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(goldWarm)
+                        }
+                        .padding(.top, 2)
+                    }
+                    .buttonStyle(.plain)
                 }
-
-                Spacer()
-
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(isSelected ? Color.spinlogPink : Color.appTertiaryText)
             }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 16)
-            .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(isSelected ? Color.spinlogPinkBadge : Color(uiColor: .secondarySystemGroupedBackground))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(
-                        isSelected ? Color.spinlogPink : Color.primary.opacity(0.08),
-                        lineWidth: isSelected ? 2 : 1
-                    )
-            )
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 22)
+            .padding(.top, 6)
         }
-        .buttonStyle(.plain)
+        .padding(.bottom, 8)
     }
 
     // MARK: - Ligne de fonctionnalité
 
-    private func featureRow(regularPrefix: String, boldText: String) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: "checkmark")
-                .font(.system(size: 13, weight: .black))
-                .foregroundStyle(Color.spinlogPink)
-                .padding(.top, 2)
-
-            (Text(regularPrefix).font(.subheadline).foregroundStyle(.primary.opacity(0.85))
-             + Text(boldText).font(.subheadline.weight(.bold)).foregroundStyle(.primary))
-                .fixedSize(horizontal: false, vertical: true)
+    private func featureRow(_ feature: PaywallFeatureInfo) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            SettingsIcon(systemName: feature.icon, backgroundColor: feature.color)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(feature.title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                Text(feature.description)
+                    .font(.caption)
+                    .foregroundStyle(Color.appSecondaryText)
+            }
+            Spacer(minLength: 0)
         }
-    }
-
-    // MARK: - Validation & Achat
-
-    private func handleContinue() {
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
-        premiumStore.isPremium = true
-        dismiss()
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
     }
 }
 
-// MARK: - Illustration graphique du Header
+// MARK: - Illustration graphique du Header en tons Or Hifi / Ambre Collector
 
 private struct PaywallHeaderGraphicView: View {
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [Color.spinlogPinkDeep, Color.spinlogPink],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+            goldHeaderGradient
 
-            // Composition de vinyles et pochettes, dans les tons du thème actif
+            // Composition de supports audio physiques (vinyle, CD, cassette) en harmonie dorée
             ZStack {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.spinlogPinkDeep.opacity(0.7))
-                    .frame(width: 90, height: 90)
-                    .rotationEffect(.degrees(-18))
-                    .offset(x: -140, y: -20)
-                    .opacity(0.7)
-
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.black.opacity(0.22))
-                    .frame(width: 110, height: 110)
-                    .rotationEffect(.degrees(14))
-                    .offset(x: 130, y: -15)
-                    .opacity(0.8)
-
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.spinlogPinkLight)
-                    .frame(width: 105, height: 105)
-                    .shadow(color: Color.black.opacity(0.35), radius: 10, x: -4, y: 6)
-                    .rotationEffect(.degrees(-6))
-                    .offset(x: -75, y: -10)
-
-                vinylDiscView(labelColor: Color.spinlogPinkLight, size: 100)
+                vinylDiscView(labelColor: goldLight, size: 112)
                     .shadow(color: Color.black.opacity(0.4), radius: 8, y: 5)
-                    .offset(x: 35, y: -30)
+                    .rotationEffect(.degrees(-8))
+                    .offset(x: -90, y: -15)
 
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.white.opacity(0.28))
-                    .frame(width: 95, height: 95)
+                cdDiscView(size: 98)
+                    .shadow(color: Color.black.opacity(0.35), radius: 8, y: 5)
+                    .rotationEffect(.degrees(14))
+                    .offset(x: 100, y: -25)
+
+                vinylDiscView(labelColor: goldDeep.opacity(0.9), size: 88)
+                    .shadow(color: Color.black.opacity(0.45), radius: 8, y: 6)
+                    .rotationEffect(.degrees(11))
+                    .offset(x: 115, y: 45)
+
+                cassetteView(width: 130)
                     .shadow(color: Color.black.opacity(0.4), radius: 8, y: 6)
-                    .rotationEffect(.degrees(10))
-                    .offset(x: 20, y: 55)
-
-                vinylDiscView(labelColor: Color.white.opacity(0.85), size: 110)
-                    .shadow(color: Color.black.opacity(0.45), radius: 10, y: 6)
-                    .offset(x: 105, y: 25)
-
-                vinylDiscView(labelColor: Color.spinlogPinkDeep.opacity(0.85), size: 95)
-                    .shadow(color: Color.black.opacity(0.45), radius: 10, y: 6)
-                    .offset(x: -125, y: 40)
+                    .rotationEffect(.degrees(-5))
+                    .offset(x: -20, y: 45)
             }
 
             // Fondu vers l'arrière-plan de la page pour une transition sans couture
@@ -475,6 +325,69 @@ private struct PaywallHeaderGraphicView: View {
                 .frame(width: size * 0.10, height: size * 0.10)
         }
     }
+
+    /// CD stylisé : surface nacrée avec reflet irisé teinté or/ambre, petit trou central.
+    private func cdDiscView(size: CGFloat) -> some View {
+        ZStack {
+            Circle()
+                .fill(
+                    AngularGradient(
+                        colors: [
+                            Color.white.opacity(0.92), goldLight.opacity(0.70),
+                            Color.white.opacity(0.88), goldAccent.opacity(0.55),
+                            Color.white.opacity(0.92)
+                        ],
+                        center: .center
+                    )
+                )
+                .frame(width: size, height: size)
+                .overlay(Circle().strokeBorder(Color.white.opacity(0.6), lineWidth: 1))
+
+            Circle()
+                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+                .frame(width: size * 0.66, height: size * 0.66)
+
+            Circle()
+                .fill(Color.white.opacity(0.95))
+                .frame(width: size * 0.40, height: size * 0.40)
+
+            Circle()
+                .fill(Color(white: 0.82))
+                .frame(width: size * 0.12, height: size * 0.12)
+        }
+    }
+
+    /// Cassette audio stylisée : boîtier sombre, fenêtre centrale et deux bobines.
+    private func cassetteView(width: CGFloat) -> some View {
+        let height = width * 0.62
+        return ZStack {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(LinearGradient(colors: [Color(white: 0.20), Color(white: 0.08)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                .frame(width: width, height: height)
+
+            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                .fill(goldLight.opacity(0.9))
+                .frame(width: width * 0.8, height: height * 0.3)
+                .offset(y: -height * 0.2)
+
+            HStack(spacing: width * 0.24) {
+                cassetteSpoolView(size: height * 0.36)
+                cassetteSpoolView(size: height * 0.36)
+            }
+            .offset(y: height * 0.12)
+        }
+    }
+
+    private func cassetteSpoolView(size: CGFloat) -> some View {
+        ZStack {
+            Circle()
+                .fill(Color.white.opacity(0.85))
+                .frame(width: size, height: size)
+            Circle()
+                .fill(Color(white: 0.15))
+                .frame(width: size * 0.36, height: size * 0.36)
+        }
+    }
 }
 
 // MARK: - Découpe incurvée de l'en-tête
@@ -492,4 +405,8 @@ private struct PaywallHeaderCurve: Shape {
         path.closeSubpath()
         return path
     }
+}
+
+#Preview {
+    SpinlogPaywallView()
 }

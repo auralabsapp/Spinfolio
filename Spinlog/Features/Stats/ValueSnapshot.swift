@@ -1,6 +1,12 @@
 import Foundation
 import SwiftData
 
+extension Notification.Name {
+    /// Postée quand `CloudSyncEngine` applique un point d'historique de valeur reçu d'un autre
+    /// appareil, pour que `StatsViewModel` recharge `valueHistoryPoints` s'il est déjà ouvert.
+    static let collectionSnapshotsChanged = Notification.Name("com.spinlog.collectionSnapshotsChanged")
+}
+
 /// Formate une date en clé de jour stable (fuseau local), utilisée comme identifiant unique pour
 /// garantir au plus un point d'historique par jour, quel que soit le modèle.
 private func dayStamp(for date: Date) -> String {
@@ -41,12 +47,16 @@ final class ReleasePriceSnapshot {
     var date: Date
     var currency: String
     var medianPrice: Double
+    /// État déclaré utilisé pour ce calcul (ex. "Near Mint (NM or M-)"), pour pouvoir invalider le
+    /// cache si l'utilisateur change l'état renseigné sur son exemplaire avant les 24h.
+    var condition: String?
 
-    init(releaseId: Int, date: Date = Date(), currency: String, medianPrice: Double) {
+    init(releaseId: Int, date: Date = Date(), currency: String, medianPrice: Double, condition: String?) {
         self.releaseId = releaseId
         self.date = date
         self.currency = currency
         self.medianPrice = medianPrice
+        self.condition = condition
         self.id = "\(releaseId)_\(dayStamp(for: date))"
     }
 }

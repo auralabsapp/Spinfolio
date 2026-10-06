@@ -84,6 +84,7 @@ enum CollectionPreferencesStore {
 
     static func setDefaultAddFolderId(_ folderId: Int, for username: String) {
         setValue(folderId, forKey: key("defaultAddFolderId", for: username), notify: true)
+        CloudSyncEngine.shared.markCollectionPreferencesDirty()
     }
 
     static func isAlwaysAsk(for username: String) -> Bool {
@@ -101,14 +102,29 @@ enum CollectionPreferencesStore {
         setValue(option?.rawValue, forKey: key("sortOption", for: username))
     }
 
-    // MARK: - Critères de filtre
-
-    static func filterTag(for username: String) -> String? {
-        UserDefaults.standard.string(forKey: key("filterTag", for: username))
+    /// `nil` tant que l'utilisateur n'a jamais modifié le sens de tri : l'appelant retombe alors
+    /// sur `CollectionSortOption.defaultAscending` pour le critère actif.
+    static func sortAscending(for username: String) -> Bool? {
+        guard let value = intValue(forKey: key("sortAscending", for: username)) else { return nil }
+        return value == 1
     }
 
-    static func setFilterTag(_ tag: String?, for username: String) {
-        setValue(tag, forKey: key("filterTag", for: username), removeIfEmpty: true)
+    static func setSortAscending(_ ascending: Bool, for username: String) {
+        setValue(ascending ? 1 : 0, forKey: key("sortAscending", for: username))
+    }
+
+    // MARK: - Critères de filtre
+
+    static func filterTags(for username: String) -> [String] {
+        UserDefaults.standard.stringArray(forKey: key("filterTags", for: username)) ?? []
+    }
+
+    static func setFilterTags(_ tags: [String], for username: String) {
+        if tags.isEmpty {
+            UserDefaults.standard.removeObject(forKey: key("filterTags", for: username))
+        } else {
+            UserDefaults.standard.set(tags, forKey: key("filterTags", for: username))
+        }
     }
 
     static func filterFormat(for username: String) -> String? {
@@ -117,6 +133,11 @@ enum CollectionPreferencesStore {
 
     static func setFilterFormat(_ format: String?, for username: String) {
         setValue(format, forKey: key("filterFormat", for: username), removeIfEmpty: true)
+    }
+
+    static func clearFilterPreferences(for username: String) {
+        UserDefaults.standard.removeObject(forKey: key("filterTags", for: username))
+        UserDefaults.standard.removeObject(forKey: key("filterFormat", for: username))
     }
 
     // MARK: - Suivi de cote (prix d'achat)
@@ -129,6 +150,7 @@ enum CollectionPreferencesStore {
 
     static func setPurchasePriceFieldId(_ fieldId: Int?, for username: String) {
         setValue(fieldId, forKey: key("purchasePriceFieldId", for: username), notify: true)
+        CloudSyncEngine.shared.markCollectionPreferencesDirty()
     }
 
     /// Identifiant du champ personnalisé Discogs utilisé comme "état du média" (Media Condition),
@@ -139,6 +161,7 @@ enum CollectionPreferencesStore {
 
     static func setMediaConditionFieldId(_ fieldId: Int?, for username: String) {
         setValue(fieldId, forKey: key("mediaConditionFieldId", for: username), notify: true)
+        CloudSyncEngine.shared.markCollectionPreferencesDirty()
     }
 
     /// Devise principale de la collection, utilisée par défaut à la saisie d'un prix d'achat et
@@ -149,5 +172,23 @@ enum CollectionPreferencesStore {
 
     static func setDefaultCurrency(_ currency: String, for username: String) {
         setValue(currency, forKey: key("defaultCurrency", for: username), notify: true)
+        CloudSyncEngine.shared.markCollectionPreferencesDirty()
+    }
+
+    // MARK: - Synchronisation iCloud (compte premium)
+
+    /// Applique un instantané de préférences "durables" reçu d'iCloud (voir `CloudSyncEngine`).
+    /// N'écrit qu'en local : ne redéclenche pas d'envoi vers CloudKit, cette donnée en vient déjà.
+    static func applyRemotePreferences(
+        currency: String,
+        purchasePriceFieldId: Int?,
+        mediaConditionFieldId: Int?,
+        defaultAddFolderId: Int,
+        for username: String
+    ) {
+        setValue(currency, forKey: key("defaultCurrency", for: username), notify: true)
+        setValue(purchasePriceFieldId, forKey: key("purchasePriceFieldId", for: username), notify: true)
+        setValue(mediaConditionFieldId, forKey: key("mediaConditionFieldId", for: username), notify: true)
+        setValue(defaultAddFolderId, forKey: key("defaultAddFolderId", for: username), notify: true)
     }
 }

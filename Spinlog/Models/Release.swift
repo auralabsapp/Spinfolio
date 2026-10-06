@@ -1,6 +1,6 @@
 import Foundation
 
-struct ReleaseArtist: Decodable, Sendable, Identifiable {
+struct ReleaseArtist: Codable, Sendable, Identifiable {
     let id: Int
     let name: String
     /// Variante du nom utilisée spécifiquement sur ce pressage (souvent identique à `name`).
@@ -23,7 +23,13 @@ struct ReleaseArtist: Decodable, Sendable, Identifiable {
     }
 }
 
-struct ReleaseLabel: Decodable, Sendable, Identifiable {
+extension ReleaseArtist {
+    init(name: String, id: Int = 0) {
+        self.init(id: id, name: name, anv: nil, join: nil, role: nil, tracks: nil, resourceURL: nil)
+    }
+}
+
+struct ReleaseLabel: Codable, Sendable, Identifiable {
     let id: Int
     let name: String
     let catno: String?
@@ -60,7 +66,7 @@ struct ReleaseIdentifier: Decodable, Sendable, Identifiable {
     var id: String { type + value }
 }
 
-struct ReleaseFormat: Decodable, Sendable {
+struct ReleaseFormat: Codable, Sendable {
     let name: String
     let qty: String?
     /// Précision libre en plus de `descriptions` (ex: "Gatefold", "Clear Vinyl").
@@ -109,9 +115,9 @@ struct ReleaseVideo: Decodable, Sendable, Identifiable {
 
     var id: String { uri }
 
-    /// Miniature YouTube reconstruite à partir de l'identifiant de vidéo dans l'URL,
-    /// l'API Discogs ne renvoyant pas d'image de miniature pour ses vidéos.
-    var thumbnailURL: URL? {
+    /// Identifiant de vidéo YouTube extrait de l'URL Discogs (formats `youtu.be/{id}` et
+    /// `youtube.com/watch?v={id}`), utilisé à la fois pour la miniature et la lecture intégrée.
+    var youTubeVideoID: String? {
         guard let components = URLComponents(string: uri),
               let host = components.host, host.contains("youtu") else { return nil }
         let videoId: String?
@@ -121,7 +127,14 @@ struct ReleaseVideo: Decodable, Sendable, Identifiable {
             videoId = components.queryItems?.first { $0.name == "v" }?.value
         }
         guard let videoId, !videoId.isEmpty else { return nil }
-        return URL(string: "https://img.youtube.com/vi/\(videoId)/hqdefault.jpg")
+        return videoId
+    }
+
+    /// Miniature YouTube reconstruite à partir de l'identifiant de vidéo dans l'URL,
+    /// l'API Discogs ne renvoyant pas d'image de miniature pour ses vidéos.
+    var thumbnailURL: URL? {
+        guard let youTubeVideoID else { return nil }
+        return URL(string: "https://img.youtube.com/vi/\(youTubeVideoID)/hqdefault.jpg")
     }
 
     var formattedDuration: String? {
@@ -154,6 +167,14 @@ struct Release: Decodable, Identifiable, Sendable {
     let lowestPrice: Double?
     let masterId: Int?
     let resourceURL: String
+    let uri: String?
+    /// Dossier Discogs de l'exemplaire d'origine (absent quand cette `Release` vient d'une
+    /// simple recherche/fiche API, pas d'un exemplaire réellement possédé) — voir
+    /// `ShelfPlacementService`, qui s'en sert pour restreindre "où ranger" au même dossier.
+    /// La clé `folder_id` n'apparaît jamais dans la réponse `GET /releases/{id}` (notion propre
+    /// à un exemplaire de collection, pas à une release) : `decodeIfPresent` (implicite pour tout
+    /// type optionnel via la synthèse `Decodable`) donne alors simplement `nil`.
+    let folderId: Int?
 
     private enum CodingKeys: String, CodingKey {
         case id, title, year, country, released, notes, genres, styles
@@ -162,6 +183,8 @@ struct Release: Decodable, Identifiable, Sendable {
         case lowestPrice = "lowest_price"
         case masterId = "master_id"
         case resourceURL = "resource_url"
+        case uri
+        case folderId = "folder_id"
     }
 
     /// Enchaîne les noms d'artistes avec leur séparateur Discogs (`join`, ex: "&", "Featuring")
@@ -177,6 +200,21 @@ struct Release: Decodable, Identifiable, Sendable {
             }
         }
         return result
+    }
+
+    /// Forme canonique des noms d'artistes (nom brut, virgule systématique), identique à
+    /// `BasicInformation.artistNames` : sert de clé de tri (ex. surcharges de tri par artiste)
+    /// afin de rester cohérente quelle que soit la source (`CollectionItem` ou `Release` complet).
+    /// `artistNames` reste réservé à l'affichage (ANV, jointure Discogs `join`).
+    var sortArtistNames: String {
+        (artists ?? []).map(\.name).joined(separator: ", ")
+    }
+
+    var discogsWebURL: URL? {
+        if let uri, let url = URL(string: uri) {
+            return url
+        }
+        return URL(string: "https://www.discogs.com/release/\(id)")
     }
 
     var primaryImageURL: String? {
@@ -198,5 +236,80 @@ struct Release: Decodable, Identifiable, Sendable {
             }
         }
         return released
+    }
+}
+
+extension Release {
+    init(from item: CollectionItem) {
+        let info = item.basicInformation
+        var imgs: [DiscogsImage] = []
+        if let cover = info.coverImage, !cover.isEmpty {
+            imgs.append(DiscogsImage(type: "primary", uri: cover, uri150: info.thumb ?? cover))
+        } else if let thumb = info.thumb, !thumb.isEmpty {
+            imgs.append(DiscogsImage(type: "primary", uri: thumb, uri150: thumb))
+        }
+
+        self.init(
+            id: item.releaseId,
+            title: info.title,
+            year: info.year,
+            country: nil,
+            released: nil,
+            notes: nil,
+            genres: info.genres,
+            styles: info.styles,
+            artists: info.artists,
+            extraartists: nil,
+            labels: info.labels,
+            companies: nil,
+            identifiers: nil,
+            formats: info.formats,
+            images: imgs,
+            tracklist: nil,
+            community: nil,
+            videos: nil,
+            numForSale: nil,
+            lowestPrice: nil,
+            masterId: info.masterId,
+            resourceURL: info.resourceURL,
+            uri: nil,
+            folderId: item.folderId
+        )
+    }
+
+    init(from info: BasicInformation) {
+        var imgs: [DiscogsImage] = []
+        if let cover = info.coverImage, !cover.isEmpty {
+            imgs.append(DiscogsImage(type: "primary", uri: cover, uri150: info.thumb ?? cover))
+        } else if let thumb = info.thumb, !thumb.isEmpty {
+            imgs.append(DiscogsImage(type: "primary", uri: thumb, uri150: thumb))
+        }
+
+        self.init(
+            id: info.id,
+            title: info.title,
+            year: info.year,
+            country: nil,
+            released: nil,
+            notes: nil,
+            genres: info.genres,
+            styles: info.styles,
+            artists: info.artists,
+            extraartists: nil,
+            labels: info.labels,
+            companies: nil,
+            identifiers: nil,
+            formats: info.formats,
+            images: imgs,
+            tracklist: nil,
+            community: nil,
+            videos: nil,
+            numForSale: nil,
+            lowestPrice: nil,
+            masterId: info.masterId,
+            resourceURL: info.resourceURL,
+            uri: nil,
+            folderId: nil
+        )
     }
 }

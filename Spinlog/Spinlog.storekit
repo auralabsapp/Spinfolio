@@ -1,0 +1,100 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : ""
+      }
+    ]
+  },
+  "identifier" : "E2B7E1B8",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "fr_FR",
+    "_storefront" : "FRA",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "21482819",
+      "localizations" : [
+        {
+          "description" : "Débloquez toutes les fonctionnalités de Spinlog",
+          "displayName" : "Spinlog Premium",
+          "locale" : "fr"
+        }
+      ],
+      "name" : "Spinlog Premium",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "24.99",
+          "familyShareable" : true,
+          "groupNumber" : 1,
+          "internalID" : "6472819001",
+          "introductoryOffer" : {
+            "internalID" : "7B581B81",
+            "numberOfPeriods" : 1,
+            "paymentMode" : "freeTrial",
+            "subscriptionPeriod" : "P1W"
+          },
+          "localizations" : [
+            {
+              "description" : "Accès illimité à toutes les fonctionnalités de Spinlog",
+              "displayName" : "Abonnement Annuel",
+              "locale" : "fr"
+            }
+          ],
+          "productID" : "com.auralabs.Spinlog.premium.yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Spinlog Premium Annuel",
+          "subscriptionGroupID" : "21482819",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "2.99",
+          "familyShareable" : true,
+          "groupNumber" : 2,
+          "internalID" : "6472819002",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Accès mensuel à toutes les fonctionnalités de Spinlog",
+              "displayName" : "Abonnement Mensuel",
+              "locale" : "fr"
+            }
+          ],
+          "productID" : "com.auralabs.Spinlog.premium.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Spinlog Premium Mensuel",
+          "subscriptionGroupID" : "21482819",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

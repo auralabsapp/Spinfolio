@@ -85,20 +85,38 @@
   .section-desc { font-size: 7.6pt; color: var(--text-secondary); margin: 0 0 2.4mm 0; line-height: 1.45; }
 
   /* ---------- Shot grid ---------- */
-  .shot-row { display: flex; gap: 3mm; margin-bottom: 2mm; }
-  .shot-col { flex: 1; display: flex; flex-direction: column; gap: 1.4mm; min-width: 0; }
+  .shot-row { display: flex; gap: 3mm; margin-bottom: 2mm; justify-content: center; }
+  .shot-col { flex: 0 0 auto; display: flex; flex-direction: column; gap: 1.4mm; }
+  .shot-col.w4 { width: 39mm; }
+  .shot-col.w2 { width: 42mm; }
+  .shot-col.w1 { width: 42mm; }
+  /* Cadre "iPhone 17 Pro" : bords titane, coins très arrondis, Dynamic Island incrustée.
+     Hauteur fixée explicitement (39mm/42mm × 2622/1206) plutôt qu'via `aspect-ratio` : ce
+     dernier n'est pas fiable dans le moteur d'impression PDF de Chrome et produisait un
+     cadre surdimensionné (visible comme un halo gris) autour du téléphone. */
   .shot-frame {
     width: 100%;
-    aspect-ratio: 1206 / 2622;
-    background: #111;
-    border-radius: 3mm;
-    padding: 1.1mm;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+    background: linear-gradient(155deg, #4a4a4d 0%, #17171a 12%, #0a0a0b 50%, #1c1c1f 88%, #48484b 100%);
+    border-radius: 4.6mm;
+    padding: 1.15mm;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.22);
   }
+  .shot-col.w4 .shot-frame { height: 84.9mm; }
+  .shot-col.w2 .shot-frame, .shot-col.w1 .shot-frame { height: 91.3mm; }
   .shot-frame .inner {
-    width: 100%; height: 100%; border-radius: 2.2mm; overflow: hidden; background: #fff;
+    width: 100%; height: 100%; border-radius: 3.7mm; overflow: hidden; background: #fff;
+    position: relative;
   }
   .shot-frame img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .shot-frame .inner::after {
+    content: "";
+    position: absolute;
+    top: 2.4%; left: 50%; transform: translateX(-50%);
+    width: 34%; height: 3%;
+    background: #000;
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 0.4px rgba(255,255,255,0.08);
+  }
   .shot-frame.missing {
     background: #eceaf2; border: 0.6pt dashed #b9b3c9; padding: 0;
     display: flex; align-items: center; justify-content: center;
@@ -169,25 +187,25 @@
       <div class="section-head"><h2>Votre collection, organisée à votre façon</h2><span class="tag-free">GRATUIT</span></div>
       <p class="section-desc">Trois affichages au choix, une recherche instantanée et un tri entièrement personnalisable (artiste, titre, année, genre, support, label, note...).</p>
       <div class="shot-row">
-        <div class="shot-col">
+        <div class="shot-col w4">
           <div class="shot-frame"><div class="inner"><img src="assets/full-5613.png" alt="Vue liste"></div></div>
           <div class="shot-caption">Vue Liste</div>
           <div class="shot-caption-sub">Alphabétique, avec index rapide</div>
         </div>
-        <div class="shot-col">
+        <div class="shot-col w4">
           <div class="shot-frame"><div class="inner"><img src="assets/full-5614.png" alt="Vue carrousel"></div></div>
           <div class="shot-caption">Vue Carrousel</div>
           <div class="shot-caption-sub">Immersive, pochette en avant</div>
         </div>
-        <div class="shot-col">
-          <div class="shot-frame missing"><div class="missing-label">CAPTURE MANQUANTE<br>Vue Mosaïque<br>(grille de pochettes)</div></div>
+        <div class="shot-col w4">
+          <div class="shot-frame"><div class="inner"><img src="assets/full-5622.png" alt="Vue mosaïque"></div></div>
           <div class="shot-caption">Vue Mosaïque</div>
           <div class="shot-caption-sub">Grille façon Apple Music</div>
         </div>
-        <div class="shot-col">
-          <div class="shot-frame missing"><div class="missing-label">CAPTURE MANQUANTE<br>Menu de tri<br>(options de tri ouvertes)</div></div>
+        <div class="shot-col w4">
+          <div class="shot-frame"><div class="inner"><img src="assets/full-5627.png" alt="Personnalisation du tri"></div></div>
           <div class="shot-caption">Tri personnalisable</div>
-          <div class="shot-caption-sub">Artiste, titre, année, genre...</div>
+          <div class="shot-caption-sub">Artiste, titre, année, genre... + réglage par artiste</div>
         </div>
       </div>
     </div>
@@ -196,17 +214,17 @@
       <div class="section-head"><h2>Rechercher, ajouter &amp; organiser</h2><span class="tag-free">GRATUIT</span></div>
       <p class="section-desc">Ajoutez un disque en un instant par recherche ou scan de code-barres, et gardez votre collection organisée grâce à des tags personnalisés.</p>
       <div class="shot-row">
-        <div class="shot-col">
-          <div class="shot-frame missing"><div class="missing-label">CAPTURE MANQUANTE<br>Recherche / scan<br>de code-barres</div></div>
-          <div class="shot-caption">Recherche &amp; scan</div>
+        <div class="shot-col w4">
+          <div class="shot-frame"><div class="inner"><img src="assets/full-5626.png" alt="Scan par lot"></div></div>
+          <div class="shot-caption">Scan de codes-barres</div>
           <div class="shot-caption-sub">Ajout instantané à la collection</div>
         </div>
-        <div class="shot-col">
-          <div class="shot-frame missing"><div class="missing-label">CAPTURE MANQUANTE<br>Réglages → Gestion<br>des tags</div></div>
+        <div class="shot-col w4">
+          <div class="shot-frame"><div class="inner"><img src="assets/full-5628.png" alt="Gestion des tags"></div></div>
           <div class="shot-caption">Gestion des tags</div>
           <div class="shot-caption-sub">Créer, renommer, fusionner</div>
         </div>
-        <div class="shot-col">
+        <div class="shot-col w4">
           <div class="shot-frame"><div class="inner"><img src="assets/full-5620.png" alt="Wantlist"></div></div>
           <div class="shot-caption">Wantlist</div>
           <div class="shot-caption-sub">Liste de souhaits synchronisée Discogs</div>
@@ -242,12 +260,12 @@
       <div class="section-head"><h2>Suivi de la cote &amp; plus-value</h2><span class="tag-premium">PREMIUM</span></div>
       <p class="section-desc">Renseignez le prix payé pour chaque exemplaire : Spinlog le compare en temps réel à la cote Discogs, disque par disque et sur l'ensemble de la collection.</p>
       <div class="shot-row">
-        <div class="shot-col" style="flex: 0.85;">
-          <div class="shot-frame"><div class="inner"><img src="assets/full-5615.png" alt="Fiche disque avec plus-value"></div></div>
+        <div class="shot-col w2">
+          <div class="shot-frame"><div class="inner"><img src="assets/full-5625.png" alt="Fiche disque avec plus-value"></div></div>
           <div class="shot-caption">Fiche disque</div>
-          <div class="shot-caption-sub">Plus-value par exemplaire (+8 €, +38 %)</div>
+          <div class="shot-caption-sub">Plus-value par exemplaire (+48 €, +164 %)</div>
         </div>
-        <div class="shot-col" style="flex: 0.85;">
+        <div class="shot-col w2">
           <div class="shot-frame"><div class="inner"><img src="assets/full-5617.png" alt="Investi vs cote actuelle"></div></div>
           <div class="shot-caption">Vue globale</div>
           <div class="shot-caption-sub">Total investi vs cote actuelle de la collection</div>
@@ -259,7 +277,7 @@
       <div class="section-head"><h2>Où ranger cet album ?</h2><span class="tag-premium">PREMIUM</span></div>
       <p class="section-desc">Spinlog calcule l'emplacement exact de chaque disque dans votre meuble physique selon votre règle de tri (artiste, année originale, personnalisations par artiste...) et affiche ses deux voisins immédiats.</p>
       <div class="shot-row">
-        <div class="shot-col" style="flex: 0.85; margin: 0 auto;">
+        <div class="shot-col w1">
           <div class="shot-frame"><div class="inner"><img src="assets/full-5619.png" alt="Guide de rangement"></div></div>
           <div class="shot-caption">Guide de rangement</div>
           <div class="shot-caption-sub">Position exacte + disques repères gauche/droite</div>
@@ -286,32 +304,25 @@
     </div>
 
     <div class="section premium">
-      <div class="section-head"><h2>Palmarès d'écoute &amp; statistiques</h2><span class="tag-premium">PREMIUM</span></div>
-      <p class="section-desc">Chaque écoute est enregistrée : retrouvez vos tops albums et artistes, vos podiums du mois et de l'année, et l'évolution de votre collection dans le temps.</p>
+      <div class="section-head"><h2>Statistiques, alertes &amp; personnalisation</h2><span class="tag-premium">PREMIUM</span></div>
+      <p class="section-desc">Chaque écoute est enregistrée : retrouvez vos tops albums et artistes, vos podiums du mois et de l'année. Sois averti quand un disque de ta wantlist apparaît à bon prix, et personnalise l'app avec 8 palettes de couleurs exclusives.</p>
       <div class="shot-row">
-        <div class="shot-col">
+        <div class="shot-col w4">
           <div class="shot-frame"><div class="inner"><img src="assets/full-5616.png" alt="Statistiques générales"></div></div>
           <div class="shot-caption">Vue d'ensemble</div>
-          <div class="shot-caption-sub">Albums, artistes, exemplaires ajoutés par année</div>
+          <div class="shot-caption-sub">Albums, artistes, exemplaires par année</div>
         </div>
-        <div class="shot-col">
+        <div class="shot-col w4">
           <div class="shot-frame"><div class="inner"><img src="assets/full-5618.png" alt="Podium d'écoute"></div></div>
           <div class="shot-caption">Podium</div>
-          <div class="shot-caption-sub">Top albums écoutés du mois / de l'année</div>
+          <div class="shot-caption-sub">Tops albums du mois / de l'année</div>
         </div>
-      </div>
-    </div>
-
-    <div class="section premium">
-      <div class="section-head"><h2>Alertes de prix &amp; personnalisation</h2><span class="tag-premium">PREMIUM</span></div>
-      <p class="section-desc">Sois averti quand un disque de ta wantlist apparaît à bon prix, et personnalise l'app avec 8 palettes de couleurs exclusives.</p>
-      <div class="shot-row">
-        <div class="shot-col">
+        <div class="shot-col w4">
           <div class="shot-frame"><div class="inner"><img src="assets/full-5620.png" alt="Alertes wantlist"></div></div>
           <div class="shot-caption">Alertes de prix</div>
-          <div class="shot-caption-sub">Wantlist avec seuils déclenchés (🔥) et actifs (🔔)</div>
+          <div class="shot-caption-sub">Seuils déclenchés (🔥) et actifs (🔔)</div>
         </div>
-        <div class="shot-col">
+        <div class="shot-col w4">
           <div class="shot-frame"><div class="inner"><img src="assets/full-5621.png" alt="Thèmes de couleur"></div></div>
           <div class="shot-caption">Thèmes de couleur</div>
           <div class="shot-caption-sub">8 palettes exclusives</div>

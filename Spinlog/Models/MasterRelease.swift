@@ -33,4 +33,30 @@ struct MasterRelease: Decodable, Identifiable, Sendable {
     var primaryImageURL: String? {
         images?.first?.uri
     }
+
+    var discogsWebURL: URL? {
+        URL(string: "https://www.discogs.com/master/\(id)")
+    }
+}
+
+/// Un pressage/édition d'un master, tel que listé par `GET /masters/{id}/versions`.
+struct MasterVersion: Decodable, Identifiable, Sendable {
+    let id: Int
+    let label: String?
+    let catno: String?
+    let format: String?
+    let country: String?
+    let released: String?
+    let thumb: String?
+    let resourceURL: String
+
+    private enum CodingKeys: String, CodingKey {
+        case id, label, catno, format, country, released, thumb
+        case resourceURL = "resource_url"
+    }
+}
+
+struct MasterVersionsResponse: Decodable {
+    let pagination: Pagination
+    let versions: [MasterVersion]
 }

@@ -13,8 +13,11 @@ struct SectionIndexBar: View {
         GeometryReader { geometry in
             VStack(spacing: 0) {
                 ForEach(entries, id: \.token) { entry in
-                    Text(entry.token)
+                    Text(railLabel(for: entry.token))
                         .font(.system(size: 9, weight: .bold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .fixedSize(horizontal: true, vertical: false)
                         .foregroundStyle(activeToken == entry.token ? Color.accentColor : .secondary)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
@@ -30,19 +33,34 @@ struct SectionIndexBar: View {
                     }
             )
         }
-        .frame(width: 12)
+        .frame(width: 18)
         .overlay(alignment: .center) {
             if let activeToken {
                 Text(activeToken)
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .font(.system(size: activeToken.count > 2 ? 22 : 30, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
                     .frame(width: 60, height: 60)
-                    .background(.black.opacity(0.75), in: Circle())
+                    .background(
+                        Circle()
+                            .fill(LinearGradient(
+                                colors: [Color.buttonPinkTop, Color.buttonPinkBottom],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ))
+                            .shadow(color: Color.buttonPinkBottom.opacity(0.35), radius: 8, y: 2)
+                    )
                     .offset(x: -46)
                     .transition(.opacity.combined(with: .scale))
             }
         }
         .animation(.easeOut(duration: 0.15), value: activeToken)
+    }
+
+    private func railLabel(for token: String) -> String {
+        if token.count == 4, let _ = Int(token) {
+            return String(token.suffix(2))
+        }
+        return token
     }
 
     private func select(at y: CGFloat, in height: CGFloat) {

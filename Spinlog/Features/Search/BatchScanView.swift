@@ -11,6 +11,7 @@ struct BatchScanView: View {
     @State private var availableFolders: [CollectionFolder] = []
     @State private var selectedFolderId: Int?
     @State private var authManager = DiscogsAuthManager.shared
+    @State private var networkMonitor = NetworkMonitor.shared
 
     private enum Phase {
         case scanning
@@ -32,6 +33,14 @@ struct BatchScanView: View {
             .toolbar { toolbarContent }
         }
         .task { await loadFolders() }
+        // Scan comme revue groupée nécessitent tous deux le réseau (lookup code-barres, ajout
+        // à la collection) : si la connexion tombe pendant que cet écran est ouvert, on revient
+        // à la recherche plutôt que de laisser l'utilisateur continuer dans un état cassé.
+        .onChange(of: networkMonitor.isConnected) { _, isConnected in
+            if !isConnected {
+                dismiss()
+            }
+        }
         .alert("Discogs", isPresented: Binding(
             get: { viewModel.message != nil },
             set: { if !$0 { viewModel.message = nil } }
@@ -63,7 +72,7 @@ struct BatchScanView: View {
             }
         } else {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Fermer") { dismiss() }
+                SheetCloseButton()
             }
         }
     }
@@ -82,7 +91,7 @@ struct BatchScanView: View {
             )
             .ignoresSafeArea()
 
-            Text(scanCounterText)
+            scanCounterText
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.white)
                 .padding(.horizontal, 16)
@@ -91,12 +100,18 @@ struct BatchScanView: View {
                 .padding(.bottom, 32)
                 .animation(.spring(response: 0.3, dampingFraction: 0.8), value: viewModel.items.count)
         }
+        .onAppear {
+            UIApplication.shared.isIdleTimerDisabled = true
+        }
+        .onDisappear {
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
     }
 
-    private var scanCounterText: String {
+    private var scanCounterText: Text {
         let count = viewModel.items.count
-        if count == 0 { return "Scanne un code-barres" }
-        return count == 1 ? "1 code scanné" : "\(count) codes scannés"
+        if count == 0 { return Text("Scanne un code-barres") }
+        return count == 1 ? Text("1 code scanné") : Text("\(count) codes scannés")
     }
 
     // MARK: - Phase 2 : revue groupée
@@ -121,7 +136,8 @@ struct BatchScanView: View {
                             item: item,
                             isInCollection: viewModel.isAlreadyInCollection(item),
                             isInWantlist: viewModel.isAlreadyInWantlist(item),
-                            onToggle: { viewModel.toggleSelection(item) }
+                            onToggle: { viewModel.toggleSelection(item) },
+                            onSelectMatch: { result in viewModel.selectMatch(result, for: item) }
                         )
                         .swipeActions(edge: .trailing) {
                             Button(role: .destructive) {
@@ -218,6 +234,9 @@ private struct BatchScanRow: View {
     let isInCollection: Bool
     let isInWantlist: Bool
     let onToggle: () -> Void
+    let onSelectMatch: (SearchResult) -> Void
+
+    @State private var showingPressingChoice = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -232,7 +251,8 @@ private struct BatchScanRow: View {
                         .foregroundStyle(item.isSelected ? Color.spinlogPink : Color.appTertiaryText)
                 }
                 .buttonStyle(.plain)
-                AsyncCoverImage(url: result.thumb ?? result.coverImage, cornerRadius: 6)
+                .accessibilityLabel(item.isSelected ? "Désélectionner ce disque" : "Sélectionner ce disque")
+                AsyncCoverImage(url: result.thumb ?? result.coverImage, cornerRadius: 6, targetSize: 44)
                     .frame(width: 44, height: 44)
             case .notFound:
                 Image(systemName: "questionmark.circle.fill")
@@ -278,9 +298,174 @@ private struct BatchScanRow: View {
                 }
             }
             Spacer(minLength: 0)
+
+            if case .found(let selected) = item.status, item.alternatives.count > 1 {
+                pressingPicker(selected: selected, alternatives: item.alternatives)
+            }
         }
         .padding(.vertical, 4)
         .opacity(item.status == .notFound ? 0.5 : 1)
+    }
+
+    /// Ce code-barres correspond à plusieurs pressages Discogs (rééditions, éditions
+    /// différentes...) : le premier est retenu par défaut, mais l'utilisateur peut ouvrir
+    /// cette liste détaillée (pochette, année, pays, format, label) pour choisir le bon
+    /// pressage — un simple menu texte ne suffisait pas à les distinguer.
+    private func pressingPicker(selected: SearchResult, alternatives: [SearchResult]) -> some View {
+        Button {
+            showingPressingChoice = true
+        } label: {
+            VStack(spacing: 2) {
+                Image(systemName: "square.stack.3d.up.fill")
+                    .font(.caption)
+                Text("\(alternatives.count)")
+                    .font(.caption2.weight(.semibold))
+            }
+            .foregroundStyle(Color.spinlogPink)
+            .padding(6)
+            .background(Color.spinlogPinkBadge, in: Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Choisir le pressage (\(alternatives.count) trouvés)")
+        .sheet(isPresented: $showingPressingChoice) {
+            PressingChoiceSheet(
+                alternatives: alternatives,
+                selectedId: selected.id,
+                onSelect: { onSelectMatch($0) }
+            )
+        }
+    }
+}
+
+/// Liste détaillée des pressages Discogs partageant un même code-barres, pour permettre de
+/// choisir le bon en toute confiance (pochette, année, pays, format, label/référence).
+private struct ReleasePreviewTarget: Identifiable, Hashable {
+    let id: Int
+    let coverURL: String?
+}
+
+private struct PressingChoiceSheet: View {
+    let alternatives: [SearchResult]
+    let selectedId: Int
+    let onSelect: (SearchResult) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var previewTarget: ReleasePreviewTarget?
+
+    var body: some View {
+        NavigationStack {
+            List(alternatives) { alternative in
+                HStack(alignment: .top, spacing: 12) {
+                    Button {
+                        onSelect(alternative)
+                        dismiss()
+                    } label: {
+                        HStack(alignment: .top, spacing: 14) {
+                            AsyncCoverImage(url: alternative.coverImage ?? alternative.thumb, cornerRadius: 8, targetSize: 88)
+                                .frame(width: 88, height: 88)
+
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text(alternative.title)
+                                    .font(.body.weight(.semibold))
+                                    .foregroundStyle(.primary)
+                                    .lineLimit(2)
+
+                                if let yearCountry = yearCountryLine(for: alternative) {
+                                    Text(yearCountry)
+                                        .font(.subheadline)
+                                        .foregroundStyle(Color.appSecondaryText)
+                                }
+
+                                if let labelCatno = labelCatnoLine(for: alternative) {
+                                    Text(labelCatno)
+                                        .font(.subheadline)
+                                        .foregroundStyle(Color.appSecondaryText)
+                                        .lineLimit(1)
+                                }
+
+                                if let format = alternative.format, !format.isEmpty {
+                                    Text(format.joined(separator: ", "))
+                                        .font(.caption)
+                                        .foregroundStyle(Color.appTertiaryText)
+                                        .lineLimit(2)
+                                }
+
+                                if let styleLine = styleLine(for: alternative) {
+                                    Text(styleLine)
+                                        .font(.caption)
+                                        .foregroundStyle(Color.appTertiaryText)
+                                        .lineLimit(1)
+                                }
+                            }
+
+                            Spacer(minLength: 0)
+
+                            if alternative.id == selectedId {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.title3)
+                                    .foregroundStyle(Color.spinlogPink)
+                            }
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        previewTarget = ReleasePreviewTarget(id: alternative.id, coverURL: alternative.coverImage ?? alternative.thumb)
+                    } label: {
+                        Image(systemName: "chevron.right.circle")
+                            .font(.title3)
+                            .foregroundStyle(Color.appTertiaryText)
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel("Voir la fiche de cette release")
+                }
+                .padding(.vertical, 8)
+            }
+            .listStyle(.plain)
+            .navigationTitle("Choisir le pressage")
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationDestination(item: $previewTarget) { target in
+                ReleaseDetailView(releaseId: target.id, initialCoverURL: target.coverURL)
+            }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    SheetCloseButton()
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+    }
+
+    private func yearCountryLine(for result: SearchResult) -> String? {
+        var parts: [String] = []
+        if let year = result.year, !year.isEmpty {
+            parts.append(year)
+        }
+        if let country = result.country, !country.isEmpty {
+            parts.append(country)
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+
+    /// La référence catalogue (catno) est souvent l'élément le plus discriminant entre deux
+    /// pressages Discogs partageant le même code-barres (ex. une réédition change de catno
+    /// même quand le reste des métadonnées se ressemble).
+    private func labelCatnoLine(for result: SearchResult) -> String? {
+        var parts: [String] = []
+        if let label = result.label?.first {
+            parts.append(label)
+        }
+        if let catno = result.catno, !catno.isEmpty {
+            parts.append("Cat. \(catno)")
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+
+    private func styleLine(for result: SearchResult) -> String? {
+        let styles = (result.style ?? []) + (result.genre ?? [])
+        return styles.isEmpty ? nil : styles.joined(separator: ", ")
     }
 }
 

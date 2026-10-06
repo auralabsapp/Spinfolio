@@ -2,16 +2,48 @@
   "sourceLanguage" : "fr",
   "strings" : {
     "Album du jour" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Album of the Day"
+          }
+        }
+      }
     },
     "ALBUM DU JOUR" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "ALBUM OF THE DAY"
+          }
+        }
+      }
+    },
+    "Arrêter la lecture" : {
 
     },
     "EN COURS D'ÉCOUTE" : {
-
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "NOW PLAYING"
+          }
+        }
+      }
     },
     "Un disque de ta collection Discogs tiré au hasard chaque jour." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "A record from your Discogs collection, picked at random every day."
+          }
+        }
+      }
     }
   },
   "version" : "1.3"

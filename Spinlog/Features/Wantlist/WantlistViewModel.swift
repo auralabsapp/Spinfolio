@@ -1,34 +1,74 @@
+import SwiftUI
 import Foundation
 import Observation
 
 @Observable
 @MainActor
 final class WantlistViewModel {
+    static let shared = WantlistViewModel()
+
     private(set) var items: [WantlistItem] = []
     private(set) var isLoading = false
     private(set) var errorMessage: String?
     private(set) var isOfflineAndStale: Bool = false
 
     var searchText = ""
-    /// Même construction que l'onglet Collection : tri, filtres par tag/support, sections
+    /// Même construction que l'onglet Collection : tri, filtre par support, sections
     /// avec en-têtes et barre de navigation rapide.
     var sortOption: CollectionSortOption = .added {
         didSet {
             guard oldValue != sortOption else { return }
+            sortAscending = sortOption.defaultAscending
             Task { await loadFirstPage() }
         }
     }
-    var selectedTag: String? = nil
+
+    var sortAscending: Bool = CollectionSortOption.added.defaultAscending {
+        didSet {
+            guard oldValue != sortAscending else { return }
+            Task { await loadFirstPage() }
+        }
+    }
+
+    /// Sémantique ET : un élément n'est affiché que s'il porte tous les tags sélectionnés.
+    var selectedTags: Set<String> = []
     var selectedFormat: String? = nil
 
     var hasActiveFilters: Bool {
-        (selectedTag != nil && !selectedTag!.isEmpty) ||
-        (selectedFormat != nil && !selectedFormat!.isEmpty)
+        !selectedTags.isEmpty || (selectedFormat != nil && !selectedFormat!.isEmpty)
     }
 
     func clearFilters() {
-        selectedTag = nil
+        selectedTags.removeAll()
         selectedFormat = nil
+    }
+
+    func toggleTagFilter(_ tag: String) {
+        if selectedTags.contains(tag) {
+            selectedTags.remove(tag)
+        } else {
+            selectedTags.insert(tag)
+        }
+    }
+
+    func reset() {
+        items = []
+        folders = []
+        itemAwaitingFolderChoice = nil
+        currentPage = 1
+        totalPages = 1
+        errorMessage = nil
+        isOfflineAndStale = false
+        isLoading = false
+        searchText = ""
+        selectedTags.removeAll()
+        selectedFormat = nil
+        sortOption = .added
+        sortAscending = CollectionSortOption.added.defaultAscending
+    }
+
+    func refresh() async {
+        await load()
     }
 
     var availableFormats: [String] {
@@ -46,12 +86,6 @@ final class WantlistViewModel {
 
     private var filteredItems: [WantlistItem] {
         var list = items
-
-        if let selectedTag, !selectedTag.isEmpty {
-            list = list.filter { item in
-                TagStore.shared.tags(for: item.id).contains(selectedTag)
-            }
-        }
 
         if let selectedFormat, !selectedFormat.isEmpty {
             list = list.filter { item in
@@ -73,7 +107,7 @@ final class WantlistViewModel {
     /// Éléments filtrés et regroupés par section, dans un ordre déterministe — identique au
     /// mécanisme de `CollectionViewModel.sections`.
     var sections: [(key: String, items: [WantlistItem])] {
-        let sorted = filteredItems.sorted { $0.isOrderedBefore($1, for: sortOption) }
+        let sorted = filteredItems.sorted { $0.isOrderedBefore($1, for: sortOption, ascending: sortAscending) }
         var order: [String] = []
         var groups: [String: [WantlistItem]] = [:]
         for item in sorted {
@@ -112,6 +146,44 @@ final class WantlistViewModel {
     private let localStore = LocalDataStore.shared
     private let syncQueue = OfflineSyncQueue.shared
 
+    init() {
+        NotificationCenter.default.addObserver(
+            forName: .wantlistItemAdded,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            MainActor.assumeIsolated {
+                guard let self, let item = notification.userInfo?["item"] as? WantlistItem else { return }
+                self.handleWantlistItemAdded(item)
+            }
+        }
+
+        NotificationCenter.default.addObserver(
+            forName: .wantlistItemRemoved,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            MainActor.assumeIsolated {
+                guard let self, let releaseId = notification.userInfo?["releaseId"] as? Int else { return }
+                self.handleWantlistItemRemoved(releaseId: releaseId)
+            }
+        }
+    }
+
+    private func handleWantlistItemAdded(_ item: WantlistItem) {
+        if !items.contains(where: { $0.id == item.id }) {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                items.insert(item, at: 0)
+            }
+        }
+    }
+
+    private func handleWantlistItemRemoved(releaseId: Int) {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            items.removeAll { $0.id == releaseId }
+        }
+    }
+
     /// Pagination paresseuse : jamais toute la wantlist en un appel (conformité API Discogs).
     private var currentPage = 1
     private var totalPages = 1
@@ -138,7 +210,7 @@ final class WantlistViewModel {
 
         do {
             let response = try await DiscogsAPIClient.shared.wantlist(
-                username: username, page: 1, sort: sortOption.apiSortValue, sortOrder: sortOption.apiSortOrder, credentials: credentials
+                username: username, page: 1, sort: sortOption.apiSortValue, sortOrder: sortOption.apiSortOrder(ascending: sortAscending), credentials: credentials
             )
             items = response.wants
             currentPage = 1
@@ -146,11 +218,11 @@ final class WantlistViewModel {
             isOfflineAndStale = false
 
             // Mise en cache dans SwiftData avec horodatage
-            localStore.saveWantlistItems(items, username: username)
+            persistToCache(username: username)
         } catch {
             // Repli sur le cache local
             loadFromLocalStore(username: username)
-            if items.isEmpty {
+            if items.isEmpty && !error.isCancellation {
                 errorMessage = error.localizedDescription
             }
         }
@@ -170,15 +242,15 @@ final class WantlistViewModel {
         errorMessage = nil
         do {
             let response = try await DiscogsAPIClient.shared.wantlist(
-                username: username, page: 1, sort: sortOption.apiSortValue, sortOrder: sortOption.apiSortOrder, credentials: credentials
+                username: username, page: 1, sort: sortOption.apiSortValue, sortOrder: sortOption.apiSortOrder(ascending: sortAscending), credentials: credentials
             )
             items = response.wants
             currentPage = 1
             totalPages = response.pagination.pages
             isOfflineAndStale = false
-            localStore.saveWantlistItems(items, username: username)
+            persistToCache(username: username)
         } catch {
-            if items.isEmpty {
+            if items.isEmpty && !error.isCancellation {
                 errorMessage = error.localizedDescription
             }
         }
@@ -209,18 +281,29 @@ final class WantlistViewModel {
         isLoading = true
         do {
             let response = try await DiscogsAPIClient.shared.wantlist(
-                username: username, page: currentPage + 1, sort: sortOption.apiSortValue, sortOrder: sortOption.apiSortOrder, credentials: credentials
+                username: username, page: currentPage + 1, sort: sortOption.apiSortValue, sortOrder: sortOption.apiSortOrder(ascending: sortAscending), credentials: credentials
             )
             let newItems = items + response.wants
             items = newItems
             currentPage += 1
             totalPages = response.pagination.pages
 
-            localStore.saveWantlistItems(newItems, username: username)
+            persistToCache(username: username)
         } catch {
             // On garde les éléments déjà affichés
         }
         isLoading = false
+    }
+
+    /// Enregistre `items` dans le cache local. Une fois toutes les pages chargées (`items` part
+    /// toujours de la page 1 renvoyée par Discogs, jamais du cache), la liste est complète : le
+    /// cache est alors remplacé, ce qui en retire les disques sortis de la wantlist ailleurs.
+    private func persistToCache(username: String) {
+        if currentPage >= totalPages {
+            localStore.replaceWantlistItems(items, username: username)
+        } else {
+            localStore.saveWantlistItems(items, username: username)
+        }
     }
 
     func remove(_ item: WantlistItem) async {
@@ -251,8 +334,14 @@ final class WantlistViewModel {
         }
     }
 
-    /// Charge les dossiers disponibles puis ouvre le sélecteur ; `confirmMoveToCollection`
-    /// termine le déplacement une fois le dossier choisi.
+    /// Supprime plusieurs éléments de la wantlist (édition en lot) — même logique que
+    /// `remove`, en réutilisant le retrait unitaire et la file hors ligne.
+    func removeItems(_ targets: [WantlistItem]) async {
+        for item in targets {
+            await remove(item)
+        }
+    }
+
     func beginMoveToCollection(_ item: WantlistItem) async {
         guard let username = authManager.username else { return }
 
@@ -287,33 +376,40 @@ final class WantlistViewModel {
 
     func confirmMoveToCollection(_ item: WantlistItem, folderId: Int) async {
         guard let username = authManager.username else { return }
-
-        if !networkMonitor.isConnected && isOfflineAndStale {
-            errorMessage = "Mode hors ligne (données de plus de 6h) : modification bloquée."
-            itemAwaitingFolderChoice = nil
-            return
-        }
-
-        // Optimistic UI
-        items.removeAll { $0.id == item.id }
-        localStore.removeWantlistItem(username: username, releaseId: item.id)
-        LibraryMembershipStore.shared.markRemovedFromWantlist(item.id)
-        LibraryMembershipStore.shared.markInCollection(item.id)
         itemAwaitingFolderChoice = nil
 
+        // Retrait immédiat de la wantlist
+        await remove(item)
+
+        // Ajout à la collection (optimistic UI géré par NotificationCenter dans CollectionViewModel)
         if networkMonitor.isConnected, let credentials = authManager.credentials {
             do {
-                _ = try await DiscogsAPIClient.shared.addToCollection(
+                let response = try await DiscogsAPIClient.shared.addToCollection(
                     username: username, folderId: folderId, releaseId: item.id, credentials: credentials
                 )
-                try await DiscogsAPIClient.shared.removeFromWantlist(username: username, releaseId: item.id, credentials: credentials)
+                let newItem = CollectionItem(
+                    releaseId: item.id,
+                    folderId: folderId,
+                    rating: item.rating,
+                    dateAdded: ISO8601DateFormatter().string(from: Date()),
+                    basicInformation: item.basicInformation,
+                    instanceId: response.instanceId,
+                    notes: []
+                )
+                localStore.saveCollectionItems([newItem], username: username, folderId: folderId)
+                LibraryMembershipStore.shared.markInCollection(item.id)
+                NotificationCenter.default.post(
+                    name: .collectionItemAdded,
+                    object: nil,
+                    userInfo: ["item": newItem]
+                )
             } catch {
-                syncQueue.enqueue(PendingAction(type: .addToCollection, releaseId: item.id, folderId: folderId))
-                syncQueue.enqueue(PendingAction(type: .removeFromWantlist, releaseId: item.id))
+                let action = PendingAction(type: .addToCollection, releaseId: item.id, targetFolderId: folderId)
+                syncQueue.enqueue(action)
             }
         } else {
-            syncQueue.enqueue(PendingAction(type: .addToCollection, releaseId: item.id, folderId: folderId))
-            syncQueue.enqueue(PendingAction(type: .removeFromWantlist, releaseId: item.id))
+            let action = PendingAction(type: .addToCollection, releaseId: item.id, targetFolderId: folderId)
+            syncQueue.enqueue(action)
         }
     }
 }

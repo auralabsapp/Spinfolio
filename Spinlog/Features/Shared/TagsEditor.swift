@@ -1,39 +1,349 @@
 import SwiftUI
 
-/// Éditeur de tags personnels pour une release : pastilles avec suppression, plus un champ
-/// pour en ajouter un nouveau. Persisté par `TagStore`, jamais envoyé à Discogs.
+/// Affiche les tags actuels d'un exemplaire avec un bouton "Ajouter" ouvrant une bottom sheet
+/// de gestion et d'attribution des tags. Persisté par `TagStore`, jamais envoyé à Discogs.
 struct TagsEditor: View {
-    let releaseId: Int
+    let instanceId: Int
+    var releaseId: Int? = nil
+
     @State private var store = TagStore.shared
-    @State private var newTag = ""
+    @State private var showingManagementSheet = false
+
+    init(instanceId: Int, releaseId: Int? = nil) {
+        self.instanceId = instanceId
+        self.releaseId = releaseId
+    }
+
+    init(releaseId: Int) {
+        self.instanceId = releaseId
+        self.releaseId = releaseId
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            let tags = store.tags(for: releaseId)
-            if !tags.isEmpty {
-                FlowLayout(spacing: 6) {
-                    ForEach(tags, id: \.self) { tag in
-                        TagPill(tag: tag) {
-                            store.removeTag(tag, from: releaseId)
-                        }
-                    }
+        let tags = store.tags(for: instanceId, releaseId: releaseId)
+        FlowLayout(spacing: 8) {
+            ForEach(tags, id: \.self) { tag in
+                TagPill(tag: tag) {
+                    store.removeTag(tag, from: instanceId, releaseId: releaseId)
                 }
             }
 
-            HStack(spacing: 8) {
-                TextField("Ajouter un tag", text: $newTag)
-                    .textFieldStyle(.roundedBorder)
-                    .submitLabel(.done)
-                    .onSubmit(addTag)
-                Button("Ajouter", action: addTag)
-                    .disabled(newTag.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            Button {
+                showingManagementSheet = true
+            } label: {
+                HStack(spacing: 5) {
+                    Image(systemName: "plus")
+                        .font(.caption.weight(.bold))
+                    Text(tags.isEmpty ? "Ajouter un tag" : "Ajouter")
+                        .font(.caption.weight(.semibold))
+                }
+                .padding(.horizontal, 11)
+                .padding(.vertical, 4)
+                .foregroundStyle(Color.appSecondaryText)
+                .overlay(
+                    Capsule()
+                        .strokeBorder(Color.primary.opacity(0.22), style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                )
             }
+            .buttonStyle(.plain)
+        }
+        .sheet(isPresented: $showingManagementSheet) {
+            ReleaseTagSheet(instanceId: instanceId, releaseId: releaseId)
         }
     }
+}
 
-    private func addTag() {
-        store.addTag(newTag, to: releaseId)
-        newTag = ""
+/// Bottom sheet de gestion et d'attribution des tags pour un exemplaire
+struct ReleaseTagSheet: View {
+    let instanceId: Int
+    var releaseId: Int? = nil
+
+    init(instanceId: Int, releaseId: Int? = nil) {
+        self.instanceId = instanceId
+        self.releaseId = releaseId
+    }
+
+    init(releaseId: Int) {
+        self.instanceId = releaseId
+        self.releaseId = releaseId
+    }
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var store = TagStore.shared
+    @State private var searchText = ""
+    @State private var renameItem: TagRenameItem? = nil
+    @State private var tagToDelete: String? = nil
+    @State private var duplicateTagError: String? = nil
+    @State private var showingMaxLengthAlert = false
+    @State private var showingMaxTagsAlert = false
+
+    private var appliedTags: Set<String> {
+        Set(store.tags(for: instanceId, releaseId: releaseId))
+    }
+
+    private var hasReachedMaxTags: Bool {
+        appliedTags.count >= TagConstants.maxTagsPerInstance
+    }
+
+    /// Tente d'attribuer `tag` à l'exemplaire, ou affiche une alerte si la limite est déjà atteinte.
+    private func attemptAddTag(_ tag: String) {
+        guard !hasReachedMaxTags else {
+            showingMaxTagsAlert = true
+            return
+        }
+        store.addTag(tag, to: instanceId, releaseId: releaseId)
+    }
+
+    private var filteredTags: [String] {
+        let all = store.allTags
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return all }
+        return all.filter { $0.localizedCaseInsensitiveContains(query) }
+    }
+
+    private var exactMatchExists: Bool {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        return store.allTags.contains { $0.caseInsensitiveCompare(query) == .orderedSame }
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+                    // Bouton de création directe et fluide via la recherche
+                    if !trimmed.isEmpty && !exactMatchExists {
+                        Button {
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            attemptAddTag(trimmed)
+                            searchText = ""
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.title3)
+                                    .foregroundStyle(Color.spinlogPink)
+
+                                Text("Créer et ajouter « \(trimmed) »")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(Color.spinlogPink)
+
+                                Spacer()
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 12)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .appleMusicGroupedCard()
+                    } else if !trimmed.isEmpty && exactMatchExists {
+                        // Indication sobre que le tag existe déjà
+                        HStack(spacing: 12) {
+                            Image(systemName: "exclamationmark.circle.fill")
+                                .font(.title3)
+                                .foregroundStyle(.orange)
+
+                            Text("Tag déjà existant")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.primary)
+
+                            Spacer()
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .appleMusicGroupedCard()
+                    }
+
+                    if store.allTags.isEmpty && trimmed.isEmpty {
+                        VStack(alignment: .center, spacing: 14) {
+                            Image(systemName: "tag")
+                                .font(.system(size: 44))
+                                .foregroundStyle(Color.spinlogPink.opacity(0.8))
+
+                            Text("Aucun tag créé")
+                                .font(.headline)
+
+                            Text("Tapez un nom dans la barre de recherche ci-dessus pour créer et attribuer votre premier tag.")
+                                .font(.subheadline)
+                                .foregroundStyle(Color.appSecondaryText)
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 36)
+                        .padding(.horizontal, 20)
+                    } else {
+                        VStack(alignment: .leading, spacing: 10) {
+                            SectionEyebrow(title: "Tags disponibles (\(filteredTags.count))", icon: "tag.fill")
+
+                            VStack(spacing: 0) {
+                                ForEach(Array(filteredTags.enumerated()), id: \.element) { index, tag in
+                                    tagRow(tag)
+                                    if index < filteredTags.count - 1 {
+                                        Divider().opacity(0.15).padding(.leading, 14)
+                                    }
+                                }
+                            }
+                            .padding(.vertical, 4)
+                            .appleMusicGroupedCard()
+
+                            Text("Touchez un tag pour l'attribuer. Glissez vers la gauche pour le modifier ou le supprimer.")
+                                .font(.footnote)
+                                .foregroundStyle(Color.appSecondaryText)
+
+                            Text("\(appliedTags.count)/\(TagConstants.maxTagsPerInstance) tags attribués à cet exemplaire")
+                                .font(.footnote.weight(.medium))
+                                .foregroundStyle(hasReachedMaxTags ? .orange : Color.appSecondaryText)
+                        }
+                    }
+                }
+                .padding()
+            }
+            .swipeActionsContainer()
+            .navigationTitle("Gestion des tags")
+            .navigationBarTitleDisplayMode(.inline)
+            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Rechercher ou créer un tag")
+            .onChange(of: searchText) { _, newValue in
+                if newValue.count > TagConstants.maxNameLength {
+                    searchText = String(newValue.prefix(TagConstants.maxNameLength))
+                    showingMaxLengthAlert = true
+                }
+            }
+            .onSubmit(of: .search) {
+                let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !trimmed.isEmpty else { return }
+                if exactMatchExists {
+                    duplicateTagError = trimmed
+                } else {
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    attemptAddTag(trimmed)
+                    searchText = ""
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    SheetCloseButton()
+                }
+            }
+            .sheet(item: $renameItem) { item in
+                TagRenameSheet(tag: item.tag)
+            }
+            .confirmationDialog(
+                "Supprimer le tag",
+                isPresented: Binding(
+                    get: { tagToDelete != nil },
+                    set: { if !$0 { tagToDelete = nil } }
+                ),
+                titleVisibility: .visible
+            ) {
+                Button("Supprimer", role: .destructive) {
+                    if let tag = tagToDelete {
+                        store.deleteTag(tag)
+                    }
+                    tagToDelete = nil
+                }
+                Button("Annuler", role: .cancel) {
+                    tagToDelete = nil
+                }
+            } message: {
+                if let tag = tagToDelete {
+                    let count = store.releaseCount(for: tag)
+                    Text("Êtes-vous sûr de vouloir supprimer « \(tag) » ? Ce tag sera retiré de \(count <= 1 ? "1 disque" : "\(count) disques").")
+                }
+            }
+            .alert("Tag déjà existant", isPresented: Binding(
+                get: { duplicateTagError != nil },
+                set: { if !$0 { duplicateTagError = nil } }
+            )) {
+                Button("OK", role: .cancel) {
+                    duplicateTagError = nil
+                }
+            } message: {
+                if let name = duplicateTagError {
+                    Text("Le tag « \(name) » existe déjà dans votre bibliothèque.")
+                }
+            }
+            .alert("Nom trop long", isPresented: $showingMaxLengthAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Le nom d'un tag est limité à \(TagConstants.maxNameLength) caractères.")
+            }
+            .alert("Limite de tags atteinte", isPresented: $showingMaxTagsAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Un exemplaire ne peut pas avoir plus de \(TagConstants.maxTagsPerInstance) tags. Retirez-en un pour en attribuer un autre.")
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+    }
+
+    private func tagRow(_ tag: String) -> some View {
+        let isApplied = appliedTags.contains(tag)
+        return HStack(spacing: 12) {
+            Text(tag)
+                .font(.subheadline.weight(.medium))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(Color.tagBackground, in: Capsule())
+                .foregroundStyle(Color.tagForeground)
+
+            Spacer()
+
+            let count = store.instanceCount(for: tag)
+            Text(count <= 1 ? "\(count) ex." : "\(count) ex.")
+                .font(.footnote)
+                .foregroundStyle(Color.appSecondaryText)
+
+            Image(systemName: isApplied ? "checkmark.circle.fill" : "circle")
+                .font(.title3)
+                .foregroundStyle(isApplied ? Color.spinlogPink : Color.secondary.opacity(0.35))
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .opacity(!isApplied && hasReachedMaxTags ? 0.4 : 1)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .onTapGesture {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            if isApplied {
+                store.removeTag(tag, from: instanceId, releaseId: releaseId)
+            } else {
+                attemptAddTag(tag)
+            }
+        }
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            Button(role: .destructive) {
+                tagToDelete = tag
+            } label: {
+                Label("Supprimer", systemImage: "trash.fill")
+            }
+            .tint(.red)
+            .labelStyle(.iconOnly)
+            .accessibilityLabel("Supprimer ce tag")
+
+            Button {
+                renameItem = TagRenameItem(tag: tag)
+            } label: {
+                Label("Modifier", systemImage: "pencil")
+            }
+            .tint(.orange)
+            .labelStyle(.iconOnly)
+            .accessibilityLabel("Modifier ce tag")
+        }
+        .contextMenu {
+            Button {
+                renameItem = TagRenameItem(tag: tag)
+            } label: {
+                Label("Renommer", systemImage: "pencil")
+            }
+
+            Button(role: .destructive) {
+                tagToDelete = tag
+            } label: {
+                Label("Supprimer", systemImage: "trash")
+            }
+        }
     }
 }
 
@@ -45,46 +355,44 @@ struct TagPill: View {
     var body: some View {
         HStack(spacing: 4) {
             Text(tag)
-                .font(.caption)
+                .font(.caption.weight(.medium))
             if let onRemove {
                 Button(action: onRemove) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                    Image(systemName: "xmark")
+                        .font(.system(size: 8, weight: .bold))
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Retirer le tag \(tag)")
             }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
-        .background(.fill.tertiary, in: Capsule())
+        .padding(.horizontal, 9)
+        .padding(.vertical, 4)
+        .background(Color.tagBackground, in: Capsule())
+        .foregroundStyle(Color.tagForeground)
     }
 }
 
-/// Enchaîne des vues en les faisant passer à la ligne quand la largeur disponible est dépassée
-/// (contrairement à un `HStack`, qui déborderait, ou un `ScrollView` horizontal, qui rebondirait
-/// inutilement pour une poignée de tags courts).
+/// Layout fluide (wrap) pour disposer les pastilles de tags sur plusieurs lignes si besoin.
 struct FlowLayout: Layout {
-    var spacing: CGFloat = 6
+    var spacing: CGFloat = 8
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let maxWidth = proposal.width ?? .infinity
+        let width = proposal.width ?? .infinity
         var currentX: CGFloat = 0
         var currentY: CGFloat = 0
         var lineHeight: CGFloat = 0
 
-        for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
-            if currentX + size.width > maxWidth, currentX > 0 {
+        for view in subviews {
+            let size = view.sizeThatFits(.unspecified)
+            if currentX + size.width > width && currentX > 0 {
                 currentX = 0
                 currentY += lineHeight + spacing
                 lineHeight = 0
             }
-            currentX += size.width + spacing
             lineHeight = max(lineHeight, size.height)
+            currentX += size.width + spacing
         }
-        currentY += lineHeight
-        return CGSize(width: maxWidth.isFinite ? maxWidth : currentX, height: currentY)
+        return CGSize(width: width, height: currentY + lineHeight)
     }
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
@@ -92,16 +400,16 @@ struct FlowLayout: Layout {
         var currentY = bounds.minY
         var lineHeight: CGFloat = 0
 
-        for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
-            if currentX + size.width > bounds.maxX, currentX > bounds.minX {
+        for view in subviews {
+            let size = view.sizeThatFits(.unspecified)
+            if currentX + size.width > bounds.maxX && currentX > bounds.minX {
                 currentX = bounds.minX
                 currentY += lineHeight + spacing
                 lineHeight = 0
             }
-            subview.place(at: CGPoint(x: currentX, y: currentY), proposal: ProposedViewSize(size))
-            currentX += size.width + spacing
+            view.place(at: CGPoint(x: currentX, y: currentY), proposal: ProposedViewSize(size))
             lineHeight = max(lineHeight, size.height)
+            currentX += size.width + spacing
         }
     }
 }

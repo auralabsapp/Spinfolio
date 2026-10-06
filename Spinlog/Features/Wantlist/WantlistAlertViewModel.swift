@@ -52,6 +52,7 @@ final class WantlistAlertViewModel {
         do {
             let stats = try await DiscogsAPIClient.shared.marketplaceStats(
                 releaseId: item.id,
+                currency: currency,
                 credentials: authManager.credentials
             )
             self.currentStats = stats

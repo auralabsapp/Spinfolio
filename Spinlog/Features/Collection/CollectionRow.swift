@@ -2,6 +2,11 @@ import SwiftUI
 
 struct CollectionRow: View {
     let item: CollectionItem
+    var copyBadge: String? = nil
+    /// Mode sélection multiple actif pour toute la liste (contrôle l'apparition de la pastille).
+    var isSelecting: Bool = false
+    /// État coché/décoché de cet exemplaire, pertinent seulement si `isSelecting` est vrai.
+    var isSelected: Bool = false
 
     @State private var tagStore = TagStore.shared
 
@@ -9,54 +14,95 @@ struct CollectionRow: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 14) {
-            AsyncCoverImage(url: coverURL, cornerRadius: 8)
+            if isSelecting {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.title3)
+                    .foregroundStyle(isSelected ? Color.spinlogPink : Color.appTertiaryText)
+                    .transition(.scale.combined(with: .opacity))
+            }
+
+            AsyncCoverImage(url: coverURL, cornerRadius: 10, targetSize: 80)
                 .frame(width: 80, height: 80)
-                .shadow(color: .black.opacity(0.16), radius: 5, x: 0, y: 2.5)
+                .overlay {
+                    if isSelecting && isSelected {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .strokeBorder(Color.spinlogPink, lineWidth: 2.5)
+                    }
+                }
+                .opacity(isSelecting ? (isSelected ? 1.0 : 0.45) : 1.0)
+                .shadow(color: .black.opacity(isSelecting ? (isSelected ? 0.22 : 0.08) : 0.16), radius: 5, x: 0, y: 2.5)
+                .animation(.spring(response: 0.28, dampingFraction: 0.85), value: isSelected)
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text(info.artistNames)
-                    .font(.headline)
-                    .lineLimit(1)
+            VStack(alignment: .leading, spacing: 2) {
+                // Bloc 1 : Titre de l'album (mis en évidence) & Artiste
+                VStack(alignment: .leading, spacing: 2) {
+                    // 1ère ligne : Titre de l'album
+                    Text(info.title)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
 
-                Text(info.title)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-
-                if let formatLine {
-                    Text(formatLine)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    // 2ème ligne : Artiste
+                    Text(info.artistNames)
+                        .font(.subheadline)
+                        .foregroundStyle(Color.appSecondaryText)
                         .lineLimit(1)
                 }
 
-                HStack(spacing: 6) {
-                    if let year = info.year {
-                        Text(String(year))
-                            .font(.caption2.bold())
-                            .foregroundStyle(.secondary)
+                // Bloc 2 : Format & Année / Date d'ajout (interligne accru après la ligne 2)
+                if (formatLine != nil && !(formatLine?.isEmpty ?? true)) || yearAndDateLine != nil {
+                    VStack(alignment: .leading, spacing: 2) {
+                        // 3ème ligne : Format
+                        if let formatLine, !formatLine.isEmpty {
+                            Text(formatLine)
+                                .font(.caption)
+                                .foregroundStyle(Color.appSecondaryText)
+                                .lineLimit(1)
+                        }
+
+                        // 4ème ligne : Année - Ajouté le jj/mm/aaaa
+                        if let yearAndDateLine {
+                            Text(yearAndDateLine)
+                                .font(.caption2)
+                                .foregroundStyle(Color.appSecondaryText)
+                                .lineLimit(1)
+                        }
                     }
-                    if hasNotes {
-                        Text("Notes")
-                            .font(.caption2.bold())
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.accentColor, in: Capsule())
-                            .foregroundStyle(.white)
+                    .padding(.top, 3)
+                }
+
+                // Bloc 3 : Étiquette exemplaire et badges (interligne accru après la ligne 4)
+                if copyBadge != nil || customFieldsCount > 0 || !tags.isEmpty {
+                    // 5ème ligne : Étiquette exemplaire, "x champs perso" et "x tags"
+                    HStack(spacing: 6) {
+                        if let copyBadge {
+                            Text(copyBadge)
+                                .font(.caption2.bold())
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.primary.opacity(0.08), in: Capsule())
+                                .foregroundStyle(Color.appSecondaryText)
+                        }
+
+                        if customFieldsCount > 0 {
+                            Text(customFieldsLabel)
+                                .font(.caption2.weight(.semibold))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.accentColor.opacity(0.12), in: Capsule())
+                                .foregroundStyle(Color.accentColor)
+                        }
+
+                        if !tags.isEmpty {
+                            Text(tagsLabel)
+                                .font(.caption2.bold())
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.tagBackground, in: Capsule())
+                                .foregroundStyle(Color.tagForeground)
+                        }
                     }
-                    ForEach(tags.prefix(2), id: \.self) { tag in
-                        Text(tag)
-                            .font(.caption2.bold())
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.tagBackground, in: Capsule())
-                            .foregroundStyle(Color.tagForeground)
-                    }
-                    if tags.count > 2 {
-                        Text("+\(tags.count - 2)")
-                            .font(.caption2.bold())
-                            .foregroundStyle(Color.tagForeground)
-                    }
+                    .padding(.top, 3)
                 }
             }
 
@@ -76,13 +122,36 @@ struct CollectionRow: View {
     }
 
     private var tags: [String] {
-        tagStore.tags(for: item.releaseId)
+        tagStore.tags(for: item.instanceId, releaseId: item.releaseId)
     }
 
-    /// Le tag "Notes" signale qu'au moins un champ personnalisé Discogs a été renseigné
-    /// pour cet exemplaire (état de la pochette, remarques libres, etc.).
-    private var hasNotes: Bool {
-        item.notes.contains { !$0.value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    /// Nombre de champs personnalisés Discogs renseignés par l'utilisateur
+    /// pour cet exemplaire (état du disque, état de la pochette, commentaires, etc.).
+    private var customFieldsCount: Int {
+        item.notes.filter { !$0.value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }.count
+    }
+
+    private var customFieldsLabel: String {
+        customFieldsCount == 1 ? "1 info perso" : "\(customFieldsCount) infos perso"
+    }
+
+    private var tagsLabel: String {
+        tags.count == 1 ? "1 tag" : "\(tags.count) tags"
+    }
+
+    private var yearAndDateLine: String? {
+        let year = info.year != nil && info.year! > 0 ? "\(info.year!)" : nil
+        let date = item.dateAddedDate?.formatted(Date.FormatStyle(date: .numeric, time: .omitted))
+        switch (year, date) {
+        case let (.some(y), .some(d)):
+            return "\(y) · Ajouté le \(d)"
+        case let (.some(y), .none):
+            return y
+        case let (.none, .some(d)):
+            return "Ajouté le \(d)"
+        case (.none, .none):
+            return nil
+        }
     }
 
     private var formatLine: String? {

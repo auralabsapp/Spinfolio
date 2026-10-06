@@ -6,6 +6,15 @@ struct DiscogsCredentials: Sendable {
     let tokenSecret: String
 }
 
+extension Error {
+    /// `true` si l'erreur provient de l'annulation de la tâche (attente du rate limiter ou requête
+    /// réseau interrompue) : ce n'est pas un échec à montrer à l'utilisateur, la tâche a
+    /// simplement été remplacée (nouvelle frappe, changement de dossier ou de tri...).
+    var isCancellation: Bool {
+        self is CancellationError || (self as? URLError)?.code == .cancelled
+    }
+}
+
 /// Client HTTP générique pour l'API REST Discogs (réponses JSON).
 /// Le flux OAuth (request_token / access_token, réponses form-encoded) est géré séparément
 /// par `DiscogsAuthManager`, qui réutilise le même `OAuth1Signer`.
@@ -54,9 +63,10 @@ final class DiscogsAPIClient {
         path: String,
         method: String = "GET",
         queryItems: [URLQueryItem] = [],
+        body: Data? = nil,
         credentials: DiscogsCredentials? = nil
     ) async throws -> T {
-        let (data, _) = try await perform(path: path, method: method, queryItems: queryItems, credentials: credentials)
+        let (data, _) = try await perform(path: path, method: method, queryItems: queryItems, body: body, credentials: credentials)
         return try decoder.decode(T.self, from: data)
     }
 
@@ -66,9 +76,10 @@ final class DiscogsAPIClient {
         path: String,
         method: String,
         queryItems: [URLQueryItem] = [],
+        body: Data? = nil,
         credentials: DiscogsCredentials?
     ) async throws -> Bool {
-        _ = try await perform(path: path, method: method, queryItems: queryItems, credentials: credentials)
+        _ = try await perform(path: path, method: method, queryItems: queryItems, body: body, credentials: credentials)
         return true
     }
 
@@ -78,6 +89,7 @@ final class DiscogsAPIClient {
         path: String,
         method: String,
         queryItems: [URLQueryItem],
+        body: Data? = nil,
         credentials: DiscogsCredentials?
     ) async throws -> (Data, HTTPURLResponse) {
         guard var components = URLComponents(url: baseURL.appendingPathComponent(path), resolvingAgainstBaseURL: false) else {
@@ -91,26 +103,35 @@ final class DiscogsAPIClient {
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = method
         urlRequest.setValue(DiscogsSecrets.userAgent, forHTTPHeaderField: "User-Agent")
-        urlRequest.setValue(
-            signer.authorizationHeader(
-                method: method,
-                url: url,
-                token: credentials?.token,
-                tokenSecret: credentials?.tokenSecret ?? ""
-            ),
-            forHTTPHeaderField: "Authorization"
-        )
+        if let body {
+            urlRequest.httpBody = body
+            urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        }
+        for attempt in 0...2 {
+            try await rateLimiter.waitForSlot()
 
-        for attempt in 0...1 {
-            await rateLimiter.waitForSlot()
+            // Signé à chaque tentative, juste avant l'envoi : un retry après 429 repart plusieurs
+            // secondes plus tard, et réutiliser le même `oauth_nonce`/`oauth_timestamp` peut être
+            // rejeté par Discogs comme un rejeu.
+            urlRequest.setValue(
+                signer.authorizationHeader(
+                    method: method,
+                    url: url,
+                    token: credentials?.token,
+                    tokenSecret: credentials?.tokenSecret ?? ""
+                ),
+                forHTTPHeaderField: "Authorization"
+            )
 
             let (data, response) = try await session.data(for: urlRequest)
             guard let http = response as? HTTPURLResponse else { throw APIError.invalidResponse }
             await rateLimiter.recordResponse(http)
 
-            if http.statusCode == 429, attempt == 0 {
+            if http.statusCode == 429, attempt < 2 {
                 let delay = await rateLimiter.retryDelay(after: http)
-                try? await Task.sleep(for: .seconds(delay))
+                // `try` (et non `try?`) : une tâche annulée pendant l'attente (changement de
+                // dossier, de compte...) ne doit pas renvoyer sa requête.
+                try await Task.sleep(for: .seconds(delay))
                 continue
             }
 

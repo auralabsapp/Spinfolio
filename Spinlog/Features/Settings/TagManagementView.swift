@@ -1,161 +1,312 @@
 import SwiftUI
 
-struct TagManagementView: View {
-    @State private var store = TagStore.shared
-    @State private var searchText = ""
-    @State private var showingCreateAlert = false
-    @State private var newTagInput = ""
-    @State private var tagToRename: String?
-    @State private var renameInput = ""
-    @State private var tagToDelete: String?
-    @State private var showingDeleteAllConfirmation = false
+struct TagRenameItem: Identifiable, Equatable {
+    var id: String { tag }
+    let tag: String
+}
 
-    private var filteredTags: [String] {
-        let all = store.allTags
-        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty else { return all }
-        return all.filter { $0.localizedCaseInsensitiveContains(query) }
+/// Vue modale élégante et sans conflit pour renommer un tag ou le fusionner en cas de doublon
+struct TagRenameSheet: View {
+    let sourceTag: String
+    @Environment(\.dismiss) private var dismiss
+    @State private var store = TagStore.shared
+    @State private var newName: String
+    @State private var showingMergeConfirmation = false
+    @State private var showingMaxLengthAlert = false
+    @FocusState private var isFieldFocused: Bool
+
+    init(tag: String) {
+        self.sourceTag = tag
+        self._newName = State(initialValue: tag)
+    }
+
+    private var trimmedNewName: String {
+        newName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var isSameName: Bool {
+        trimmedNewName == sourceTag
+    }
+
+    private var targetTag: String? {
+        guard !trimmedNewName.isEmpty, !isSameName else { return nil }
+        return store.existingTag(matching: trimmedNewName)
+    }
+
+    private var isCollision: Bool {
+        guard let target = targetTag else { return false }
+        return target.caseInsensitiveCompare(sourceTag) != .orderedSame
     }
 
     var body: some View {
-        Group {
-            if store.allTags.isEmpty {
-                ContentUnavailableView {
-                    Label("Aucun tag", systemImage: "tag.slash")
-                } description: {
-                    Text("Créez des tags ici ou attribuez-en à vos disques depuis la fiche détaillée d'un vinyle.")
-                } actions: {
-                    Button("Créer un tag") {
-                        newTagInput = ""
-                        showingCreateAlert = true
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Nom du tag")
+                            .font(.subheadline)
+                            .foregroundStyle(Color.appSecondaryText)
+
+                        TextField("Nom du tag", text: $newName)
+                            .font(.body)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 12)
+                            .appleMusicGroupedCard()
+                            .focused($isFieldFocused)
+                            .submitLabel(isCollision ? .return : .done)
+                            .onChange(of: newName) { _, newValue in
+                                if newValue.count > TagConstants.maxNameLength {
+                                    newName = String(newValue.prefix(TagConstants.maxNameLength))
+                                    showingMaxLengthAlert = true
+                                }
+                            }
+                            .onSubmit {
+                                if !isCollision && !trimmedNewName.isEmpty && !isSameName {
+                                    store.renameTag(sourceTag, to: trimmedNewName)
+                                    dismiss()
+                                }
+                            }
                     }
-                    .buttonStyle(.borderedProminent)
-                }
-            } else if filteredTags.isEmpty {
-                ContentUnavailableView.search(text: searchText)
-            } else {
-                List {
-                    Section {
-                        ForEach(filteredTags, id: \.self) { tag in
-                            HStack(spacing: 12) {
-                                Text(tag)
-                                    .font(.subheadline.weight(.medium))
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 5)
-                                    .background(Color.tagBackground, in: Capsule())
-                                    .foregroundStyle(Color.tagForeground)
 
-                                Spacer()
-
-                                let count = store.releaseCount(for: tag)
-                                Text(count <= 1 ? "\(count) disque" : "\(count) disques")
-                                    .font(.footnote)
-                                    .foregroundStyle(.secondary)
+                    if isCollision, let target = targetTag {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.orange)
+                                Text("Tag déjà existant")
+                                    .font(.subheadline.weight(.semibold))
                             }
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                tagToRename = tag
-                                renameInput = tag
-                            }
-                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                Button(role: .destructive) {
-                                    tagToDelete = tag
-                                } label: {
-                                    Label("Supprimer", systemImage: "trash")
-                                }
 
-                                Button {
-                                    tagToRename = tag
-                                    renameInput = tag
-                                } label: {
-                                    Label("Renommer", systemImage: "pencil")
-                                }
-                                .tint(.orange)
-                            }
-                            .contextMenu {
-                                Button {
-                                    tagToRename = tag
-                                    renameInput = tag
-                                } label: {
-                                    Label("Renommer", systemImage: "pencil")
-                                }
-
-                                Button(role: .destructive) {
-                                    tagToDelete = tag
-                                } label: {
-                                    Label("Supprimer", systemImage: "trash")
-                                }
-                            }
-                        }
-                    } header: {
-                        Text("\(filteredTags.count) \(filteredTags.count <= 1 ? "tag" : "tags")")
-                    } footer: {
-                        Text("Touchez un tag ou glissez vers la gauche pour le renommer ou le supprimer. La modification sera répercutée sur tous les disques associés.")
-                    }
-                }
-            }
-        }
-        .navigationTitle("Gestion des tags")
-        .searchable(text: $searchText, prompt: "Rechercher un tag")
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                HStack(spacing: 8) {
-                    Button {
-                        newTagInput = ""
-                        showingCreateAlert = true
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                    .accessibilityLabel("Nouveau tag")
-
-                    if !store.allTags.isEmpty {
-                        Menu {
-                            Button(role: .destructive) {
-                                showingDeleteAllConfirmation = true
+                            Button {
+                                showingMergeConfirmation = true
                             } label: {
-                                Label("Supprimer tous les tags", systemImage: "trash")
+                                HStack(spacing: 8) {
+                                    Image(systemName: "arrow.triangle.merge")
+                                    Text("Fusionner avec « \(target) »")
+                                        .fontWeight(.semibold)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 11)
+                                .background(Color.orange.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
+                                .foregroundStyle(.orange)
                             }
-                        } label: {
-                            Image(systemName: "ellipsis.circle")
+                            .buttonStyle(.plain)
                         }
-                        .accessibilityLabel("Options des tags")
+                        .padding(14)
+                        .appleMusicGroupedCard()
+                    }
+                }
+                .padding()
+            }
+            .scrollDismissesKeyboard(.interactively)
+            .navigationTitle("Renommer le tag")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Annuler") {
+                        dismiss()
+                    }
+                }
+
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Enregistrer") {
+                        if !isCollision && !trimmedNewName.isEmpty && !isSameName {
+                            store.renameTag(sourceTag, to: trimmedNewName)
+                            dismiss()
+                        }
+                    }
+                    .disabled(trimmedNewName.isEmpty || isSameName || isCollision)
+                    .fontWeight(.semibold)
+                    .tint(Color.spinlogPink)
+                }
+            }
+            .confirmationDialog(
+                "Confirmer la fusion des tags",
+                isPresented: $showingMergeConfirmation,
+                titleVisibility: .visible
+            ) {
+                if let target = targetTag {
+                    Button("Fusionner les tags", role: .destructive) {
+                        store.renameTag(sourceTag, to: target)
+                        dismiss()
+                    }
+                    Button("Annuler", role: .cancel) {}
+                }
+            } message: {
+                if let target = targetTag {
+                    let sourceCount = store.instanceCount(for: sourceTag)
+                    let targetCount = store.instanceCount(for: target)
+                    Text("Tous les exemplaires associés à « \(sourceTag) » (\(sourceCount)) recevront le tag « \(target) » (\(targetCount)). Le tag « \(sourceTag) » sera définitivement supprimé.")
+                }
+            }
+            .onAppear {
+                isFieldFocused = true
+            }
+            .alert("Nom trop long", isPresented: $showingMaxLengthAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Le nom d'un tag est limité à \(TagConstants.maxNameLength) caractères.")
+            }
+        }
+        .presentationDetents([.height(isCollision ? 300 : 210), .medium])
+        .presentationDragIndicator(.visible)
+    }
+}
+
+struct TagManagementView: View {
+    /// Non-`nil` quand cette vue est ouverte pour appliquer un tag à une sélection en cours
+    /// (édition en lot depuis Collection) plutôt que pour la gérer depuis Réglages : toucher un
+    /// tag l'applique alors immédiatement et referme la sheet, au lieu d'ouvrir le renommage.
+    var onApply: ((String) -> Void)? = nil
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var store = TagStore.shared
+    @State private var searchText = ""
+    @State private var renameItem: TagRenameItem?
+    @State private var tagToDelete: String?
+    @State private var duplicateTagError: String?
+    @State private var showingMaxLengthAlert = false
+
+    private var trimmedQuery: String {
+        searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var exactMatchExists: Bool {
+        store.allTags.contains { $0.caseInsensitiveCompare(trimmedQuery) == .orderedSame }
+    }
+
+    private var filteredTags: [String] {
+        let all = store.allTags
+        guard !trimmedQuery.isEmpty else { return all }
+        return all.filter { $0.localizedCaseInsensitiveContains(trimmedQuery) }
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                // Bouton de création directe et fluide via la recherche
+                if onApply != nil {
+                    Text("Touchez un tag pour l'ajouter à la sélection.")
+                        .font(.footnote)
+                        .foregroundStyle(Color.appSecondaryText)
+                }
+
+                if !trimmedQuery.isEmpty && !exactMatchExists {
+                    Button {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        store.createTag(trimmedQuery)
+                        if let onApply {
+                            onApply(trimmedQuery)
+                            dismiss()
+                        } else {
+                            searchText = ""
+                        }
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title3)
+                                .foregroundStyle(Color.spinlogPink)
+
+                            Text("Créer le tag « \(trimmedQuery) »")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Color.spinlogPink)
+
+                            Spacer()
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .appleMusicGroupedCard()
+                } else if !trimmedQuery.isEmpty && exactMatchExists {
+                    // Indication sobre que le tag existe déjà
+                    HStack(spacing: 12) {
+                        Image(systemName: "exclamationmark.circle.fill")
+                            .font(.title3)
+                            .foregroundStyle(.orange)
+
+                        Text("Tag déjà existant")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.primary)
+
+                        Spacer()
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
+                    .appleMusicGroupedCard()
+                }
+
+                if store.allTags.isEmpty && trimmedQuery.isEmpty {
+                    VStack(alignment: .center, spacing: 14) {
+                        Image(systemName: "tag")
+                            .font(.system(size: 44))
+                            .foregroundStyle(Color.spinlogPink.opacity(0.8))
+
+                        Text("Aucun tag créé")
+                            .font(.headline)
+
+                        Text("Tapez un nom dans la barre de recherche ci-dessus pour créer votre premier tag.")
+                            .font(.subheadline)
+                            .foregroundStyle(Color.appSecondaryText)
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 36)
+                    .padding(.horizontal, 20)
+                } else if !filteredTags.isEmpty {
+                    VStack(alignment: .leading, spacing: 10) {
+                        SectionEyebrow(title: "Tags créés (\(filteredTags.count))", icon: "tag.fill")
+
+                        VStack(spacing: 0) {
+                            ForEach(Array(filteredTags.enumerated()), id: \.element) { index, tag in
+                                tagRow(tag)
+                                if index < filteredTags.count - 1 {
+                                    Divider().opacity(0.15).padding(.leading, 14)
+                                }
+                            }
+                        }
+                        .padding(.vertical, 4)
+                        .appleMusicGroupedCard()
+
+                        Text("Glissez vers la gauche pour modifier ou supprimer un tag.")
+                            .font(.footnote)
+                            .foregroundStyle(Color.appSecondaryText)
                     }
                 }
             }
+            .padding()
         }
-        .alert("Nouveau tag", isPresented: $showingCreateAlert) {
-            TextField("Nom du tag", text: $newTagInput)
-            Button("Créer") {
-                store.createTag(newTagInput)
-                newTagInput = ""
-            }
-            .disabled(newTagInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            Button("Annuler", role: .cancel) {
-                newTagInput = ""
-            }
-        } message: {
-            Text("Ce tag sera disponible dans les suggestions pour tous vos disques.")
-        }
-        .alert("Renommer le tag", isPresented: Binding(
-            get: { tagToRename != nil },
-            set: { if !$0 { tagToRename = nil } }
-        )) {
-            TextField("Nouveau nom", text: $renameInput)
-            Button("Enregistrer") {
-                if let oldTag = tagToRename {
-                    store.renameTag(oldTag, to: renameInput)
+        .swipeActionsContainer()
+        .navigationTitle("Gestion des tags")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if onApply != nil {
+                ToolbarItem(placement: .topBarTrailing) {
+                    SheetCloseButton()
                 }
-                tagToRename = nil
             }
-            .disabled(renameInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            Button("Annuler", role: .cancel) {
-                tagToRename = nil
+        }
+        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Rechercher ou créer un tag")
+        .onChange(of: searchText) { _, newValue in
+            if newValue.count > TagConstants.maxNameLength {
+                searchText = String(newValue.prefix(TagConstants.maxNameLength))
+                showingMaxLengthAlert = true
             }
-        } message: {
-            if let oldTag = tagToRename {
-                let count = store.releaseCount(for: oldTag)
-                Text("Le renommage s'appliquera à \(count <= 1 ? "1 disque associé" : "\(count) disques associés").")
+        }
+        .onSubmit(of: .search) {
+            let trimmed = trimmedQuery
+            guard !trimmed.isEmpty else { return }
+            if exactMatchExists {
+                duplicateTagError = trimmed
+            } else {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                store.createTag(trimmed)
+                searchText = ""
             }
+        }
+        .sheet(item: $renameItem) { item in
+            TagRenameSheet(tag: item.tag)
         }
         .confirmationDialog(
             "Supprimer le tag",
@@ -180,17 +331,85 @@ struct TagManagementView: View {
                 Text("Êtes-vous sûr de vouloir supprimer « \(tag) » ? Ce tag sera retiré de \(count <= 1 ? "1 disque" : "\(count) disques").")
             }
         }
-        .confirmationDialog(
-            "Supprimer tous les tags ?",
-            isPresented: $showingDeleteAllConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Supprimer tous les tags", role: .destructive) {
-                store.removeAllTags()
+        .alert("Tag déjà existant", isPresented: Binding(
+            get: { duplicateTagError != nil },
+            set: { if !$0 { duplicateTagError = nil } }
+        )) {
+            Button("OK", role: .cancel) {
+                duplicateTagError = nil
             }
-            Button("Annuler", role: .cancel) {}
         } message: {
-            Text("Tous les tags seront définitivement supprimés et retirés de vos disques. Cette action est irréversible.")
+            if let name = duplicateTagError {
+                Text("Le tag « \(name) » existe déjà dans votre bibliothèque.")
+            }
+        }
+        .alert("Nom trop long", isPresented: $showingMaxLengthAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Le nom d'un tag est limité à \(TagConstants.maxNameLength) caractères.")
+        }
+    }
+
+    private func tagRow(_ tag: String) -> some View {
+        HStack(spacing: 12) {
+            Text(tag)
+                .font(.subheadline.weight(.medium))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(Color.tagBackground, in: Capsule())
+                .foregroundStyle(Color.tagForeground)
+
+            Spacer()
+
+            let count = store.instanceCount(for: tag)
+            Text(count <= 1 ? "\(count) ex." : "\(count) ex.")
+                .font(.footnote)
+                .foregroundStyle(Color.appSecondaryText)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if let onApply {
+                onApply(tag)
+                dismiss()
+            } else {
+                renameItem = TagRenameItem(tag: tag)
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            Button(role: .destructive) {
+                tagToDelete = tag
+            } label: {
+                Label("Supprimer", systemImage: "trash.fill")
+            }
+            .tint(.red)
+            .labelStyle(.iconOnly)
+            .accessibilityLabel("Supprimer ce tag")
+
+            Button {
+                renameItem = TagRenameItem(tag: tag)
+            } label: {
+                Label("Modifier", systemImage: "pencil")
+            }
+            .tint(.orange)
+            .labelStyle(.iconOnly)
+            .accessibilityLabel("Modifier ce tag")
+        }
+        .contextMenu {
+            Button {
+                renameItem = TagRenameItem(tag: tag)
+            } label: {
+                Label("Renommer", systemImage: "pencil")
+            }
+
+            Button(role: .destructive) {
+                tagToDelete = tag
+            } label: {
+                Label("Supprimer", systemImage: "trash")
+            }
         }
     }
 }

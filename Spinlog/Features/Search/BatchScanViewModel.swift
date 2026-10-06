@@ -22,6 +22,10 @@ struct BatchScanItem: Identifiable {
     var id: String { code }
     let code: String
     var status: BatchScanItemStatus
+    /// Tous les pressages Discogs partageant ce code-barres (un même code-barres correspond
+    /// souvent à plusieurs pressages/rééditions) : `status` retient celui actuellement
+    /// sélectionné pour l'ajout, mais l'utilisateur peut en choisir un autre depuis cette liste.
+    var alternatives: [SearchResult] = []
     var isSelected = true
 }
 
@@ -51,8 +55,10 @@ final class BatchScanViewModel {
                 code, credentials: DiscogsAuthManager.shared.credentials
             )
             guard let index = items.firstIndex(where: { $0.code == code }) else { return }
-            if let match = response.results.first(where: \.isRelease) {
-                items[index].status = .found(match)
+            let releases = response.results.filter(\.isRelease)
+            if let first = releases.first {
+                items[index].status = .found(first)
+                items[index].alternatives = releases
             } else {
                 items[index].status = .notFound
             }
@@ -69,6 +75,13 @@ final class BatchScanViewModel {
     func toggleSelection(_ item: BatchScanItem) {
         guard let index = items.firstIndex(where: { $0.id == item.id }) else { return }
         items[index].isSelected.toggle()
+    }
+
+    /// Change le pressage retenu pour ce code-barres parmi les alternatives détectées (même
+    /// code-barres partagé par plusieurs éditions/rééditions).
+    func selectMatch(_ result: SearchResult, for item: BatchScanItem) {
+        guard let index = items.firstIndex(where: { $0.id == item.id }) else { return }
+        items[index].status = .found(result)
     }
 
     func isAlreadyInCollection(_ item: BatchScanItem) -> Bool {
@@ -100,8 +113,11 @@ final class BatchScanViewModel {
             count += 1
             addProgressText = "Ajout en collection (\(count)/\(targets.count))\u{2026}"
             let actions = ReleaseActions()
-            await actions.addToCollection(releaseId: result.id, targetFolderId: folderId)
-            try? await Task.sleep(for: .milliseconds(600))
+            // Sans l'objet `Release`, `addToCollection` ne notifie pas les onglets Collection/
+            // Wantlist (voir `ReleaseActions.addToCollection`) : la liste ne se met alors pas à
+            // jour tant que l'utilisateur ne recharge pas manuellement.
+            let release = try? await DiscogsAPIClient.shared.release(id: result.id, credentials: DiscogsAuthManager.shared.credentials)
+            await actions.addToCollection(releaseId: result.id, release: release, targetFolderId: folderId)
         }
         let targetIds = Set(targets.map(\.id))
         items.removeAll { targetIds.contains($0.id) }
@@ -120,8 +136,8 @@ final class BatchScanViewModel {
             count += 1
             addProgressText = "Ajout en wantlist (\(count)/\(targets.count))\u{2026}"
             let actions = ReleaseActions()
-            await actions.addToWantlist(releaseId: result.id)
-            try? await Task.sleep(for: .milliseconds(600))
+            let release = try? await DiscogsAPIClient.shared.release(id: result.id, credentials: DiscogsAuthManager.shared.credentials)
+            await actions.addToWantlist(releaseId: result.id, release: release)
         }
         let targetIds = Set(targets.map(\.id))
         items.removeAll { targetIds.contains($0.id) }

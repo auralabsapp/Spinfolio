@@ -14,6 +14,8 @@ private struct DisableContentPopGesture: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
         DispatchQueue.main.async {
             uiViewController.navigationController?.interactiveContentPopGestureRecognizer?.isEnabled = false
+            uiViewController.navigationController?.interactivePopGestureRecognizer?.isEnabled = true
+            uiViewController.navigationController?.interactivePopGestureRecognizer?.delegate = nil
         }
     }
 

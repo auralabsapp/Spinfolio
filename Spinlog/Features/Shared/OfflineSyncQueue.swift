@@ -6,16 +6,36 @@ enum ActionType: String, Codable, Sendable {
     case removeFromCollection
     case addToWantlist
     case removeFromWantlist
+    case updateCollectionField
+    case moveCollectionInstance
 }
 
 struct PendingAction: Identifiable, Codable, Sendable {
     let id: UUID
     let type: ActionType
     let releaseId: Int
+    /// Dossier courant de l'exemplaire au moment de l'action (utilisé dans le chemin de la
+    /// requête Discogs). Pour `.moveCollectionInstance`, c'est le dossier de départ.
     let folderId: Int?
     let instanceId: Int?
     let date: Date
     var retryCount: Int
+    /// Identifiant du champ personnalisé Discogs modifié (seulement pour `.updateCollectionField`).
+    let fieldId: Int?
+    /// Nouvelle valeur du champ personnalisé (seulement pour `.updateCollectionField`).
+    let value: String?
+    /// Dossier de destination (seulement pour `.moveCollectionInstance`).
+    let targetFolderId: Int?
+    /// Compte Discogs auquel appartient l'action, renseigné par `OfflineSyncQueue.enqueue` : une
+    /// action ne doit jamais être rejouée avec les identifiants d'un autre compte. `nil` pour les
+    /// actions persistées par une version antérieure (rejouées sur le compte connecté, comme avant).
+    var username: String?
+
+    /// Indique si l'action peut être rejouée pour le compte `username`.
+    func belongs(to username: String) -> Bool {
+        guard let owner = self.username else { return true }
+        return owner.caseInsensitiveCompare(username) == .orderedSame
+    }
 
     init(
         id: UUID = UUID(),
@@ -24,7 +44,10 @@ struct PendingAction: Identifiable, Codable, Sendable {
         folderId: Int? = nil,
         instanceId: Int? = nil,
         date: Date = Date(),
-        retryCount: Int = 0
+        retryCount: Int = 0,
+        fieldId: Int? = nil,
+        value: String? = nil,
+        targetFolderId: Int? = nil
     ) {
         self.id = id
         self.type = type
@@ -33,6 +56,20 @@ struct PendingAction: Identifiable, Codable, Sendable {
         self.instanceId = instanceId
         self.date = date
         self.retryCount = retryCount
+        self.fieldId = fieldId
+        self.value = value
+        self.targetFolderId = targetFolderId
+    }
+}
+
+enum OfflineSyncError: LocalizedError {
+    case ambiguousInstance
+
+    var errorDescription: String? {
+        switch self {
+        case .ambiguousInstance:
+            return "plusieurs exemplaires de ce disque, supprime-le manuellement"
+        }
     }
 }
 
@@ -52,11 +89,33 @@ final class OfflineSyncQueue {
 
     private init() {
         loadPersistedActions()
+
+        // Sans cet observateur, une file remplie hors ligne ne se relance qu'au prochain
+        // `enqueue()` (s'il intervient alors qu'on est déjà reconnecté) : rien ne la reprenait
+        // sinon au simple retour du réseau.
+        NotificationCenter.default.addObserver(
+            forName: .networkConnectionRestored,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                await self?.processQueue()
+            }
+        }
     }
 
     // MARK: - Gestion de la file
 
+    func clearQueue() {
+        pendingActions.removeAll()
+        persistActions()
+    }
+
     func enqueue(_ action: PendingAction) {
+        var action = action
+        if action.username == nil {
+            action.username = DiscogsAuthManager.shared.username
+        }
         pendingActions.append(action)
         persistActions()
 
@@ -83,14 +142,15 @@ final class OfflineSyncQueue {
 
     func processQueue() async {
         guard !isProcessing, !pendingActions.isEmpty, NetworkMonitor.shared.isConnected else { return }
-        guard let username = DiscogsAuthManager.shared.username,
-              let credentials = DiscogsAuthManager.shared.credentials else { return }
+        guard let (username, credentials) = DiscogsAuthManager.shared.session else { return }
 
         isProcessing = true
         defer { isProcessing = false }
 
-        while !pendingActions.isEmpty && NetworkMonitor.shared.isConnected {
-            let action = pendingActions[0]
+        // Les actions d'un autre compte restent en file, intactes, jusqu'à ce que ce compte se
+        // reconnecte : les rejouer ici les appliquerait à la collection du mauvais compte.
+        while NetworkMonitor.shared.isConnected,
+              let action = pendingActions.first(where: { $0.belongs(to: username) }) {
 
             // Respect impératif du rate-limiting Discogs (au moins 1,1s entre chaque requête)
             let elapsed = Date().timeIntervalSince(lastRequestTime)
@@ -104,14 +164,22 @@ final class OfflineSyncQueue {
                 try await executeAction(action, username: username, credentials: credentials)
 
                 // Succès : retirer de la file
-                if !pendingActions.isEmpty && pendingActions[0].id == action.id {
-                    pendingActions.removeFirst()
-                    persistActions()
-                }
+                removeAction(id: action.id)
             } catch {
                 // Gestion du Rate Limiting HTTP 429
                 let errorString = error.localizedDescription
-                if errorString.contains("429") || (error as? DiscogsError) == .rateLimited {
+                let isRateLimited: Bool
+                if let apiError = error as? DiscogsAPIClient.APIError {
+                    switch apiError {
+                    case .rateLimited: isRateLimited = true
+                    case .http(let status, _): isRateLimited = (status == 429)
+                    default: isRateLimited = false
+                    }
+                } else {
+                    isRateLimited = errorString.contains("429")
+                }
+
+                if isRateLimited {
                     // Backoff de sécurité avant de réessayer
                     try? await Task.sleep(for: .seconds(5))
                     continue
@@ -123,15 +191,12 @@ final class OfflineSyncQueue {
 
                 if updatedAction.retryCount >= 3 {
                     // Échec définitif : suppression de la file et notification de l'utilisateur
-                    if !pendingActions.isEmpty && pendingActions[0].id == action.id {
-                        pendingActions.removeFirst()
-                        persistActions()
-                    }
+                    removeAction(id: action.id)
                     lastErrorNotification = "Échec définitif de synchronisation : \(actionDescription(for: action)) (\(error.localizedDescription))"
                 } else {
                     // Mise à jour de l'action avec nouveau compteur
-                    if !pendingActions.isEmpty && pendingActions[0].id == action.id {
-                        pendingActions[0] = updatedAction
+                    if let index = pendingActions.firstIndex(where: { $0.id == action.id }) {
+                        pendingActions[index] = updatedAction
                         persistActions()
                     }
                     // Pause temporaire avant la prochaine tentative
@@ -139,6 +204,12 @@ final class OfflineSyncQueue {
                 }
             }
         }
+    }
+
+    private func removeAction(id: UUID) {
+        guard let index = pendingActions.firstIndex(where: { $0.id == id }) else { return }
+        pendingActions.remove(at: index)
+        persistActions()
     }
 
     private func executeAction(
@@ -172,6 +243,11 @@ final class OfflineSyncQueue {
                     releaseId: action.releaseId,
                     credentials: credentials
                 )
+                // Plusieurs exemplaires : impossible de savoir lequel supprimer, on échoue plutôt
+                // que de retirer arbitrairement le premier (potentiellement le mauvais).
+                guard instances.releases.count <= 1 else {
+                    throw OfflineSyncError.ambiguousInstance
+                }
                 if let instance = instances.releases.first {
                     try await DiscogsAPIClient.shared.removeFromCollection(
                         username: username,
@@ -196,6 +272,29 @@ final class OfflineSyncQueue {
                 releaseId: action.releaseId,
                 credentials: credentials
             )
+
+        case .updateCollectionField:
+            guard let instanceId = action.instanceId, let fieldId = action.fieldId, let value = action.value else { return }
+            try await DiscogsAPIClient.shared.updateCollectionField(
+                username: username,
+                folderId: action.folderId ?? DiscogsConstants.uncategorizedFolderId,
+                releaseId: action.releaseId,
+                instanceId: instanceId,
+                fieldId: fieldId,
+                value: value,
+                credentials: credentials
+            )
+
+        case .moveCollectionInstance:
+            guard let instanceId = action.instanceId, let targetFolderId = action.targetFolderId else { return }
+            try await DiscogsAPIClient.shared.moveCollectionInstance(
+                username: username,
+                folderId: action.folderId ?? DiscogsConstants.uncategorizedFolderId,
+                releaseId: action.releaseId,
+                instanceId: instanceId,
+                toFolderId: targetFolderId,
+                credentials: credentials
+            )
         }
     }
 
@@ -205,6 +304,8 @@ final class OfflineSyncQueue {
         case .removeFromCollection: return "Suppression de la collection (release \(action.releaseId))"
         case .addToWantlist: return "Ajout à la wantlist (release \(action.releaseId))"
         case .removeFromWantlist: return "Suppression de la wantlist (release \(action.releaseId))"
+        case .updateCollectionField: return "Modification d'un champ personnalisé (release \(action.releaseId))"
+        case .moveCollectionInstance: return "Changement de dossier (release \(action.releaseId))"
         }
     }
 }

@@ -3,7 +3,7 @@ import CryptoKit
 
 /// Signe les requêtes selon OAuth 1.0a (HMAC-SHA1), tel qu'exigé par l'API Discogs.
 /// Référence : https://www.discogs.com/developers#page:authentication
-struct OAuth1Signer: Sendable {
+nonisolated struct OAuth1Signer: Sendable {
     let consumerKey: String
     let consumerSecret: String
 

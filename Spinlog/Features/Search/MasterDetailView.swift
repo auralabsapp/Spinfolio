@@ -63,7 +63,13 @@ struct MasterDetailView: View {
                     }
 
                     if let tracklist = master.tracklist, !tracklist.isEmpty {
-                        TracklistSection(tracklist: tracklist)
+                        TracklistSection(
+                            tracklist: tracklist,
+                            artistName: master.artistNames,
+                            albumTitle: master.title,
+                            coverURL: master.primaryImageURL,
+                            destination: .master(master.id)
+                        )
                     }
 
                     if !viewModel.versions.isEmpty {
@@ -86,11 +92,22 @@ struct MasterDetailView: View {
                             }
                         }
                     }
+
+                    if let url = master.discogsWebURL {
+                        DiscogsAttributionLink(url: url)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    }
                 }
                 .padding()
             }
             .background(infoBackgroundColor.ignoresSafeArea())
             .animation(.easeInOut(duration: 0.35), value: infoBackgroundColor)
+            .onAppear {
+                TabNavigationCoordinator.shared.registerTopDestination(.master(masterId))
+            }
+            .onDisappear {
+                TabNavigationCoordinator.shared.unregisterTopDestination(.master(masterId))
+            }
         }
     }
 }

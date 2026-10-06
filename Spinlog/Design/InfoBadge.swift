@@ -9,6 +9,6 @@ struct InfoBadge: View {
         Label(text, systemImage: systemImage)
             .labelStyle(.titleAndIcon)
             .font(.caption)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Color.appSecondaryText)
     }
 }

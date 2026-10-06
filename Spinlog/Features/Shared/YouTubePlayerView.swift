@@ -7,6 +7,18 @@ import WebKit
 struct YouTubePlayerView: UIViewRepresentable {
     let videoID: String
 
+    /// Retient l'ID déjà chargé pour ne recharger la page (et donc redémarrer la vidéo) que
+    /// lorsque celui-ci change réellement. Sans ça, `updateUIView` — appelé à chaque re-rendu
+    /// SwiftUI, y compris lors d'une simple rotation de l'écran — rechargeait l'iframe et
+    /// remettait la lecture à zéro.
+    final class Coordinator {
+        var loadedVideoID: String?
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
     func makeUIView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
         configuration.allowsInlineMediaPlayback = true
@@ -20,8 +32,35 @@ struct YouTubePlayerView: UIViewRepresentable {
     }
 
     func updateUIView(_ webView: WKWebView, context: Context) {
-        guard let url = URL(string: "https://www.youtube.com/embed/\(videoID)?playsinline=1&rel=0") else { return }
-        webView.load(URLRequest(url: url))
+        guard context.coordinator.loadedVideoID != videoID else { return }
+        context.coordinator.loadedVideoID = videoID
+
+        // Certaines vidéos restreignent l'intégration à une liste de domaines autorisés par leur
+        // propriétaire. Discogs, qui intègre ces mêmes vidéos sur ses propres fiches release,
+        // s'authentifie auprès de YouTube avec `origin=https://www.discogs.com` (visible dans les
+        // URLs de son lecteur) : on reprend cette origine plutôt que youtube.com, qui n'est pas
+        // reconnue comme un domaine tiers autorisé et déclenchait "Cette vidéo n'est pas disponible".
+        let html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+            <style>
+                html, body { margin: 0; padding: 0; background-color: black; }
+                iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+            </style>
+        </head>
+        <body>
+            <iframe
+                src="https://www.youtube.com/embed/\(videoID)?playsinline=1&rel=0&autoplay=1&origin=https://www.discogs.com"
+                frameborder="0"
+                allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen>
+            </iframe>
+        </body>
+        </html>
+        """
+        webView.loadHTMLString(html, baseURL: URL(string: "https://www.discogs.com"))
     }
 }
 
@@ -51,11 +90,7 @@ struct VideoPlayerSheet: View {
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Fermer") {
-                        dismiss()
-                    }
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Color.spinlogPink)
+                    SheetCloseButton()
                 }
             }
         }

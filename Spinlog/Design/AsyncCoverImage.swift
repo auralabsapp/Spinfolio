@@ -1,16 +1,21 @@
 import SwiftUI
+import Kingfisher
 
 /// Pochette carrée à coins arrondis, avec halo et état de chargement/erreur.
-/// Passe par `DiscogsImageLoader` (et non `AsyncImage` seul) car l'API Discogs exige un
-/// `User-Agent` et une signature OAuth même pour les images, avec un cache borné à 6h.
+/// Utilise Kingfisher avec cache disque borné à 6h et headers Discogs.
 struct AsyncCoverImage: View {
     let url: String?
     var cornerRadius: CGFloat = 12
     var showsBorder: Bool = true
+    /// Taille d'affichage prévue (en points), quand elle est connue à l'avance. Permet à
+    /// Kingfisher de décoder directement une miniature à cette résolution au lieu de mettre en
+    /// cache/décoder l'image d'origine en pleine résolution puis de la sous-échantillonner à
+    /// chaque rendu — coûteux pendant le défilement des listes/grilles. `nil` conserve le
+    /// comportement précédent (taille inconnue à l'avance, ex: héros avec parallax).
+    var targetSize: CGFloat? = nil
     var onAverageColorLoaded: ((UIColor) -> Void)? = nil
 
-    @State private var uiImage: UIImage?
-    @State private var isLoading = true
+    @Environment(\.displayScale) private var displayScale
 
     var body: some View {
         content
@@ -22,22 +27,36 @@ struct AsyncCoverImage: View {
                         .strokeBorder(.quaternary, lineWidth: 0.5)
                 }
             }
-            .task(id: url) {
-                await load()
-            }
     }
 
     @ViewBuilder
     private var content: some View {
-        if let uiImage {
-            Image(uiImage: uiImage)
-                .resizable()
-                .aspectRatio(1, contentMode: .fill)
-        } else if isLoading {
-            placeholder.overlay { ProgressView() }
+        if let urlString = url, let imageURL = URL(string: urlString) {
+            configuredImage(url: imageURL, urlString: urlString)
         } else {
             placeholder
         }
+    }
+
+    private func configuredImage(url: URL, urlString: String) -> some View {
+        var image = KFImage(url)
+            .placeholder {
+                placeholder.overlay { ProgressView() }
+            }
+            .onSuccess { result in
+                if let avg = result.image.averageColor {
+                    ReleaseColorCache.shared.register(color: avg, url: urlString)
+                    onAverageColorLoaded?(avg)
+                }
+            }
+            .fade(duration: 0.2)
+        if let targetSize {
+            let pixelSize = targetSize * displayScale
+            image = image.downsampling(size: CGSize(width: pixelSize, height: pixelSize))
+        }
+        return image
+            .resizable()
+            .aspectRatio(1, contentMode: .fill)
     }
 
     private var placeholder: some View {
@@ -46,30 +65,8 @@ struct AsyncCoverImage: View {
             .overlay {
                 Image(systemName: "opticaldisc")
                     .font(.title2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.appSecondaryText)
             }
-    }
-
-    private func load() async {
-        uiImage = nil
-        guard let urlString = url, let imageURL = URL(string: urlString) else {
-            isLoading = false
-            return
-        }
-        isLoading = true
-        do {
-            let data = try await DiscogsImageLoader.shared.loadData(
-                from: imageURL, credentials: DiscogsAuthManager.shared.credentials
-            )
-            let image = UIImage(data: data)
-            uiImage = image
-            if let avg = image?.averageColor {
-                onAverageColorLoaded?(avg)
-            }
-        } catch {
-            uiImage = nil
-        }
-        isLoading = false
     }
 }
 

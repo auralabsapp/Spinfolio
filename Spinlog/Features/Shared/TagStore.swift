@@ -155,6 +155,11 @@ final class TagStore {
             if let legacy = legacyTagsByRelease[releaseKey], !legacy.isEmpty {
                 return legacy
             }
+        } else {
+            let legacyKey = String(instanceId)
+            if let legacy = legacyTagsByRelease[legacyKey], !legacy.isEmpty {
+                return legacy
+            }
         }
         return []
     }
@@ -171,14 +176,44 @@ final class TagStore {
             TimestampedTag(name: name, addedAt: existingByName[name] ?? now)
         }
         persist()
+        CloudSyncEngine.shared.markTagsDirty(instanceId: instanceId)
     }
 
-    /// Rétrocompatibilité / interrogation au niveau release.
-    func tags(for releaseId: Int) -> [String] {
-        if let legacy = legacyTagsByRelease[String(releaseId)], !legacy.isEmpty {
-            return legacy
+    // MARK: - Synchronisation iCloud (compte premium)
+
+    /// Instantané des tags d'un exemplaire sous une forme partageable avec `CloudSyncEngine`
+    /// (sans exposer le `TimestampedTag` privé de ce store).
+    func syncSnapshot(for instanceId: Int) -> [SyncedTag] {
+        (timestampedTagsByInstance[String(instanceId)] ?? []).map { SyncedTag(name: $0.name, addedAt: $0.addedAt) }
+    }
+
+    /// Identifiants de tous les exemplaires ayant au moins un tag, pour la synchronisation
+    /// initiale : les tags créés avant l'existence de `CloudSyncEngine` (ou avant l'activation du
+    /// compte premium) n'ont jamais déclenché `markTagsDirty` — il faut donc les repousser
+    /// explicitement à chaque activation de compte, pas seulement les futures modifications.
+    func allTaggedInstanceIds() -> [Int] {
+        timestampedTagsByInstance.keys.compactMap { Int($0) }
+    }
+
+    /// Applique un état de tags déjà fusionné (voir `TagMergeLogic`) reçu depuis iCloud pour un
+    /// exemplaire donné. N'écrit qu'en local : ne redéclenche pas d'envoi vers CloudKit, cette
+    /// donnée en vient déjà.
+    func applyRemoteTags(instanceId: Int, tags: [SyncedTag]) {
+        let instanceKey = String(instanceId)
+        if tags.isEmpty {
+            timestampedTagsByInstance.removeValue(forKey: instanceKey)
+        } else {
+            timestampedTagsByInstance[instanceKey] = tags.map { TimestampedTag(name: $0.name, addedAt: $0.addedAt) }
         }
-        return []
+        persist()
+    }
+
+    /// Applique un état de tags autonomes déjà fusionné (voir `CloudSyncEngine`) reçu depuis
+    /// iCloud. N'écrit qu'en local : ne redéclenche pas d'envoi vers CloudKit, cette donnée en
+    /// vient déjà.
+    func applyRemoteStandaloneTags(_ tags: Set<String>) {
+        standaloneTags = tags
+        persist()
     }
 
     /// Réassigne les tags d'un identifiant d'exemplaire temporaire vers l'identifiant définitif Discogs.
@@ -189,6 +224,7 @@ final class TagStore {
             timestampedTagsByInstance[newKey] = entries
             timestampedTagsByInstance.removeValue(forKey: oldKey)
             persist()
+            CloudSyncEngine.shared.markTagsDirty(instanceId: newInstanceId)
         }
     }
 
@@ -229,6 +265,7 @@ final class TagStore {
         guard !allTags.contains(where: { $0.caseInsensitiveCompare(trimmed) == .orderedSame }) else { return }
         standaloneTags.insert(trimmed)
         persist()
+        CloudSyncEngine.shared.markStandaloneTagsDirty()
     }
 
     /// Ajoute un tag à un exemplaire spécifique (`instanceId`).
@@ -247,6 +284,7 @@ final class TagStore {
         updated.append(TimestampedTag(name: trimmed, addedAt: now))
         timestampedTagsByInstance[instanceKey] = updated
         persist()
+        CloudSyncEngine.shared.markTagsDirty(instanceId: instanceId)
     }
 
     /// Retire un tag d'un exemplaire spécifique (`instanceId`).
@@ -266,6 +304,7 @@ final class TagStore {
             }
         }
         persist()
+        CloudSyncEngine.shared.markTagsDirty(instanceId: instanceId)
     }
 
     /// Supprime tous les tags associés à un exemplaire supprimé.
@@ -273,6 +312,7 @@ final class TagStore {
         let instanceKey = String(instanceId)
         if timestampedTagsByInstance.removeValue(forKey: instanceKey) != nil {
             persist()
+            CloudSyncEngine.shared.markTagsDirty(instanceId: instanceId)
         }
     }
 
@@ -286,6 +326,7 @@ final class TagStore {
             standaloneTags.insert(trimmed)
         }
 
+        var dirtyInstanceIds: [Int] = []
         for (key, entries) in timestampedTagsByInstance {
             if entries.contains(where: { $0.name == oldTag }) {
                 var updated = entries.map { entry in
@@ -294,6 +335,7 @@ final class TagStore {
                 var seen = Set<String>()
                 updated = updated.filter { seen.insert($0.name.lowercased()).inserted }
                 timestampedTagsByInstance[key] = updated
+                if let instanceId = Int(key) { dirtyInstanceIds.append(instanceId) }
             }
         }
 
@@ -307,18 +349,23 @@ final class TagStore {
         }
 
         persist()
+        CloudSyncEngine.shared.markStandaloneTagsDirty()
+        for instanceId in dirtyInstanceIds { CloudSyncEngine.shared.markTagsDirty(instanceId: instanceId) }
     }
 
     /// Supprime définitivement un tag : retiré de tous les exemplaires et de la liste globale.
     func deleteTag(_ tag: String) {
         standaloneTags.remove(tag)
 
+        var dirtyInstanceIds: [Int] = []
         for (key, entries) in timestampedTagsByInstance {
             let updated = entries.filter { $0.name != tag }
             if updated.isEmpty {
                 timestampedTagsByInstance.removeValue(forKey: key)
+                if let instanceId = Int(key) { dirtyInstanceIds.append(instanceId) }
             } else if updated.count != entries.count {
                 timestampedTagsByInstance[key] = updated
+                if let instanceId = Int(key) { dirtyInstanceIds.append(instanceId) }
             }
         }
 
@@ -333,6 +380,8 @@ final class TagStore {
         }
 
         persist()
+        CloudSyncEngine.shared.markStandaloneTagsDirty()
+        for instanceId in dirtyInstanceIds { CloudSyncEngine.shared.markTagsDirty(instanceId: instanceId) }
     }
 
     /// Restauration des données de tags à partir d'une sauvegarde. Les tags importés reçoivent
@@ -364,5 +413,11 @@ final class TagStore {
         if let data = try? JSONEncoder().encode(standaloneTags) {
             UserDefaults.standard.set(data, forKey: key(standaloneKey, for: activeUsername))
         }
+        NotificationCenter.default.post(name: .tagsChanged, object: nil)
     }
+}
+
+
+extension Notification.Name {
+    static let tagsChanged = Notification.Name("com.spinlog.tagsChanged")
 }

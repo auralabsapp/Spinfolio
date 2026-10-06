@@ -13,6 +13,7 @@ final class DiscogsAuthManager: NSObject {
 
     private(set) var isAuthenticated: Bool
     private(set) var username: String?
+    private(set) var avatarURL: String?
     private(set) var isAuthenticating = false
     var lastError: String?
 
@@ -30,17 +31,33 @@ final class DiscogsAuthManager: NSObject {
         return DiscogsCredentials(token: token, tokenSecret: secret)
     }
 
+    /// Regroupe `username`/`credentials` en une seule valeur optionnelle, pour remplacer le
+    /// `guard let username = ..., let credentials = ...` répété à l'identique dans une douzaine
+    /// d'endroits de l'app par un unique `guard let session = authManager.session`.
+    var session: (username: String, credentials: DiscogsCredentials)? {
+        guard let username, let credentials else { return nil }
+        return (username, credentials)
+    }
+
     private enum Keys {
         static let accessToken = "accessToken"
         static let accessTokenSecret = "accessTokenSecret"
         static let username = "username"
+        static let avatarURL = "avatarURL"
     }
 
     private override init() {
         let keychain = KeychainStore()
+        keychain.migrateAccessibilityIfNeeded()
         self.isAuthenticated = keychain.get(Keys.accessToken) != nil
         self.username = keychain.get(Keys.username)
+        self.avatarURL = keychain.get(Keys.avatarURL)
         super.init()
+        // Propage le compte déjà connu (relance de l'app) aux stores isolés par compte, pour
+        // qu'ils chargent tout de suite les bonnes données plutôt que de démarrer à vide.
+        TagStore.shared.setActiveUsername(self.username)
+        ListeningLogStore.shared.setActiveUsername(self.username)
+        CloudSyncEngine.shared.setActiveUsername(self.username)
     }
 
     func login() async {
@@ -62,16 +79,28 @@ final class DiscogsAuthManager: NSObject {
                 verifier: verifier
             )
 
-            keychain.set(accessToken.token, forKey: Keys.accessToken)
-            keychain.set(accessToken.secret, forKey: Keys.accessTokenSecret)
-
             let identity: Identity = try await DiscogsAPIClient.shared.request(
                 path: "oauth/identity",
                 credentials: DiscogsCredentials(token: accessToken.token, tokenSecret: accessToken.secret)
             )
+            // Tokens et nom d'utilisateur écrits ensemble, uniquement une fois l'identité
+            // obtenue : si `oauth/identity` échouait après l'écriture des tokens, l'app se
+            // croyait connectée au relancement (`isAuthenticated` ne dépend que du token) sans
+            // nom d'utilisateur, donc incapable de charger quoi que ce soit.
+            keychain.set(accessToken.token, forKey: Keys.accessToken)
+            keychain.set(accessToken.secret, forKey: Keys.accessTokenSecret)
             keychain.set(identity.username, forKey: Keys.username)
             username = identity.username
             isAuthenticated = true
+            // Bascule les stores isolés par compte (tags, journal d'écoute) sur ce compte : s'il
+            // a déjà été utilisé sur cet appareil, ses données sont restaurées immédiatement.
+            TagStore.shared.setActiveUsername(username)
+            ListeningLogStore.shared.setActiveUsername(username)
+            CloudSyncEngine.shared.setActiveUsername(username)
+            // Rejoue les actions hors ligne laissées en attente par ce compte lors d'une
+            // session précédente (celles des autres comptes restent en file, voir `OfflineSyncQueue`).
+            Task { await OfflineSyncQueue.shared.processQueue() }
+            await fetchUserProfileIfNeeded(force: true)
         } catch {
             lastError = error.localizedDescription
         }
@@ -81,8 +110,47 @@ final class DiscogsAuthManager: NSObject {
         keychain.remove(Keys.accessToken)
         keychain.remove(Keys.accessTokenSecret)
         keychain.remove(Keys.username)
+        keychain.remove(Keys.avatarURL)
         isAuthenticated = false
         username = nil
+        avatarURL = nil
+        // Vide l'état en mémoire des stores isolés par compte (les données restent sur le
+        // disque, prêtes à être restaurées si ce compte se reconnecte plus tard).
+        TagStore.shared.setActiveUsername(nil)
+        ListeningLogStore.shared.setActiveUsername(nil)
+        CloudSyncEngine.shared.setActiveUsername(nil)
+        // Idem pour Collection/Wantlist/Recherche : ces vues restent montées en permanence dans
+        // le TabView racine, donc leurs singletons ne se réinitialisent jamais tout seuls entre
+        // deux comptes. Sans ce vidage, les items du compte précédent restaient affichés après
+        // connexion sur un autre compte et étaient même réécrits dans le cache local (SwiftData)
+        // du nouveau compte au chargement suivant, car ce chargement fusionne avec l'existant
+        // au lieu de le remplacer (voir `mergedWithFreshPage1`).
+        CollectionViewModel.shared.reset()
+        WantlistViewModel.shared.reset()
+        SearchViewModel.shared.reset()
+        LibraryMembershipStore.shared.refresh()
+        // Vide la session web persistante des `SafariView` (fiches Discogs, marketplace...) :
+        // sans ça, si l'utilisateur s'y était connecté manuellement, cette page resterait
+        // connectée à ce compte même après connexion à un autre compte dans l'app.
+        SafariView.clearPersistedDiscogsSession()
+        // Évite que le widget "Album du jour" continue de piocher dans la collection d'un
+        // compte dont on vient de se déconnecter.
+        WidgetSnapshotStore.saveCollection([])
+    }
+
+    /// Récupère le profil public Discogs pour mettre à jour l'avatar de l'utilisateur.
+    func fetchUserProfileIfNeeded(force: Bool = false) async {
+        guard let username, let credentials else { return }
+        if !force, avatarURL != nil { return }
+        do {
+            let profile = try await DiscogsAPIClient.shared.userProfile(username: username, credentials: credentials)
+            if let avatar = profile.avatarURL, !avatar.isEmpty {
+                self.avatarURL = avatar
+                self.keychain.set(avatar, forKey: Keys.avatarURL)
+            }
+        } catch {
+            // Échec réseau silencieux (mode hors-ligne ou rate limit)
+        }
     }
 
     // MARK: - Étapes OAuth (réponses form-encoded, pas JSON)
@@ -135,7 +203,13 @@ final class DiscogsAuthManager: NSObject {
             session.presentationContextProvider = self
             session.prefersEphemeralWebBrowserSession = true
             webAuthSession = session
-            session.start()
+            // Si la session ne peut pas démarrer, son completion handler n'est jamais appelé :
+            // sans ce cas, la continuation restait en suspens et `isAuthenticating` bloqué à
+            // `true`, rendant le bouton de connexion inopérant jusqu'au relancement de l'app.
+            if !session.start() {
+                webAuthSession = nil
+                continuation.resume(throwing: AuthError.invalidResponse)
+            }
         }
     }
 
@@ -195,9 +269,12 @@ final class DiscogsAuthManager: NSObject {
 
 extension DiscogsAuthManager: ASWebAuthenticationPresentationContextProviding {
     func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-        UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .flatMap(\.windows)
-            .first { $0.isKeyWindow } ?? ASPresentationAnchor()
+        let windowScenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        if let keyWindow = windowScenes.flatMap(\.windows).first(where: \.isKeyWindow) {
+            return keyWindow
+        }
+        // Ce delegate n'est appelé que pendant la présentation d'une session web, donc au moins
+        // une scène doit exister à ce moment ; on évite ainsi `ASPresentationAnchor()` (dépréciée).
+        return ASPresentationAnchor(windowScene: windowScenes.first!)
     }
 }

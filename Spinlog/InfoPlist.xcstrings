@@ -1,5 +1,5 @@
 {
-  "sourceLanguage" : "en",
+  "sourceLanguage" : "fr",
   "strings" : {
     "CFBundleDisplayName" : {
       "comment" : "Bundle display name",
@@ -7,8 +7,14 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "needs_review",
             "value" : "Spinlog"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Spinfolio"
           }
         }
       }
@@ -19,8 +25,26 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Spinlog"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
             "state" : "new",
             "value" : "Spinlog"
+          }
+        }
+      }
+    },
+    "NSAppleMusicUsageDescription" : {
+      "comment" : "Privacy - Media Library Usage Description",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Spinfolio utilise Apple Music pour afficher une photo de l'artiste dans tes statistiques d'écoute."
           }
         }
       }
@@ -30,6 +54,12 @@
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Spinlog uses the camera to scan your records' barcodes and find their Discogs listing."
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Spinlog utilise l'appareil photo pour scanner le code-barres de vos disques et retrouver leur fiche Discogs."

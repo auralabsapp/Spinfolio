@@ -101,6 +101,7 @@ final class ListeningLogStore {
         let session = ListeningSession(releaseId: releaseId, timestamp: date)
         sessions.insert(session, at: 0)
         persist()
+        CloudSyncEngine.shared.markSessionDirty(id: session.id)
         return session
     }
 
@@ -108,6 +109,7 @@ final class ListeningLogStore {
     func removeSession(id: UUID) {
         sessions.removeAll { $0.id == id }
         persist()
+        CloudSyncEngine.shared.markSessionDeleted(id: id)
     }
 
     // MARK: - Requêtes d'écoute
@@ -125,6 +127,40 @@ final class ListeningLogStore {
     /// Liste de toutes les sessions d'une release, de la plus récente à la plus ancienne.
     func sessions(for releaseId: Int) -> [ListeningSession] {
         sessions.filter { $0.releaseId == releaseId }
+    }
+
+    // MARK: - Synchronisation iCloud (compte premium)
+
+    /// Identifiants de toutes les sessions enregistrées, pour la synchronisation initiale (même
+    /// besoin que `TagStore.allTaggedInstanceIds()`) : les sessions créées avant l'existence de
+    /// `CloudSyncEngine` (ou avant l'activation du compte premium) n'ont jamais déclenché
+    /// `markSessionDirty` — il faut donc les repousser explicitement à chaque activation de
+    /// compte, pas seulement les futures créations.
+    func allSessionIds() -> [UUID] {
+        sessions.map(\.id)
+    }
+
+    /// Session correspondant à cet identifiant, pour construire le contenu à envoyer vers iCloud.
+    func session(id: UUID) -> ListeningSession? {
+        sessions.first { $0.id == id }
+    }
+
+    /// Applique une session reçue d'iCloud (ajout ou mise à jour). N'écrit qu'en local : ne
+    /// redéclenche pas d'envoi vers CloudKit, cette donnée en vient déjà.
+    func applyRemoteSession(_ session: ListeningSession) {
+        if let index = sessions.firstIndex(where: { $0.id == session.id }) {
+            sessions[index] = session
+        } else {
+            sessions.append(session)
+        }
+        sessions.sort { $0.timestamp > $1.timestamp }
+        persist()
+    }
+
+    /// Applique une suppression de session reçue d'iCloud. N'écrit qu'en local.
+    func applyRemoteSessionDeletion(id: UUID) {
+        sessions.removeAll { $0.id == id }
+        persist()
     }
 
     // MARK: - Sauvegarde & Restauration

@@ -13,17 +13,40 @@ final class NetworkMonitor {
     private(set) var isExpensive: Bool = false
     private(set) var isConstrained: Bool = false
 
+    /// Permet de simuler un mode hors ligne à des fins de test et de débogage sans couper le Wi-Fi/4G.
+    var simulatedOffline: Bool = false {
+        didSet {
+            guard simulatedOffline != oldValue else { return }
+            if simulatedOffline {
+                isConnected = false
+            } else {
+                isConnected = monitor.currentPath.status == .satisfied
+                if isConnected {
+                    NotificationCenter.default.post(name: .networkConnectionRestored, object: nil)
+                }
+            }
+        }
+    }
+
     private let monitor = NWPathMonitor()
     private let queue = DispatchQueue(label: "com.spinlog.networkmonitor", qos: .background)
 
     private init() {
-        self.isConnected = monitor.currentPath.status == .satisfied
-        self.isExpensive = monitor.currentPath.isExpensive
-        self.isConstrained = monitor.currentPath.isConstrained
+        // Pas de lecture de `monitor.currentPath` ici : avant `start()`, ce chemin n'est pas
+        // encore évalué et peut se dire non satisfait, ce qui faisait démarrer l'app en "hors
+        // ligne" (cache seul, bannière) jusqu'au premier `pathUpdateHandler`. On part donc de
+        // l'hypothèse "connecté" ; le handler, appelé dès le démarrage, rétablit l'état réel en
+        // quelques millisecondes (et une requête lancée entre-temps hors ligne retombe déjà sur
+        // le cache local).
 
         monitor.pathUpdateHandler = { [weak self] path in
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
                 guard let self else { return }
+                if self.simulatedOffline {
+                    self.isConnected = false
+                    return
+                }
+
                 let previousState = self.isConnected
                 let newState = path.status == .satisfied
                 self.isConnected = newState

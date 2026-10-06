@@ -17,7 +17,7 @@ struct PurchasePriceHelpSheet: View {
                     title: "Champs prix d'achat et état du disque",
                     icon: "tag.fill"
                 ) {
-                    Text("Spinlog utilise deux champs personnalisés de ta collection Discogs : un pour le prix d'achat, un pour l'état du disque. Chacun est détecté automatiquement par mot-clé dans le nom du champ — « prix », « prix d'achat », « price », « purchase price », « bought for » ou « cost » pour le prix d'achat ; « Media Condition » ou « état du disque » pour l'état (en excluant « Sleeve Condition », qui concerne la pochette).")
+                    Text("\(AppInfo.name) utilise deux champs personnalisés de ta collection Discogs : un pour le prix d'achat, un pour l'état du disque. Chacun est détecté automatiquement par mot-clé dans le nom du champ — « prix », « prix d'achat », « price », « purchase price », « bought for » ou « cost » pour le prix d'achat ; « Media Condition » ou « état du disque » pour l'état (en excluant « Sleeve Condition », qui concerne la pochette).")
                     Text("Le champ état du disque existe par défaut sur Discogs ; le champ prix d'achat, en revanche, doit être créé une fois manuellement (voir ci-dessous).")
                     Text("Si la détection échoue ou que tu préfères un autre champ, choisis-le manuellement dans les sélecteurs ci-dessus.")
                 }
@@ -30,7 +30,7 @@ struct PurchasePriceHelpSheet: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("1. Va dans Réglages du compte → onglet Collection sur discogs.com")
                         Text("2. Dans « Champs personnalisés », crée un champ de type texte (ex. nommé « Prix d'achat »)")
-                        Text("3. Reviens dans Spinlog : le nouveau champ apparaît dans le sélecteur")
+                        Text("3. Reviens dans \(AppInfo.name) : le nouveau champ apparaît dans le sélecteur")
                     }
                     .font(.subheadline)
                     .foregroundStyle(Color.appSecondaryText)
@@ -58,8 +58,8 @@ struct PurchasePriceHelpSheet: View {
                     title: "Calcul de la cote actuelle",
                     icon: "chart.line.uptrend.xyaxis"
                 ) {
-                    Text("Discogs n'expose pas de « prix médian » pour une release précise, seulement des suggestions de prix par état du disque (Mint, Near Mint, VG+...). Spinlog utilise donc l'état renseigné dans le champ état du disque pour sélectionner la suggestion la plus pertinente.")
-                    Text("Si aucun état n'est renseigné (ou si l'état déclaré n'a pas de suggestion disponible), Spinlog calcule une moyenne de toutes les suggestions disponibles pour cette release — l'estimation est alors moins précise, mais reste affichée.")
+                    Text("Discogs n'expose pas de « prix médian » pour une release précise, seulement des suggestions de prix par état du disque (Mint, Near Mint, VG+...). \(AppInfo.name) utilise donc l'état renseigné dans le champ état du disque pour sélectionner la suggestion la plus pertinente.")
+                    Text("Si aucun état n'est renseigné (ou si l'état déclaré n'a pas de suggestion disponible), \(AppInfo.name) calcule une moyenne de toutes les suggestions disponibles pour cette release — l'estimation est alors moins précise, mais reste affichée.")
                 }
 
                 helpSection(

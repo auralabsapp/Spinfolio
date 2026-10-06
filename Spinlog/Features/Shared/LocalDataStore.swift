@@ -1,5 +1,10 @@
 import Foundation
 import SwiftData
+import WidgetKit
+import OSLog
+
+private let widgetSnapshotLogger = Logger(subsystem: "com.aurelienscarpa.Spinlog", category: "WidgetSnapshotSync")
+private let localDataStoreLogger = Logger(subsystem: "com.aurelienscarpa.Spinlog", category: "LocalDataStore")
 
 @Model
 final class CachedCollectionEntry {
@@ -72,9 +77,6 @@ final class CachedFetchMetadata {
 final class LocalDataStore {
     static let shared = LocalDataStore()
 
-    /// Time-To-Live de 6 heures (21600 secondes) conformément aux contraintes.
-    static let ttlSeconds: TimeInterval = 6 * 3600
-
     private let container: ModelContainer
     private let context: ModelContext
 
@@ -83,19 +85,216 @@ final class LocalDataStore {
             CachedCollectionEntry.self,
             CachedWantlistEntry.self,
             CachedFolderEntry.self,
-            CachedFetchMetadata.self
+            CachedFetchMetadata.self,
+            MasterRecord.self,
+            CollectionSnapshot.self,
+            ReleasePriceSnapshot.self
         ])
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        // `cloudKitDatabase: .none` est explicite : ce cache Discogs est jetable et retéléchargeable
+        // (TTL 6h), il ne doit jamais être mirroré vers CloudKit. Sans ce paramètre, SwiftData
+        // active automatiquement la synchronisation CloudKit dès que l'app a la capacité iCloud —
+        // et ce schéma (contraintes uniques, attributs non optionnels) n'y est pas compatible,
+        // ce qui fait planter le chargement du container au lancement.
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false, cloudKitDatabase: .none)
         do {
             container = try ModelContainer(for: schema, configurations: [config])
             context = ModelContext(container)
         } catch {
-            // Fallback en mémoire en cas d'erreur de schéma
-            let inMemoryConfig = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+            // Fallback en mémoire en cas d'erreur de schéma : rien ne sera conservé entre deux
+            // lancements, d'où ce log (auparavant silencieux) pour pouvoir diagnostiquer.
+            localDataStoreLogger.fault("Échec d'ouverture du store SwiftData, repli en mémoire : \(error, privacy: .public)")
+            let inMemoryConfig = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
             container = (try? ModelContainer(for: schema, configurations: [inMemoryConfig]))
                 ?? (try! ModelContainer(for: Schema([]), configurations: []))
             context = ModelContext(container)
         }
+    }
+
+    // MARK: - Master Records (Années originales immuables)
+
+    private var masterYearsMemoryCache: [Int: Int]?
+
+    /// Récupère tous les MasterRecords déjà connus sous forme de dictionnaire [masterId: originalYear].
+    func getAllMasterYears() -> [Int: Int] {
+        if let cache = masterYearsMemoryCache {
+            return cache
+        }
+        let descriptor = FetchDescriptor<MasterRecord>()
+        guard let records = try? context.fetch(descriptor) else { return [:] }
+        var result: [Int: Int] = [:]
+        result.reserveCapacity(records.count)
+        for record in records {
+            result[record.masterId] = record.originalYear
+        }
+        masterYearsMemoryCache = result
+        return result
+    }
+
+    /// Récupère l'année originale d'un master particulier si présente en cache.
+    func getMasterYear(for masterId: Int) -> Int? {
+        if let cached = masterYearsMemoryCache?[masterId] {
+            return cached > 0 ? cached : nil
+        }
+        let descriptor = FetchDescriptor<MasterRecord>(
+            predicate: #Predicate<MasterRecord> { $0.masterId == masterId }
+        )
+        if let year = (try? context.fetch(descriptor))?.first?.originalYear {
+            if masterYearsMemoryCache == nil {
+                masterYearsMemoryCache = [:]
+            }
+            masterYearsMemoryCache?[masterId] = year
+            return year > 0 ? year : nil
+        }
+        return nil
+    }
+
+    /// Enregistre ou met à jour l'année originale d'un Master.
+    func saveMasterYear(_ year: Int, for masterId: Int) {
+        if masterYearsMemoryCache == nil {
+            masterYearsMemoryCache = [:]
+        }
+        masterYearsMemoryCache?[masterId] = year
+
+        let descriptor = FetchDescriptor<MasterRecord>(
+            predicate: #Predicate<MasterRecord> { $0.masterId == masterId }
+        )
+        if let existing = (try? context.fetch(descriptor))?.first {
+            existing.originalYear = year
+            existing.fetchedAt = Date()
+        } else {
+            let record = MasterRecord(masterId: masterId, originalYear: year)
+            context.insert(record)
+        }
+        try? context.save()
+
+        NotificationCenter.default.post(
+            name: .masterYearResolved,
+            object: nil,
+            userInfo: ["masterId": masterId, "year": year]
+        )
+    }
+
+    /// Restaure en masse une table masterId -> année depuis une sauvegarde, sans écraser une
+    /// donnée déjà connue localement plus récemment que la restauration (les deux sont la même
+    /// valeur immuable en pratique, mais on n'écrase jamais un enregistrement existant pour éviter
+    /// de perdre un `fetchedAt` plus précis).
+    func saveMasterYears(_ years: [Int: Int]) {
+        guard !years.isEmpty else { return }
+        let existing = getAllMasterYears()
+        for (masterId, year) in years where existing[masterId] == nil {
+            context.insert(MasterRecord(masterId: masterId, originalYear: year))
+        }
+        try? context.save()
+    }
+
+    // MARK: - Value Snapshots (Cote & Prix d'achat)
+
+    /// Enregistre un nouveau point d'historique de la valeur globale de la collection, ou met à
+    /// jour celui du jour s'il existe déjà (au plus un point par jour).
+    func saveCollectionSnapshot(currency: String, low: Double, median: Double, high: Double) {
+        let snapshot = CollectionSnapshot(currency: currency, low: low, median: median, high: high)
+        let targetId = snapshot.id
+        let descriptor = FetchDescriptor<CollectionSnapshot>(
+            predicate: #Predicate<CollectionSnapshot> { $0.id == targetId }
+        )
+        if let existing = (try? context.fetch(descriptor))?.first {
+            existing.date = snapshot.date
+            existing.currency = currency
+            existing.low = low
+            existing.median = median
+            existing.high = high
+        } else {
+            context.insert(snapshot)
+        }
+        try? context.save()
+        CloudSyncEngine.shared.markCollectionSnapshotDirty(dayStamp: targetId)
+    }
+
+    /// Point d'historique de collection le plus récent (pour déterminer si un rafraîchissement
+    /// est nécessaire, ou pour afficher la dernière valeur connue).
+    func latestCollectionSnapshot() -> CollectionSnapshot? {
+        var descriptor = FetchDescriptor<CollectionSnapshot>(sortBy: [SortDescriptor(\.date, order: .reverse)])
+        descriptor.fetchLimit = 1
+        return (try? context.fetch(descriptor))?.first
+    }
+
+    /// Historique complet, trié chronologiquement, pour le graphique d'évolution de la valeur.
+    func allCollectionSnapshots() -> [CollectionSnapshot] {
+        let descriptor = FetchDescriptor<CollectionSnapshot>(sortBy: [SortDescriptor(\.date, order: .forward)])
+        return (try? context.fetch(descriptor)) ?? []
+    }
+
+    // MARK: - Synchronisation iCloud (compte premium)
+
+    /// Identifiants (jour, "yyyy-MM-dd") de tous les points d'historique de collection, pour la
+    /// synchronisation initiale (même besoin que `TagStore.allTaggedInstanceIds()`).
+    func collectionSnapshotDayStamps() -> [String] {
+        allCollectionSnapshots().map(\.id)
+    }
+
+    /// Point d'historique correspondant à ce jour, pour construire le contenu à envoyer vers
+    /// iCloud.
+    func collectionSnapshot(dayStamp: String) -> CollectionSnapshot? {
+        let descriptor = FetchDescriptor<CollectionSnapshot>(
+            predicate: #Predicate<CollectionSnapshot> { $0.id == dayStamp }
+        )
+        return (try? context.fetch(descriptor))?.first
+    }
+
+    /// Applique un point d'historique reçu d'iCloud (ajout ou mise à jour). N'écrit qu'en local :
+    /// ne redéclenche pas d'envoi vers CloudKit, cette donnée en vient déjà.
+    func applyRemoteCollectionSnapshot(
+        dayStamp: String,
+        date: Date,
+        currency: String,
+        low: Double,
+        median: Double,
+        high: Double
+    ) {
+        let descriptor = FetchDescriptor<CollectionSnapshot>(
+            predicate: #Predicate<CollectionSnapshot> { $0.id == dayStamp }
+        )
+        if let existing = (try? context.fetch(descriptor))?.first {
+            existing.date = date
+            existing.currency = currency
+            existing.low = low
+            existing.median = median
+            existing.high = high
+        } else {
+            context.insert(CollectionSnapshot(date: date, currency: currency, low: low, median: median, high: high))
+        }
+        try? context.save()
+        NotificationCenter.default.post(name: .collectionSnapshotsChanged, object: nil)
+    }
+
+    /// Enregistre un nouveau point d'historique de prix pour une release, ou met à jour celui du
+    /// jour s'il existe déjà (au plus un point par jour et par release).
+    func saveReleasePriceSnapshot(releaseId: Int, currency: String, medianPrice: Double, condition: String?) {
+        let snapshot = ReleasePriceSnapshot(releaseId: releaseId, currency: currency, medianPrice: medianPrice, condition: condition)
+        let targetId = snapshot.id
+        let descriptor = FetchDescriptor<ReleasePriceSnapshot>(
+            predicate: #Predicate<ReleasePriceSnapshot> { $0.id == targetId }
+        )
+        if let existing = (try? context.fetch(descriptor))?.first {
+            existing.date = snapshot.date
+            existing.currency = currency
+            existing.medianPrice = medianPrice
+            existing.condition = condition
+        } else {
+            context.insert(snapshot)
+        }
+        try? context.save()
+    }
+
+    /// Dernier point de prix connu pour une release (pour déterminer si un rafraîchissement est
+    /// nécessaire, et afficher une estimation immédiate sans attendre le réseau).
+    func latestReleasePriceSnapshot(releaseId: Int) -> ReleasePriceSnapshot? {
+        var descriptor = FetchDescriptor<ReleasePriceSnapshot>(
+            predicate: #Predicate<ReleasePriceSnapshot> { $0.releaseId == releaseId },
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
+        )
+        descriptor.fetchLimit = 1
+        return (try? context.fetch(descriptor))?.first
     }
 
     // MARK: - Collection
@@ -123,6 +322,109 @@ final class LocalDataStore {
         context.insert(meta)
 
         try? context.save()
+
+        // Appelé à chaque page pendant la synchro de fond : on se contente ici d'amorcer un
+        // widget encore vide. Relire et décoder toute la collection à chaque page (comme avant)
+        // rendait la synchro quadratique sur le main actor ; l'instantané complet est écrit une
+        // seule fois, en fin de synchro, par `syncCollectionFolder`.
+        if WidgetSnapshotStore.loadCollection().isEmpty {
+            let all = getAllCollectionItems(username: username)
+            if !all.isEmpty {
+                updateWidgetSnapshot(all)
+            }
+        }
+    }
+
+    /// Nombre de disques distincts (par release, comme l'instantané du widget) en cache pour ce
+    /// compte, sans décoder les payloads JSON.
+    private func cachedReleaseCount(username: String) -> Int {
+        var descriptor = FetchDescriptor<CachedCollectionEntry>(
+            predicate: #Predicate<CachedCollectionEntry> { $0.username == username }
+        )
+        descriptor.propertiesToFetch = [\.releaseId]
+        guard let entries = try? context.fetch(descriptor) else { return 0 }
+        return Set(entries.map(\.releaseId)).count
+    }
+
+    func syncCollectionFolder(username: String, folderId: Int, fullItems: [CollectionItem]) {
+        let now = Date()
+        let encoder = JSONEncoder()
+
+        let deleteDescriptor = FetchDescriptor<CachedCollectionEntry>(
+            predicate: #Predicate<CachedCollectionEntry> {
+                $0.username == username && $0.folderId == folderId
+            }
+        )
+        if let oldEntries = try? context.fetch(deleteDescriptor) {
+            for entry in oldEntries {
+                context.delete(entry)
+            }
+        }
+
+        for item in fullItems {
+            guard item.instanceId > 0 && item.instanceId != item.releaseId else { continue }
+            guard let data = try? encoder.encode(item) else { continue }
+            let entry = CachedCollectionEntry(
+                username: username,
+                folderId: folderId,
+                releaseId: item.releaseId,
+                instanceId: item.instanceId,
+                payload: data,
+                lastFetchedAt: now
+            )
+            context.insert(entry)
+        }
+
+        let metaId = "\(username)_collection_\(folderId)"
+        let meta = CachedFetchMetadata(id: metaId, lastFetchedAt: now)
+        context.insert(meta)
+
+        try? context.save()
+
+        // Le dossier "All" (agrégat complet) est le reflet fidèle de toute la collection.
+        // Si folderId est "All", on met à jour le widget avec ces items.
+        // Si folderId n'est pas "All" mais que le widget est vide ou incomplet, on l'alimente avec le maximum de disques disponibles.
+        if folderId == DiscogsConstants.allFolderId {
+            updateWidgetSnapshot(fullItems)
+        } else {
+            // Comparaison en disques distincts (l'instantané du widget est dédoublonné par
+            // release) : comparer des exemplaires à des disques, comme avant, était toujours vrai
+            // dès qu'un disque était possédé en plusieurs exemplaires, et réécrivait le widget à
+            // chaque appel. Le décodage complet n'a lieu que si une mise à jour est nécessaire.
+            let knownReleaseCount = cachedReleaseCount(username: username)
+            let currentSnapshotCount = WidgetSnapshotStore.loadCollection().count
+            if knownReleaseCount > 0 && (currentSnapshotCount == 0 || knownReleaseCount > currentSnapshotCount) {
+                updateWidgetSnapshot(getAllCollectionItems(username: username))
+            }
+        }
+    }
+
+    /// Ravitaille le widget "Album du jour" à partir de tous les disques de la collection en cache.
+    func refreshWidgetSnapshot(username: String) {
+        let all = getAllCollectionItems(username: username)
+        guard !all.isEmpty else { return }
+        updateWidgetSnapshot(all)
+    }
+
+    /// Réduit la collection à un instantané léger (id, titre, artiste, pochette) pour le widget
+    /// "Album du jour", dédoublonné par release (plusieurs exemplaires d'un même disque ne
+    /// doivent compter qu'une fois dans le tirage aléatoire).
+    func updateWidgetSnapshot(_ items: [CollectionItem]) {
+        var seenReleaseIds = Set<Int>()
+        var snapshot: [RandomAlbumSnapshotItem] = []
+        for item in items {
+            guard item.releaseId > 0,
+                  seenReleaseIds.insert(item.releaseId).inserted else { continue }
+            snapshot.append(RandomAlbumSnapshotItem(
+                releaseId: item.releaseId,
+                title: item.basicInformation.title,
+                artistNames: item.basicInformation.artistNames,
+                coverURL: item.basicInformation.coverImage ?? item.basicInformation.thumb
+            ))
+        }
+        widgetSnapshotLogger.log("updateWidgetSnapshot : \(items.count) exemplaire(s) en entrée -> \(snapshot.count) disque(s) uniques écrits dans l'App Group.")
+        WidgetSnapshotStore.saveCollection(snapshot)
+        WidgetCenter.shared.reloadTimelines(ofKind: WidgetKinds.randomAlbum)
     }
 
     func getCollectionItems(username: String, folderId: Int) -> [CollectionItem] {
@@ -136,6 +438,48 @@ final class LocalDataStore {
         return entries.compactMap { try? decoder.decode(CollectionItem.self, from: $0.payload) }
     }
 
+    func getAllCollectionItems(username: String) -> [CollectionItem] {
+        let allInFolder0 = getCollectionItems(username: username, folderId: DiscogsConstants.allFolderId)
+        let descriptor = FetchDescriptor<CachedCollectionEntry>(
+            predicate: #Predicate<CachedCollectionEntry> {
+                $0.username == username
+            }
+        )
+        guard let entries = try? context.fetch(descriptor) else { return allInFolder0 }
+        let decoder = JSONDecoder()
+        var seen = Set<Int>()
+        var items: [CollectionItem] = []
+        for entry in entries {
+            if let item = try? decoder.decode(CollectionItem.self, from: entry.payload),
+               !seen.contains(item.instanceId) {
+                seen.insert(item.instanceId)
+                items.append(item)
+            }
+        }
+        return items.count > allInFolder0.count ? items : allInFolder0
+    }
+
+    /// Récupère l'ensemble des exemplaires d'une release donnée enregistrés pour un utilisateur.
+    func getCollectionItems(username: String, releaseId: Int) -> [CollectionItem] {
+        let descriptor = FetchDescriptor<CachedCollectionEntry>(
+            predicate: #Predicate<CachedCollectionEntry> {
+                $0.username == username && $0.releaseId == releaseId
+            }
+        )
+        guard let entries = try? context.fetch(descriptor) else { return [] }
+        let decoder = JSONDecoder()
+        var seen = Set<Int>()
+        var items: [CollectionItem] = []
+        for entry in entries {
+            if let item = try? decoder.decode(CollectionItem.self, from: entry.payload),
+               !seen.contains(item.instanceId) {
+                seen.insert(item.instanceId)
+                items.append(item)
+            }
+        }
+        return items
+    }
+
     func removeCollectionItem(username: String, folderId: Int, instanceId: Int) {
         let targetId = "\(username)_\(folderId)_\(instanceId)"
         let descriptor = FetchDescriptor<CachedCollectionEntry>(
@@ -146,6 +490,43 @@ final class LocalDataStore {
                 context.delete(entry)
             }
             try? context.save()
+            refreshWidgetSnapshot(username: username)
+        }
+    }
+
+    func removeCollectionItems(username: String, releaseId: Int) {
+        let descriptor = FetchDescriptor<CachedCollectionEntry>(
+            predicate: #Predicate<CachedCollectionEntry> {
+                $0.username == username && $0.releaseId == releaseId
+            }
+        )
+        if let entries = try? context.fetch(descriptor) {
+            for entry in entries {
+                context.delete(entry)
+            }
+            try? context.save()
+            refreshWidgetSnapshot(username: username)
+        }
+    }
+
+    /// Nettoie les entrées corrompues ou fantômes (instanceId invalide ou égal au releaseId).
+    func cleanupPhantomCollectionEntries(username: String) {
+        let descriptor = FetchDescriptor<CachedCollectionEntry>(
+            predicate: #Predicate<CachedCollectionEntry> {
+                $0.username == username
+            }
+        )
+        if let entries = try? context.fetch(descriptor) {
+            var hasChanges = false
+            for entry in entries {
+                if entry.instanceId <= 0 || entry.instanceId == entry.releaseId {
+                    context.delete(entry)
+                    hasChanges = true
+                }
+            }
+            if hasChanges {
+                try? context.save()
+            }
         }
     }
 
@@ -161,10 +542,83 @@ final class LocalDataStore {
         guard let date = lastCollectionFetchedAt(username: username, folderId: folderId) else {
             return true
         }
-        return Date().timeIntervalSince(date) >= Self.ttlSeconds
+        return Date().timeIntervalSince(date) >= DiscogsConstants.sixHoursTTL
+    }
+
+    // MARK: - Outils Développeur / Simulation
+
+    /// Simule un cache plus vieux que 6 heures (7h en arrière) pour tester l'apparition
+    /// des bandeaux hors ligne et le comportement de synchronisation selon la règle Discogs.
+    func simulateStaleCache(username: String) {
+        let sevenHoursAgo = Date().addingTimeInterval(-7 * 3600)
+        let collectionMetaId = "\(username)_collection_\(DiscogsConstants.allFolderId)"
+        let wantlistMetaId = "\(username)_wantlist"
+
+        let cMeta = CachedFetchMetadata(id: collectionMetaId, lastFetchedAt: sevenHoursAgo)
+        context.insert(cMeta)
+
+        let wMeta = CachedFetchMetadata(id: wantlistMetaId, lastFetchedAt: sevenHoursAgo)
+        context.insert(wMeta)
+
+        try? context.save()
+    }
+
+    /// Réinitialise l'horodatage du cache à l'instant présent (tout frais).
+    func resetCacheFreshness(username: String) {
+        let now = Date()
+        let collectionMetaId = "\(username)_collection_\(DiscogsConstants.allFolderId)"
+        let wantlistMetaId = "\(username)_wantlist"
+
+        let cMeta = CachedFetchMetadata(id: collectionMetaId, lastFetchedAt: now)
+        context.insert(cMeta)
+
+        let wMeta = CachedFetchMetadata(id: wantlistMetaId, lastFetchedAt: now)
+        context.insert(wMeta)
+
+        try? context.save()
     }
 
     // MARK: - Wantlist
+
+    /// Synchronisation complète : purge d'abord toute entrée en cache qui ne fait plus partie
+    /// de `fullItems` (voir `syncCollectionFolder`, même logique) — contrairement à
+    /// `saveWantlistItems`, purement additif, qui ne supprime jamais les entrées obsolètes.
+    /// Sans cette purge, une release retirée de la wantlist par un autre moyen que Spinlog (ou
+    /// dont la suppression locale a échoué une fois) reste indéfiniment fantôme dans le cache et
+    /// continue de s'afficher comme "en wantlist" ailleurs dans l'app (résultats de recherche,
+    /// bouton sur la fiche release) via `LibraryMembershipStore.refresh()`.
+    /// À appeler uniquement quand `fullItems` représente l'intégralité de la wantlist distante
+    /// (toutes les pages chargées), jamais une page partielle.
+    func syncWantlist(username: String, fullItems: [WantlistItem]) {
+        let now = Date()
+        let encoder = JSONEncoder()
+
+        let deleteDescriptor = FetchDescriptor<CachedWantlistEntry>(
+            predicate: #Predicate<CachedWantlistEntry> { $0.username == username }
+        )
+        if let oldEntries = try? context.fetch(deleteDescriptor) {
+            for entry in oldEntries {
+                context.delete(entry)
+            }
+        }
+
+        for item in fullItems {
+            guard let data = try? encoder.encode(item) else { continue }
+            let entry = CachedWantlistEntry(
+                username: username,
+                releaseId: item.id,
+                payload: data,
+                lastFetchedAt: now
+            )
+            context.insert(entry)
+        }
+
+        let metaId = "\(username)_wantlist"
+        let meta = CachedFetchMetadata(id: metaId, lastFetchedAt: now)
+        context.insert(meta)
+
+        try? context.save()
+    }
 
     func saveWantlistItems(_ items: [WantlistItem], username: String) {
         let now = Date()
@@ -188,6 +642,23 @@ final class LocalDataStore {
         try? context.save()
     }
 
+    /// Remplace tout le cache wantlist du compte par `items`, à n'appeler qu'avec la liste
+    /// complète : contrairement à `saveWantlistItems` (qui ne fait qu'ajouter/mettre à jour),
+    /// supprime aussi les entrées absentes — ex: retirées de la wantlist depuis discogs.com, qui
+    /// sinon réapparaissaient hors ligne.
+    func replaceWantlistItems(_ items: [WantlistItem], username: String) {
+        let keptReleaseIds = Set(items.map(\.id))
+        let descriptor = FetchDescriptor<CachedWantlistEntry>(
+            predicate: #Predicate<CachedWantlistEntry> { $0.username == username }
+        )
+        if let entries = try? context.fetch(descriptor) {
+            for entry in entries where !keptReleaseIds.contains(entry.releaseId) {
+                context.delete(entry)
+            }
+        }
+        saveWantlistItems(items, username: username)
+    }
+
     func getWantlistItems(username: String) -> [WantlistItem] {
         let descriptor = FetchDescriptor<CachedWantlistEntry>(
             predicate: #Predicate<CachedWantlistEntry> { $0.username == username }
@@ -203,10 +674,20 @@ final class LocalDataStore {
             predicate: #Predicate<CachedWantlistEntry> { $0.id == targetId }
         )
         if let entries = try? context.fetch(descriptor) {
+            widgetSnapshotLogger.log("LibrarySyncDebug DELETE targetId=\(targetId) matchedEntries=\(entries.count)")
             for entry in entries {
                 context.delete(entry)
             }
-            try? context.save()
+            let saveError: String
+            do {
+                try context.save()
+                saveError = "none"
+            } catch {
+                saveError = error.localizedDescription
+            }
+            widgetSnapshotLogger.log("LibrarySyncDebug DELETE targetId=\(targetId) saveError=\(saveError)")
+        } else {
+            widgetSnapshotLogger.log("LibrarySyncDebug DELETE targetId=\(targetId) fetchFailed")
         }
     }
 
@@ -222,7 +703,7 @@ final class LocalDataStore {
         guard let date = lastWantlistFetchedAt(username: username) else {
             return true
         }
-        return Date().timeIntervalSince(date) >= Self.ttlSeconds
+        return Date().timeIntervalSince(date) >= DiscogsConstants.sixHoursTTL
     }
 
     // MARK: - Dossiers
@@ -251,4 +732,8 @@ final class LocalDataStore {
         let decoder = JSONDecoder()
         return entries.compactMap { try? decoder.decode(CollectionFolder.self, from: $0.payload) }
     }
+}
+
+extension Notification.Name {
+    static let masterYearResolved = Notification.Name("com.spinlog.masterYearResolved")
 }

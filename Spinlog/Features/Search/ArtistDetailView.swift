@@ -49,6 +49,11 @@ struct ArtistDetailView: View {
                             }
                         }
                     }
+
+                    if let url = artist.discogsWebURL {
+                        DiscogsAttributionLink(url: url)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    }
                 }
                 .padding()
             }

@@ -24,7 +24,7 @@ actor CurrencyConversionService {
     }
 
     private var cache: [String: CachedRate] = [:]
-    private let cacheTTL: TimeInterval = 24 * 3600
+    private let cacheTTL: TimeInterval = DiscogsConstants.oneDayTTL
     private let userDefaultsKey = "com.spinlog.currencyRatesCache"
 
     /// Taux de repli approximatifs (1 unité de la devise -> USD), figés dans le code. Utilisés
@@ -38,8 +38,16 @@ actor CurrencyConversionService {
         "CHF": 1.11
     ]
 
+    /// Charge le cache persistant directement dans l'initialiseur : un `init` synchrone
+    /// d'acteur n'est pas isolé, donc appeler une méthode isolée comme `loadPersistedCache()`
+    /// depuis ici n'est plus autorisé en mode de concurrence strict (Swift 6) — l'accès direct
+    /// aux propriétés stockées reste lui autorisé pendant l'initialisation.
     private init() {
-        loadPersistedCache()
+        guard let data = UserDefaults.standard.data(forKey: userDefaultsKey),
+              let entries = try? JSONDecoder().decode([PersistedRate].self, from: data) else { return }
+        for entry in entries {
+            cache[entry.key] = CachedRate(rate: entry.rate, fetchedAt: entry.fetchedAt)
+        }
     }
 
     /// Taux de conversion de `from` vers `to` (1 unité de `from` exprimée en `to`).
@@ -69,7 +77,7 @@ actor CurrencyConversionService {
     // MARK: - Réseau
 
     private func fetchRate(from: String, to: String) async -> Double? {
-        guard NetworkMonitor.shared.isConnected else { return nil }
+        guard await NetworkMonitor.shared.isConnected else { return nil }
         guard let url = URL(string: "https://api.frankfurter.dev/v1/latest?base=\(from)&symbols=\(to)") else { return nil }
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
@@ -98,11 +106,4 @@ actor CurrencyConversionService {
         }
     }
 
-    private func loadPersistedCache() {
-        guard let data = UserDefaults.standard.data(forKey: userDefaultsKey),
-              let entries = try? JSONDecoder().decode([PersistedRate].self, from: data) else { return }
-        for entry in entries {
-            cache[entry.key] = CachedRate(rate: entry.rate, fetchedAt: entry.fetchedAt)
-        }
-    }
 }

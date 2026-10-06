@@ -8,6 +8,7 @@ final class ShelfPlacementViewModel {
         customCollection: [Release]?,
         strategy: ShelfSortStrategy,
         ignoreArticles: Bool,
+        restrictToSameFolder: Bool,
         username: String?
     ) -> ShelfNeighbors {
         if let customCollection {
@@ -22,7 +23,8 @@ final class ShelfPlacementViewModel {
                 for: targetRelease,
                 username: username,
                 strategy: strategy,
-                ignoreArticles: ignoreArticles
+                ignoreArticles: ignoreArticles,
+                restrictToSameFolder: restrictToSameFolder
             )
         }
     }

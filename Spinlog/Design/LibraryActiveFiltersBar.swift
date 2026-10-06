@@ -2,30 +2,86 @@ import SwiftUI
 
 /// Bandeau des filtres actifs (tag / support), partagé par Collection et Wantlist.
 struct LibraryActiveFiltersBar: View {
-    @Binding var selectedTag: String?
+    var selectedTags: Binding<Set<String>>? = nil
+    var selectedTag: Binding<String?>? = nil
     @Binding var selectedFormat: String?
     let onClearAll: () -> Void
+
+    init(
+        selectedTags: Binding<Set<String>>,
+        selectedFormat: Binding<String?>,
+        onClearAll: @escaping () -> Void
+    ) {
+        self.selectedTags = selectedTags
+        self.selectedTag = nil
+        self._selectedFormat = selectedFormat
+        self.onClearAll = onClearAll
+    }
+
+    init(
+        selectedTag: Binding<String?>,
+        selectedFormat: Binding<String?>,
+        onClearAll: @escaping () -> Void
+    ) {
+        self.selectedTags = nil
+        self.selectedTag = selectedTag
+        self._selectedFormat = selectedFormat
+        self.onClearAll = onClearAll
+    }
+
+    init(
+        selectedFormat: Binding<String?>,
+        onClearAll: @escaping () -> Void
+    ) {
+        self.selectedTags = nil
+        self.selectedTag = nil
+        self._selectedFormat = selectedFormat
+        self.onClearAll = onClearAll
+    }
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                if let tag = selectedTag {
+                if let selectedTags {
+                    ForEach(selectedTags.wrappedValue.sorted(), id: \.self) { tag in
+                        HStack(spacing: 4) {
+                            Image(systemName: "tag.fill")
+                                .font(.caption2)
+                            Text(tag)
+                                .font(.caption.weight(.semibold))
+                            Button {
+                                selectedTags.wrappedValue.remove(tag)
+                            } label: {
+                                Image(systemName: "xmark")
+                                    .font(.caption2.bold())
+                            }
+                            .accessibilityLabel("Effacer le filtre de tag \(tag)")
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(Color.spinlogPinkBadge, in: Capsule())
+                        .overlay(Capsule().strokeBorder(Color.spinlogPink.opacity(0.35), lineWidth: 0.8))
+                        .foregroundStyle(Color.spinlogPink)
+                    }
+                } else if let selectedTag, let tag = selectedTag.wrappedValue {
                     HStack(spacing: 4) {
                         Image(systemName: "tag.fill")
                             .font(.caption2)
                         Text(tag)
                             .font(.caption.weight(.semibold))
                         Button {
-                            selectedTag = nil
+                            selectedTag.wrappedValue = nil
                         } label: {
                             Image(systemName: "xmark")
                                 .font(.caption2.bold())
                         }
+                        .accessibilityLabel("Effacer le filtre de tag \(tag)")
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
-                    .background(Color.accentColor.opacity(0.15), in: Capsule())
-                    .foregroundStyle(Color.accentColor)
+                    .background(Color.spinlogPinkBadge, in: Capsule())
+                    .overlay(Capsule().strokeBorder(Color.spinlogPink.opacity(0.35), lineWidth: 0.8))
+                    .foregroundStyle(Color.spinlogPink)
                 }
 
                 if let format = selectedFormat {
@@ -40,20 +96,21 @@ struct LibraryActiveFiltersBar: View {
                             Image(systemName: "xmark")
                                 .font(.caption2.bold())
                         }
+                        .accessibilityLabel("Effacer le filtre de format")
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
-                    .background(Color.secondary.opacity(0.15), in: Capsule())
-                    .foregroundStyle(.primary)
+                    .background(Color.spinlogPinkBadge, in: Capsule())
+                    .overlay(Capsule().strokeBorder(Color.spinlogPink.opacity(0.35), lineWidth: 0.8))
+                    .foregroundStyle(Color.spinlogPink)
                 }
 
                 Button("Tout effacer", action: onClearAll)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.appSecondaryText)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 6)
         }
-        .background(Color(uiColor: .systemGroupedBackground))
     }
 }

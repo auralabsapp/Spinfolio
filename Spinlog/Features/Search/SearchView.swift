@@ -1,12 +1,24 @@
 import SwiftUI
 
 struct SearchView: View {
-    @State private var viewModel = SearchViewModel()
+    @State private var viewModel = SearchViewModel.shared
     @State private var isScannerPresented = false
+    @State private var isBatchScannerPresented = false
+    @State private var premiumStore = PremiumStore.shared
+    @State private var networkMonitor = NetworkMonitor.shared
+    @State private var showingPremiumSheet = false
     @FocusState private var isSearchFieldFocused: Bool
+
+    @ObservedObject private var activityManager = NowPlayingActivityManager.shared
+    private var membership = LibraryMembershipStore.shared
+
+
 
     var body: some View {
         VStack(spacing: 12) {
+            if !networkMonitor.isConnected {
+                OfflineBannerView(customMessage: "La recherche nécessite une connexion réseau")
+            }
             searchBar
             scopePicker
             content
@@ -16,20 +28,27 @@ struct SearchView: View {
         .fullScreenCover(isPresented: $isScannerPresented) {
             scannerSheet
         }
+        .fullScreenCover(isPresented: $isBatchScannerPresented) {
+            BatchScanView()
+        }
+        .premiumFeaturesSheet(isPresented: $showingPremiumSheet)
         .task(id: "\(viewModel.query)|\(viewModel.scope.rawValue)") {
             if viewModel.consumeSuppressFlag() { return }
             try? await Task.sleep(for: .milliseconds(350))
             guard !Task.isCancelled else { return }
             await viewModel.search()
         }
+        .task {
+            membership.refresh()
+        }
+
     }
 
-    /// Barre de recherche personnalisée (plutôt que `.searchable`) pour pouvoir intégrer
-    /// l'icône de scan directement à droite du champ, comme demandé.
+    /// Barre de recherche personnalisée
     private var searchBar: some View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.appSecondaryText)
 
             TextField("Artiste, disque, label…", text: $viewModel.query)
                 .textFieldStyle(.plain)
@@ -41,9 +60,10 @@ struct SearchView: View {
                     viewModel.query = ""
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appSecondaryText)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Effacer la recherche")
             }
 
             Divider().frame(height: 18)
@@ -53,10 +73,58 @@ struct SearchView: View {
                 isScannerPresented = true
             } label: {
                 Image(systemName: "barcode.viewfinder")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(networkMonitor.isConnected ? Color.spinlogPink : Color.appTertiaryText)
             }
             .buttonStyle(.plain)
+            .disabled(!networkMonitor.isConnected)
             .accessibilityLabel("Rechercher par scan")
+
+            Button {
+                isSearchFieldFocused = false
+                if premiumStore.isPremium {
+                    isBatchScannerPresented = true
+                } else {
+                    showingPremiumSheet = true
+                }
+            } label: {
+                if premiumStore.isPremium {
+                    Image(systemName: "rectangle.stack.badge.plus")
+                        .font(.system(size: 17, weight: .medium))
+                        .foregroundStyle(Color.spinlogPink)
+                } else {
+                    ZStack(alignment: .topTrailing) {
+                        Image(systemName: "rectangle.stack.badge.plus")
+                            .font(.system(size: 17, weight: .medium))
+                            .foregroundStyle(Color(red: 0.92, green: 0.62, blue: 0.16))
+
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color(red: 0.98, green: 0.78, blue: 0.28),
+                                            Color(red: 0.88, green: 0.52, blue: 0.12)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 12, height: 12)
+
+                            Image(systemName: "lock.fill")
+                                .font(.system(size: 6.5, weight: .bold))
+                                .foregroundStyle(.white)
+                        }
+                        .offset(x: 5, y: -5)
+                    }
+                    .padding(.trailing, 2)
+                }
+            }
+            .buttonStyle(.plain)
+            // Seulement si premium : un non-premium doit toujours pouvoir ouvrir le paywall,
+            // lui-même sans dépendance réseau.
+            .disabled(premiumStore.isPremium && !networkMonitor.isConnected)
+            .accessibilityLabel(premiumStore.isPremium ? "Scan par lot" : "Scan par lot (Premium)")
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
@@ -83,6 +151,7 @@ struct SearchView: View {
                 },
                 onError: { error in
                     isScannerPresented = false
+                    viewModel.reportScannerError(error.localizedDescription)
                 }
             )
             .ignoresSafeArea()
@@ -92,13 +161,31 @@ struct SearchView: View {
                 }
             }
         }
+        .onAppear {
+            UIApplication.shared.isIdleTimerDisabled = true
+        }
+        .onDisappear {
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
     }
 
     @ViewBuilder
     private var content: some View {
         let trimmed = viewModel.query.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        if trimmed.isEmpty {
+        if !networkMonitor.isConnected {
+            ContentUnavailableView(
+                "Recherche indisponible hors ligne",
+                systemImage: "wifi.slash",
+                description: Text("La recherche Discogs nécessite une connexion réseau.")
+            )
+        } else if let errorMessage = viewModel.errorMessage {
+            ContentUnavailableView(
+                "Recherche impossible",
+                systemImage: "exclamationmark.triangle",
+                description: Text(errorMessage)
+            )
+        } else if trimmed.isEmpty {
             ContentUnavailableView(
                 "Recherche Discogs",
                 systemImage: "magnifyingglass",
@@ -107,21 +194,76 @@ struct SearchView: View {
         } else if viewModel.isLoading && viewModel.results.isEmpty {
             ProgressView()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else if let errorMessage = viewModel.errorMessage {
-            ContentUnavailableView(
-                "Recherche impossible",
-                systemImage: "exclamationmark.triangle",
-                description: Text(errorMessage)
-            )
         } else if viewModel.results.isEmpty {
             ContentUnavailableView.search(text: trimmed)
         } else {
             List(viewModel.results) { result in
                 SearchResultRow(result: result)
                     .task { await viewModel.loadMoreIfNeeded(current: result) }
+                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                        leadingSwipeActions(for: result)
+                    }
             }
             .listStyle(.plain)
+            .refreshable {
+                await viewModel.search()
+            }
         }
+    }
+
+    // MARK: - Swipe Actions (Lecture / Stop uniquement)
+
+    @ViewBuilder
+    private func leadingSwipeActions(for result: SearchResult) -> some View {
+        if result.isRelease && membership.isInCollection(result.id) {
+            if activityManager.isPlaying(releaseId: result.id) {
+                Button {
+                    stopListening(for: result)
+                } label: {
+                    Label("Stop", systemImage: "stop.fill")
+                }
+                .tint(Color(uiColor: .systemGray))
+            } else {
+                Button {
+                    triggerListeningLog(for: result)
+                } label: {
+                    Label("Lecture", systemImage: "play.fill")
+                }
+                .tint(Color.spinlogPink)
+            }
+        }
+    }
+
+    // MARK: - Listening Actions & Toasts
+
+    private func stopListening(for result: SearchResult) {
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        Task {
+            await NowPlayingActivityManager.shared.endActivity(for: result.id)
+        }
+    }
+
+    private func triggerListeningLog(for result: SearchResult) {
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        ListeningLogStore.shared.logListening(for: result.id)
+
+        let (artist, album) = parseArtistAndAlbum(from: result.title)
+        NowPlayingActivityManager.shared.startActivity(
+            releaseId: result.id,
+            albumTitle: album,
+            artistName: artist,
+            coverURL: result.thumb ?? result.coverImage
+        )
+    }
+
+    private func parseArtistAndAlbum(from title: String) -> (artist: String, album: String) {
+        if title.contains(" - ") {
+            let parts = title.components(separatedBy: " - ")
+            let artist = parts.first ?? ""
+            let album = parts.dropFirst().joined(separator: " - ")
+            return (artist, album)
+        }
+        return ("", title)
     }
 }
 
