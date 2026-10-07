@@ -72,6 +72,7 @@ enum WidgetSnapshotStore {
         for byte in string.utf8 {
             hash = ((hash << 5) &+ hash) &+ Int(byte)
         }
-        return abs(hash)
+        // Masque plutôt que `abs` : `abs(Int.min)` fait planter le programme.
+        return hash & Int.max
     }
 }

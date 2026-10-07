@@ -69,17 +69,30 @@ final class StatsViewModel {
     private(set) var totalCollectionCount: Int?
     private(set) var totalWantlistCount: Int?
     private(set) var recentAdditions: [CollectionItem] = []
-    private(set) var allCollectionItems: [CollectionItem] = []
+    private(set) var allCollectionItems: [CollectionItem] = [] {
+        didSet {
+            // Valeurs dérivées calculées une fois par changement de la collection, plutôt qu'à
+            // chaque lecture : elles sont lues à chaque rendu de l'écran Stats, qui se redessine
+            // toutes les 1,5 s pendant la résolution des masters.
+            var releases: [Int: CollectionItem] = [:]
+            for item in allCollectionItems where releases[item.releaseId] == nil {
+                releases[item.releaseId] = item
+            }
+            releaseById = releases
+            let names = allCollectionItems
+                .map { ArtistShelfSortHelper.cleanDiscogsSuffix($0.basicInformation.artistNames) }
+                .filter { !$0.isEmpty }
+            uniqueArtistsCount = allCollectionItems.isEmpty ? nil : Set(names).count
+        }
+    }
 
     /// Nombre d'artistes distincts dans la collection, regroupés comme dans le classement
     /// "Top Artistes" (le suffixe de désambiguïsation Discogs, ex. « Artist (2) », est ignoré).
-    var uniqueArtistsCount: Int? {
-        guard !allCollectionItems.isEmpty else { return nil }
-        let names = allCollectionItems
-            .map { ArtistShelfSortHelper.cleanDiscogsSuffix($0.basicInformation.artistNames) }
-            .filter { !$0.isEmpty }
-        return Set(names).count
-    }
+    private(set) var uniqueArtistsCount: Int?
+
+    /// Une release par `releaseId` (peu importe l'exemplaire) pour retrouver titre/artiste/pochette
+    /// à partir d'une session d'écoute, qui ne connaît que le `releaseId`.
+    private var releaseById: [Int: CollectionItem] = [:]
 
     /// Nombre d'ajouts par année (date d'ajout dans la collection de l'utilisateur), trié par années décroissantes.
     /// Répartition par genre musical de la collection.
@@ -172,21 +185,18 @@ final class StatsViewModel {
         }
         isLoadingOverview = false
 
-        if let username = authManager.username {
-            let cached = localStore.getCollectionItems(username: username, folderId: DiscogsConstants.allFolderId)
-            if !cached.isEmpty {
-                allCollectionItems = cached
-                updateGenreDistribution()
-                updateLabelDistribution()
-                updateMediaFormatDistribution()
-                updateTopArtistsByCollectionCount()
-            }
-        }
-
-        // Charge le cache local pérenne des MasterRecords
+        // Charge le cache local pérenne des MasterRecords (avant les calculs qui en dépendent)
         masterYearsCache = localStore.getAllMasterYears()
 
-        startHistogramLoad()
+        // Une seule lecture (décodage complet) du cache de la collection, réutilisée par tous
+        // les calculs : auparavant, il était décodé trois fois et les répartitions calculées
+        // deux fois à chaque ouverture de l'écran.
+        let cached = localStore.getCollectionItems(username: username, folderId: DiscogsConstants.allFolderId)
+        if !cached.isEmpty {
+            applyCollectionItems(cached)
+        }
+
+        startHistogramLoad(hasFreshCache: !cached.isEmpty)
         await loadValuation()
         await computeTotalInvestedIfNeeded()
     }
@@ -223,34 +233,42 @@ final class StatsViewModel {
         let currency = CollectionPreferencesStore.defaultCurrency(for: username)
 
         isComputingInvested = true
-        var total = 0.0
+        // Sommé par devise d'abord, puis une seule conversion par devise : auparavant, chaque
+        // disque attendait sa propre conversion (un passage par l'acteur, voire une requête).
+        var amountsByCurrency: [String: Double] = [:]
         for item in allCollectionItems {
             let raw = item.value(forFieldId: fieldId).trimmingCharacters(in: .whitespacesAndNewlines)
             guard !raw.isEmpty, let parsed = PurchasePriceParser.parse(raw, defaultCurrency: currency) else { continue }
-            total += await CurrencyConversionService.shared.convert(parsed.amount, from: parsed.currency, to: currency)
+            amountsByCurrency[parsed.currency, default: 0] += parsed.amount
+        }
+        var total = 0.0
+        for (sourceCurrency, amount) in amountsByCurrency {
+            total += await CurrencyConversionService.shared.convert(amount, from: sourceCurrency, to: currency)
         }
         totalInvested = total
         totalInvestedCurrency = currency
         isComputingInvested = false
     }
 
-    /// Regroupe les dates d'ajout par année et lance le calcul des années originales.
-    private func startHistogramLoad() {
+    /// Remplace la collection analysée et recalcule toutes les répartitions qui en dépendent.
+    private func applyCollectionItems(_ items: [CollectionItem]) {
+        allCollectionItems = items
+        additionsPerYear = Self.groupByYear(items)
+        updateOriginalYearsDistribution()
+        updateGenreDistribution()
+        updateLabelDistribution()
+        updateMediaFormatDistribution()
+        updateTopArtistsByCollectionCount()
+    }
+
+    /// Recharge toute la collection depuis Discogs si le cache local est périmé (ou vide). Le
+    /// cache, lui, a déjà été appliqué par `loadOverview` pour un affichage immédiat.
+    private func startHistogramLoad(hasFreshCache: Bool) {
         histogramTask?.cancel()
         guard let username = authManager.username else { return }
 
-        if !localStore.isCollectionStale(username: username, folderId: DiscogsConstants.allFolderId) {
-            let cached = localStore.getCollectionItems(username: username, folderId: DiscogsConstants.allFolderId)
-            if !cached.isEmpty {
-                allCollectionItems = cached
-                additionsPerYear = Self.groupByYear(cached)
-                updateOriginalYearsDistribution()
-                updateGenreDistribution()
-                updateLabelDistribution()
-                updateMediaFormatDistribution()
-                updateTopArtistsByCollectionCount()
-                return
-            }
+        if hasFreshCache && !localStore.isCollectionStale(username: username, folderId: DiscogsConstants.allFolderId) {
+            return
         }
 
         guard let credentials = authManager.credentials else { return }
@@ -262,15 +280,12 @@ final class StatsViewModel {
                     username: username, folderId: DiscogsConstants.allFolderId, credentials: credentials
                 )
                 guard !Task.isCancelled else { return }
-                self.allCollectionItems = allItems
                 self.totalCollectionCount = allItems.count
-                self.additionsPerYear = Self.groupByYear(allItems)
                 self.localStore.syncCollectionFolder(username: username, folderId: DiscogsConstants.allFolderId, fullItems: allItems)
-                self.updateOriginalYearsDistribution()
-                self.updateGenreDistribution()
-                self.updateLabelDistribution()
-                self.updateMediaFormatDistribution()
-                self.updateTopArtistsByCollectionCount()
+                self.applyCollectionItems(allItems)
+                // Le total investi dépend de la collection : le recalculer sur la version fraîche
+                // (il avait été calculé sur le cache, éventuellement périmé).
+                await self.computeTotalInvestedIfNeeded()
             } catch {
                 // On garde l'histogramme vide en cas d'échec.
             }
@@ -494,25 +509,27 @@ final class StatsViewModel {
 
     /// Retourne la liste des disques correspondant à un genre donné.
     func items(forGenre genreName: String) -> [CollectionItem] {
+        unsortedItems(forGenre: genreName).sorted { item1, item2 in
+            item1.basicInformation.title.localizedStandardCompare(item2.basicInformation.title) == .orderedAscending
+        }
+    }
+
+    /// Même filtre que `items(forGenre:)`, sans le tri alphabétique (coûteux) : suffisant pour
+    /// compter, ce que fait `styleBreakdown`, évalué à chaque rendu de l'écran Stats.
+    private func unsortedItems(forGenre genreName: String) -> [CollectionItem] {
         if genreName == "Autres" {
             return allCollectionItems.filter { item in
                 let genres = item.basicInformation.genres ?? []
                 return genres.contains { otherGenresNames.contains($0) }
-            }.sorted { item1, item2 in
-                item1.basicInformation.title.localizedStandardCompare(item2.basicInformation.title) == .orderedAscending
             }
         } else if genreName == "Non spécifié" {
             return allCollectionItems.filter { item in
                 let genres = item.basicInformation.genres?.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty } ?? []
                 return genres.isEmpty
-            }.sorted { item1, item2 in
-                item1.basicInformation.title.localizedStandardCompare(item2.basicInformation.title) == .orderedAscending
             }
         } else {
             return allCollectionItems.filter { item in
                 item.basicInformation.genres?.contains(genreName) == true
-            }.sorted { item1, item2 in
-                item1.basicInformation.title.localizedStandardCompare(item2.basicInformation.title) == .orderedAscending
             }
         }
     }
@@ -522,7 +539,7 @@ final class StatsViewModel {
     /// chacun d'eux, donc la somme des occurrences peut dépasser le nombre de disques du genre.
     func styleBreakdown(forGenre genreName: String) -> [StyleBreakdownEntry] {
         var counts: [String: Int] = [:]
-        for item in items(forGenre: genreName) {
+        for item in unsortedItems(forGenre: genreName) {
             let styles = item.basicInformation.styles?.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty } ?? []
             for style in styles {
                 counts[style.trimmingCharacters(in: .whitespaces), default: 0] += 1
@@ -615,7 +632,7 @@ final class StatsViewModel {
         let missingList = Array(missingMasterIds)
 
         masterResolutionTask = Task { [weak self] in
-            await MasterResolutionService.shared.resolveMasters(missingMasterIds: missingList) { [weak self] resolved, total, masterId, year in
+            await MasterResolutionService.shared.resolveMasters(missingMasterIds: missingList, subscriberKey: "stats") { [weak self] resolved, total, masterId, year in
                 guard let self else { return }
                 self.masterYearsCache[masterId] = year
                 self.missingMastersCount = max(0, total - resolved)
@@ -764,16 +781,6 @@ final class StatsViewModel {
     // MARK: - Tops & Palmarès d'écoute (fonctionnalité premium)
 
     private let listeningStore = ListeningLogStore.shared
-
-    /// Une release par `releaseId` (peu importe l'exemplaire) pour retrouver titre/artiste/pochette
-    /// à partir d'une session d'écoute, qui ne connaît que le `releaseId`.
-    private var releaseById: [Int: CollectionItem] {
-        var result: [Int: CollectionItem] = [:]
-        for item in allCollectionItems where result[item.releaseId] == nil {
-            result[item.releaseId] = item
-        }
-        return result
-    }
 
     var totalListeningSessionsCount: Int {
         listeningStore.sessions.count

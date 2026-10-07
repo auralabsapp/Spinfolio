@@ -350,6 +350,10 @@ final class CloudSyncEngine {
     /// Signale qu'un exemplaire a des tags à envoyer vers iCloud. No-op silencieux si le moteur
     /// n'est pas actif (non premium) ou si aucun compte n'est actif.
     func markTagsDirty(instanceId: Int) {
+        // Identifiant temporaire négatif d'un exemplaire en cours d'ajout (voir `ReleaseActions`) :
+        // il ne doit jamais atteindre iCloud. Ses tags y partiront sous l'identifiant définitif,
+        // via `TagStore.remapInstanceId`. Auparavant, chaque ajout créait un enregistrement parasite.
+        guard instanceId > 0 else { return }
         markDirty(.tag(instanceId: instanceId))
     }
 
@@ -857,13 +861,19 @@ extension CloudSyncEngine: CKSyncEngineDelegate {
 
         case .fetchedRecordZoneChanges(let fetchedChanges):
             cloudSyncLogger.log("fetchedRecordZoneChanges — \(fetchedChanges.modifications.count) modification(s), \(fetchedChanges.deletions.count) suppression(s)")
-            for modification in fetchedChanges.modifications {
-                rememberSystemFields(of: modification.record)
-                apply(remoteRecord: modification.record, allowMerge: isFirstHydrateForActiveAccount)
-            }
-            for deletion in fetchedChanges.deletions {
-                serverSystemFields[deletion.recordID] = nil
-                applyDeletion(recordID: deletion.recordID)
+            // Un lot peut contenir des centaines d'enregistrements (première synchro) : regroupés
+            // pour que chaque store n'écrive sur disque et ne notifie l'UI qu'une fois par lot.
+            TagStore.shared.performBatchUpdate {
+                ListeningLogStore.shared.performBatchUpdate {
+                    for modification in fetchedChanges.modifications {
+                        rememberSystemFields(of: modification.record)
+                        apply(remoteRecord: modification.record, allowMerge: isFirstHydrateForActiveAccount)
+                    }
+                    for deletion in fetchedChanges.deletions {
+                        serverSystemFields[deletion.recordID] = nil
+                        applyDeletion(recordID: deletion.recordID)
+                    }
+                }
             }
 
         case .sentRecordZoneChanges(let sentChanges):

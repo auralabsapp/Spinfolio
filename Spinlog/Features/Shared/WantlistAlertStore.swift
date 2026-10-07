@@ -75,9 +75,22 @@ final class WantlistAlertStore {
     func removeAlert(for releaseId: Int) {
         alerts.removeValue(forKey: releaseId)
         persistAlerts()
-        // Retire d'éventuelles notifications locales en attente pour cette release
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["wantlist_alert_\(releaseId)"])
+        removeNotifications(for: releaseId)
+        cancelBackgroundCheckIfIdle()
         CloudSyncEngine.shared.markWantlistAlertDeleted(releaseId: releaseId)
+    }
+
+    /// Identifiant unique par release : une nouvelle bonne affaire remplace la notification
+    /// précédente du même disque, et la suppression de l'alerte retrouve bien sa notification.
+    /// (L'ancien identifiant, suffixé du prix, ne correspondait jamais à celui retiré ici.)
+    private static func notificationIdentifier(for releaseId: Int) -> String {
+        "wantlist_alert_\(releaseId)"
+    }
+
+    private func removeNotifications(for releaseId: Int) {
+        let identifiers = [Self.notificationIdentifier(for: releaseId)]
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
+        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: identifiers)
     }
 
     /// Met à jour la boîte existante en place si l'alerte existe déjà (ne réinvalide que cette
@@ -112,7 +125,8 @@ final class WantlistAlertStore {
     func applyRemoteAlertDeletion(releaseId: Int) {
         alerts.removeValue(forKey: releaseId)
         persistAlerts()
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["wantlist_alert_\(releaseId)"])
+        removeNotifications(for: releaseId)
+        cancelBackgroundCheckIfIdle()
     }
 
     // MARK: - Persistance
@@ -173,10 +187,15 @@ final class WantlistAlertStore {
         logger.info("Début de la vérification de \(self.alerts.count) alerte(s)...")
 
         for box in Array(alerts.values) {
+            // Tâche de fond expirée (voir `AppDelegate`) : on s'arrête net. Chaque alerte déjà
+            // vérifiée a été enregistrée au fil de l'eau par `checkSingleAlert`.
+            guard !Task.isCancelled else {
+                logger.info("Vérification des alertes interrompue (tâche annulée).")
+                break
+            }
             await checkSingleAlert(box.alert)
         }
 
-        persistAlerts()
         scheduleBackgroundCheck()
     }
 
@@ -188,53 +207,68 @@ final class WantlistAlertStore {
                 currency: alert.currency,
                 credentials: DiscogsAuthManager.shared.credentials
             )
-            var updated = alert
-            updated.lastCheckedAt = Date()
-            updated.currentNumForSale = stats.numForSale
-
+            // Prix le plus bas, converti si besoin dans la devise de l'alerte.
+            var lowestPrice: Double?
             if let lowest = stats.lowestPrice {
-                // Convertit si besoin dans la devise de l'alerte
-                let convertedPrice: Double
                 if lowest.currency.uppercased() == alert.currency.uppercased() {
-                    convertedPrice = lowest.value
+                    lowestPrice = lowest.value
                 } else {
-                    convertedPrice = await CurrencyConversionService.shared.convert(
+                    lowestPrice = await CurrencyConversionService.shared.convert(
                         lowest.value,
                         from: lowest.currency,
                         to: alert.currency
                     )
                 }
+            }
 
-                updated.currentLowestPrice = convertedPrice
+            // L'alerte a pu être modifiée (prix cible, devise) ou supprimée pendant les requêtes :
+            // on repart de sa version actuelle plutôt que de la copie d'avant la requête, qui
+            // écrasait sinon la modification de l'utilisateur. Devise changée : ce résultat
+            // n'est plus comparable, la prochaine vérification s'en chargera.
+            guard let current = alerts[alert.releaseId]?.alert, current.currency == alert.currency else { return }
+            var updated = current
+            updated.lastCheckedAt = Date()
+            updated.currentNumForSale = stats.numForSale
+            updated.currentLowestPrice = lowestPrice
+            if lowestPrice != nil {
                 updated.currentLowestPriceCurrency = alert.currency
+            }
 
-                // Vérifie si le prix est sous le seuil
-                if convertedPrice <= alert.targetPrice {
-                    // Ne notifie que si nous n'avons pas déjà notifié pour ce prix ou un prix supérieur
-                    let shouldNotify: Bool
-                    if let lastNotified = alert.lastNotifiedPrice {
-                        shouldNotify = convertedPrice < lastNotified
-                    } else {
-                        shouldNotify = true
-                    }
-
-                    if shouldNotify {
-                        await postNotification(for: updated, price: convertedPrice)
-                        updated.lastNotifiedPrice = convertedPrice
-                    }
+            if let lowestPrice, lowestPrice <= updated.targetPrice {
+                // Ne notifie que si nous n'avons pas déjà notifié pour ce prix ou un prix inférieur.
+                let shouldNotify = updated.lastNotifiedPrice.map { lowestPrice < $0 } ?? true
+                if shouldNotify {
+                    updated.lastNotifiedPrice = lowestPrice
+                    // Enregistré AVANT d'envoyer la notification : si l'app est suspendue juste
+                    // après (tâche de fond expirée), le passage suivant ne la renverra pas.
+                    // Auparavant, rien n'était enregistré avant la fin de toute la boucle.
+                    upsert(updated)
+                    persistAlerts()
+                    await postNotification(for: updated, price: lowestPrice)
                 }
             } else {
-                updated.currentLowestPrice = nil
+                // Repassé au-dessus du seuil (ou plus rien en vente) : on réarme l'alerte, pour
+                // qu'une nouvelle baisse sous le seuil soit à nouveau signalée — même à un prix
+                // déjà notifié par le passé.
+                updated.lastNotifiedPrice = nil
             }
 
+            // Supprimée pendant l'envoi de la notification : ne pas la ressusciter.
+            guard alerts[alert.releaseId] != nil else { return }
             // Mutation de la boîte existante en place (pas de réassignation de `alerts`) : seule
             // cette alerte réinvalide ses lecteurs, pas la liste Wantlist entière.
-            if let box = alerts[alert.releaseId] {
-                box.alert = updated
-            }
+            upsert(updated)
+            persistAlerts()
+
             // Synchronisé pour que les autres appareils voient le dernier prix constaté et
-            // n'envoient pas une seconde notification pour un prix déjà signalé par celui-ci.
-            CloudSyncEngine.shared.markWantlistAlertDirty(releaseId: alert.releaseId)
+            // n'envoient pas une seconde notification pour un prix déjà signalé par celui-ci —
+            // mais pas quand seule la date de vérification a changé : sinon chaque passage (toutes
+            // les 3 h) renvoyait toutes les alertes vers iCloud.
+            var withoutCheckDate = updated
+            withoutCheckDate.lastCheckedAt = current.lastCheckedAt
+            if withoutCheckDate != current {
+                CloudSyncEngine.shared.markWantlistAlertDirty(releaseId: alert.releaseId)
+            }
         } catch {
             logger.warning("Échec de vérification marketplace pour release \(alert.releaseId): \(error.localizedDescription)")
         }
@@ -255,7 +289,7 @@ final class WantlistAlertStore {
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
         let request = UNNotificationRequest(
-            identifier: "wantlist_alert_\(alert.releaseId)_\(Int(price))",
+            identifier: Self.notificationIdentifier(for: alert.releaseId),
             content: content,
             trigger: trigger
         )
@@ -273,20 +307,35 @@ final class WantlistAlertStore {
     /// Enregistre la tâche de fond auprès du système iOS. N'enregistre aucun réveil si
     /// l'utilisateur n'est pas premium, pour ne pas solliciter l'appareil pour une fonctionnalité
     /// à laquelle il n'a plus droit (voir `checkAlerts()`).
+    ///
+    /// Ne resoumet rien si une vérification est déjà planifiée : resoumettre remplace la demande
+    /// existante et repousse donc son déclenchement à "maintenant + 3 h". Comme cette méthode est
+    /// appelée à chaque passage en arrière-plan (et à chaque alerte reçue d'iCloud), un
+    /// utilisateur ouvrant l'app plus souvent que toutes les 3 h ne voyait sinon jamais la
+    /// vérification s'exécuter.
     func scheduleBackgroundCheck() {
         guard PremiumStore.shared.isPremium else { return }
         guard !alerts.isEmpty else { return }
 
-        let request = BGAppRefreshTaskRequest(identifier: wantlistAlertsTaskIdentifier)
-        // Demande un rafraîchissement au plus tôt après 3 heures
-        request.earliestBeginDate = Date(timeIntervalSinceNow: 3 * 3600)
+        Task {
+            let pending = await BGTaskScheduler.shared.pendingTaskRequests()
+            guard !pending.contains(where: { $0.identifier == wantlistAlertsTaskIdentifier }) else { return }
 
-        BGTaskScheduler.shared.submitTaskRequest(request) { error in
-            if let error {
-                logger.error("Impossible de soumettre la tâche d'arrière-plan: \(error.localizedDescription)")
-            } else {
+            let request = BGAppRefreshTaskRequest(identifier: wantlistAlertsTaskIdentifier)
+            // Demande un rafraîchissement au plus tôt après 3 heures
+            request.earliestBeginDate = Date(timeIntervalSinceNow: 3 * 3600)
+            do {
+                try await BGTaskScheduler.shared.submitTaskRequest(request)
                 logger.info("Tâche d'arrière-plan programmée avec succès.")
+            } catch {
+                logger.error("Impossible de soumettre la tâche d'arrière-plan: \(error.localizedDescription)")
             }
         }
+    }
+
+    /// Plus aucune alerte : inutile de réveiller l'app pour rien.
+    private func cancelBackgroundCheckIfIdle() {
+        guard alerts.isEmpty else { return }
+        BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: wantlistAlertsTaskIdentifier)
     }
 }

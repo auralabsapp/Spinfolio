@@ -48,6 +48,35 @@ final class TagStore {
 
     private init() {}
 
+    /// Profondeur des `performBatchUpdate` en cours : tant qu'elle est non nulle, `persist()` ne
+    /// fait que noter qu'une écriture sera nécessaire à la fin du lot.
+    private var batchDepth = 0
+    private var needsPersistAfterBatch = false
+
+    /// Regroupe plusieurs modifications en une seule écriture disque et une seule notification
+    /// `.tagsChanged`. Sans ça, chaque modification d'un lot (tag ajouté à 500 disques, ou
+    /// première synchro iCloud de milliers d'exemplaires) réencodait tout le store et faisait
+    /// retrier toute la collection (`CollectionViewModel` observe `.tagsChanged`) à chaque fois.
+    func performBatchUpdate(_ updates: () -> Void) {
+        batchDepth += 1
+        updates()
+        batchDepth -= 1
+        if batchDepth == 0 && needsPersistAfterBatch {
+            needsPersistAfterBatch = false
+            persist()
+        }
+    }
+
+    /// Date d'ajout de chaque tag d'un exemplaire. Tolère les doublons de nom (en gardant la plus
+    /// ancienne date) : `Dictionary(uniqueKeysWithValues:)`, utilisé auparavant, fait planter
+    /// l'app sur un doublon — possible par exemple après restauration d'une sauvegarde JSON.
+    private func addedAtByName(forInstanceKey instanceKey: String) -> [String: Date] {
+        Dictionary(
+            (timestampedTagsByInstance[instanceKey] ?? []).map { ($0.name, $0.addedAt) },
+            uniquingKeysWith: { min($0, $1) }
+        )
+    }
+
     /// Bascule ce store sur les données propres au compte Discogs indiqué : sauvegarde déjà à
     /// jour (chaque mutation persiste immédiatement), donc il suffit de recharger l'état en
     /// mémoire depuis le stockage propre à ce compte. Appelé par `DiscogsAuthManager` au
@@ -168,13 +197,14 @@ final class TagStore {
     /// Préserve la date d'ajout des tags déjà présents ; les nouveaux reçoivent la date actuelle.
     func setTags(_ tags: [String], for instanceId: Int) {
         let instanceKey = String(instanceId)
-        let existingByName = Dictionary(
-            uniqueKeysWithValues: (timestampedTagsByInstance[instanceKey] ?? []).map { ($0.name, $0.addedAt) }
-        )
+        let existingByName = addedAtByName(forInstanceKey: instanceKey)
         let now = Date()
-        timestampedTagsByInstance[instanceKey] = tags.map { name in
-            TimestampedTag(name: name, addedAt: existingByName[name] ?? now)
-        }
+        // Dédoublonné (insensible à la casse) : un doublon enregistré ici ferait sinon reparaître
+        // le même tag deux fois à l'affichage et dans la synchro.
+        var seen = Set<String>()
+        timestampedTagsByInstance[instanceKey] = tags
+            .filter { seen.insert($0.lowercased()).inserted }
+            .map { name in TimestampedTag(name: name, addedAt: existingByName[name] ?? now) }
         persist()
         CloudSyncEngine.shared.markTagsDirty(instanceId: instanceId)
     }
@@ -276,9 +306,7 @@ final class TagStore {
         let currentNames = tags(for: instanceId, releaseId: releaseId)
         guard !currentNames.contains(where: { $0.caseInsensitiveCompare(trimmed) == .orderedSame }) else { return }
 
-        let existingByName = Dictionary(
-            uniqueKeysWithValues: (timestampedTagsByInstance[instanceKey] ?? []).map { ($0.name, $0.addedAt) }
-        )
+        let existingByName = addedAtByName(forInstanceKey: instanceKey)
         let now = Date()
         var updated = currentNames.map { name in TimestampedTag(name: name, addedAt: existingByName[name] ?? now) }
         updated.append(TimestampedTag(name: trimmed, addedAt: now))
@@ -291,13 +319,14 @@ final class TagStore {
     func removeTag(_ tag: String, from instanceId: Int, releaseId: Int? = nil) {
         let instanceKey = String(instanceId)
         var currentNames = tags(for: instanceId, releaseId: releaseId)
+        // Tag absent : rien à faire. Évite, lors d'un retrait en lot, de réécrire et de renvoyer
+        // vers iCloud les exemplaires qui ne portaient pas ce tag.
+        guard currentNames.contains(tag) else { return }
         currentNames.removeAll { $0 == tag }
         if currentNames.isEmpty {
             timestampedTagsByInstance.removeValue(forKey: instanceKey)
         } else {
-            let existingByName = Dictionary(
-                uniqueKeysWithValues: (timestampedTagsByInstance[instanceKey] ?? []).map { ($0.name, $0.addedAt) }
-            )
+            let existingByName = addedAtByName(forInstanceKey: instanceKey)
             let now = Date()
             timestampedTagsByInstance[instanceKey] = currentNames.map { name in
                 TimestampedTag(name: name, addedAt: existingByName[name] ?? now)
@@ -391,18 +420,35 @@ final class TagStore {
         tagsByRelease: [String: [String]],
         standaloneTags: Set<String>
     ) {
+        let previousInstanceIds = Set(allTaggedInstanceIds())
         if let tagsByInstance {
             let now = Date()
             self.timestampedTagsByInstance = tagsByInstance.mapValues { names in
-                names.map { TimestampedTag(name: $0, addedAt: now) }
+                // Dédoublonné : une sauvegarde éditée à la main peut contenir un doublon.
+                var seen = Set<String>()
+                return names
+                    .filter { seen.insert($0.lowercased()).inserted }
+                    .map { TimestampedTag(name: $0, addedAt: now) }
             }
         }
         self.legacyTagsByRelease = tagsByRelease
         self.standaloneTags = standaloneTags
         persist()
+
+        // Sans ces signalements, la restauration restait purement locale : iCloud gardait l'état
+        // d'avant (y compris des tags que la sauvegarde ne contient plus) et pouvait le réappliquer
+        // au prochain fetch. On renvoie donc tous les exemplaires concernés, avant et après.
+        for instanceId in previousInstanceIds.union(allTaggedInstanceIds()) {
+            CloudSyncEngine.shared.markTagsDirty(instanceId: instanceId)
+        }
+        CloudSyncEngine.shared.markStandaloneTagsDirty()
     }
 
     private func persist() {
+        guard batchDepth == 0 else {
+            needsPersistAfterBatch = true
+            return
+        }
         guard let activeUsername else { return }
         if let data = try? JSONEncoder().encode(timestampedTagsByInstance) {
             UserDefaults.standard.set(data, forKey: key(instanceStorageKey, for: activeUsername))

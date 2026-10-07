@@ -31,6 +31,10 @@ final class CollectionViewModel {
     }
     private(set) var isLoading = false
     private(set) var errorMessage: String?
+    /// Résultat d'une action de l'utilisateur (retrait, déplacement…) à lui signaler, affiché en
+    /// alerte par `CollectionView`. Distinct de `errorMessage`, qui n'est visible que lorsque la
+    /// liste est vide (échec de chargement) : les messages d'action y restaient invisibles.
+    var actionMessage: String?
     private(set) var isOfflineAndStale: Bool = false
 
     var searchText = "" {
@@ -225,12 +229,16 @@ final class CollectionViewModel {
         guard sortOption == .shelf, ShelfPreferencesStore.shared.sortStrategy.usesMasterYear else { return }
         let missing = items.compactMap { item -> Int? in
             guard let masterId = item.basicInformation.masterId, masterId > 0 else { return nil }
-            return localStore.getMasterYear(for: masterId) == nil ? masterId : nil
+            // `isMasterResolved` et non `getMasterYear == nil` : un master sans année sur Discogs
+            // est enregistré à 0 (résolu), mais `getMasterYear` renvoie `nil` pour 0 — il était
+            // donc redemandé à Discogs indéfiniment.
+            return localStore.isMasterResolved(masterId) ? nil : masterId
         }
         let uniqueMissing = Array(Set(missing))
         guard !uniqueMissing.isEmpty else { return }
         Task {
-            await MasterResolutionService.shared.resolveMasters(missingMasterIds: uniqueMissing) { _, _, _, _ in }
+            // La collection réagit déjà à `.masterYearResolved` : aucun suivi de progression ici.
+            await MasterResolutionService.shared.resolveMasters(missingMasterIds: uniqueMissing, subscriberKey: "collection") { _, _, _, _ in }
         }
     }
 
@@ -690,7 +698,7 @@ final class CollectionViewModel {
         // Si l'appareil est hors ligne et que les données ont plus de 6 heures (Option B) :
         // maintien de l'affichage en lecture seule et blocage des modifications
         if !networkMonitor.isConnected && isOfflineAndStale {
-            errorMessage = AppMessages.offlineStaleModificationBlocked
+            actionMessage = AppMessages.offlineStaleModificationBlocked
             return
         }
 
@@ -705,6 +713,14 @@ final class CollectionViewModel {
         }
         LibraryMembershipStore.shared.notifyCollectionItemRemoved(releaseId: item.releaseId, instanceId: item.instanceId)
 
+        // Exemplaire ajouté hors ligne et pas encore envoyé : il suffit d'annuler son ajout en
+        // attente (voir `OfflineSyncQueue.cancelPendingAdd`).
+        if item.instanceId < 0 {
+            syncQueue.cancelPendingAdd(temporaryInstanceId: item.instanceId)
+            TagStore.shared.removeTags(for: item.instanceId)
+            return
+        }
+
         if networkMonitor.isConnected, let credentials = authManager.credentials {
             do {
                 try await DiscogsAPIClient.shared.removeFromCollection(
@@ -714,8 +730,9 @@ final class CollectionViewModel {
                     instanceId: item.instanceId,
                     credentials: credentials
                 )
-            } catch {
-                // En cas d'erreur de coupure réseau inattendue, mise en file d'attente
+            } catch where error.isNotFound {
+                // Déjà absent sur Discogs : le retrait est acquis.
+            } catch where error.isTransientNetworkFailure {
                 let action = PendingAction(
                     type: .removeFromCollection,
                     releaseId: item.releaseId,
@@ -723,6 +740,19 @@ final class CollectionViewModel {
                     instanceId: item.instanceId
                 )
                 syncQueue.enqueue(action)
+                actionMessage = AppMessages.discogsUnavailableQueued
+            } catch {
+                // Refus définitif : on réaffiche l'exemplaire plutôt que de laisser la file
+                // échouer trois fois pendant qu'il semble retiré.
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    if !items.contains(where: { $0.id == item.id }) {
+                        items.append(item)
+                    }
+                }
+                localStore.saveCollectionItems([item], username: username, folderId: item.folderId)
+                localStore.saveCollectionItems([item], username: username, folderId: DiscogsConstants.allFolderId)
+                LibraryMembershipStore.shared.markInCollection(item.releaseId)
+                actionMessage = AppMessages.removalFailed
             }
         } else {
             // Hors ligne : enregistrement dans la file d'attente des mutations
@@ -743,7 +773,7 @@ final class CollectionViewModel {
         guard let username = authManager.username, item.folderId != toFolderId else { return }
 
         if !networkMonitor.isConnected && isOfflineAndStale {
-            errorMessage = AppMessages.offlineStaleModificationBlocked
+            actionMessage = AppMessages.offlineStaleModificationBlocked
             return
         }
 
@@ -784,6 +814,13 @@ final class CollectionViewModel {
         localStore.saveCollectionItems([movedItem], username: username, folderId: DiscogsConstants.allFolderId)
         LibraryMembershipStore.shared.notifyCollectionInstanceReplaced(oldInstanceId: item.instanceId, newInstance: movedItem)
 
+        // Exemplaire ajouté hors ligne et pas encore envoyé : seul le dossier de son ajout en
+        // attente change (voir `OfflineSyncQueue.retargetPendingAdd`).
+        if item.instanceId < 0 {
+            syncQueue.retargetPendingAdd(temporaryInstanceId: item.instanceId, toFolderId: toFolderId)
+            return
+        }
+
         if networkMonitor.isConnected, let credentials = authManager.credentials {
             do {
                 try await DiscogsAPIClient.shared.moveCollectionInstance(
@@ -794,7 +831,7 @@ final class CollectionViewModel {
                     toFolderId: toFolderId,
                     credentials: credentials
                 )
-            } catch {
+            } catch where error.isTransientNetworkFailure {
                 syncQueue.enqueue(PendingAction(
                     type: .moveCollectionInstance,
                     releaseId: item.releaseId,
@@ -802,6 +839,12 @@ final class CollectionViewModel {
                     instanceId: item.instanceId,
                     targetFolderId: toFolderId
                 ))
+                actionMessage = AppMessages.discogsUnavailableQueued
+            } catch {
+                // Refus définitif : on annule le déplacement optimiste (exemplaire, compteurs des
+                // dossiers, cache) au lieu de laisser la file échouer trois fois.
+                revertMove(original: item, moved: movedItem, username: username)
+                actionMessage = AppMessages.moveFailed
             }
         } else {
             syncQueue.enqueue(PendingAction(
@@ -812,6 +855,37 @@ final class CollectionViewModel {
                 targetFolderId: toFolderId
             ))
         }
+    }
+
+    /// Inverse exact de la mise à jour optimiste faite par `moveInstance`.
+    private func revertMove(original: CollectionItem, moved: CollectionItem, username: String) {
+        let originFolderId = original.folderId
+        let toFolderId = moved.folderId
+        withAnimation(.easeInOut(duration: 0.2)) {
+            if let index = items.firstIndex(where: { $0.id == original.id }) {
+                // Vue filtrée sur le dossier de destination : l'exemplaire n'y a plus sa place.
+                if selectedFolderId == toFolderId {
+                    items.remove(at: index)
+                } else {
+                    items[index] = original
+                }
+            } else if selectedFolderId == originFolderId {
+                // Retiré de la vue filtrée sur le dossier de départ : on l'y remet.
+                items.append(original)
+            }
+            folders = folders.map { folder in
+                if folder.id == originFolderId {
+                    return CollectionFolder(id: folder.id, name: folder.name, count: folder.count + 1, resourceURL: folder.resourceURL)
+                } else if folder.id == toFolderId {
+                    return CollectionFolder(id: folder.id, name: folder.name, count: max(0, folder.count - 1), resourceURL: folder.resourceURL)
+                }
+                return folder
+            }
+        }
+        localStore.removeCollectionItem(username: username, folderId: toFolderId, instanceId: original.instanceId)
+        localStore.saveCollectionItems([original], username: username, folderId: originFolderId)
+        localStore.saveCollectionItems([original], username: username, folderId: DiscogsConstants.allFolderId)
+        LibraryMembershipStore.shared.notifyCollectionInstanceReplaced(oldInstanceId: original.instanceId, newInstance: original)
     }
 
     /// Reflète localement une note/des champs personnalisés déjà enregistrés par

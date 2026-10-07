@@ -85,7 +85,27 @@ final class ListeningLogStore {
         persist()
     }
 
+    /// Voir `TagStore.performBatchUpdate` : tant qu'un lot est en cours, le tri et l'écriture
+    /// sont différés à la fin du lot plutôt que refaits à chaque session reçue d'iCloud.
+    private var batchDepth = 0
+    private var needsPersistAfterBatch = false
+
+    func performBatchUpdate(_ updates: () -> Void) {
+        batchDepth += 1
+        updates()
+        batchDepth -= 1
+        if batchDepth == 0 && needsPersistAfterBatch {
+            needsPersistAfterBatch = false
+            sessions.sort { $0.timestamp > $1.timestamp }
+            persist()
+        }
+    }
+
     private func persist() {
+        guard batchDepth == 0 else {
+            needsPersistAfterBatch = true
+            return
+        }
         guard let activeUsername else { return }
         if let encoded = try? JSONEncoder().encode(sessions) {
             UserDefaults.standard.set(encoded, forKey: storageKey(for: activeUsername))
@@ -153,7 +173,10 @@ final class ListeningLogStore {
         } else {
             sessions.append(session)
         }
-        sessions.sort { $0.timestamp > $1.timestamp }
+        // En lot, le tri est fait une seule fois à la fin (`performBatchUpdate`).
+        if batchDepth == 0 {
+            sessions.sort { $0.timestamp > $1.timestamp }
+        }
         persist()
     }
 
@@ -169,16 +192,23 @@ final class ListeningLogStore {
     func restoreSessions(_ importedSessions: [ListeningSession]) {
         var existingSet = Set(sessions.map(\.id))
         var merged = sessions
+        var addedIds: [UUID] = []
 
         for session in importedSessions {
             if !existingSet.contains(session.id) {
                 merged.append(session)
                 existingSet.insert(session.id)
+                addedIds.append(session.id)
             }
         }
 
         self.sessions = merged.sorted { $0.timestamp > $1.timestamp }
         persist()
+        // Sans ça, les sessions restaurées restaient sur cet appareil et n'atteignaient jamais
+        // iCloud ni les autres appareils.
+        for id in addedIds {
+            CloudSyncEngine.shared.markSessionDirty(id: id)
+        }
     }
 }
 

@@ -22,7 +22,7 @@ struct CollectionView: View {
     @State private var showingBulkDeleteConfirmation = false
     @State private var showingBulkTagManagement = false
     @State private var pendingMoveFolder: CollectionFolder? = nil
-    @ObservedObject private var activityManager = NowPlayingActivityManager.shared
+    private var activityManager = NowPlayingActivityManager.shared
 
     var body: some View {
         content
@@ -298,6 +298,17 @@ struct CollectionView: View {
             }
             .onReceive(NotificationCenter.default.publisher(for: .lastConsultedFolderChanged)) { _ in
                 Task { await viewModel.handlePreferencesChanged() }
+            }
+            // Résultat d'une action (retrait, déplacement…) : binding dérivé de la seule
+            // `actionMessage`, sans état de présentation séparé qui pourrait se désynchroniser.
+            .alert(
+                viewModel.actionMessage ?? "",
+                isPresented: Binding(
+                    get: { viewModel.actionMessage != nil },
+                    set: { if !$0 { viewModel.actionMessage = nil } }
+                )
+            ) {
+                Button("OK", role: .cancel) {}
             }
     }
 

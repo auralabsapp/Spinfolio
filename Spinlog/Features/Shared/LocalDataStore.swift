@@ -112,15 +112,18 @@ final class LocalDataStore {
 
     // MARK: - Master Records (Années originales immuables)
 
+    /// Copie mémoire COMPLÈTE de la table des MasterRecords, chargée une fois puis tenue à jour
+    /// par `saveMasterYear`/`saveMasterYears`. Auparavant, `getMasterYear`/`saveMasterYear`
+    /// pouvaient la créer partielle avant le premier `getAllMasterYears`, qui la renvoyait ensuite
+    /// telle quelle : des masters déjà connus semblaient manquants et étaient redemandés à Discogs.
     private var masterYearsMemoryCache: [Int: Int]?
 
-    /// Récupère tous les MasterRecords déjà connus sous forme de dictionnaire [masterId: originalYear].
-    func getAllMasterYears() -> [Int: Int] {
+    private func loadedMasterYears() -> [Int: Int] {
         if let cache = masterYearsMemoryCache {
             return cache
         }
         let descriptor = FetchDescriptor<MasterRecord>()
-        guard let records = try? context.fetch(descriptor) else { return [:] }
+        let records = (try? context.fetch(descriptor)) ?? []
         var result: [Int: Int] = [:]
         result.reserveCapacity(records.count)
         for record in records {
@@ -130,29 +133,27 @@ final class LocalDataStore {
         return result
     }
 
-    /// Récupère l'année originale d'un master particulier si présente en cache.
+    /// Récupère tous les MasterRecords déjà connus sous forme de dictionnaire [masterId: originalYear].
+    func getAllMasterYears() -> [Int: Int] {
+        loadedMasterYears()
+    }
+
+    /// Récupère l'année originale d'un master particulier si présente en cache. Simple lecture
+    /// du dictionnaire en mémoire : auparavant, chaque master inconnu déclenchait sa propre
+    /// requête SwiftData, pour toute la collection, à chaque page chargée en tri "rangement".
     func getMasterYear(for masterId: Int) -> Int? {
-        if let cached = masterYearsMemoryCache?[masterId] {
-            return cached > 0 ? cached : nil
-        }
-        let descriptor = FetchDescriptor<MasterRecord>(
-            predicate: #Predicate<MasterRecord> { $0.masterId == masterId }
-        )
-        if let year = (try? context.fetch(descriptor))?.first?.originalYear {
-            if masterYearsMemoryCache == nil {
-                masterYearsMemoryCache = [:]
-            }
-            masterYearsMemoryCache?[masterId] = year
-            return year > 0 ? year : nil
-        }
-        return nil
+        guard let year = loadedMasterYears()[masterId] else { return nil }
+        return year > 0 ? year : nil
+    }
+
+    /// Indique si ce master a déjà été résolu (même sans année connue, enregistrée à 0).
+    func isMasterResolved(_ masterId: Int) -> Bool {
+        loadedMasterYears()[masterId] != nil
     }
 
     /// Enregistre ou met à jour l'année originale d'un Master.
     func saveMasterYear(_ year: Int, for masterId: Int) {
-        if masterYearsMemoryCache == nil {
-            masterYearsMemoryCache = [:]
-        }
+        _ = loadedMasterYears()
         masterYearsMemoryCache?[masterId] = year
 
         let descriptor = FetchDescriptor<MasterRecord>(
@@ -183,6 +184,7 @@ final class LocalDataStore {
         let existing = getAllMasterYears()
         for (masterId, year) in years where existing[masterId] == nil {
             context.insert(MasterRecord(masterId: masterId, originalYear: year))
+            masterYearsMemoryCache?[masterId] = year
         }
         try? context.save()
     }
@@ -657,6 +659,36 @@ final class LocalDataStore {
             }
         }
         saveWantlistItems(items, username: username)
+    }
+
+    /// Identifiants de release présents dans le cache de la collection ("Tous"), sans décoder
+    /// les payloads JSON (seul `releaseId` est lu).
+    func collectionReleaseIds(username: String) -> Set<Int> {
+        let allFolderId = DiscogsConstants.allFolderId
+        var descriptor = FetchDescriptor<CachedCollectionEntry>(
+            predicate: #Predicate<CachedCollectionEntry> { $0.username == username && $0.folderId == allFolderId }
+        )
+        descriptor.propertiesToFetch = [\.releaseId]
+        return Set(((try? context.fetch(descriptor)) ?? []).map(\.releaseId))
+    }
+
+    /// Identifiants de release présents dans le cache de la wantlist, sans décoder les payloads.
+    func wantlistReleaseIds(username: String) -> Set<Int> {
+        var descriptor = FetchDescriptor<CachedWantlistEntry>(
+            predicate: #Predicate<CachedWantlistEntry> { $0.username == username }
+        )
+        descriptor.propertiesToFetch = [\.releaseId]
+        return Set(((try? context.fetch(descriptor)) ?? []).map(\.releaseId))
+    }
+
+    /// Un seul élément de la wantlist en cache, sans décoder toute la wantlist.
+    func getWantlistItem(username: String, releaseId: Int) -> WantlistItem? {
+        let targetId = "\(username)_\(releaseId)"
+        let descriptor = FetchDescriptor<CachedWantlistEntry>(
+            predicate: #Predicate<CachedWantlistEntry> { $0.id == targetId }
+        )
+        guard let entry = (try? context.fetch(descriptor))?.first else { return nil }
+        return try? JSONDecoder().decode(WantlistItem.self, from: entry.payload)
     }
 
     func getWantlistItems(username: String) -> [WantlistItem] {

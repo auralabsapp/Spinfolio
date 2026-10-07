@@ -165,6 +165,10 @@ final class OfflineSyncQueue {
 
                 // Succès : retirer de la file
                 removeAction(id: action.id)
+            } catch where error.isNotFound && (action.type == .removeFromCollection || action.type == .removeFromWantlist) {
+                // Retrait d'un élément déjà absent sur Discogs : le but est atteint. Auparavant,
+                // ce 404 était retenté trois fois puis signalé comme un échec définitif.
+                removeAction(id: action.id)
             } catch {
                 // Gestion du Rate Limiting HTTP 429
                 let errorString = error.localizedDescription
@@ -206,6 +210,49 @@ final class OfflineSyncQueue {
         }
     }
 
+    // MARK: - Exemplaires pas encore synchronisés
+
+    /// Un exemplaire ajouté hors ligne n'existe pas encore sur Discogs : il porte l'identifiant
+    /// temporaire négatif enregistré dans `instanceId` de son action `.addToCollection` (voir
+    /// `ReleaseActions.addToCollection`). Le retirer revient donc à annuler cet ajout en
+    /// attente — auparavant, un retrait de cet identifiant inexistant était mis en file, échouait,
+    /// et l'ajout initial finissait quand même par être envoyé.
+    /// - Returns: `true` si un ajout en attente a été trouvé et annulé.
+    @discardableResult
+    func cancelPendingAdd(temporaryInstanceId: Int) -> Bool {
+        guard temporaryInstanceId < 0,
+              let action = pendingActions.first(where: { $0.type == .addToCollection && $0.instanceId == temporaryInstanceId }) else {
+            return false
+        }
+        removeAction(id: action.id)
+        return true
+    }
+
+    /// Change le dossier de destination d'un ajout encore en attente (déplacement d'un exemplaire
+    /// ajouté hors ligne), plutôt que de mettre en file un déplacement d'un identifiant inexistant.
+    /// - Returns: `true` si un ajout en attente a été trouvé et modifié.
+    @discardableResult
+    func retargetPendingAdd(temporaryInstanceId: Int, toFolderId: Int) -> Bool {
+        guard temporaryInstanceId < 0,
+              let index = pendingActions.firstIndex(where: { $0.type == .addToCollection && $0.instanceId == temporaryInstanceId }) else {
+            return false
+        }
+        let action = pendingActions[index]
+        var retargeted = PendingAction(
+            id: action.id,
+            type: action.type,
+            releaseId: action.releaseId,
+            folderId: toFolderId,
+            instanceId: action.instanceId,
+            date: action.date,
+            retryCount: action.retryCount
+        )
+        retargeted.username = action.username
+        pendingActions[index] = retargeted
+        persistActions()
+        return true
+    }
+
     private func removeAction(id: UUID) {
         guard let index = pendingActions.firstIndex(where: { $0.id == id }) else { return }
         pendingActions.remove(at: index)
@@ -219,13 +266,20 @@ final class OfflineSyncQueue {
     ) async throws {
         switch action.type {
         case .addToCollection:
-            let folderId = action.folderId ?? 1 // Dossier "Uncategorized" par défaut si absent
-            _ = try await DiscogsAPIClient.shared.addToCollection(
+            // `targetFolderId` : écrit par d'anciennes versions de `WantlistViewModel` à la place
+            // de `folderId`, ce qui envoyait le disque dans "Uncategorized".
+            let folderId = action.folderId ?? action.targetFolderId ?? DiscogsConstants.uncategorizedFolderId
+            let response = try await DiscogsAPIClient.shared.addToCollection(
                 username: username,
                 folderId: folderId,
                 releaseId: action.releaseId,
                 credentials: credentials
             )
+            // Exemplaire créé hors ligne : ses tags étaient rattachés à l'identifiant temporaire,
+            // on les reporte sur l'identifiant définitif (sinon ils étaient perdus à la synchro).
+            if let temporaryInstanceId = action.instanceId, temporaryInstanceId < 0 {
+                TagStore.shared.remapInstanceId(from: temporaryInstanceId, to: response.instanceId)
+            }
 
         case .removeFromCollection:
             if let instanceId = action.instanceId {

@@ -74,4 +74,9 @@ nonisolated enum AppMessages {
 
     static let offlineAddQueued = "Ajout enregistré hors ligne (sera synchronisé à la reconnexion)."
     static let offlineRemovalQueued = "Retrait enregistré hors ligne (sera synchronisé à la reconnexion)."
+
+    static let discogsUnavailableQueued = "Discogs ne répond pas : la modification sera synchronisée automatiquement."
+    static let addFailed = "Impossible d'ajouter ce disque sur Discogs."
+    static let removalFailed = "Impossible de retirer ce disque sur Discogs."
+    static let moveFailed = "Impossible de changer ce disque de dossier sur Discogs."
 }

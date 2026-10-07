@@ -2,7 +2,7 @@ import SwiftUI
 import Foundation
 import ActivityKit
 import UIKit
-import Combine
+import Observation
 import Kingfisher
 import OSLog
 
@@ -29,20 +29,25 @@ public enum ListeningMaxDurationOption: Int, CaseIterable, Identifiable, Sendabl
 }
 
 /// Gestionnaire du cycle de vie de la Live Activity "En cours d'écoute" (Dynamic Island & Lock Screen).
+///
+/// `@Observable` (comme les autres stores de l'app) plutôt qu'`ObservableObject` : les vues ne
+/// sont réinvalidées que pour les propriétés qu'elles lisent réellement, au lieu de l'être
+/// toutes à chaque `@Published` modifié.
+@Observable
 @MainActor
-final class NowPlayingActivityManager: ObservableObject {
+final class NowPlayingActivityManager {
     static let shared = NowPlayingActivityManager()
 
     public static let maxListeningDurationKey = "spinlog_max_listening_duration"
     public static let defaultDuration: TimeInterval = 3600 // 1 heure
 
-    @Published private(set) var activeReleaseId: Int?
-    @Published private(set) var activeAlbumTitle: String?
-    @Published private(set) var activeArtistName: String?
-    @Published private(set) var activeCoverURL: String?
-    @Published private(set) var activeStartedAt: Date?
-    private var currentActivity: Activity<NowPlayingActivityAttributes>?
-    private var autoStopTask: Task<Void, Never>?
+    private(set) var activeReleaseId: Int?
+    private(set) var activeAlbumTitle: String?
+    private(set) var activeArtistName: String?
+    private(set) var activeCoverURL: String?
+    private(set) var activeStartedAt: Date?
+    @ObservationIgnored private var currentActivity: Activity<NowPlayingActivityAttributes>?
+    @ObservationIgnored private var autoStopTask: Task<Void, Never>?
 
     public var maxListeningDuration: TimeInterval {
         let val = UserDefaults.standard.double(forKey: Self.maxListeningDurationKey)

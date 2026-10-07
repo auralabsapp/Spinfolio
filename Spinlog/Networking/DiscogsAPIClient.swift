@@ -13,6 +13,26 @@ extension Error {
     var isCancellation: Bool {
         self is CancellationError || (self as? URLError)?.code == .cancelled
     }
+
+    /// `true` si un nouvel essai a une chance d'aboutir : réseau indisponible ou interrompu,
+    /// quota Discogs dépassé, erreur serveur (5xx). Les autres erreurs (4xx : identifiants
+    /// invalides, release inexistante, requête refusée…) se reproduiront à l'identique.
+    var isTransientNetworkFailure: Bool {
+        if self is URLError || isCancellation { return true }
+        guard let apiError = self as? DiscogsAPIClient.APIError else { return false }
+        switch apiError {
+        case .rateLimited: return true
+        case .http(let status, _): return status == 429 || status >= 500
+        case .invalidURL, .invalidResponse: return false
+        }
+    }
+
+    /// `true` pour un 404 Discogs : pour une suppression, la ressource est déjà absente — le but
+    /// de la requête est donc atteint.
+    var isNotFound: Bool {
+        if let apiError = self as? DiscogsAPIClient.APIError, case .http(404, _) = apiError { return true }
+        return false
+    }
 }
 
 /// Client HTTP générique pour l'API REST Discogs (réponses JSON).

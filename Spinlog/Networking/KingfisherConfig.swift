@@ -18,24 +18,30 @@ enum KingfisherConfig {
         // Downloader : injection automatique des headers requis par Discogs
         let modifier = AnyModifier { request in
             var req = request
+            // Uniquement vers Discogs : auparavant, l'en-tête OAuth (qui contient l'`oauth_token`
+            // de l'utilisateur) et le User-Agent Discogs partaient avec TOUTES les images, y
+            // compris les pochettes d'artistes Apple Music et autres hôtes tiers — pour rien, au
+            // prix de deux lectures Keychain et d'une signature HMAC par image.
+            guard let url = req.url, let host = url.host?.lowercased(),
+                  host == "discogs.com" || host.hasSuffix(".discogs.com") else {
+                return req
+            }
             req.setValue(DiscogsSecrets.userAgent, forHTTPHeaderField: "User-Agent")
 
-            if let url = req.url {
-                let keychain = KeychainStore()
-                let token = keychain.get("accessToken")
-                let secret = keychain.get("accessTokenSecret")
-                let signer = OAuth1Signer(
-                    consumerKey: DiscogsSecrets.consumerKey,
-                    consumerSecret: DiscogsSecrets.consumerSecret
-                )
-                let authHeader = signer.authorizationHeader(
-                    method: req.httpMethod ?? "GET",
-                    url: url,
-                    token: token,
-                    tokenSecret: secret ?? ""
-                )
-                req.setValue(authHeader, forHTTPHeaderField: "Authorization")
-            }
+            let keychain = KeychainStore()
+            let token = keychain.get("accessToken")
+            let secret = keychain.get("accessTokenSecret")
+            let signer = OAuth1Signer(
+                consumerKey: DiscogsSecrets.consumerKey,
+                consumerSecret: DiscogsSecrets.consumerSecret
+            )
+            let authHeader = signer.authorizationHeader(
+                method: req.httpMethod ?? "GET",
+                url: url,
+                token: token,
+                tokenSecret: secret ?? ""
+            )
+            req.setValue(authHeader, forHTTPHeaderField: "Authorization")
             return req
         }
 

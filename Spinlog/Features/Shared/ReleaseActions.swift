@@ -69,8 +69,10 @@ final class ReleaseActions {
             return
         }
 
-        let cached = localStore.getCollectionItems(username: username, folderId: DiscogsConstants.allFolderId)
-        let localInstances = cached.filter { $0.releaseId == releaseId && $0.instanceId > 0 && $0.instanceId != $0.releaseId }
+        // Lecture ciblée sur cette release : auparavant, toute la collection (puis toute la
+        // wantlist) était décodée à chaque ouverture d'une fiche disque.
+        let localInstances = localStore.getCollectionItems(username: username, releaseId: releaseId)
+            .filter { $0.instanceId > 0 && $0.instanceId != $0.releaseId }
         if !localInstances.isEmpty {
             collectionInstances = localInstances
             isInCollection = true
@@ -79,7 +81,7 @@ final class ReleaseActions {
         }
 
         if LibraryMembershipStore.shared.isInWantlist(releaseId) ||
-           localStore.getWantlistItems(username: username).contains(where: { $0.id == releaseId }) {
+           localStore.getWantlistItem(username: username, releaseId: releaseId) != nil {
             isInWantlist = true
         }
     }
@@ -149,7 +151,7 @@ final class ReleaseActions {
 
         // 1. Initialisation immédiate depuis le cache local
         if LibraryMembershipStore.shared.isInWantlist(releaseId) ||
-           localStore.getWantlistItems(username: username).contains(where: { $0.id == releaseId }) {
+           localStore.getWantlistItem(username: username, releaseId: releaseId) != nil {
             isInWantlist = true
         }
 
@@ -347,7 +349,7 @@ final class ReleaseActions {
         }
 
         // Identifiant d'instance temporaire négatif pour l'optimistic UI (évite toute collision avec un vrai id Discogs)
-        let tempInstanceId = -Int(Date().timeIntervalSince1970)
+        let tempInstanceId = Self.makeTemporaryInstanceId()
 
         // Initialise explicitement les tags de ce nouvel exemplaire à vide
         // pour garantir qu'il n'hérite pas des tags d'une version ou d'un exemplaire existant
@@ -387,7 +389,9 @@ final class ReleaseActions {
         }
 
         if !networkMonitor.isConnected {
-            let action = PendingAction(type: .addToCollection, releaseId: releaseId, folderId: folderId)
+            // `instanceId` temporaire : permet à la file de retrouver cet ajout si l'exemplaire est
+            // retiré ou déplacé avant la synchro, et d'y reporter ses tags ensuite.
+            let action = PendingAction(type: .addToCollection, releaseId: releaseId, folderId: folderId, instanceId: tempInstanceId)
             syncQueue.enqueue(action)
             return
         }
@@ -420,7 +424,16 @@ final class ReleaseActions {
             Task {
                 await self.checkIfInCollection(releaseId: releaseId)
             }
+        } catch where error.isTransientNetworkFailure {
+            // Discogs injoignable : même traitement qu'hors ligne (l'exemplaire optimiste reste
+            // affiché et l'ajout part en file). Auparavant, l'UI annulait l'ajout tout en le
+            // mettant QUAND MÊME en file : l'utilisateur, voyant un échec, réessayait, et se
+            // retrouvait avec deux exemplaires une fois la file rejouée.
+            syncQueue.enqueue(PendingAction(type: .addToCollection, releaseId: releaseId, folderId: folderId, instanceId: tempInstanceId))
+            message = AppMessages.discogsUnavailableQueued
         } catch {
+            // Refus définitif (release inexistante, identifiants invalides…) : un nouvel essai
+            // échouerait à l'identique, on annule donc l'ajout sans le mettre en file.
             TagStore.shared.removeTags(for: tempInstanceId)
             withAnimation(.easeInOut(duration: 0.2)) {
                 collectionInstances.removeAll { $0.instanceId == tempInstanceId }
@@ -430,9 +443,19 @@ final class ReleaseActions {
                 }
             }
             LibraryMembershipStore.shared.notifyCollectionItemRemoved(releaseId: releaseId, instanceId: tempInstanceId)
-            let action = PendingAction(type: .addToCollection, releaseId: releaseId, folderId: folderId)
-            syncQueue.enqueue(action)
+            message = AppMessages.addFailed
         }
+    }
+
+    private static var lastTemporaryInstanceId = 0
+
+    /// Identifiant négatif unique pour un exemplaire en cours d'ajout. L'ancien `-timestamp` à la
+    /// seconde près donnait le même identifiant à deux ajouts rapprochés (scan en lot), qui
+    /// partageaient alors tags, remplacement et retrait. Strictement décroissant ici.
+    private static func makeTemporaryInstanceId() -> Int {
+        let candidate = -Int(Date().timeIntervalSince1970 * 1000)
+        lastTemporaryInstanceId = min(candidate, lastTemporaryInstanceId - 1)
+        return lastTemporaryInstanceId
     }
 
     /// Supprime un exemplaire spécifique de la collection
@@ -462,13 +485,16 @@ final class ReleaseActions {
             LibraryMembershipStore.shared.notifyCollectionItemRemoved(releaseId: releaseId, instanceId: targetInstanceId)
         }
 
+        // Exemplaire ajouté hors ligne et pas encore envoyé : il n'existe pas sur Discogs, il
+        // suffit d'annuler son ajout en attente (aucune requête, aucun blocage hors ligne).
+        if targetInstanceId < 0 {
+            syncQueue.cancelPendingAdd(temporaryInstanceId: targetInstanceId)
+            TagStore.shared.removeTags(for: targetInstanceId)
+            return
+        }
+
         if !networkMonitor.isConnected && localStore.isCollectionStale(username: username, folderId: DiscogsConstants.allFolderId) {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                collectionInstances = previousInstances
-                isInCollection = !previousInstances.isEmpty
-            }
-            localStore.saveCollectionItems([instance], username: username, folderId: targetFolderId)
-            localStore.saveCollectionItems([instance], username: username, folderId: DiscogsConstants.allFolderId)
+            restoreRemovedInstances([instance], previousInstances: previousInstances, username: username)
             message = AppMessages.offlineStaleRemovalBlocked
             return
         }
@@ -493,7 +519,9 @@ final class ReleaseActions {
                 instanceId: targetInstanceId,
                 credentials: credentials
             )
-        } catch {
+        } catch where error.isNotFound {
+            // Déjà absent sur Discogs (supprimé ailleurs) : le retrait est acquis.
+        } catch where error.isTransientNetworkFailure {
             let action = PendingAction(
                 type: .removeFromCollection,
                 releaseId: releaseId,
@@ -501,6 +529,28 @@ final class ReleaseActions {
                 instanceId: targetInstanceId
             )
             syncQueue.enqueue(action)
+            message = AppMessages.discogsUnavailableQueued
+        } catch {
+            // Refus définitif : la file l'aurait retenté trois fois en vain avant d'afficher un
+            // échec, pendant que l'UI montrait le disque comme retiré. On le restaure tout de suite.
+            restoreRemovedInstances([instance], previousInstances: previousInstances, username: username)
+            message = AppMessages.removalFailed
+        }
+    }
+
+    /// Annule un retrait optimiste : réaffiche les exemplaires, les remet en cache (dans leur
+    /// dossier ET dans "Tous") et prévient les autres écrans. Auparavant, le blocage hors ligne
+    /// ne restaurait que ce view model : la liste de la collection, déjà prévenue du retrait,
+    /// continuait d'afficher le disque comme retiré.
+    private func restoreRemovedInstances(_ removed: [CollectionItem], previousInstances: [CollectionItem], username: String) {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            collectionInstances = previousInstances
+            isInCollection = !previousInstances.isEmpty
+        }
+        for instance in removed {
+            localStore.saveCollectionItems([instance], username: username, folderId: instance.folderId)
+            localStore.saveCollectionItems([instance], username: username, folderId: DiscogsConstants.allFolderId)
+            LibraryMembershipStore.shared.notifyCollectionItemAdded(instance)
         }
     }
 
@@ -535,6 +585,13 @@ final class ReleaseActions {
         localStore.saveCollectionItems([movedItem], username: username, folderId: DiscogsConstants.allFolderId)
         LibraryMembershipStore.shared.notifyCollectionInstanceReplaced(oldInstanceId: instanceId, newInstance: movedItem)
 
+        // Exemplaire ajouté hors ligne et pas encore envoyé : on change simplement le dossier de
+        // son ajout en attente (il n'existe pas encore sur Discogs, rien à déplacer là-bas).
+        if instanceId < 0 {
+            syncQueue.retargetPendingAdd(temporaryInstanceId: instanceId, toFolderId: toFolderId)
+            return
+        }
+
         if !networkMonitor.isConnected {
             syncQueue.enqueue(PendingAction(
                 type: .moveCollectionInstance,
@@ -556,7 +613,7 @@ final class ReleaseActions {
                 toFolderId: toFolderId,
                 credentials: credentials
             )
-        } catch {
+        } catch where error.isTransientNetworkFailure {
             syncQueue.enqueue(PendingAction(
                 type: .moveCollectionInstance,
                 releaseId: releaseId,
@@ -564,6 +621,21 @@ final class ReleaseActions {
                 instanceId: instanceId,
                 targetFolderId: toFolderId
             ))
+            message = AppMessages.discogsUnavailableQueued
+        } catch {
+            // Refus définitif (exemplaire supprimé ailleurs, dossier inexistant…) : on remet
+            // l'exemplaire dans son dossier d'origine plutôt que de laisser la file échouer trois
+            // fois pendant que l'UI le montre déplacé.
+            withAnimation(.easeInOut(duration: 0.2)) {
+                if let idx = collectionInstances.firstIndex(where: { $0.instanceId == instanceId }) {
+                    collectionInstances[idx] = instance
+                }
+            }
+            localStore.removeCollectionItem(username: username, folderId: toFolderId, instanceId: instanceId)
+            localStore.saveCollectionItems([instance], username: username, folderId: originFolderId)
+            localStore.saveCollectionItems([instance], username: username, folderId: DiscogsConstants.allFolderId)
+            LibraryMembershipStore.shared.notifyCollectionInstanceReplaced(oldInstanceId: instanceId, newInstance: instance)
+            message = AppMessages.moveFailed
         }
     }
 
@@ -584,24 +656,28 @@ final class ReleaseActions {
         LibraryMembershipStore.shared.notifyCollectionItemRemoved(releaseId: releaseId)
 
         if !networkMonitor.isConnected && localStore.isCollectionStale(username: username, folderId: DiscogsConstants.allFolderId) {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                collectionInstances = savedInstances
-                isInCollection = !savedInstances.isEmpty
-            }
-            if !savedInstances.isEmpty {
-                localStore.saveCollectionItems(savedInstances, username: username, folderId: DiscogsConstants.allFolderId)
-                for inst in savedInstances {
-                    LibraryMembershipStore.shared.notifyCollectionItemAdded(inst)
-                }
-            } else {
+            restoreRemovedInstances(savedInstances, previousInstances: savedInstances, username: username)
+            if savedInstances.isEmpty {
                 LibraryMembershipStore.shared.markInCollection(releaseId)
             }
             message = AppMessages.offlineStaleRemovalBlocked
             return
         }
 
+        // Exemplaires ajoutés hors ligne et pas encore envoyés : on annule leur ajout en attente
+        // au lieu de demander à Discogs de retirer un identifiant qui n'existe pas.
+        let unsyncedInstances = savedInstances.filter { $0.instanceId < 0 }
+        for inst in unsyncedInstances {
+            syncQueue.cancelPendingAdd(temporaryInstanceId: inst.instanceId)
+            TagStore.shared.removeTags(for: inst.instanceId)
+        }
+        let syncedInstances = savedInstances.filter { $0.instanceId > 0 }
+        if !unsyncedInstances.isEmpty && syncedInstances.isEmpty {
+            return
+        }
+
         if !networkMonitor.isConnected {
-            for inst in savedInstances {
+            for inst in syncedInstances {
                 let action = PendingAction(
                     type: .removeFromCollection,
                     releaseId: releaseId,
@@ -614,40 +690,62 @@ final class ReleaseActions {
         }
 
         guard let credentials = authManager.credentials else { return }
-        do {
-            if savedInstances.isEmpty {
-                let fetched = try await DiscogsAPIClient.shared.collectionInstances(
+
+        // Exemplaires à retirer : ceux connus localement, sinon ceux que Discogs renvoie.
+        var targets = syncedInstances
+        if targets.isEmpty {
+            do {
+                targets = try await DiscogsAPIClient.shared.collectionInstances(
                     username: username, releaseId: releaseId, credentials: credentials
-                )
-                for inst in fetched.releases {
-                    try await DiscogsAPIClient.shared.removeFromCollection(
-                        username: username,
-                        folderId: inst.folderId,
-                        releaseId: releaseId,
-                        instanceId: inst.instanceId,
-                        credentials: credentials
-                    )
+                ).releases
+            } catch where error.isTransientNetworkFailure {
+                // Auparavant, ce cas ne mettait rien en file (liste locale vide) : le disque
+                // semblait retiré mais ne l'était jamais. Sans `instanceId`, la file récupère
+                // elle-même l'exemplaire (et refuse de choisir s'il y en a plusieurs).
+                syncQueue.enqueue(PendingAction(type: .removeFromCollection, releaseId: releaseId))
+                message = AppMessages.discogsUnavailableQueued
+                return
+            } catch {
+                LibraryMembershipStore.shared.markInCollection(releaseId)
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isInCollection = true
                 }
-            } else {
-                for inst in savedInstances {
-                    try await DiscogsAPIClient.shared.removeFromCollection(
-                        username: username,
-                        folderId: inst.folderId,
-                        releaseId: releaseId,
-                        instanceId: inst.instanceId,
-                        credentials: credentials
-                    )
-                }
+                message = AppMessages.removalFailed
+                return
             }
-        } catch {
-            for inst in savedInstances {
-                let action = PendingAction(
-                    type: .removeFromCollection,
-                    releaseId: releaseId,
+        }
+
+        // Retirés un par un : en cas d'échec, seuls les exemplaires restants sont mis en file ou
+        // restaurés — auparavant, tous l'étaient, y compris ceux déjà retirés avec succès.
+        for (index, inst) in targets.enumerated() {
+            do {
+                try await DiscogsAPIClient.shared.removeFromCollection(
+                    username: username,
                     folderId: inst.folderId,
-                    instanceId: inst.instanceId
+                    releaseId: releaseId,
+                    instanceId: inst.instanceId,
+                    credentials: credentials
                 )
-                syncQueue.enqueue(action)
+            } catch where error.isNotFound {
+                // Déjà absent sur Discogs : rien à faire pour cet exemplaire.
+                continue
+            } catch {
+                let remaining = Array(targets[index...])
+                if error.isTransientNetworkFailure {
+                    for remainingInstance in remaining {
+                        syncQueue.enqueue(PendingAction(
+                            type: .removeFromCollection,
+                            releaseId: releaseId,
+                            folderId: remainingInstance.folderId,
+                            instanceId: remainingInstance.instanceId
+                        ))
+                    }
+                    message = AppMessages.discogsUnavailableQueued
+                } else {
+                    restoreRemovedInstances(remaining, previousInstances: remaining, username: username)
+                    message = AppMessages.removalFailed
+                }
+                return
             }
         }
     }
@@ -708,14 +806,33 @@ final class ReleaseActions {
         guard let credentials = authManager.credentials else { return }
         do {
             _ = try await DiscogsAPIClient.shared.addToWantlist(username: username, releaseId: releaseId, credentials: credentials)
-        } catch {
+        } catch where error.isTransientNetworkFailure {
             let action = PendingAction(type: .addToWantlist, releaseId: releaseId)
             syncQueue.enqueue(action)
+            message = AppMessages.discogsUnavailableQueued
+        } catch {
+            // Refus définitif : on annule plutôt que de laisser la file échouer trois fois.
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isInWantlist = false
+            }
+            localStore.removeWantlistItem(username: username, releaseId: releaseId)
+            LibraryMembershipStore.shared.notifyWantlistItemRemoved(releaseId: releaseId)
+            message = AppMessages.addFailed
         }
     }
 
     func removeFromWantlist(releaseId: Int) async {
         guard let username = authManager.username else { return }
+
+        // Vérifié AVANT toute modification : auparavant, l'élément était déjà supprimé du cache
+        // local quand ce blocage le réaffichait, et disparaissait donc de la wantlist hors ligne.
+        if !networkMonitor.isConnected && localStore.isWantlistStale(username: username) {
+            message = AppMessages.offlineStaleRemovalBlocked
+            return
+        }
+
+        // Conservé pour pouvoir annuler le retrait en cas de refus définitif de Discogs.
+        let previousItem = localStore.getWantlistItem(username: username, releaseId: releaseId)
 
         // Optimistic UI : dégriser instantanément le bouton
         withAnimation(.easeInOut(duration: 0.2)) {
@@ -723,15 +840,6 @@ final class ReleaseActions {
         }
         localStore.removeWantlistItem(username: username, releaseId: releaseId)
         LibraryMembershipStore.shared.notifyWantlistItemRemoved(releaseId: releaseId)
-
-        if !networkMonitor.isConnected && localStore.isWantlistStale(username: username) {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                isInWantlist = true
-            }
-            LibraryMembershipStore.shared.markInWantlist(releaseId)
-            message = AppMessages.offlineStaleRemovalBlocked
-            return
-        }
 
         if !networkMonitor.isConnected {
             let action = PendingAction(type: .removeFromWantlist, releaseId: releaseId)
@@ -742,9 +850,23 @@ final class ReleaseActions {
         guard let credentials = authManager.credentials else { return }
         do {
             _ = try await DiscogsAPIClient.shared.removeFromWantlist(username: username, releaseId: releaseId, credentials: credentials)
-        } catch {
+        } catch where error.isNotFound {
+            // Déjà absent de la wantlist sur Discogs : le retrait est acquis.
+        } catch where error.isTransientNetworkFailure {
             let action = PendingAction(type: .removeFromWantlist, releaseId: releaseId)
             syncQueue.enqueue(action)
+            message = AppMessages.discogsUnavailableQueued
+        } catch {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isInWantlist = true
+            }
+            if let previousItem {
+                localStore.saveWantlistItems([previousItem], username: username)
+                LibraryMembershipStore.shared.notifyWantlistItemAdded(previousItem)
+            } else {
+                LibraryMembershipStore.shared.markInWantlist(releaseId)
+            }
+            message = AppMessages.removalFailed
         }
     }
 }

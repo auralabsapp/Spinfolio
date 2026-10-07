@@ -35,9 +35,13 @@ final class LibraryMembershipStore {
             wantlistReleaseIds = []
             return
         }
-        collectionReleaseIds = Set(localStore.getCollectionItems(username: username, folderId: DiscogsConstants.allFolderId).map(\.releaseId))
-        wantlistReleaseIds = Set(localStore.getWantlistItems(username: username).map(\.id))
-        membershipDebugLogger.log("REFRESH wantlistReleaseIds count=\(self.wantlistReleaseIds.count) ids=\(self.wantlistReleaseIds.sorted().map(String.init).joined(separator: ","))")
+        // Lecture des seuls identifiants : auparavant, toute la collection et toute la wantlist
+        // étaient décodées (JSON) à chaque affichage de l'onglet Recherche.
+        collectionReleaseIds = localStore.collectionReleaseIds(username: username)
+        wantlistReleaseIds = localStore.wantlistReleaseIds(username: username)
+        // Le nombre suffit : la liste complète des identifiants, triée et concaténée, était
+        // écrite dans les journaux à chaque appel, y compris en production.
+        membershipDebugLogger.log("REFRESH collection=\(self.collectionReleaseIds.count) wantlist=\(self.wantlistReleaseIds.count)")
     }
 
     func isInCollection(_ releaseId: Int) -> Bool { collectionReleaseIds.contains(releaseId) }

@@ -9,7 +9,7 @@ struct SearchView: View {
     @State private var showingPremiumSheet = false
     @FocusState private var isSearchFieldFocused: Bool
 
-    @ObservedObject private var activityManager = NowPlayingActivityManager.shared
+    private var activityManager = NowPlayingActivityManager.shared
     private var membership = LibraryMembershipStore.shared
 
 

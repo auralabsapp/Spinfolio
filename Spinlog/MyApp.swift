@@ -16,11 +16,21 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
             forTaskWithIdentifier: wantlistAlertsTaskIdentifier,
             using: nil
         ) { task in
-            guard let appRefreshTask = task as? BGAppRefreshTask else { return }
-            Task { @MainActor in
+            guard let appRefreshTask = task as? BGAppRefreshTask else {
+                task.setTaskCompleted(success: false)
+                return
+            }
+            let work = Task { @MainActor in
                 WantlistAlertStore.shared.scheduleBackgroundCheck()
                 await WantlistAlertStore.shared.checkAlerts()
-                appRefreshTask.setTaskCompleted(success: true)
+                appRefreshTask.setTaskCompleted(success: !Task.isCancelled)
+            }
+            // Sans ce handler, une vérification trop longue (nombreuses alertes, quota Discogs)
+            // dépassait le temps accordé par iOS, qui tuait alors l'app et réduisait ses futurs
+            // créneaux d'arrière-plan. L'annulation interrompt la boucle et les requêtes en cours ;
+            // la tâche est ensuite marquée terminée ci-dessus.
+            appRefreshTask.expirationHandler = {
+                work.cancel()
             }
         }
         application.registerForRemoteNotifications()

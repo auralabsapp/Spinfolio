@@ -26,16 +26,29 @@ actor CurrencyConversionService {
     private var cache: [String: CachedRate] = [:]
     private let cacheTTL: TimeInterval = DiscogsConstants.oneDayTTL
     private let userDefaultsKey = "com.spinlog.currencyRatesCache"
+    /// Dernier échec de récupération par paire de devises. Sans ce délai, une API injoignable
+    /// (réseau présent mais service en panne) était réinterrogée à CHAQUE conversion : le calcul
+    /// du total investi enchaînait une requête par disque, chacune jusqu'au délai réseau maximal.
+    private var lastFailureAt: [String: Date] = [:]
+    private let failureRetryDelay: TimeInterval = 10 * 60
 
     /// Taux de repli approximatifs (1 unité de la devise -> USD), figés dans le code. Utilisés
     /// uniquement hors ligne ou en cas d'échec de l'API ; à ne jamais présenter comme des taux exacts.
+    /// Couvre toutes les devises du marketplace Discogs : une devise absente était auparavant
+    /// convertie à 1:1 (ex: 100 SEK comptés comme 100 EUR).
     private static let staticRatesToUSD: [String: Double] = [
         "USD": 1.0,
         "EUR": 1.08,
         "GBP": 1.27,
         "JPY": 0.0064,
         "CAD": 0.73,
-        "CHF": 1.11
+        "CHF": 1.11,
+        "AUD": 0.66,
+        "NZD": 0.60,
+        "SEK": 0.095,
+        "BRL": 0.18,
+        "MXN": 0.055,
+        "ZAR": 0.055
     ]
 
     /// Charge le cache persistant directement dans l'initialiseur : un `init` synchrone
@@ -61,12 +74,21 @@ actor CurrencyConversionService {
             return cached.rate
         }
 
-        if let fetched = await fetchRate(from: from, to: to) {
-            cache[key] = CachedRate(rate: fetched, fetchedAt: Date())
-            persistCache()
-            return fetched
+        let recentlyFailed = lastFailureAt[key].map { Date().timeIntervalSince($0) < failureRetryDelay } ?? false
+        if !recentlyFailed {
+            if let fetched = await fetchRate(from: from, to: to) {
+                cache[key] = CachedRate(rate: fetched, fetchedAt: Date())
+                lastFailureAt[key] = nil
+                persistCache()
+                return fetched
+            }
+            lastFailureAt[key] = Date()
         }
 
+        // Un taux réel expiré reste plus juste que la table figée.
+        if let stale = cache[key] {
+            return stale.rate
+        }
         return Self.staticFallbackRate(from: from, to: to)
     }
 
@@ -79,8 +101,12 @@ actor CurrencyConversionService {
     private func fetchRate(from: String, to: String) async -> Double? {
         guard await NetworkMonitor.shared.isConnected else { return nil }
         guard let url = URL(string: "https://api.frankfurter.dev/v1/latest?base=\(from)&symbols=\(to)") else { return nil }
+        // 10 s plutôt que les 60 s par défaut : en cas d'échec on retombe sur un taux approché,
+        // inutile de bloquer l'affichage (total investi, alertes) aussi longtemps.
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 10
         do {
-            let (data, _) = try await URLSession.shared.data(from: url)
+            let (data, _) = try await URLSession.shared.data(for: request)
             let decoded = try JSONDecoder().decode(FrankfurterResponse.self, from: data)
             return decoded.rates[to]
         } catch {

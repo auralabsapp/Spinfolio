@@ -11,7 +11,7 @@ import SwiftUI
 ///   d'où la lecture a été lancée.
 struct MiniPlayerBar: View {
     @State private var service = AppleMusicPlaybackService.shared
-    @ObservedObject private var activityManager = NowPlayingActivityManager.shared
+    private var activityManager = NowPlayingActivityManager.shared
     @State private var coordinator = TabNavigationCoordinator.shared
     @Environment(\.colorScheme) private var colorScheme
 
@@ -434,7 +434,7 @@ private struct AutoScrollingText: View {
 /// se positionnant automatiquement au millimètre près au-dessus de la barre d'onglets.
 struct MiniPlayerContainerModifier: ViewModifier {
     @State private var service = AppleMusicPlaybackService.shared
-    @ObservedObject private var activityManager = NowPlayingActivityManager.shared
+    private var activityManager = NowPlayingActivityManager.shared
 
     /// Le `safeAreaInset` n'est monté que lorsqu'il y a effectivement quelque chose à afficher :
     /// même vide, sa seule présence force une renégociation de la zone de sécurité à chaque image

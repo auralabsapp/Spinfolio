@@ -186,9 +186,18 @@ enum CollectionPreferencesStore {
         defaultAddFolderId: Int,
         for username: String
     ) {
-        setValue(currency, forKey: key("defaultCurrency", for: username), notify: true)
-        setValue(purchasePriceFieldId, forKey: key("purchasePriceFieldId", for: username), notify: true)
-        setValue(mediaConditionFieldId, forKey: key("mediaConditionFieldId", for: username), notify: true)
+        // Une seule notification, et seulement si quelque chose a réellement changé : chaque
+        // `.collectionPreferencesChanged` fait recharger la page 1 de la collection depuis Discogs
+        // (en annulant la synchro de fond en cours). Auparavant, ces quatre écritures en postaient
+        // quatre, à chaque réception de cet enregistrement depuis iCloud, même inchangé.
+        let changed = currency != defaultCurrency(for: username)
+            || purchasePriceFieldId != self.purchasePriceFieldId(for: username)
+            || mediaConditionFieldId != self.mediaConditionFieldId(for: username)
+            || defaultAddFolderId != self.defaultAddFolderId(for: username)
+        guard changed else { return }
+        setValue(currency, forKey: key("defaultCurrency", for: username))
+        setValue(purchasePriceFieldId, forKey: key("purchasePriceFieldId", for: username))
+        setValue(mediaConditionFieldId, forKey: key("mediaConditionFieldId", for: username))
         setValue(defaultAddFolderId, forKey: key("defaultAddFolderId", for: username), notify: true)
     }
 }

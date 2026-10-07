@@ -1,5 +1,6 @@
 import WidgetKit
 import SwiftUI
+import ImageIO
 import OSLog
 
 /// Dupliqué depuis `Secrets.swift` (côté app, non visible depuis l'extension) : Discogs demande
@@ -129,12 +130,29 @@ struct RandomAlbumProvider: TimelineProvider {
         guard let urlString, let url = URL(string: urlString) else { return nil }
         var request = URLRequest(url: url)
         request.setValue(widgetUserAgent, forHTTPHeaderField: "User-Agent")
+        // L'extension dispose d'un temps d'exécution limité : mieux vaut afficher le widget sans
+        // pochette que d'attendre les 60 s par défaut et risquer d'être interrompu par le système.
+        request.timeoutInterval = 10
         do {
             let (data, _) = try await URLSession.shared.data(for: request)
-            return data
+            return Self.downsampled(data, maxPixelSize: 600) ?? data
         } catch {
             return nil
         }
+    }
+
+    /// Réduit la pochette (souvent 600 à 1200+ px chez Discogs) avant de la décoder et de la
+    /// stocker dans l'entrée : une extension de widget a un budget mémoire serré, et WidgetKit
+    /// refuse d'afficher les images trop grandes.
+    private static func downsampled(_ data: Data, maxPixelSize: Int) -> Data? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxPixelSize
+        ]
+        guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
+        return UIImage(cgImage: cgImage).jpegData(compressionQuality: 0.85)
     }
 }
 

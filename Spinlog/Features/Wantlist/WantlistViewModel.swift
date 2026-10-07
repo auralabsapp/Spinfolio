@@ -404,11 +404,15 @@ final class WantlistViewModel {
                     userInfo: ["item": newItem]
                 )
             } catch {
-                let action = PendingAction(type: .addToCollection, releaseId: item.id, targetFolderId: folderId)
+                // `folderId` (et non `targetFolderId`, réservé aux déplacements) : c'est le champ lu
+            // par la file pour un ajout — l'autre envoyait le disque dans "Uncategorized".
+            let action = PendingAction(type: .addToCollection, releaseId: item.id, folderId: folderId)
                 syncQueue.enqueue(action)
             }
         } else {
-            let action = PendingAction(type: .addToCollection, releaseId: item.id, targetFolderId: folderId)
+            // `folderId` (et non `targetFolderId`, réservé aux déplacements) : c'est le champ lu
+            // par la file pour un ajout — l'autre envoyait le disque dans "Uncategorized".
+            let action = PendingAction(type: .addToCollection, releaseId: item.id, folderId: folderId)
             syncQueue.enqueue(action)
         }
     }

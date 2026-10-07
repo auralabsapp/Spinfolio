@@ -105,13 +105,27 @@ final class AppleMusicPlaybackService {
         stop()
         isLoadingTrackID = trackID
 
-        guard let song = await song(trackID: trackID, artistName: artistName, albumTitle: albumTitle, trackTitle: trackTitle, trackDuration: trackDuration, requestAuthorizationIfNeeded: true) else {
+        let found = await song(trackID: trackID, artistName: artistName, albumTitle: albumTitle, trackTitle: trackTitle, trackDuration: trackDuration, requestAuthorizationIfNeeded: true)
+        // Un autre titre a été demandé pendant la recherche : celui-ci est abandonné. Sans cette
+        // vérification, appuyer sur A puis aussitôt sur B finissait par lancer A aussi (deux
+        // lecteurs simultanés, et un mini-lecteur affichant le mauvais titre).
+        guard isLoadingTrackID == trackID else { return }
+        guard let song = found else {
             isLoadingTrackID = nil
             return
         }
 
         if AppleMusicAccountStore.shared.canPlayFullCatalog {
             await playFull(song)
+            guard isLoadingTrackID == trackID else {
+                // Arrêté pendant le démarrage, sans autre titre demandé entre-temps : la lecture
+                // vient de partir sans aucune interface pour l'arrêter.
+                if playingTrackID == nil && isLoadingTrackID == nil {
+                    progressPollingTask?.cancel()
+                    ApplicationMusicPlayer.shared.pause()
+                }
+                return
+            }
         } else {
             playPreview(song)
         }
@@ -134,6 +148,8 @@ final class AppleMusicPlaybackService {
     }
 
     func stop() {
+        // Annule aussi une lecture en cours de préparation (voir la vérification dans `toggle`).
+        isLoadingTrackID = nil
         guard isPlaying || currentItem != nil || previewPlayer != nil else { return }
 
         if let timeObserverToken {
@@ -149,9 +165,7 @@ final class AppleMusicPlaybackService {
         progressPollingTask?.cancel()
         progressPollingTask = nil
 
-        Task.detached(priority: .utility) {
-            try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-        }
+        enqueueAudioSessionChange(active: false)
 
         if AppleMusicAccountStore.shared.canPlayFullCatalog {
             Task.detached(priority: .userInitiated) {
@@ -188,18 +202,7 @@ final class AppleMusicPlaybackService {
         totalDuration = 30.0
         playbackTime = 0
 
-        // Configurer AVAudioSession hors du fil principal (background Task.detached)
-        // pour éliminer tout risque de blocage UI (AVAudioSession Hang Risk).
-        Task.detached(priority: .userInitiated) {
-            do {
-                let session = AVAudioSession.sharedInstance()
-                try session.setCategory(.playback, mode: .default, options: [])
-                try session.setActive(true)
-            } catch {
-                Logger(subsystem: "com.spinlog.app", category: "AppleMusicPlayback")
-                    .error("Configuration AVAudioSession échouée : \(error, privacy: .public)")
-            }
-        }
+        enqueueAudioSessionChange(active: true)
 
         let player = AVPlayer(url: url)
         player.volume = 1.0
@@ -222,6 +225,32 @@ final class AppleMusicPlaybackService {
             }
         }
         player.playImmediately(atRate: 1.0)
+    }
+
+    /// Dernière modification de la session audio demandée, pour les enchaîner dans l'ordre.
+    private var audioSessionTask: Task<Void, Never>?
+
+    /// Active ou désactive la session audio hors du fil principal (AVAudioSession peut bloquer),
+    /// mais strictement dans l'ordre des demandes. Auparavant, deux `Task.detached` indépendantes
+    /// (désactivation dans `stop()`, puis activation pour le titre suivant) pouvaient s'exécuter
+    /// dans le désordre et laisser la session désactivée pendant la lecture.
+    private func enqueueAudioSessionChange(active: Bool) {
+        let previous = audioSessionTask
+        audioSessionTask = Task.detached(priority: .userInitiated) {
+            await previous?.value
+            do {
+                let session = AVAudioSession.sharedInstance()
+                if active {
+                    try session.setCategory(.playback, mode: .default, options: [])
+                    try session.setActive(true)
+                } else {
+                    try session.setActive(false, options: .notifyOthersOnDeactivation)
+                }
+            } catch {
+                Logger(subsystem: "com.spinlog.app", category: "AppleMusicPlayback")
+                    .error("Configuration AVAudioSession (active=\(active)) échouée : \(error, privacy: .public)")
+            }
+        }
     }
 
     private func playFull(_ song: MusicKit.Song) async {
@@ -252,8 +281,14 @@ final class AppleMusicPlaybackService {
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 500_000_000)
                 guard let self, self.isPlaying else { break }
-                guard ApplicationMusicPlayer.shared.queue.currentEntry != nil else { break }
-                self.playbackTime = ApplicationMusicPlayer.shared.playbackTime
+                let player = ApplicationMusicPlayer.shared
+                // Morceau terminé (ou lecteur vidé) : sans ce cas, le mini-lecteur restait affiché
+                // "en lecture" indéfiniment après la fin du titre.
+                guard player.queue.currentEntry != nil, player.state.playbackStatus != .stopped else {
+                    self.stop()
+                    break
+                }
+                self.playbackTime = player.playbackTime
             }
         }
     }
@@ -267,6 +302,7 @@ final class AppleMusicPlaybackService {
         requestAuthorizationIfNeeded: Bool
     ) async -> MusicKit.Song? {
         let key = "\(artistName)|\(albumTitle)|\(trackTitle)".lowercased()
+        // `songCache[key]` est un `Song??` : `.some(nil)` = recherche déjà faite, sans correspondance.
         if let cached = songCache[key] {
             matchStatusByTrackID[trackID] = cached != nil
             return cached
@@ -299,13 +335,16 @@ final class AppleMusicPlaybackService {
                 trackTitle: trackTitle,
                 trackDuration: Self.parseDiscogsDuration(trackDuration)
             )
-            songCache[key] = match
+            // `updateValue` : sur un dictionnaire à valeurs optionnelles, `songCache[key] = match`
+            // avec `match == nil` SUPPRIME la clé au lieu de mémoriser "aucune correspondance".
+            songCache.updateValue(match, forKey: key)
             matchStatusByTrackID[trackID] = match != nil
             return match
         } catch {
+            // Erreur de recherche (réseau, service MusicKit…) : rien n'est mémorisé et le statut
+            // reste inconnu, pour qu'un prochain appui retente. Auparavant, le titre était marqué
+            // "sans correspondance" et son bouton restait grisé pour toute la session.
             logger.error("Recherche MusicKit échouée pour \(trackTitle, privacy: .public) : \(error, privacy: .public)")
-            songCache[key] = nil
-            matchStatusByTrackID[trackID] = false
             return nil
         }
     }

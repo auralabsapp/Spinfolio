@@ -65,14 +65,17 @@ struct BulkTagManagementSheet: View {
         guard !trimmed.isEmpty else { return }
 
         var hadLimitIssue = false
-        for item in items {
-            let current = store.tags(for: item.instanceId, releaseId: item.releaseId)
-            let alreadyHas = current.contains { $0.caseInsensitiveCompare(trimmed) == .orderedSame }
-            if !alreadyHas {
-                if current.count >= TagConstants.maxTagsPerInstance {
-                    hadLimitIssue = true
-                } else {
-                    store.addTag(trimmed, to: item.instanceId, releaseId: item.releaseId)
+        // Une seule écriture et un seul recalcul de la collection pour tout le lot.
+        store.performBatchUpdate {
+            for item in items {
+                let current = store.tags(for: item.instanceId, releaseId: item.releaseId)
+                let alreadyHas = current.contains { $0.caseInsensitiveCompare(trimmed) == .orderedSame }
+                if !alreadyHas {
+                    if current.count >= TagConstants.maxTagsPerInstance {
+                        hadLimitIssue = true
+                    } else {
+                        store.addTag(trimmed, to: item.instanceId, releaseId: item.releaseId)
+                    }
                 }
             }
         }
@@ -84,8 +87,10 @@ struct BulkTagManagementSheet: View {
     }
 
     private func removeTagFromAll(_ tag: String) {
-        for item in items {
-            store.removeTag(tag, from: item.instanceId, releaseId: item.releaseId)
+        store.performBatchUpdate {
+            for item in items {
+                store.removeTag(tag, from: item.instanceId, releaseId: item.releaseId)
+            }
         }
         hasModified = true
     }

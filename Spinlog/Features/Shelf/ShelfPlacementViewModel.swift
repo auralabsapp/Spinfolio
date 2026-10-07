@@ -34,14 +34,14 @@ final class ShelfPlacementViewModel {
     func prefetchMasterYearIfNeeded(for release: Release, usesMasterYear: Bool) async {
         guard usesMasterYear,
               let masterId = release.masterId, masterId > 0,
-              LocalDataStore.shared.getMasterYear(for: masterId) == nil else { return }
+              !LocalDataStore.shared.isMasterResolved(masterId) else { return }
 
         do {
             let credentials = DiscogsAuthManager.shared.credentials
             let master = try await DiscogsAPIClient.shared.masterRelease(id: masterId, credentials: credentials)
-            if let year = master.year, year > 0 {
-                LocalDataStore.shared.saveMasterYear(year, for: masterId)
-            }
+            // 0 si Discogs n'a pas d'année : marque le master comme résolu (comme
+            // `MasterResolutionService`), pour ne pas le redemander à chaque fois.
+            LocalDataStore.shared.saveMasterYear(max(master.year ?? 0, 0), for: masterId)
         } catch {}
     }
 }

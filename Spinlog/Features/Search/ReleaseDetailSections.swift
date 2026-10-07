@@ -705,7 +705,7 @@ struct ListeningLogCard: View {
     var onStopListening: (() -> Void)? = nil
 
     @State private var listeningStore = ListeningLogStore.shared
-    @ObservedObject private var activityManager = NowPlayingActivityManager.shared
+    private var activityManager = NowPlayingActivityManager.shared
 
     private var isPlayingThisRelease: Bool {
         activityManager.isPlaying(releaseId: releaseId)
@@ -1107,8 +1107,8 @@ struct ReleaseInfoCard: View {
         guard let masterId = release.masterId, masterId > 0 else { return }
 
         // Vérifier dans le cache local SwiftData
-        if let cached = LocalDataStore.shared.getMasterYear(for: masterId), cached > 0 {
-            masterYear = cached
+        if LocalDataStore.shared.isMasterResolved(masterId) {
+            masterYear = LocalDataStore.shared.getMasterYear(for: masterId)
             return
         }
 
@@ -1116,10 +1116,12 @@ struct ReleaseInfoCard: View {
         do {
             let credentials = DiscogsAuthManager.shared.credentials
             let master = try await DiscogsAPIClient.shared.masterRelease(id: masterId, credentials: credentials)
-            if let year = master.year, year > 0 {
+            let year = max(master.year ?? 0, 0)
+            if year > 0 {
                 masterYear = year
-                LocalDataStore.shared.saveMasterYear(year, for: masterId)
             }
+            // 0 si Discogs n'a pas d'année : évite de le redemander à chaque ouverture.
+            LocalDataStore.shared.saveMasterYear(year, for: masterId)
         } catch {
             // Silencieux en cas d'erreur réseau
         }
