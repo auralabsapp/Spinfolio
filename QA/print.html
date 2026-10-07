@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<!--
+  Mise en page imprimable du cahier de recette (PDF), générée à partir de tests.js.
+  Régénérer le PDF depuis le dossier QA :
+
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new \
+      --no-pdf-header-footer --virtual-time-budget=5000 \
+      --print-to-pdf=Spinfolio_Cahier_de_test.pdf "file://$PWD/print.html"
+-->
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Spinfolio — Cahier de recette</title>
+  <style>
+    @page {
+      size: A4 landscape;
+      margin: 14mm 14mm 14mm 14mm;
+      @bottom-right { content: "Page " counter(page) " / " counter(pages); font: 7.5pt -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; color: #9a9a9a; }
+      @bottom-left { content: "Spinfolio — Cahier de recette v3.1"; font: 7.5pt -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; color: #9a9a9a; }
+    }
+    :root {
+      --accent: #b7791f;
+      --accent-badge: #d9a43b;
+      --ink: #1f1f1f;
+      --muted: #6b6b6b;
+      --line: #e3e0d8;
+      --head-bg: #f5f1e8;
+      --ok-ink: #1d6b33;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; color: var(--ink); font-size: 7.9pt; line-height: 1.34; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+    /* Page de garde */
+    .eyebrow { color: var(--accent); font-weight: 700; font-size: 9pt; letter-spacing: 1.4px; text-transform: uppercase; margin-bottom: 10px; }
+    h1 { font-size: 22pt; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.3px; }
+    .subtitle { font-size: 9.5pt; color: #3f3f3f; margin-bottom: 10px; }
+    .meta { font-size: 7.6pt; color: var(--muted); margin-bottom: 9px; }
+    .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 7.6pt; color: #3f3f3f; margin-bottom: 10px; }
+    .legend span.item { display: inline-flex; gap: 6px; align-items: center; }
+
+    .cover-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 18px; align-items: start; }
+    table.summary { width: 100%; border-collapse: collapse; font-size: 7.6pt; }
+    table.summary th { background: var(--head-bg); text-align: left; padding: 3px 7px; border: 1px solid var(--line); font-weight: 700; }
+    table.summary td { padding: 2.5px 7px; border: 1px solid var(--line); }
+    table.summary td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    table.summary tr.total td { font-weight: 700; background: #faf8f3; }
+    .whatsnew { border: 1px solid #99e2d6; background: #f0fdfa; border-radius: 6px; padding: 9px 11px; font-size: 7.6pt; }
+    .whatsnew h3 { font-size: 9.5pt; color: #0f766e; margin-bottom: 6px; }
+    .whatsnew ul { padding-left: 14px; }
+    .whatsnew li { margin-bottom: 3px; }
+
+    /* Familles */
+    .family { break-before: page; }
+    .family-title { display: flex; align-items: center; gap: 10px; border-bottom: 2px solid var(--accent-badge); padding-bottom: 6px; margin-bottom: 6px; break-after: avoid; }
+    .badge { display: inline-flex; align-items: center; justify-content: center; width: 19px; height: 19px; border-radius: 4px; background: var(--accent-badge); color: #fff; font-weight: 700; font-size: 10pt; }
+    .family-title h2 { font-size: 14pt; font-weight: 700; }
+    .family-title .count { color: var(--muted); font-weight: 400; font-size: 9.5pt; }
+    .intro { font-style: italic; color: var(--muted); font-size: 8.2pt; margin: 4px 0 8px; break-after: avoid; }
+
+    table.tests { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    table.tests thead { display: table-header-group; }
+    table.tests th { background: var(--head-bg); text-align: left; padding: 4px 6px; border: 1px solid var(--line); font-weight: 700; }
+    table.tests th.col-id { color: var(--accent); }
+    table.tests th.col-expected { color: var(--ok-ink); }
+    table.tests td { padding: 4px 6px; border: 1px solid var(--line); vertical-align: top; overflow-wrap: anywhere; }
+    table.tests tr { break-inside: avoid; }
+    table.tests tr.audit td:first-child { box-shadow: inset 3px 0 0 #14b8a6; }
+    .col-id { width: 6%; } .col-title { width: 15%; } .col-conditions { width: 18%; } .col-steps { width: 27%; } .col-expected { width: 34%; }
+    td.id { color: var(--accent); font-weight: 700; }
+    td .title { font-weight: 700; }
+    td.expected { color: var(--ok-ink); }
+    td ol { padding-left: 15px; }
+    td ol li { margin-bottom: 1px; }
+    code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em; word-break: break-all; }
+
+    .tags { margin-top: 3px; display: flex; flex-wrap: wrap; gap: 3px; }
+    .tag { display: inline-block; font-size: 6.4pt; font-weight: 700; letter-spacing: 0.3px; padding: 1px 6px; border-radius: 8px; }
+    .tag-PREMIUM { background: #fbe9c8; color: #8a5300; }
+    .tag-RÉGRESSION { background: #fde2e1; color: #b42318; }
+    .tag-2APPAREILS { background: #dbeafe; color: #1d4ed8; }
+    .tag-DEV { background: #e5e7eb; color: #374151; }
+    .tag-LIMITE { background: #e7e0fb; color: #5b3fb3; }
+    .tag-AUDIT { background: #ccfbf1; color: #0f766e; }
+  </style>
+  <script src="tests.js"></script>
+</head>
+<body>
+  <section class="cover">
+    <div class="eyebrow">Spinfolio — Assurance qualité</div>
+    <h1>Cahier de recette</h1>
+    <p class="subtitle">Plan de test complet, format tableau, regroupé par famille fonctionnelle — standard, premium, lecture Apple Music, cas aux limites, fiabilisation &amp; migration</p>
+    <p class="meta" id="meta"></p>
+    <div class="legend" id="legend"></div>
+    <div class="cover-grid">
+      <table class="summary" id="summary"></table>
+      <div class="whatsnew">
+        <h3>Nouveautés de la version 3.1</h3>
+        <ul id="whatsnew"></ul>
+      </div>
+    </div>
+  </section>
+
+  <main id="families"></main>
+
+  <script>
+    const TAG_LEGEND = [
+      ['AUDIT', "nouveau en v3.1 — couvre les corrections de l'audit de fiabilisation, à passer en priorité"],
+      ['PREMIUM', 'fonctionnalité réservée aux comptes premium'],
+      ['RÉGRESSION', 'lié à un bug déjà corrigé — à surveiller en priorité'],
+      ['2 APPAREILS', 'nécessite deux appareils physiques'],
+      ['DEV', 'nécessite un build Debug, le débogueur ou un outil (proxy, CloudKit Dashboard)'],
+      ['LIMITE', 'cas aux limites / robustesse'],
+    ];
+    const tagHTML = tag => `<span class="tag tag-${tag.replace(/\s/g, '')}">${escapeHTML(tag)}</span>`;
+
+    const families = [];
+    testCases.forEach(t => {
+      let f = families.find(x => x.code === t.family);
+      if (!f) { f = { code: t.family, name: t.familyName, tests: [] }; families.push(f); }
+      f.tests.push(t);
+    });
+    const auditCount = testCases.filter(t => t.tags.includes('AUDIT')).length;
+
+    document.getElementById('meta').innerHTML =
+      `Version du document : ${CAMPAIGN_VERSION} — Généré le ${CAMPAIGN_DATE} — ${testCases.length} tests<br>` +
+      `Usage : après une modification, identifier la ou les familles concernées ci-dessous et ne rejouer que les tests correspondants. ` +
+      `Avant la fusion de la branche <code>audit-fixes</code>, passer en priorité les ${auditCount} tests tagués AUDIT. ` +
+      `La campagne interactive (statuts, notes, export JSON) se fait dans <code>QA/index.html</code>.`;
+
+    document.getElementById('legend').innerHTML = TAG_LEGEND
+      .map(([tag, label]) => `<span class="item">${tagHTML(tag)} ${escapeHTML(label)}</span>`).join('');
+
+    document.getElementById('summary').innerHTML =
+      `<tr><th>Famille</th><th>Périmètre</th><th>Nb. de tests</th><th>dont AUDIT</th></tr>` +
+      families.map(f => `<tr><td>${f.code}</td><td>${escapeHTML(f.name)}</td>` +
+        `<td class="num">${f.tests.length}</td><td class="num">${f.tests.filter(t => t.tags.includes('AUDIT')).length || '—'}</td></tr>`).join('') +
+      `<tr class="total"><td colspan="2">Total</td><td class="num">${testCases.length}</td><td class="num">${auditCount}</td></tr>`;
+
+    const newOutsideAudit = testCases.filter(t => !t.tags.includes('AUDIT') && /^(F21|F22|N17|O12|O13|P14|P15|Q25|Q26|R\d+)$/.test(t.id)).length;
+    document.getElementById('whatsnew').innerHTML = [
+      `<b>${auditCount} tests AUDIT</b> répartis dans les familles existantes : isolation des comptes (iCloud, file hors ligne), disques supprimés ou déplacés sur discogs.com, erreurs passagères vs définitives (ajout, retrait, déplacement), alertes wantlist en arrière-plan, performances (grosses collections, Stats, synchro), lecture Apple Music, confidentialité des en-têtes.`,
+      `<b>Alertes wantlist vérifiées à chaque ouverture de l'app</b> (au plus une fois toutes les 15 min) : F22, F23.`,
+      `<b>Nouvelle famille R</b> — mise à jour depuis une version précédente : reprise de la session, de la file hors ligne, de la synchro iCloud et des alertes.`,
+      `<b>${newOutsideAudit} compléments</b> hors audit : notifications refusées, synchro Wi-Fi uniquement, ouverture depuis le widget, Split View, formats régionaux, interruptions audio.`,
+      `<b>4 résultats attendus mis à jour</b> pour refléter le nouveau comportement : M13 (quota iCloud), M14 (compte iCloud déconnecté), P6 (réinstallation), Q18 (hors ligne Apple Music).`,
+      `<b>Outils</b> : Network Link Conditioner (Réglages iOS › Développeur, profil « 100% Loss » = Discogs injoignable sans être hors ligne), proxy HTTP (Proxyman/Charles), Console.app, CloudKit Dashboard, débogueur Xcode.`,
+    ].map(item => `<li>${item}</li>`).join('');
+
+    const stepsHTML = steps => {
+      const items = steps.split('\n').map(s => s.replace(/^\d+\.\s*/, '')).filter(Boolean);
+      return `<ol>${items.map(s => `<li>${formatText(s)}</li>`).join('')}</ol>`;
+    };
+
+    document.getElementById('families').innerHTML = families.map(f => `
+      <section class="family">
+        <div class="family-title"><span class="badge">${f.code}</span><h2>${escapeHTML(f.name)} <span class="count">(${f.tests.length} tests)</span></h2></div>
+        ${FAMILY_INTROS[f.code] ? `<p class="intro">${escapeHTML(FAMILY_INTROS[f.code])}</p>` : ''}
+        <table class="tests">
+          <thead><tr>
+            <th class="col-id">ID</th><th class="col-title">Test</th><th class="col-conditions">Conditions</th>
+            <th class="col-steps">Étapes</th><th class="col-expected">Résultat attendu</th>
+          </tr></thead>
+          <tbody>
+            ${f.tests.map(t => `
+              <tr class="${t.tags.includes('AUDIT') ? 'audit' : ''}">
+                <td class="id">${t.id}</td>
+                <td><div class="title">${formatText(t.title)}</div>${t.tags.length ? `<div class="tags">${t.tags.map(tagHTML).join('')}</div>` : ''}</td>
+                <td>${formatText(t.conditions)}</td>
+                <td>${stepsHTML(t.steps)}</td>
+                <td class="expected">${formatText(t.expected)}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </section>`).join('');
+  </script>
+</body>
+</html>

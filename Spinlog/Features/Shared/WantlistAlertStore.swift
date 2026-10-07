@@ -30,6 +30,12 @@ final class WantlistAlertStore {
     static let shared = WantlistAlertStore()
 
     private let storageKey = "com.spinlog.wantlistAlerts"
+    /// Date de la dernière vérification complète (premier plan ou arrière-plan) arrivée au bout.
+    private let lastFullCheckKey = "com.spinlog.wantlistAlerts.lastFullCheckAt"
+    /// Délai minimal entre deux vérifications déclenchées par l'ouverture de l'app : chaque
+    /// vérification coûte une requête Discogs par alerte, et des allers-retours rapides entre
+    /// apps épuiseraient sinon le quota partagé avec le reste de l'app.
+    private let minimumAppOpenCheckInterval: TimeInterval = 15 * 60
     private(set) var alerts: [Int: WantlistAlertBox] = [:]
     private(set) var isChecking: Bool = false
 
@@ -186,17 +192,34 @@ final class WantlistAlertStore {
 
         logger.info("Début de la vérification de \(self.alerts.count) alerte(s)...")
 
+        var completed = true
         for box in Array(alerts.values) {
             // Tâche de fond expirée (voir `AppDelegate`) : on s'arrête net. Chaque alerte déjà
             // vérifiée a été enregistrée au fil de l'eau par `checkSingleAlert`.
             guard !Task.isCancelled else {
                 logger.info("Vérification des alertes interrompue (tâche annulée).")
+                completed = false
                 break
             }
             await checkSingleAlert(box.alert)
         }
+        if completed {
+            UserDefaults.standard.set(Date(), forKey: lastFullCheckKey)
+        }
 
         scheduleBackgroundCheck()
+    }
+
+    /// Vérification déclenchée à chaque ouverture de l'app (lancement et retour au premier
+    /// plan) : sans elle, un utilisateur ayant désactivé l'actualisation en arrière-plan (ou
+    /// qu'iOS ne réveille pas) ne voyait ses alertes vérifiées qu'à leur création. Ignorée si
+    /// une vérification complète a eu lieu il y a moins de `minimumAppOpenCheckInterval`.
+    func checkAlertsOnAppOpen() async {
+        if let lastCheck = UserDefaults.standard.object(forKey: lastFullCheckKey) as? Date,
+           Date().timeIntervalSince(lastCheck) < minimumAppOpenCheckInterval {
+            return
+        }
+        await checkAlerts()
     }
 
     /// Vérifie une alerte précise et envoie une notification si le prix est inférieur au seuil

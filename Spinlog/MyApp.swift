@@ -124,6 +124,10 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
                         Task {
                             await NowPlayingActivityManager.shared.checkExpiry()
                         }
+                        // Lancement et retour au premier plan (voir `checkAlertsOnAppOpen`).
+                        Task {
+                            await WantlistAlertStore.shared.checkAlertsOnAppOpen()
+                        }
                     }
                 }
         }

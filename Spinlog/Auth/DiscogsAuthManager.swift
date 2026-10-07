@@ -2,6 +2,7 @@ import Foundation
 import AuthenticationServices
 import UIKit
 import Observation
+import WidgetKit
 
 /// Orchestre le flow OAuth 1.0a "3-legged" de Discogs (request token → autorisation
 /// navigateur → access token) et conserve les tokens obtenus dans le Keychain.
@@ -136,6 +137,9 @@ final class DiscogsAuthManager: NSObject {
         // Évite que le widget "Album du jour" continue de piocher dans la collection d'un
         // compte dont on vient de se déconnecter.
         WidgetSnapshotStore.saveCollection([])
+        // Sans ce rechargement, le widget gardait l'ancien disque affiché jusqu'à son prochain
+        // rafraîchissement système (minuit) : vider l'instantané ne suffit pas.
+        WidgetCenter.shared.reloadTimelines(ofKind: WidgetKinds.randomAlbum)
     }
 
     /// Récupère le profil public Discogs pour mettre à jour l'avatar de l'utilisateur.
