@@ -14,6 +14,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		273E27BD3076347A00D8F64B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 000000000000000100000000;
+			remoteInfo = Spinlog;
+		};
 		27FA071D305E9812004E6B81 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 000000000000000000000000 /* Project object */;
@@ -174,6 +181,9 @@
 			);
 			buildRules = (
 			);
+			dependencies = (
+				273E27BE3076347A00D8F64B /* PBXTargetDependency */,
+			);
 			fileSystemSynchronizedGroups = (
 				2703F4BA3075962F00634ED4 /* SpinlogTests */,
 			);
@@ -283,6 +293,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		273E27BE3076347A00D8F64B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 000000000000000100000000 /* Spinlog */;
+			targetProxy = 273E27BD3076347A00D8F64B /* PBXContainerItemProxy */;
+		};
 		27FA071E305E9812004E6B81 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 27FA070A305E9810004E6B81 /* SpinlogWidgetsExtension */;
