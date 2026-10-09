@@ -14,8 +14,10 @@ private struct SafariTarget: Identifiable {
 struct UserProfileSheet: View {
     let username: String
 
+    @Environment(\.dismiss) private var dismiss
     @State private var viewModel = UserProfileViewModel()
     @State private var safariTarget: SafariTarget?
+    @State private var showingDeleteAccountConfirmation = false
 
     var body: some View {
         content
@@ -24,6 +26,22 @@ struct UserProfileSheet: View {
             .task { await viewModel.load(username: username) }
             .sheet(item: $safariTarget) { target in
                 SafariView(url: target.url)
+            }
+            .confirmationDialog(
+                "Supprimer le compte Discogs",
+                isPresented: $showingDeleteAccountConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("Supprimer le compte sur Discogs.com", role: .destructive) {
+                    safariTarget = SafariTarget(url: DiscogsConstants.accountDeletionURL)
+                }
+                Button("Effacer les données locales & iCloud et se déconnecter", role: .destructive) {
+                    DiscogsAuthManager.shared.deleteLocalAccountData()
+                    dismiss()
+                }
+                Button("Annuler", role: .cancel) {}
+            } message: {
+                Text("Ton compte est géré par Discogs. Pour supprimer définitivement ton compte et l'ensemble de tes données, tu dois finaliser la demande sur le site officiel de Discogs.\n\nTu peux également effacer immédiatement toutes les données stockées par l'application sur cet appareil et synchronisées sur iCloud (tags, historique d'écoute, préférences).")
             }
     }
 
@@ -91,6 +109,28 @@ struct UserProfileSheet: View {
                             .padding(.vertical, 14)
                         }
                         .appleMusicGroupedCard()
+                    }
+
+                    // Bouton de suppression de compte (Guideline Apple 5.1.1(v))
+                    VStack(alignment: .leading, spacing: 8) {
+                        Button(role: .destructive) {
+                            showingDeleteAccountConfirmation = true
+                        } label: {
+                            HStack {
+                                Spacer()
+                                Label("Supprimer mon compte...", systemImage: "trash")
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(.red)
+                                Spacer()
+                            }
+                            .padding(.vertical, 14)
+                        }
+                        .appleMusicGroupedCard()
+
+                        Text("Ton compte est hébergé sur Discogs. Tu peux lancer la suppression définitive de ton compte ou effacer les données locales et synchronisées sur iCloud (tags, historique d'écoute, préférences).")
+                            .font(.footnote)
+                            .foregroundStyle(Color.appSecondaryText)
+                            .padding(.horizontal, 4)
                     }
                 }
                 .padding()

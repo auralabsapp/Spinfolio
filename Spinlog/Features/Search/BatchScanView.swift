@@ -111,7 +111,7 @@ struct BatchScanView: View {
     private var scanCounterText: Text {
         let count = viewModel.items.count
         if count == 0 { return Text("Scanne un code-barres") }
-        return count == 1 ? Text("1 code scanné") : Text("\(count) codes scannés")
+        return Text("\(count) codes scannés")
     }
 
     // MARK: - Phase 2 : revue groupée

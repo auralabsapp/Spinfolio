@@ -68,7 +68,7 @@ struct OfflineSettingsDetailView: View {
                                 Text(offlineManager.lastSyncDate == nil ? "Télécharger toute ma collection" : "Synchroniser maintenant")
                                     .font(.body.weight(.medium))
                                     .foregroundStyle(.primary)
-                                Text("Récupère tous vos albums, vos dossiers, votre wantlist et les pochettes")
+                                Text("Récupère tous tes albums, tes dossiers, ta wantlist et les pochettes")
                                     .font(.caption2)
                                     .foregroundStyle(Color.appSecondaryText)
                             }
@@ -137,7 +137,7 @@ struct OfflineSettingsDetailView: View {
             } header: {
                 Text("Espace de stockage")
             } footer: {
-                Text("Les pochettes sont conservées sur le disque pour un affichage immédiat hors ligne. Vider le cache libère l'espace sans effacer votre liste d'albums.")
+                Text("Les pochettes sont conservées sur le disque pour un affichage immédiat hors ligne. Vider le cache libère l'espace sans effacer ta liste d'albums.")
             }
 
             // MARK: - 4. Fonctionnement
@@ -150,11 +150,11 @@ struct OfflineSettingsDetailView: View {
                             .font(.subheadline.weight(.semibold))
                     }
 
-                    Text("En déplacement sans réseau, \(AppInfo.name) vous permet de consulter votre discothèque et vos pochettes en toute autonomie.")
+                    Text("En déplacement sans réseau, \(AppInfo.name) te permet de consulter ta discothèque et tes pochettes en toute autonomie.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
 
-                    Text("Dès que votre appareil retrouve une connexion Internet, vos albums, vos dossiers et les estimations de prix du marché se synchronisent automatiquement.")
+                    Text("Dès que ton appareil retrouve une connexion Internet, tes albums, tes dossiers et les estimations de prix du marché se synchronisent automatiquement.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -181,7 +181,7 @@ struct OfflineSettingsDetailView: View {
             }
             Button("Annuler", role: .cancel) {}
         } message: {
-            Text("Les pochettes d'albums seront re-téléchargées la prochaine fois que vous les consulterez avec une connexion Internet.")
+            Text("Les pochettes d'albums seront re-téléchargées la prochaine fois que tu les consulteras avec une connexion Internet.")
         }
         .confirmationDialog(
             "Télécharger en 4G/5G ?",
@@ -193,7 +193,7 @@ struct OfflineSettingsDetailView: View {
             }
             Button("Annuler", role: .cancel) {}
         } message: {
-            Text("Vous n'êtes pas connecté en Wi-Fi. Télécharger toute votre collection et ses pochettes peut consommer une quantité importante de données mobiles.")
+            Text("Tu n'es pas connecté en Wi-Fi. Télécharger toute ta collection et ses pochettes peut consommer une quantité importante de données mobiles.")
         }
         .alert(alertMessage ?? "", isPresented: $showingAlert) {
             Button("OK", role: .cancel) {}
@@ -247,7 +247,7 @@ struct OfflineSettingsDetailView: View {
 
     private func startSync(ignoringNetworkCost: Bool = false) {
         guard let (username, credentials) = authManager.session else {
-            alertMessage = "Veuillez vous connecter à votre compte Discogs dans les Réglages pour synchroniser."
+            alertMessage = String(localized: "Connecte-toi à ton compte Discogs dans les Réglages pour synchroniser.")
             showingAlert = true
             return
         }
@@ -267,7 +267,6 @@ struct OfflineSettingsDetailView: View {
 
     private func formattedDate(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
         return formatter.string(from: date)

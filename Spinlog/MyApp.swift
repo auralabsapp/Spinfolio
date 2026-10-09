@@ -71,6 +71,27 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     ) {
         completionHandler([.banner, .sound, .badge])
     }
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        let userInfo = response.notification.request.content.userInfo
+        if userInfo["type"] as? String == "wantlist_alert",
+           let releaseId = userInfo["releaseId"] as? Int {
+            TabNavigationCoordinator.shared.openWantlistAlert(releaseId: releaseId)
+        }
+        completionHandler()
+    }
+
+    // Interdit formellement toute orientation paysage (Landscape) sur iPhone comme sur iPad
+    func application(
+        _ application: UIApplication,
+        supportedInterfaceOrientationsFor window: UIWindow?
+    ) -> UIInterfaceOrientationMask {
+        return [.portrait, .portraitUpsideDown]
+    }
 }
 
 @main struct MyApp: App {

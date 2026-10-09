@@ -6,7 +6,7 @@ import Foundation
 /// identifiants techniques déjà figés ailleurs (Bundle ID, App Group, clés UserDefaults,
 /// identifiants StoreKit...), qui doivent rester stables indépendamment du nom affiché.
 nonisolated enum AppInfo {
-    static let name = "Spinfolio"
+    static var name: String { String(localized: "Spinfolio") }
 }
 
 /// Identifiants et valeurs Discogs réutilisés à plusieurs endroits, pour éviter les nombres
@@ -19,6 +19,8 @@ nonisolated enum DiscogsConstants {
     /// Taille de page maximale acceptée par l'API Discogs pour les listes paginées.
     static let maxPageSize = 100
     static let websiteURL = URL(string: "https://www.discogs.com")!
+    /// URL officielle de suppression définitive de compte Discogs (Guideline Apple 5.1.1(v))
+    static let accountDeletionURL = URL(string: "https://www.discogs.com/users/delete")!
 
     /// TTL de 6h partagé par tous les caches locaux (collection, wantlist, images...),
     /// conformément à la contrainte de fraîcheur des données de l'API Discogs.
@@ -45,7 +47,7 @@ nonisolated enum AppTiming {
 /// côté app (`WidgetCenter.reloadTimelines(ofKind:)`) et la déclaration du widget côté extension
 /// (dupliqué là-bas : les deux cibles ne partagent pas de fichiers Swift entre elles).
 nonisolated enum WidgetKinds {
-    static let randomAlbum = "RandomAlbumWidget"
+    static var randomAlbum: String { String(localized: "RandomAlbumWidget") }
 }
 
 /// Contraintes de saisie pour les tags (donnée 100% locale à l'app, non liée à Discogs).
@@ -60,23 +62,27 @@ nonisolated enum TagConstants {
 /// Libellés utilisateur réutilisés à l'identique par plusieurs écrans/view models (actions
 /// collection/wantlist, mode hors ligne...), centralisés ici pour éviter les chaînes dupliquées
 /// et garder un vocabulaire cohérent.
+///
+/// Propriétés calculées `String(localized:)` (et non `static let` de simples `String`) : les
+/// textes sont ainsi extraits dans le catalogue et traduits selon la langue de l'appareil, au
+/// lieu de s'afficher en français quelle que soit la langue.
 nonisolated enum AppMessages {
-    static let loginRequiredForCollection = "Connecte-toi à Discogs pour ajouter à ta collection."
-    static let loginRequiredForWantlist = "Connecte-toi à Discogs pour ajouter à ta wantlist."
+    static var loginRequiredForCollection: String { String(localized: "Connecte-toi à Discogs pour ajouter à ta collection.") }
+    static var loginRequiredForWantlist: String { String(localized: "Connecte-toi à Discogs pour ajouter à ta wantlist.") }
 
-    static let offlineStaleAddBlocked = "Mode hors ligne (données de plus de 6h) : ajout bloqué."
-    static let offlineStaleModificationBlocked = "Mode hors ligne (données de plus de 6h) : modification bloquée."
-    static let offlineStaleRemovalBlocked = "Mode hors ligne (données de plus de 6h) : retrait bloqué."
+    static var offlineStaleAddBlocked: String { String(localized: "Mode hors ligne (données de plus de 6h) : ajout bloqué.") }
+    static var offlineStaleModificationBlocked: String { String(localized: "Mode hors ligne (données de plus de 6h) : modification bloquée.") }
+    static var offlineStaleRemovalBlocked: String { String(localized: "Mode hors ligne (données de plus de 6h) : retrait bloqué.") }
 
-    static let addedToCollection = "Ajouté à la collection."
-    static let addedToWantlist = "Ajouté à la wantlist."
-    static let removedFromWantlist = "Retiré de la wantlist."
+    static var addedToCollection: String { String(localized: "Ajouté à la collection.") }
+    static var addedToWantlist: String { String(localized: "Ajouté à la wantlist.") }
+    static var removedFromWantlist: String { String(localized: "Retiré de la wantlist.") }
 
-    static let offlineAddQueued = "Ajout enregistré hors ligne (sera synchronisé à la reconnexion)."
-    static let offlineRemovalQueued = "Retrait enregistré hors ligne (sera synchronisé à la reconnexion)."
+    static var offlineAddQueued: String { String(localized: "Ajout enregistré hors ligne (sera synchronisé à la reconnexion).") }
+    static var offlineRemovalQueued: String { String(localized: "Retrait enregistré hors ligne (sera synchronisé à la reconnexion).") }
 
-    static let discogsUnavailableQueued = "Discogs ne répond pas : la modification sera synchronisée automatiquement."
-    static let addFailed = "Impossible d'ajouter ce disque sur Discogs."
-    static let removalFailed = "Impossible de retirer ce disque sur Discogs."
-    static let moveFailed = "Impossible de changer ce disque de dossier sur Discogs."
+    static var discogsUnavailableQueued: String { String(localized: "Discogs ne répond pas : la modification sera synchronisée automatiquement.") }
+    static var addFailed: String { String(localized: "Impossible d'ajouter ce disque sur Discogs.") }
+    static var removalFailed: String { String(localized: "Impossible de retirer ce disque sur Discogs.") }
+    static var moveFailed: String { String(localized: "Impossible de changer ce disque de dossier sur Discogs.") }
 }

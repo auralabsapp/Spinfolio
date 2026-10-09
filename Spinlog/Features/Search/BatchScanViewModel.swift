@@ -111,7 +111,7 @@ final class BatchScanViewModel {
         for target in targets {
             guard case let .found(result) = target.status else { continue }
             count += 1
-            addProgressText = "Ajout en collection (\(count)/\(targets.count))\u{2026}"
+            addProgressText = String(localized: "Ajout en collection (\(count)/\(targets.count))…")
             let actions = ReleaseActions()
             // Sans l'objet `Release`, `addToCollection` ne notifie pas les onglets Collection/
             // Wantlist (voir `ReleaseActions.addToCollection`) : la liste ne se met alors pas à
@@ -123,7 +123,7 @@ final class BatchScanViewModel {
         items.removeAll { targetIds.contains($0.id) }
         addProgressText = nil
         isAdding = false
-        message = count == 1 ? "1 disque ajouté à la collection." : "\(count) disques ajoutés à la collection."
+        message = String(localized: "\(count) disques ajoutés à la collection.")
     }
 
     func addSelectedToWantlist() async {
@@ -134,7 +134,7 @@ final class BatchScanViewModel {
         for target in targets {
             guard case let .found(result) = target.status else { continue }
             count += 1
-            addProgressText = "Ajout en wantlist (\(count)/\(targets.count))\u{2026}"
+            addProgressText = String(localized: "Ajout en wantlist (\(count)/\(targets.count))…")
             let actions = ReleaseActions()
             let release = try? await DiscogsAPIClient.shared.release(id: result.id, credentials: DiscogsAuthManager.shared.credentials)
             await actions.addToWantlist(releaseId: result.id, release: release)
@@ -143,6 +143,6 @@ final class BatchScanViewModel {
         items.removeAll { targetIds.contains($0.id) }
         addProgressText = nil
         isAdding = false
-        message = count == 1 ? "1 disque ajouté à la wantlist." : "\(count) disques ajoutés à la wantlist."
+        message = String(localized: "\(count) disques ajoutés à la wantlist.")
     }
 }

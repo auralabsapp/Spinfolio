@@ -32,6 +32,8 @@ struct SettingsView: View {
     @State private var showingDiscogsWebsite = false
     @State private var showingPremiumFeaturesSheet = false
     @State private var showingLogoutConfirmation = false
+    @State private var showingDeleteAccountConfirmation = false
+    @State private var showingDeleteAccountWebsite = false
 
     // Export CSV de la collection
     @State private var isExportingCSV = false
@@ -67,7 +69,22 @@ struct SettingsView: View {
                 }
                 Button("Annuler", role: .cancel) {}
             } message: {
-                Text("Êtes-vous sûr de vouloir vous déconnecter de votre compte Discogs ?")
+                Text("Veux-tu vraiment te déconnecter de ton compte Discogs ?")
+            }
+            .confirmationDialog(
+                "Supprimer le compte Discogs",
+                isPresented: $showingDeleteAccountConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("Supprimer le compte sur Discogs.com", role: .destructive) {
+                    showingDeleteAccountWebsite = true
+                }
+                Button("Effacer les données locales & iCloud et se déconnecter", role: .destructive) {
+                    authManager.deleteLocalAccountData()
+                }
+                Button("Annuler", role: .cancel) {}
+            } message: {
+                Text("Ton compte est géré par Discogs. Pour supprimer définitivement ton compte et l'ensemble de tes données, tu dois finaliser la demande sur le site officiel de Discogs.\n\nTu peux également effacer immédiatement toutes les données stockées par l'application sur cet appareil et synchronisées sur iCloud (tags, historique d'écoute, préférences).")
             }
     }
 
@@ -81,6 +98,9 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showingDiscogsWebsite) {
                 SafariView(url: DiscogsConstants.websiteURL)
+            }
+            .sheet(isPresented: $showingDeleteAccountWebsite) {
+                SafariView(url: DiscogsConstants.accountDeletionURL)
             }
             .premiumFeaturesSheet(isPresented: $showingPremiumFeaturesSheet)
             .task {
@@ -211,7 +231,7 @@ struct SettingsView: View {
                             Text("Se connecter à Discogs")
                                 .font(.body.weight(.medium))
                                 .foregroundStyle(.primary)
-                            Text("Synchronisez votre collection et vos souhaits")
+                            Text("Synchronise ta collection et tes souhaits")
                                 .font(.caption)
                                 .foregroundStyle(Color.appSecondaryText)
                         }
@@ -240,7 +260,7 @@ struct SettingsView: View {
             Text("Compte Discogs")
         } footer: {
             if authManager.isAuthenticated {
-                Text("Gérez votre profil Discogs.")
+                Text("Gère ton profil Discogs.")
             }
         }
     }
@@ -361,7 +381,7 @@ struct SettingsView: View {
                             Text("Personnaliser le tri des artistes")
                                 .foregroundStyle(.primary)
                             let count = shelfPreferences.customArtistSortOverrides.count
-                            Text(count > 0 ? "\(count) artiste\(count > 1 ? "s" : "") personnalisé\(count > 1 ? "s" : "")" : "Ajuster l'ordre artiste par artiste")
+                            Text(count > 0 ? "\(count) artistes personnalisés" : "Ajuster l'ordre artiste par artiste")
                                 .font(.caption2)
                                 .foregroundStyle(Color.appSecondaryText)
                         }
@@ -371,7 +391,7 @@ struct SettingsView: View {
         } header: {
             Text("Collection & Rangement")
         } footer: {
-            Text("Personnalisez vos tags, le dossier d'enregistrement par défaut et les règles de tri appliquées à votre meuble physique et votre collection.")
+            Text("Personnalise tes tags, le dossier d'enregistrement par défaut et les règles de tri appliquées à ton meuble physique et ta collection.")
         }
     }
 
@@ -392,7 +412,7 @@ struct SettingsView: View {
                 HStack(spacing: 14) {
                     SettingsIcon(systemName: "timer", backgroundColor: .indigo)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Arrêt automatique de lecture")
+                        Text("Arrêt automatique de l'écoute")
                             .foregroundStyle(.primary)
                         Text("Durée maximale de la Live Activity")
                             .font(.caption2)
@@ -403,9 +423,9 @@ struct SettingsView: View {
             .pickerStyle(.menu)
             .tint(Color.spinlogPink)
         } header: {
-            Text("Écoute & Live Activity")
+            Text("Écoute sur platine & Live Activity")
         } footer: {
-            Text("La lecture s'arrête automatiquement après cette durée. Lancer une nouvelle écoute interrompt immédiatement l'album en cours.")
+            Text("L'écoute sur platine s'arrête automatiquement après cette durée. En lancer une nouvelle interrompt immédiatement l'album en cours.")
         }
     }
 
@@ -438,7 +458,7 @@ struct SettingsView: View {
         } header: {
             Text("Apple Music")
         } footer: {
-            Text("Permet d'écouter les titres en entier depuis une fiche album avec un abonnement Apple Music actif. Sans connexion, un extrait de 30s reste disponible.")
+            Text("Permet de lire les titres en entier depuis une fiche album avec un abonnement Apple Music actif. Sans connexion, un extrait de 30 s reste disponible. Ces lectures ne comptent pas comme des écoutes sur platine.")
         }
     }
 
@@ -536,7 +556,7 @@ struct SettingsView: View {
             Text("Suivi de cote")
         } footer: {
             if premiumStore.isPremium && authManager.isAuthenticated {
-                Text("Associez les champs personnalisés Discogs correspondants à votre prix d'achat et à l'état de conservation pour alimenter le suivi de valeur.")
+                Text("Associe les champs personnalisés Discogs correspondants à ton prix d'achat et à l'état de conservation pour alimenter le suivi de valeur.")
             }
         }
     }
@@ -562,7 +582,7 @@ struct SettingsView: View {
                             Text("Mode hors ligne")
                                 .foregroundStyle(.primary)
                             if let date = OfflineDownloadManager.shared.lastSyncDate {
-                                Text("Synchronisé le \(formattedOfflineDate(date)) (\(OfflineDownloadManager.shared.offlineItemCount) album\(OfflineDownloadManager.shared.offlineItemCount > 1 ? "s" : ""))")
+                                Text("Synchronisé le \(formattedOfflineDate(date)) (\(OfflineDownloadManager.shared.offlineItemCount) albums)")
                                     .font(.caption2)
                                     .foregroundStyle(Color.appSecondaryText)
                             } else {
@@ -577,13 +597,12 @@ struct SettingsView: View {
         } header: {
             Text("Données hors ligne")
         } footer: {
-            Text("Téléchargez l'ensemble de votre collection et les pochettes d'albums sur votre appareil pour les consulter partout sans connexion Internet.")
+            Text("Télécharge l'ensemble de ta collection et les pochettes d'albums sur ton appareil pour les consulter partout sans connexion Internet.")
         }
     }
 
     private func formattedOfflineDate(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
         formatter.dateStyle = .short
         formatter.timeStyle = .short
         return formatter.string(from: date)
@@ -596,7 +615,7 @@ struct SettingsView: View {
         Section {
             Picker(selection: $appThemeRawValue) {
                 ForEach(AppTheme.allCases) { theme in
-                    Text(theme.rawValue).tag(theme.rawValue)
+                    Text(theme.title).tag(theme.rawValue)
                 }
             } label: {
                 HStack(spacing: 14) {
@@ -702,29 +721,29 @@ struct SettingsView: View {
         } header: {
             Text("Export")
         } footer: {
-            Text("L'export CSV regroupe tous vos albums (tous dossiers confondus) avec leurs métadonnées, tags et notes pour vos tableurs (Excel, Numbers). La déclaration PDF liste la collection avec état et prix d'achat, à présenter par exemple à un assureur.")
+            Text("L'export CSV regroupe tous tes albums (tous dossiers confondus) avec leurs métadonnées, tags et notes pour tes tableurs (Excel, Numbers). La déclaration PDF liste la collection avec état et prix d'achat, à présenter par exemple à un assureur.")
         }
     }
 
     private var pdfExportSubtitle: String {
         if isExportingPDF {
-            return "Génération du document en cours..."
+            return String(localized: "Génération du document en cours…")
         }
         if authManager.isAuthenticated {
-            return "Jaquettes, état et prix d'achat, tous dossiers confondus"
+            return String(localized: "Pochettes, état et prix d'achat, tous dossiers confondus")
         } else {
-            return "Connexion à Discogs requise"
+            return String(localized: "Connexion à Discogs requise")
         }
     }
 
     private var csvExportSubtitle: String {
         if isExportingCSV {
-            return "Génération du fichier en cours..."
+            return String(localized: "Génération du fichier en cours…")
         }
         if authManager.isAuthenticated {
-            return "Tous dossiers confondus avec tags et notes"
+            return String(localized: "Tous dossiers confondus avec tags et notes")
         } else {
-            return "Connexion à Discogs requise"
+            return String(localized: "Connexion à Discogs requise")
         }
     }
 
@@ -735,8 +754,8 @@ struct SettingsView: View {
         }
 
         guard let username = authManager.username, authManager.isAuthenticated else {
-            alertTitle = "Connexion requise"
-            alertMessage = "Vous devez être connecté à votre compte Discogs pour exporter votre collection."
+            alertTitle = String(localized: "Connexion requise")
+            alertMessage = String(localized: "Tu dois être connecté à ton compte Discogs pour exporter ta collection.")
             showingAlert = true
             return
         }
@@ -784,8 +803,8 @@ struct SettingsView: View {
 
             guard !allItems.isEmpty else {
                 isExportingCSV = false
-                alertTitle = "Collection vide"
-                alertMessage = "Aucun album n'a été trouvé dans votre collection pour l'export."
+                alertTitle = String(localized: "Collection vide")
+                alertMessage = String(localized: "Aucun album n'a été trouvé dans ta collection pour l'export.")
                 showingAlert = true
                 return
             }
@@ -810,8 +829,8 @@ struct SettingsView: View {
                 ShareSheetPresenter.present(url: tempURL)
             } catch {
                 isExportingCSV = false
-                alertTitle = "Erreur de fichier"
-                alertMessage = "Impossible de générer le fichier CSV : \(error.localizedDescription)"
+                alertTitle = String(localized: "Erreur de fichier")
+                alertMessage = String(localized: "Impossible de générer le fichier CSV : \(error.localizedDescription)")
                 showingAlert = true
             }
         }
@@ -824,8 +843,8 @@ struct SettingsView: View {
         }
 
         guard let username = authManager.username, authManager.isAuthenticated else {
-            alertTitle = "Connexion requise"
-            alertMessage = "Vous devez être connecté à votre compte Discogs pour exporter votre collection."
+            alertTitle = String(localized: "Connexion requise")
+            alertMessage = String(localized: "Tu dois être connecté à ton compte Discogs pour exporter ta collection.")
             showingAlert = true
             return
         }
@@ -867,8 +886,8 @@ struct SettingsView: View {
 
             guard !allItems.isEmpty else {
                 isExportingPDF = false
-                alertTitle = "Collection vide"
-                alertMessage = "Aucun album n'a été trouvé dans votre collection pour l'export."
+                alertTitle = String(localized: "Collection vide")
+                alertMessage = String(localized: "Aucun album n'a été trouvé dans ta collection pour l'export.")
                 showingAlert = true
                 return
             }
@@ -914,8 +933,8 @@ struct SettingsView: View {
                 ShareSheetPresenter.present(url: tempURL)
             } catch {
                 isExportingPDF = false
-                alertTitle = "Erreur de fichier"
-                alertMessage = "Impossible de générer le document PDF : \(error.localizedDescription)"
+                alertTitle = String(localized: "Erreur de fichier")
+                alertMessage = String(localized: "Impossible de générer le document PDF : \(error.localizedDescription)")
                 showingAlert = true
             }
         }
@@ -987,17 +1006,31 @@ struct SettingsView: View {
     private var logoutSection: some View {
         if authManager.isAuthenticated {
             Section {
-                Button(role: .destructive) {
+                Button {
                     showingLogoutConfirmation = true
                 } label: {
                     HStack {
                         Spacer()
                         Text("Se déconnecter")
                             .font(.body.weight(.medium))
+                            .foregroundStyle(.primary)
+                        Spacer()
+                    }
+                }
+
+                Button(role: .destructive) {
+                    showingDeleteAccountConfirmation = true
+                } label: {
+                    HStack {
+                        Spacer()
+                        Label("Supprimer mon compte...", systemImage: "trash")
+                            .font(.body.weight(.medium))
                             .foregroundStyle(.red)
                         Spacer()
                     }
                 }
+            } footer: {
+                Text("Ton compte est hébergé sur Discogs. Tu peux lancer la suppression définitive de ton compte ou effacer les données locales et synchronisées sur iCloud (tags, historique d'écoute, préférences).")
             }
         }
     }

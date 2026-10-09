@@ -28,15 +28,15 @@ final class OfflineDownloadManager {
         var statusMessage: String {
             switch self {
             case .idle:
-                return "Prêt"
+                return String(localized: "Prêt")
             case .downloadingCollection(let page, let totalPages, let itemsCount):
-                return "Téléchargement de la collection (page \(page)/\(totalPages) • \(itemsCount) disques)..."
+                return String(localized: "Téléchargement de la collection (page \(page)/\(totalPages) • \(itemsCount) disques)…")
             case .downloadingWantlist(let page, let totalPages):
-                return "Téléchargement de la wantlist (page \(page)/\(totalPages))..."
+                return String(localized: "Téléchargement de la wantlist (page \(page)/\(totalPages))…")
             case .cachingCovers(let current, let total):
-                return "Mise en cache des pochettes (\(current)/\(total))..."
+                return String(localized: "Mise en cache des pochettes (\(current)/\(total))…")
             case .completed(_, let count):
-                return "Synchronisation terminée avec succès (\(count) disques)"
+                return String(localized: "Synchronisation terminée avec succès (\(count) disques)")
             case .failed(let error):
                 return "Erreur : \(error)"
             }

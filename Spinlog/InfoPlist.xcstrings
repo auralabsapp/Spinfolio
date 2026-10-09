@@ -3,17 +3,16 @@
   "strings" : {
     "CFBundleDisplayName" : {
       "comment" : "Bundle display name",
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Spinlog"
+            "state" : "translated",
+            "value" : "Spinfolio"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Spinfolio"
           }
         }
@@ -21,17 +20,16 @@
     },
     "CFBundleName" : {
       "comment" : "Bundle name",
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "machine_translated",
+            "state" : "translated",
             "value" : "Spinlog"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Spinlog"
           }
         }
@@ -39,30 +37,34 @@
     },
     "NSAppleMusicUsageDescription" : {
       "comment" : "Privacy - Media Library Usage Description",
-      "extractionState" : "extracted_with_value",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spinfolio uses Apple Music to play tracks from your albums and show artist photos in your statistics."
+          }
+        },
         "fr" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Spinfolio utilise Apple Music pour afficher une photo de l'artiste dans tes statistiques d'écoute."
+            "state" : "translated",
+            "value" : "Spinfolio utilise Apple Music pour lire les titres de tes albums et afficher la photo des artistes dans tes statistiques."
           }
         }
       }
     },
     "NSCameraUsageDescription" : {
       "comment" : "Privacy - Camera Usage Description",
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "machine_translated",
-            "value" : "Spinlog uses the camera to scan your records' barcodes and find their Discogs listing."
+            "state" : "translated",
+            "value" : "Spinfolio uses the camera to scan your records' barcodes and find their Discogs pages."
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Spinlog utilise l'appareil photo pour scanner le code-barres de vos disques et retrouver leur fiche Discogs."
+            "state" : "translated",
+            "value" : "Spinfolio utilise l'appareil photo pour scanner le code-barres de tes disques et retrouver leur fiche Discogs."
           }
         }
       }

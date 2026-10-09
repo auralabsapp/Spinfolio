@@ -9,12 +9,14 @@ public nonisolated struct NowPlayingActivityAttributes: ActivityAttributes {
     public nonisolated struct ContentState: Codable, Hashable {
         /// Date de démarrage de la session d'écoute
         public var startedAt: Date
-        /// Éventuel statut textuel (par exemple: "En cours d'écoute")
+        /// Ancien statut textuel, plus affiché : la Live Activity affiche désormais un libellé
+        /// localisé par l'extension. Conservé pour décoder les activités démarrées par une
+        /// version antérieure de l'app.
         public var statusText: String
         /// Données binaires d'image de la jaquette redimensionnée (JPEG compact < 50 Ko pour respecter la limite ActivityKit de 4 Ko - 100 Ko)
         public var coverImageData: Data?
 
-        public init(startedAt: Date = Date(), statusText: String = "En cours sur votre platine", coverImageData: Data? = nil) {
+        public init(startedAt: Date = Date(), statusText: String = "", coverImageData: Data? = nil) {
             self.startedAt = startedAt
             self.statusText = statusText
             self.coverImageData = coverImageData

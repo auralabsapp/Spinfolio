@@ -104,7 +104,7 @@
 
   <script>
     const TAG_LEGEND = [
-      ['AUDIT', "nouveau en v3.1 — couvre les corrections de l'audit de fiabilisation, à passer en priorité"],
+      ['AUDIT', "nouveau en v3.1/v3.2 — couvre les corrections de l'audit de fiabilisation et des libellés, à passer en priorité"],
       ['PREMIUM', 'fonctionnalité réservée aux comptes premium'],
       ['RÉGRESSION', 'lié à un bug déjà corrigé — à surveiller en priorité'],
       ['2 APPAREILS', 'nécessite deux appareils physiques'],
@@ -138,6 +138,7 @@
 
     const newOutsideAudit = testCases.filter(t => !t.tags.includes('AUDIT') && /^(F21|F22|N17|O12|O13|P14|P15|Q25|Q26|R\d+)$/.test(t.id)).length;
     document.getElementById('whatsnew').innerHTML = [
+      `<b>Nouvelle famille S (v3.2)</b> — langues et libellés : interface 100 % anglaise, lexique écoute sur platine / lecture Apple Music (Listen / Play), pluriels, tutoiement, formats régionaux, nom de l'app et autorisations. J6, O4 et O11 reprennent les nouveaux libellés.`,
       `<b>${auditCount} tests AUDIT</b> répartis dans les familles existantes : isolation des comptes (iCloud, file hors ligne), disques supprimés ou déplacés sur discogs.com, erreurs passagères vs définitives (ajout, retrait, déplacement), alertes wantlist en arrière-plan, performances (grosses collections, Stats, synchro), lecture Apple Music, confidentialité des en-têtes.`,
       `<b>Alertes wantlist vérifiées à chaque ouverture de l'app</b> (au plus une fois toutes les 15 min) : F22, F23.`,
       `<b>Nouvelle famille R</b> — mise à jour depuis une version précédente : reprise de la session, de la file hors ligne, de la synchro iCloud et des alertes.`,

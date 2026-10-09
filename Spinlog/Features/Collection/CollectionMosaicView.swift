@@ -162,7 +162,7 @@ struct CollectionMosaicView: View {
                 Button {
                     onTriggerListening(item)
                 } label: {
-                    Label("Écouter ce disque", systemImage: "play.fill")
+                    Label("J'écoute ce disque sur la platine", systemImage: "opticaldisc.fill")
                 }
             }
 

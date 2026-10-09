@@ -61,7 +61,7 @@ enum CollectionCSVExporter {
         csvLines.append(headers.map(escapeCSV).joined(separator: ";"))
 
         for item in sortedItems {
-            let folderName = folderMap[item.folderId] ?? (item.folderId == 0 ? "Tous" : "Dossier \(item.folderId)")
+            let folderName = folderMap[item.folderId] ?? (item.folderId == 0 ? String(localized: "Tous") : String(localized: "Dossier \(String(item.folderId))"))
             let artist = item.basicInformation.artistNames
             let title = item.basicInformation.title
 

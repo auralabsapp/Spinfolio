@@ -186,7 +186,7 @@ struct TagManagementView: View {
             VStack(alignment: .leading, spacing: 20) {
                 // Bouton de création directe et fluide via la recherche
                 if onApply != nil {
-                    Text("Touchez un tag pour l'ajouter à la sélection.")
+                    Text("Touche un tag pour l'ajouter à la sélection.")
                         .font(.footnote)
                         .foregroundStyle(Color.appSecondaryText)
                 }
@@ -246,7 +246,7 @@ struct TagManagementView: View {
                         Text("Aucun tag créé")
                             .font(.headline)
 
-                        Text("Tapez un nom dans la barre de recherche ci-dessus pour créer votre premier tag.")
+                        Text("Tape un nom dans la barre de recherche ci-dessus pour créer ton premier tag.")
                             .font(.subheadline)
                             .foregroundStyle(Color.appSecondaryText)
                             .multilineTextAlignment(.center)
@@ -269,7 +269,7 @@ struct TagManagementView: View {
                         .padding(.vertical, 4)
                         .appleMusicGroupedCard()
 
-                        Text("Glissez vers la gauche pour modifier ou supprimer un tag.")
+                        Text("Glisse vers la gauche pour modifier ou supprimer un tag.")
                             .font(.footnote)
                             .foregroundStyle(Color.appSecondaryText)
                     }
@@ -328,7 +328,7 @@ struct TagManagementView: View {
         } message: {
             if let tag = tagToDelete {
                 let count = store.releaseCount(for: tag)
-                Text("Êtes-vous sûr de vouloir supprimer « \(tag) » ? Ce tag sera retiré de \(count <= 1 ? "1 disque" : "\(count) disques").")
+                Text("Veux-tu vraiment supprimer « \(tag) » ? Ce tag sera retiré de \(count) disques.")
             }
         }
         .alert("Tag déjà existant", isPresented: Binding(
@@ -340,7 +340,7 @@ struct TagManagementView: View {
             }
         } message: {
             if let name = duplicateTagError {
-                Text("Le tag « \(name) » existe déjà dans votre bibliothèque.")
+                Text("Le tag « \(name) » existe déjà dans ta bibliothèque.")
             }
         }
         .alert("Nom trop long", isPresented: $showingMaxLengthAlert) {
@@ -362,7 +362,7 @@ struct TagManagementView: View {
             Spacer()
 
             let count = store.instanceCount(for: tag)
-            Text(count <= 1 ? "\(count) ex." : "\(count) ex.")
+            Text("\(count) ex.")
                 .font(.footnote)
                 .foregroundStyle(Color.appSecondaryText)
         }

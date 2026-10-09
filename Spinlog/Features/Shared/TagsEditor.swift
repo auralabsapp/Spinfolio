@@ -163,7 +163,7 @@ struct ReleaseTagSheet: View {
                             Text("Aucun tag créé")
                                 .font(.headline)
 
-                            Text("Tapez un nom dans la barre de recherche ci-dessus pour créer et attribuer votre premier tag.")
+                            Text("Tape un nom dans la barre de recherche ci-dessus pour créer et attribuer ton premier tag.")
                                 .font(.subheadline)
                                 .foregroundStyle(Color.appSecondaryText)
                                 .multilineTextAlignment(.center)
@@ -186,7 +186,7 @@ struct ReleaseTagSheet: View {
                             .padding(.vertical, 4)
                             .appleMusicGroupedCard()
 
-                            Text("Touchez un tag pour l'attribuer. Glissez vers la gauche pour le modifier ou le supprimer.")
+                            Text("Touche un tag pour l'attribuer. Glisse vers la gauche pour le modifier ou le supprimer.")
                                 .font(.footnote)
                                 .foregroundStyle(Color.appSecondaryText)
 
@@ -247,7 +247,7 @@ struct ReleaseTagSheet: View {
             } message: {
                 if let tag = tagToDelete {
                     let count = store.releaseCount(for: tag)
-                    Text("Êtes-vous sûr de vouloir supprimer « \(tag) » ? Ce tag sera retiré de \(count <= 1 ? "1 disque" : "\(count) disques").")
+                    Text("Veux-tu vraiment supprimer « \(tag) » ? Ce tag sera retiré de \(count) disques.")
                 }
             }
             .alert("Tag déjà existant", isPresented: Binding(
@@ -259,7 +259,7 @@ struct ReleaseTagSheet: View {
                 }
             } message: {
                 if let name = duplicateTagError {
-                    Text("Le tag « \(name) » existe déjà dans votre bibliothèque.")
+                    Text("Le tag « \(name) » existe déjà dans ta bibliothèque.")
                 }
             }
             .alert("Nom trop long", isPresented: $showingMaxLengthAlert) {
@@ -270,7 +270,7 @@ struct ReleaseTagSheet: View {
             .alert("Limite de tags atteinte", isPresented: $showingMaxTagsAlert) {
                 Button("OK", role: .cancel) {}
             } message: {
-                Text("Un exemplaire ne peut pas avoir plus de \(TagConstants.maxTagsPerInstance) tags. Retirez-en un pour en attribuer un autre.")
+                Text("Un exemplaire ne peut pas avoir plus de \(TagConstants.maxTagsPerInstance) tags. Retires-en un pour en attribuer un autre.")
             }
         }
         .presentationDetents([.medium, .large])
@@ -290,7 +290,7 @@ struct ReleaseTagSheet: View {
             Spacer()
 
             let count = store.instanceCount(for: tag)
-            Text(count <= 1 ? "\(count) ex." : "\(count) ex.")
+            Text("\(count) ex.")
                 .font(.footnote)
                 .foregroundStyle(Color.appSecondaryText)
 

@@ -116,11 +116,11 @@ struct BulkTagManagementSheet: View {
                 VStack(alignment: .leading, spacing: 20) {
                     // En-tête explicatif
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("\(items.count) exemplaire\(items.count > 1 ? "s sélectionnés" : " sélectionné")")
+                        Text("\(items.count) exemplaires sélectionnés")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(Color.spinlogPink)
 
-                        Text("Touchez un tag pour l'ajouter ou le retirer des exemplaires sélectionnés.")
+                        Text("Touche un tag pour l'ajouter ou le retirer des exemplaires sélectionnés.")
                             .font(.footnote)
                             .foregroundStyle(Color.appSecondaryText)
                     }
@@ -157,7 +157,7 @@ struct BulkTagManagementSheet: View {
                                 .font(.title3)
                                 .foregroundStyle(Color.spinlogPink)
 
-                            Text("Le tag « \(trimmedQuery) » existe déjà. Touchez-le ci-dessous pour l'appliquer.")
+                            Text("Le tag « \(trimmedQuery) » existe déjà. Touche-le ci-dessous pour l'appliquer.")
                                 .font(.footnote)
                                 .foregroundStyle(.primary)
 
@@ -177,7 +177,7 @@ struct BulkTagManagementSheet: View {
                             Text("Aucun tag créé")
                                 .font(.headline)
 
-                            Text("Tapez un nom dans la barre de recherche pour créer et appliquer votre premier tag.")
+                            Text("Tape un nom dans la barre de recherche pour créer et appliquer ton premier tag.")
                                 .font(.subheadline)
                                 .foregroundStyle(Color.appSecondaryText)
                                 .multilineTextAlignment(.center)
@@ -273,7 +273,7 @@ struct BulkTagManagementSheet: View {
                 }
             } message: {
                 if let action = partialTagAction {
-                    Text("Ce tag est actuellement attribué à \(action.count) sur \(items.count) exemplaire\(items.count > 1 ? "s" : ""). Que souhaitez-vous faire ?")
+                    Text("Ce tag est actuellement attribué à \(action.count) exemplaires sur \(items.count). Que veux-tu faire ?")
                 }
             }
             .confirmationDialog(
@@ -296,7 +296,7 @@ struct BulkTagManagementSheet: View {
             } message: {
                 if let tag = tagToDelete {
                     let count = store.releaseCount(for: tag)
-                    Text("Êtes-vous sûr de vouloir supprimer définitivement « \(tag) » ? Ce tag sera retiré de \(count <= 1 ? "1 disque" : "\(count) disques") de votre bibliothèque.")
+                    Text("Veux-tu vraiment supprimer définitivement « \(tag) » ? Ce tag sera retiré de \(count) disques de ta bibliothèque.")
                 }
             }
             .alert("Nom trop long", isPresented: $showingMaxLengthAlert) {

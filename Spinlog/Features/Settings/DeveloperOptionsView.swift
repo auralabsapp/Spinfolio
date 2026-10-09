@@ -158,7 +158,7 @@ struct DeveloperOptionsView: View {
             } header: {
                 Text("Simulation Réseau")
             } footer: {
-                Text("Activez ce toggle pour tester le mode hors ligne sans avoir besoin d'activer le mode Avion de votre iPhone.")
+                Text("Active ce toggle pour tester le mode hors ligne sans avoir besoin d'activer le mode Avion de ton iPhone.")
             }
 
             // MARK: - 3. Règle des 6 heures Discogs (Cache Stale)
@@ -430,24 +430,24 @@ struct DeveloperOptionsView: View {
             if let backup = pendingBackupToRestore {
                 Text(restoreConfirmationMessage(for: backup))
             } else {
-                Text("Vos données locales seront remplacées.")
+                Text("Tes données locales seront remplacées.")
             }
         }
     }
 
     private func simulateStaleCache() {
         guard let username = authManager.username else {
-            showToast("Connectez-vous d'abord à un compte Discogs")
+            showToast("Connecte-toi d'abord à un compte Discogs")
             return
         }
         LocalDataStore.shared.simulateStaleCache(username: username)
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        showToast("Cache daté à -7 heures. Rendez-vous sur Collection ou Wantlist en mode hors ligne pour voir le bandeau.")
+        showToast("Cache daté à -7 heures. Va sur Collection ou Wantlist en mode hors ligne pour voir le bandeau.")
     }
 
     private func resetFreshCache() {
         guard let username = authManager.username else {
-            showToast("Connectez-vous d'abord à un compte Discogs")
+            showToast("Connecte-toi d'abord à un compte Discogs")
             return
         }
         LocalDataStore.shared.resetCacheFreshness(username: username)
@@ -457,7 +457,7 @@ struct DeveloperOptionsView: View {
 
     private func fillNetPurchasePriceField() {
         guard let username = authManager.username, let credentials = authManager.credentials else {
-            showToast("Connectez-vous d'abord à un compte Discogs")
+            showToast("Connecte-toi d'abord à un compte Discogs")
             return
         }
         isBackfillingNetPrice = true
@@ -560,9 +560,9 @@ struct DeveloperOptionsView: View {
     private var exportSubtitle: String {
         if authManager.isAuthenticated {
             if let user = authManager.username {
-                return "Exporte vos tags pour le compte \(user)"
+                return "Exporte tes tags pour le compte \(user)"
             } else {
-                return "Exporte vos tags associés à votre compte"
+                return "Exporte tes tags associés à ton compte"
             }
         } else {
             return "Connexion à Discogs requise"
@@ -578,7 +578,7 @@ struct DeveloperOptionsView: View {
 
     private func prepareExport() {
         guard let username = authManager.username, authManager.isAuthenticated else {
-            showToast("Vous devez être connecté à votre compte Discogs pour générer une sauvegarde de vos données.")
+            showToast("Tu dois être connecté à ton compte Discogs pour générer une sauvegarde de tes données.")
             return
         }
 
@@ -634,7 +634,7 @@ struct DeveloperOptionsView: View {
             let backup = try decoder.decode(SpinlogUserDataBackup.self, from: data)
 
             guard let currentUsername = authManager.username, authManager.isAuthenticated else {
-                showToast("Veuillez vous connecter à votre compte Discogs avant de restaurer une sauvegarde.")
+                showToast("Connecte-toi à ton compte Discogs avant de restaurer une sauvegarde.")
                 return
             }
 
@@ -642,7 +642,7 @@ struct DeveloperOptionsView: View {
             let currentUser = currentUsername.trimmingCharacters(in: .whitespacesAndNewlines)
 
             if backupUser.caseInsensitiveCompare(currentUser) != .orderedSame {
-                showToast("Ce fichier de sauvegarde appartient au compte « \(backupUser) », alors que vous êtes connecté avec le compte « \(currentUser) ».\n\nLa restauration a été refusée pour éviter toute incohérence.")
+                showToast("Ce fichier de sauvegarde appartient au compte « \(backupUser) », alors que tu es connecté avec le compte « \(currentUser) ».\n\nLa restauration a été refusée pour éviter toute incohérence.")
                 return
             }
 
@@ -694,7 +694,7 @@ struct DeveloperOptionsView: View {
             ShelfPreferencesStore.shared.applyRemoteCustomArtistSortOverrides(overrides)
         }
         NotificationCenter.default.post(name: .collectionPreferencesChanged, object: nil)
-        showToast("Vos données ont été restaurées avec succès (\(backup.totalTagsCount) tag\(backup.totalTagsCount > 1 ? "s" : "") et \(backup.totalReleasesTaggedCount) album\(backup.totalReleasesTaggedCount > 1 ? "s" : "") étiqueté\(backup.totalReleasesTaggedCount > 1 ? "s" : "")).")
+        showToast("Tes données ont été restaurées avec succès (\(backup.totalTagsCount) tag\(backup.totalTagsCount > 1 ? "s" : "") et \(backup.totalReleasesTaggedCount) album\(backup.totalReleasesTaggedCount > 1 ? "s" : "") étiqueté\(backup.totalReleasesTaggedCount > 1 ? "s" : "")).")
         pendingBackupToRestore = nil
     }
 

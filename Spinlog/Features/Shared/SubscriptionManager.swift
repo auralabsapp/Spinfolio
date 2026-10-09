@@ -101,7 +101,7 @@ public final class SubscriptionManager {
         throw NSError(
             domain: "com.auralabs.Spinlog",
             code: 404,
-            userInfo: [NSLocalizedDescriptionKey: "Le forfait sélectionné n'est pas encore disponible sur l'App Store."]
+            userInfo: [NSLocalizedDescriptionKey: String(localized: "Le forfait sélectionné n'est pas encore disponible sur l'App Store.")]
         )
         #endif
     }
@@ -211,29 +211,27 @@ public final class SubscriptionManager {
               offer.paymentMode == .freeTrial else { return nil }
         let count = offer.period.value * offer.periodCount
         guard count > 0 else { return nil }
-        let unit: String
+        // Une phrase complète par unité : les variantes singulier/pluriel sont dans le catalogue.
         switch offer.period.unit {
-        case .day: unit = count > 1 ? "jours" : "jour"
-        case .week: unit = count > 1 ? "semaines" : "semaine"
-        case .month: unit = count > 1 ? "mois" : "mois"
-        case .year: unit = count > 1 ? "ans" : "an"
-        @unknown default: unit = count > 1 ? "jours" : "jour"
+        case .week: return String(localized: "\(count) semaines d'essai gratuit")
+        case .month: return String(localized: "\(count) mois d'essai gratuit")
+        case .year: return String(localized: "\(count) ans d'essai gratuit")
+        default: return String(localized: "\(count) jours d'essai gratuit")
         }
-        return "\(count) \(unit) d'essai gratuit"
     }
 
     public var yearlyPriceString: String {
         if let product = yearlyProduct {
-            return "\(product.displayPrice) / an"
+            return String(localized: "\(product.displayPrice) / an")
         }
-        return "24,99 € / an"
+        return String(localized: "24,99 € / an")
     }
 
     public var monthlyPriceString: String {
         if let product = monthlyProduct {
-            return "\(product.displayPrice) / mois"
+            return String(localized: "\(product.displayPrice) / mois")
         }
-        return "2,99 € / mois"
+        return String(localized: "2,99 € / mois")
     }
 
     /// Équivalent mensuel de l'abonnement annuel calculé dynamiquement
@@ -244,10 +242,10 @@ public final class SubscriptionManager {
             formatter.numberStyle = .currency
             formatter.locale = Locale.current
             if let formatted = formatter.string(from: monthlyPriceDecimal as NSDecimalNumber) {
-                return "(\(formatted)/mois)"
+                return String(localized: "(\(formatted)/mois)")
             }
         }
-        return "(2,08 €/mois)"
+        return String(localized: "(2,08 €/mois)")
     }
 
     /// Pourcentage d'économie de l'abonnement annuel par rapport à 12 mois payés au tarif mensuel,
@@ -259,10 +257,10 @@ public final class SubscriptionManager {
             let savings = 1 - (yearlyProduct.price / fullYearAtMonthlyRate)
             let percent = Int(((savings as NSDecimalNumber).doubleValue * 100).rounded())
             if percent > 0 {
-                return "ÉCONOMISEZ \(percent)%"
+                return String(localized: "ÉCONOMISE \(percent) %")
             }
         }
-        return "ÉCONOMISEZ 30%"
+        return String(localized: "ÉCONOMISE \(30) %")
     }
 
     public nonisolated static func verify<T>(_ result: VerificationResult<T>) throws -> T {

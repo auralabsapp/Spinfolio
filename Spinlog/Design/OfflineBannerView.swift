@@ -34,7 +34,7 @@ struct OfflineBannerView: View {
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     } else if let date = lastSyncDate {
-                        let countText = (itemCount ?? 0) > 0 ? " • \(itemCount!) album\((itemCount ?? 0) > 1 ? "s" : "")" : ""
+                        let countText = (itemCount ?? 0) > 0 ? " • " + String(localized: "\(itemCount ?? 0) albums") : ""
                         Text("Instantané archivé du \(formattedDate(date))\(countText)")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
@@ -66,7 +66,6 @@ struct OfflineBannerView: View {
 
     private func formattedDate(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
         formatter.dateStyle = .short
         formatter.timeStyle = .short
         return formatter.string(from: date)
@@ -91,7 +90,7 @@ struct OfflineBannerView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Archive locale")
                                 .font(.subheadline.weight(.semibold))
-                            Text("Votre collection et vos pochettes sont sauvegardées sur votre appareil pour rester accessibles sans connexion réseau.")
+                            Text("Ta collection et tes pochettes sont sauvegardées sur ton appareil pour rester accessibles sans connexion réseau.")
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                         }
@@ -104,7 +103,7 @@ struct OfflineBannerView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Synchronisation automatique")
                                 .font(.subheadline.weight(.semibold))
-                            Text("Vous consultez votre discothèque sauvegardée sur cet appareil. Dès le retour d'une connexion Internet, \(AppInfo.name) réactualisera automatiquement votre collection et les cotes du marché.")
+                            Text("Tu consultes ta discothèque sauvegardée sur cet appareil. Dès le retour d'une connexion Internet, \(AppInfo.name) réactualisera automatiquement ta collection et les cotes du marché.")
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                         }

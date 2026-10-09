@@ -29,12 +29,19 @@ struct WantlistView: View {
         }
     }
 
+    private func presentPendingAlertIfPossible() {
+        guard let releaseId = tabCoordinator.pendingWantlistAlertReleaseId,
+              let item = viewModel.items.first(where: { $0.id == releaseId }) else { return }
+        tabCoordinator.pendingWantlistAlertReleaseId = nil
+        requestAlertSheet(for: item)
+    }
+
     @ViewBuilder
     private var sortMenu: some View {
         Menu {
             Picker("Trier par", selection: $viewModel.sortOption) {
                 ForEach(CollectionSortOption.allCases.filter { $0 != .shelf }) { option in
-                    Label(option.rawValue, systemImage: option.systemImage).tag(option)
+                    Label(option.title, systemImage: option.systemImage).tag(option)
                 }
             }
 
@@ -43,7 +50,7 @@ struct WantlistView: View {
                 Label("Décroissant", systemImage: "arrow.down").tag(false)
             }
         } label: {
-            Label("Tri : \(viewModel.sortOption.rawValue)", systemImage: viewModel.sortOption.systemImage)
+            Label("Tri : \(viewModel.sortOption.title)", systemImage: viewModel.sortOption.systemImage)
         }
     }
 
@@ -127,7 +134,7 @@ struct WantlistView: View {
             .navigationTitle("Wantlist")
             .navigationSubtitle(navigationSubtitle)
             .navigationBarTitleDisplayMode(.large)
-            .searchDestinations()
+                        .searchDestinations()
             .searchable(text: $viewModel.searchText, prompt: "Rechercher dans ta wantlist")
             .scrollDismissesKeyboard(.immediately)
     }
@@ -159,6 +166,12 @@ struct WantlistView: View {
             }
             .sheet(item: $itemForAlert) { item in
                 WantlistAlertSheet(item: item)
+            }
+            .onChange(of: tabCoordinator.pendingWantlistAlertReleaseId, initial: true) {
+                presentPendingAlertIfPossible()
+            }
+            .onChange(of: viewModel.items.count) {
+                presentPendingAlertIfPossible()
             }
             .premiumFeaturesSheet(isPresented: $showingPremiumSheet)
             .wantlistDialogs(
@@ -279,9 +292,9 @@ struct WantlistView: View {
         let total = viewModel.items.count
         if viewModel.hasActiveFilters {
             let filteredCount = viewModel.sections.flatMap(\.items).count
-            return "\(filteredCount)/\(total) élément\(total == 1 ? "" : "s")"
+            return String(localized: "\(filteredCount)/\(total) éléments")
         }
-        return total == 1 ? "1 élément" : "\(total) éléments"
+        return String(localized: "\(total) éléments")
     }
 
     @ViewBuilder
@@ -401,7 +414,7 @@ struct WantlistView: View {
     @ViewBuilder
     private var content: some View {
         if !authManager.isAuthenticated {
-            LoginPromptView(message: "Connecte-toi à Discogs pour voir ta wantlist.")
+            LoginPromptView(message: String(localized: "Connecte-toi à Discogs pour voir ta wantlist."))
         } else if viewModel.isLoading && viewModel.items.isEmpty {
             ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if let error = viewModel.errorMessage, viewModel.items.isEmpty {
@@ -468,7 +481,7 @@ struct WantlistView: View {
                                 selectedFormat: $viewModel.selectedFormat,
                                 onClearAll: viewModel.clearFilters
                             )
-                        }
+                                                    }
                     }
                     if (displayMode == .list || displayMode == .grid), viewModel.indexEntries.count > 1 {
                         SectionIndexBar(entries: viewModel.indexEntries) { sectionKey in
@@ -509,7 +522,7 @@ private extension View {
     ) -> some View {
         self
             .confirmationDialog(
-                "Supprimer \(selectedCount) élément\(selectedCount == 1 ? "" : "s") ?",
+                "Supprimer \(selectedCount) éléments ?",
                 isPresented: showingBulkDeleteConfirmation,
                 titleVisibility: .visible
             ) {
@@ -518,7 +531,7 @@ private extension View {
                 }
                 Button("Annuler", role: .cancel) {}
             } message: {
-                Text("Cette action retire définitivement ces éléments de votre wantlist Discogs.")
+                Text("Cette action retire définitivement ces éléments de ta wantlist Discogs.")
             }
             .confirmationDialog(
                 "Ajouter dans quel dossier ?",
@@ -554,7 +567,7 @@ private extension View {
                 }
             } message: {
                 if let item = itemPendingDeletion.wrappedValue {
-                    Text("Voulez-vous retirer « \(item.basicInformation.title) » de votre wantlist Discogs ?")
+                    Text("Veux-tu retirer « \(item.basicInformation.title) » de ta wantlist Discogs ?")
                 }
             }
     }

@@ -9,6 +9,15 @@ enum AppTheme: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    /// Libellé affiché. Le `rawValue` (français) reste la valeur persistée dans les réglages.
+    var title: String {
+        switch self {
+        case .system: return String(localized: "Système")
+        case .light: return String(localized: "Clair")
+        case .dark: return String(localized: "Sombre")
+        }
+    }
+
     var colorScheme: ColorScheme? {
         switch self {
         case .system: return nil
@@ -45,29 +54,29 @@ enum AppColorTheme: String, CaseIterable, Identifiable, Codable, Sendable {
 
     var displayName: String {
         switch self {
-        case .signature: return "\(AppInfo.name) Signature"
-        case .cobalt: return "Bleu Électrique"
-        case .emerald: return "Vert Émeraude"
-        case .amber: return "Orange Crépuscule"
-        case .ruby: return "Rouge Rubis"
-        case .velvet: return "Violet Améthyste"
-        case .gold: return "Cuivre & Or Hifi"
-        case .pacific: return "Turquoise Pacifique"
-        case .slate: return "Ardoise Titane"
+        case .signature: return String(localized: "\(AppInfo.name) Signature")
+        case .cobalt: return String(localized: "Bleu Électrique")
+        case .emerald: return String(localized: "Vert Émeraude")
+        case .amber: return String(localized: "Orange Crépuscule")
+        case .ruby: return String(localized: "Rouge Rubis")
+        case .velvet: return String(localized: "Violet Améthyste")
+        case .gold: return String(localized: "Cuivre & Or Hifi")
+        case .pacific: return String(localized: "Turquoise Pacifique")
+        case .slate: return String(localized: "Ardoise Titane")
         }
     }
 
     var subtitle: String {
         switch self {
-        case .signature: return "Rose néon vibrant & iconique"
-        case .cobalt: return "Bleu cobalt moderne & universel"
-        case .emerald: return "Sauge & forêt apaisant"
-        case .amber: return "Tangerine chaleureuse & coucher de soleil"
-        case .ruby: return "Carmin intense & rock"
-        case .velvet: return "Pourpre feutré & jazz lounge"
-        case .gold: return "Ambre doré & esprit audiophile"
-        case .pacific: return "Lagon aéré, frais & estival"
-        case .slate: return "Monochrome chic & intemporel"
+        case .signature: return String(localized: "Rose néon vibrant & iconique")
+        case .cobalt: return String(localized: "Bleu cobalt moderne & universel")
+        case .emerald: return String(localized: "Sauge & forêt apaisant")
+        case .amber: return String(localized: "Tangerine chaleureuse & coucher de soleil")
+        case .ruby: return String(localized: "Carmin intense & rock")
+        case .velvet: return String(localized: "Pourpre feutré & jazz lounge")
+        case .gold: return String(localized: "Ambre doré & esprit audiophile")
+        case .pacific: return String(localized: "Lagon aéré, frais & estival")
+        case .slate: return String(localized: "Monochrome chic & intemporel")
         }
     }
 

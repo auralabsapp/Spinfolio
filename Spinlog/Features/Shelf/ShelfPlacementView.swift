@@ -34,7 +34,7 @@ struct ShelfPlacementView: View {
                         PremiumLockedCard(
                             icon: "books.vertical.fill",
                             title: "Guide de rangement physique",
-                            message: "Le calcul automatique de l'emplacement exact de chaque album dans votre meuble est une fonctionnalité réservée aux membres premium."
+                            message: "Le calcul automatique de l'emplacement exact de chaque album dans ton meuble est une fonctionnalité réservée aux membres premium."
                         )
                         Spacer(minLength: 40)
                     }
@@ -200,7 +200,7 @@ struct ShelfPlacementView: View {
     // Le dossier (si le rangement y est limité) est déjà annoncé par `scopeBadge` en haut de
     // la fenêtre : pas besoin de le répéter ici.
     private var positionSubheadline: String {
-        "sur \(neighbors.totalCount) \(neighbors.category.lowercasedDisplayName)"
+        String(localized: "sur \(neighbors.totalCount) \(neighbors.category.lowercasedDisplayName)")
     }
 
     // MARK: - 2. Triptyque horizontal (Gauche - Centre - Droite)
@@ -361,9 +361,9 @@ struct ShelfPlacementView: View {
     }
 
     /// Colonne pour le Début ou la Fin de meuble
-    private func edgeColumn(title: String, subtitle: String, icon: String, color: Color) -> some View {
+    private func edgeColumn(title: LocalizedStringResource, subtitle: LocalizedStringResource, icon: String, color: Color) -> some View {
         VStack(spacing: 8) {
-            Text(subtitle.uppercased())
+            Text(String(localized: subtitle).uppercased())
                 .font(.caption2.weight(.bold))
                 .foregroundStyle(color)
                 .padding(.horizontal, 6)

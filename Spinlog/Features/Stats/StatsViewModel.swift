@@ -61,6 +61,12 @@ struct TopArtistEntry: Identifiable {
 @Observable
 @MainActor
 final class StatsViewModel {
+    /// Libellés des parts regroupées des répartitions. Traduits, et utilisés à la fois pour
+    /// l'affichage et comme clés de comparaison (`items(forGenre:)`…) : une seule source évite
+    /// qu'un libellé traduit ne corresponde plus à la valeur comparée.
+    static let othersLabel = String(localized: "Autres")
+    static let unspecifiedLabel = String(localized: "Non spécifié")
+
     /// En dessous de ce nombre d'écoutes enregistrées, un classement n'est pas jugé assez
     /// représentatif pour être affiché (trop peu de données pour être pertinent).
     static let minimumListeningSessionsForRanking = 5
@@ -307,7 +313,7 @@ final class StatsViewModel {
         for item in allCollectionItems {
             let rawGenres = item.basicInformation.genres?.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty } ?? []
             if rawGenres.isEmpty {
-                counts["Non spécifié", default: 0] += 1
+                counts[Self.unspecifiedLabel, default: 0] += 1
             } else {
                 for genre in rawGenres {
                     let clean = genre.trimmingCharacters(in: .whitespaces)
@@ -348,7 +354,7 @@ final class StatsViewModel {
 
         if othersCount > 0 {
             let pct = (Double(othersCount) / Double(totalOccurrences)) * 100.0
-            entries.append(GenreDistributionEntry(name: "Autres", count: othersCount, percentage: pct))
+            entries.append(GenreDistributionEntry(name: Self.othersLabel, count: othersCount, percentage: pct))
         }
 
         withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
@@ -372,7 +378,7 @@ final class StatsViewModel {
         for item in allCollectionItems {
             let rawLabels = item.basicInformation.labels?.map { $0.name.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty } ?? []
             if rawLabels.isEmpty {
-                counts["Non spécifié", default: 0] += 1
+                counts[Self.unspecifiedLabel, default: 0] += 1
             } else {
                 for label in rawLabels {
                     counts[label, default: 0] += 1
@@ -412,7 +418,7 @@ final class StatsViewModel {
 
         if othersCount > 0 {
             let pct = (Double(othersCount) / Double(totalOccurrences)) * 100.0
-            entries.append(LabelDistributionEntry(name: "Autres", count: othersCount, percentage: pct))
+            entries.append(LabelDistributionEntry(name: Self.othersLabel, count: othersCount, percentage: pct))
         }
 
         withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
@@ -423,14 +429,14 @@ final class StatsViewModel {
 
     /// Retourne la liste des disques correspondant à un label donné.
     func items(forLabel labelName: String) -> [CollectionItem] {
-        if labelName == "Autres" {
+        if labelName == Self.othersLabel {
             return allCollectionItems.filter { item in
                 let labels = item.basicInformation.labels?.map(\.name) ?? []
                 return labels.contains { otherLabelsNames.contains($0) }
             }.sorted { item1, item2 in
                 item1.basicInformation.title.localizedStandardCompare(item2.basicInformation.title) == .orderedAscending
             }
-        } else if labelName == "Non spécifié" {
+        } else if labelName == Self.unspecifiedLabel {
             return allCollectionItems.filter { item in
                 let labels = item.basicInformation.labels?.map { $0.name.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty } ?? []
                 return labels.isEmpty
@@ -476,7 +482,7 @@ final class StatsViewModel {
         }
 
         // Ordre fixe et logique (pas un tri par volume) : Vinyles, CD, Cassettes, Autres.
-        let order = ["Vinyles", "CD", "Cassettes", "Autres"]
+        let order = [ShelfMediaCategory.vinyl12, .cd, .cassette, .other].map(\.broadFormatLabel)
         let entries = order.compactMap { label -> MediaFormatDistributionEntry? in
             guard let count = broadCounts[label], count > 0 else { return nil }
             let pct = (Double(count) / Double(total)) * 100.0
@@ -517,12 +523,12 @@ final class StatsViewModel {
     /// Même filtre que `items(forGenre:)`, sans le tri alphabétique (coûteux) : suffisant pour
     /// compter, ce que fait `styleBreakdown`, évalué à chaque rendu de l'écran Stats.
     private func unsortedItems(forGenre genreName: String) -> [CollectionItem] {
-        if genreName == "Autres" {
+        if genreName == Self.othersLabel {
             return allCollectionItems.filter { item in
                 let genres = item.basicInformation.genres ?? []
                 return genres.contains { otherGenresNames.contains($0) }
             }
-        } else if genreName == "Non spécifié" {
+        } else if genreName == Self.unspecifiedLabel {
             return allCollectionItems.filter { item in
                 let genres = item.basicInformation.genres?.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty } ?? []
                 return genres.isEmpty

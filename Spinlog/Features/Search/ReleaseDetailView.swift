@@ -228,7 +228,7 @@ struct ReleaseDetailView: View {
                             // 0. Fiche reconstruite depuis le cache local faute de réseau : certaines
                             // sections (tracklist, communauté, marketplace, vidéos) resteront vides.
                             if viewModel.isOfflineFallback {
-                                OfflineBannerView(customMessage: "Fiche limitée depuis votre collection")
+                                OfflineBannerView(customMessage: String(localized: "Fiche limitée depuis ta collection"))
                             }
 
                             // 1. Boutons d'actions rapides tactiles : "En collection" et "Wantlist"
@@ -278,7 +278,7 @@ struct ReleaseDetailView: View {
 
                             // 2ter. Journal d'écoute (disponible pour toute release)
                             VStack(alignment: .leading, spacing: 12) {
-                                SectionEyebrow(title: "Mes écoutes", icon: "waveform")
+                                SectionEyebrow(title: "Mes écoutes sur platine", icon: "opticaldisc.fill")
                                 ListeningLogCard(
                                     releaseId: releaseId,
                                     onLogListening: {
@@ -497,7 +497,7 @@ struct ReleaseDetailView: View {
             .buttonStyle(.plain)
         } else {
             shelfPlacementRowContent(
-                subtitle: "Balayez l'exemplaire concerné vers la gauche dans « Mes exemplaires » pour voir où le ranger",
+                subtitle: String(localized: "Balaie l'exemplaire concerné vers la gauche dans « Mes exemplaires » pour voir où le ranger"),
                 showsChevron: false
             )
         }
@@ -548,7 +548,7 @@ struct ReleaseDetailView: View {
             HStack {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(.green)
-                Text("Ajouté à votre collection !")
+                Text("Ajouté à ta collection !")
                     .font(.subheadline.bold())
                     .foregroundStyle(.primary)
                 Spacer()
@@ -572,7 +572,7 @@ struct ReleaseDetailView: View {
                     message: "Passe premium pour savoir instantanément où intercaler ce disque dans ton meuble."
                 )
             } else {
-                Text("\(AppInfo.name) a déterminé l'emplacement exact de ce disque dans votre meuble.")
+                Text("\(AppInfo.name) a déterminé l'emplacement exact de ce disque dans ton meuble.")
                     .font(.caption)
                     .foregroundStyle(Color.appSecondaryText)
 
@@ -613,13 +613,13 @@ struct ReleaseDetailView: View {
     private func otherInfoSummary(for release: Release) -> String {
         var parts: [String] = []
         if let credits = release.extraartists, !credits.isEmpty {
-            parts.append("Crédits (\(credits.count))")
+            parts.append(String(localized: "Crédits (\(credits.count))"))
         }
         if let companies = release.companies, !companies.isEmpty {
-            parts.append("Fabrication (\(companies.count))")
+            parts.append(String(localized: "Fabrication (\(companies.count))"))
         }
         if let identifiers = release.identifiers, !identifiers.isEmpty {
-            parts.append("Identifiants (\(identifiers.count))")
+            parts.append(String(localized: "Identifiants (\(identifiers.count))"))
         }
         return parts.joined(separator: " · ")
     }
@@ -637,10 +637,10 @@ struct ReleaseDetailView: View {
         var parts: [String] = []
         let imagesCount = additionalImagesCount(for: release)
         if imagesCount > 0 {
-            parts.append("\(imagesCount) photo\(imagesCount > 1 ? "s" : "")")
+            parts.append(String(localized: "\(imagesCount) photos"))
         }
         if let videosCount = release.videos?.count, videosCount > 0 {
-            parts.append("\(videosCount) vidéo\(videosCount > 1 ? "s" : "")")
+            parts.append(String(localized: "\(videosCount) vidéos"))
         }
         return parts.joined(separator: " · ")
     }
@@ -798,7 +798,15 @@ struct TracklistSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionEyebrow(title: "Titres", icon: "music.note.list", style: .subsection)
+            HStack(alignment: .firstTextBaseline) {
+                SectionEyebrow(title: "Titres", icon: "music.note.list", style: .subsection)
+                Spacer()
+                if tracklist.contains(where: { !$0.isHeading }) {
+                    Text("Lecture sur Apple Music")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(Color.appSecondaryText)
+                }
+            }
             VStack(spacing: 0) {
                 ForEach(Array(tracklist.enumerated()), id: \.element.id) { index, track in
                     HStack(alignment: .center, spacing: 10) {
@@ -974,7 +982,7 @@ private struct TrackPlayButton: View {
         .task(id: trackID) {
             await service.prefetchMatch(trackID: trackID, artistName: artistName, albumTitle: albumTitle, trackTitle: trackTitle, trackDuration: duration)
         }
-        .accessibilityLabel(isPlaying ? "Mettre en pause \(trackTitle)" : "Écouter un extrait de \(trackTitle)")
+        .accessibilityLabel(isPlaying ? Text("Mettre en pause \(trackTitle)") : Text("Lire \(trackTitle) sur Apple Music"))
     }
 }
 
@@ -988,7 +996,7 @@ struct CreditsSection: View {
                 ForEach(Array(credits.enumerated()), id: \.element.id) { index, credit in
                     HStack(alignment: .center, spacing: 12) {
                         // 1. Libellé (Rôle) d'abord, standard .subheadline (noir/régulier) identique à Fabrication
-                        Text(credit.role?.isEmpty == false ? credit.role! : "Crédit")
+                        Text(credit.role?.isEmpty == false ? credit.role! : String(localized: "Crédit"))
                             .font(.subheadline)
                             .frame(minWidth: 80, alignment: .leading)
 

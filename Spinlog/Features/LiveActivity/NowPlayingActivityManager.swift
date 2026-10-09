@@ -19,16 +19,16 @@ public enum ListeningMaxDurationOption: Int, CaseIterable, Identifiable, Sendabl
 
     public var label: String {
         switch self {
-        case .thirtyMinutes: return "30 minutes (1 face)"
-        case .fortyFiveMinutes: return "45 minutes"
-        case .oneHour: return "1 heure (recommandé)"
-        case .ninetyMinutes: return "1 heure 30 (double vinyle)"
-        case .twoHours: return "2 heures"
+        case .thirtyMinutes: return String(localized: "30 minutes (1 face)")
+        case .fortyFiveMinutes: return String(localized: "45 minutes")
+        case .oneHour: return String(localized: "1 heure (recommandé)")
+        case .ninetyMinutes: return String(localized: "1 heure 30 (double vinyle)")
+        case .twoHours: return String(localized: "2 heures")
         }
     }
 }
 
-/// Gestionnaire du cycle de vie de la Live Activity "En cours d'écoute" (Dynamic Island & Lock Screen).
+/// Gestionnaire du cycle de vie de la Live Activity « écoute sur platine » (Dynamic Island & Lock Screen).
 ///
 /// `@Observable` (comme les autres stores de l'app) plutôt qu'`ObservableObject` : les vues ne
 /// sont réinvalidées que pour les propriétés qu'elles lisent réellement, au lieu de l'être
@@ -85,7 +85,7 @@ final class NowPlayingActivityManager {
     }
 
     /// Démarre une nouvelle Live Activity pour l'album en cours d'écoute.
-    /// Si une lecture était déjà en cours, elle est immédiatement arrêtée au profit de la nouvelle.
+    /// Si une écoute était déjà en cours, elle est immédiatement arrêtée au profit de la nouvelle.
     func startActivity(
         releaseId: Int,
         albumTitle: String,
@@ -136,7 +136,6 @@ final class NowPlayingActivityManager {
 
         let initialState = NowPlayingActivityAttributes.ContentState(
             startedAt: now,
-            statusText: "En cours sur votre platine",
             coverImageData: initialCoverData
         )
 
@@ -173,7 +172,6 @@ final class NowPlayingActivityManager {
                 if let coverData = await fetchAsyncCoverData(from: coverURL) {
                     let updatedState = NowPlayingActivityAttributes.ContentState(
                         startedAt: now,
-                        statusText: "En cours sur votre platine",
                         coverImageData: coverData
                     )
                     await activity.update(.init(state: updatedState, staleDate: now.addingTimeInterval(duration)))

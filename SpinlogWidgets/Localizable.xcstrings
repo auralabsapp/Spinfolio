@@ -21,16 +21,22 @@
         }
       }
     },
-    "Arrêter la lecture" : {
-
-    },
-    "EN COURS D'ÉCOUTE" : {
-      "extractionState" : "stale",
+    "Arrêter l'écoute" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "machine_translated",
-            "value" : "NOW PLAYING"
+            "state" : "translated",
+            "value" : "Stop Listening"
+          }
+        }
+      }
+    },
+    "Écoute en cours sur la platine" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listening on the turntable"
           }
         }
       }

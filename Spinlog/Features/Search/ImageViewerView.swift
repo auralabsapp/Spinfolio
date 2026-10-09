@@ -116,9 +116,9 @@ struct ImageViewerView: View {
     private func imageLabel(for index: Int) -> String {
         let isPrimary = images[index].type == "primary"
         if isPrimary {
-            return "Pochette de l'album"
+            return String(localized: "Pochette de l'album")
         }
-        return "Photo \(index + 1) sur \(images.count) de la release"
+        return String(localized: "Photo \(index + 1) sur \(images.count) de la release")
     }
 }
 

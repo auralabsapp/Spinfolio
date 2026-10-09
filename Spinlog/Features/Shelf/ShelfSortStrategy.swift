@@ -13,39 +13,39 @@ enum ShelfSortStrategy: String, CaseIterable, Identifiable, Codable, Sendable {
     var title: String {
         switch self {
         case .artistThenMasterYear:
-            return "Artiste → Année originale (Master)"
+            return String(localized: "Artiste → Année originale (Master)")
         case .artistThenTitle:
-            return "Artiste → Titre d'album (A-Z)"
+            return String(localized: "Artiste → Titre d'album (A-Z)")
         case .chronologicalOnly:
-            return "Pur chronologique (Année originale)"
+            return String(localized: "Pur chronologique (Année originale)")
         case .artistThenReleaseYear:
-            return "Artiste → Année du pressage (Release)"
+            return String(localized: "Artiste → Année du pressage (Release)")
         }
     }
 
     var shortTitle: String {
         switch self {
         case .artistThenMasterYear:
-            return "Artiste → Année (Master)"
+            return String(localized: "Artiste → Année (Master)")
         case .artistThenTitle:
-            return "Artiste → Titre"
+            return String(localized: "Artiste → Titre")
         case .chronologicalOnly:
-            return "Année (Master)"
+            return String(localized: "Année (Master)")
         case .artistThenReleaseYear:
-            return "Artiste → Pressage"
+            return String(localized: "Artiste → Pressage")
         }
     }
 
     var description: String {
         switch self {
         case .artistThenMasterYear:
-            return "Artiste A-Z, puis année originale (Master)"
+            return String(localized: "Artiste A-Z, puis année originale (Master)")
         case .artistThenTitle:
-            return "Artiste A-Z, puis titre d'album de A à Z"
+            return String(localized: "Artiste A-Z, puis titre d'album de A à Z")
         case .chronologicalOnly:
-            return "Toute la collection par année originale (Master)"
+            return String(localized: "Toute la collection par année originale (Master)")
         case .artistThenReleaseYear:
-            return "Artiste A-Z, puis année exacte de pressage"
+            return String(localized: "Artiste A-Z, puis année exacte de pressage")
         }
     }
 

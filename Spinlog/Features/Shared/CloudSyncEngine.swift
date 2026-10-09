@@ -319,6 +319,35 @@ final class CloudSyncEngine {
         syncEngine.state.add(pendingDatabaseChanges: [.saveZone(CKRecordZone(zoneID: zoneID(for: username)))])
     }
 
+    // MARK: - Suppression complète de la zone utilisateur (Guideline Apple 5.1.1(v))
+
+    /// Supprime définitivement la zone iCloud privée et tous les enregistrements CloudKit
+    /// associés à un utilisateur (tags, historique d'écoute, préférences, snapshots).
+    func deleteCloudData(for username: String) {
+        let normalized = username.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !normalized.isEmpty else { return }
+        let targetZoneID = zoneID(for: normalized)
+
+        // Réinitialise les marqueurs d'hydratation / push local
+        UserDefaults.standard.removeObject(forKey: "\(Self.hydratedFlagKeyPrefix)\(normalized)")
+        UserDefaults.standard.removeObject(forKey: "\(Self.initialPushDoneKeyPrefix)\(normalized)")
+
+        // Si CKSyncEngine est actif, on lui demande de supprimer la zone
+        if let syncEngine {
+            syncEngine.state.add(pendingDatabaseChanges: [.deleteZone(targetZoneID)])
+            scheduleSend()
+        }
+
+        // On ordonne également la suppression directe auprès de CloudKit pour garantir l'exécution
+        container.privateCloudDatabase.delete(withRecordZoneID: targetZoneID) { zoneID, error in
+            if let error {
+                cloudSyncLogger.error("Suppression de la zone CloudKit \(targetZoneID.zoneName) : \(error.localizedDescription, privacy: .public)")
+            } else {
+                cloudSyncLogger.info("Zone CloudKit \(targetZoneID.zoneName) supprimée avec succès.")
+            }
+        }
+    }
+
     // MARK: - Envoi (push)
 
     private func markDirty(_ kind: SyncedRecordKind) {

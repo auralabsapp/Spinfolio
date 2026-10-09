@@ -17,7 +17,7 @@ struct SearchView: View {
     var body: some View {
         VStack(spacing: 12) {
             if !networkMonitor.isConnected {
-                OfflineBannerView(customMessage: "La recherche nécessite une connexion réseau")
+                OfflineBannerView(customMessage: String(localized: "La recherche nécessite une connexion réseau"))
             }
             searchBar
             scopePicker
@@ -220,14 +220,14 @@ struct SearchView: View {
                 Button {
                     stopListening(for: result)
                 } label: {
-                    Label("Stop", systemImage: "stop.fill")
+                    Label("Arrêter l'écoute", systemImage: "stop.fill")
                 }
                 .tint(Color(uiColor: .systemGray))
             } else {
                 Button {
                     triggerListeningLog(for: result)
                 } label: {
-                    Label("Lecture", systemImage: "play.fill")
+                    Label("J'écoute", systemImage: "opticaldisc.fill")
                 }
                 .tint(Color.spinlogPink)
             }

@@ -14,12 +14,12 @@ enum ShelfMediaCategory: String, CaseIterable, Sendable {
 
     var displayName: String {
         switch self {
-        case .vinyl12: return "Vinyles 12 pouces"
-        case .vinyl10: return "Vinyles 10 pouces"
-        case .vinyl7: return "Vinyles 7 pouces"
-        case .cd: return "CD"
-        case .cassette: return "Cassettes"
-        case .other: return "Autres supports"
+        case .vinyl12: return String(localized: "Vinyles 12 pouces")
+        case .vinyl10: return String(localized: "Vinyles 10 pouces")
+        case .vinyl7: return String(localized: "Vinyles 7 pouces")
+        case .cd: return String(localized: "CD")
+        case .cassette: return String(localized: "Cassettes")
+        case .other: return String(localized: "Autres supports")
         }
     }
 
@@ -28,7 +28,7 @@ enum ShelfMediaCategory: String, CaseIterable, Sendable {
     /// majuscules quelle que soit sa position dans la phrase, contrairement à « Vinyles »/« Cassettes ».
     var lowercasedDisplayName: String {
         switch self {
-        case .cd: return "CD"
+        case .cd: return String(localized: "CD")
         default: return displayName.lowercased()
         }
     }
@@ -38,10 +38,10 @@ enum ShelfMediaCategory: String, CaseIterable, Sendable {
     /// qu'au survol/tap de cette part, voir `vinylSizeBreakdown` dans `StatsViewModel`).
     var broadFormatLabel: String {
         switch self {
-        case .vinyl12, .vinyl10, .vinyl7: return "Vinyles"
-        case .cd: return "CD"
-        case .cassette: return "Cassettes"
-        case .other: return "Autres"
+        case .vinyl12, .vinyl10, .vinyl7: return String(localized: "Vinyles")
+        case .cd: return String(localized: "CD")
+        case .cassette: return String(localized: "Cassettes")
+        case .other: return String(localized: "Autres")
         }
     }
 

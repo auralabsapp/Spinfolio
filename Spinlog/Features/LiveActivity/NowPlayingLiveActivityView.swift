@@ -77,7 +77,6 @@ struct NowPlayingContentRow: View {
     let releaseId: Int
     let albumTitle: String
     let artistName: String
-    var statusText: String = "En cours sur votre platine"
     let imageData: Data?
     var coverSize: CGFloat = 54
     var cornerRadius: CGFloat = 10
@@ -93,14 +92,16 @@ struct NowPlayingContentRow: View {
             )
             .shadow(color: .black.opacity(0.35), radius: 6, x: 0, y: 2)
 
-            // Textes : Indicateur "EN COURS D'ÉCOUTE", Titre, Artiste
+            // Textes : indicateur d'écoute sur platine, titre, artiste
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
                     Circle()
                         .fill(Color(red: 232/255, green: 76/255, blue: 139/255))
                         .frame(width: 6, height: 6)
 
-                    Text(statusText)
+                    // Libellé localisé par l'extension elle-même : `ContentState.statusText`,
+                    // fourni par l'app, s'affichait tel quel (toujours en français).
+                    Text("Écoute en cours sur la platine")
                         .font(.system(size: 9.5, weight: .bold))
                         .foregroundStyle(Color(red: 232/255, green: 76/255, blue: 139/255))
                         .lineLimit(1)
@@ -128,7 +129,7 @@ struct NowPlayingContentRow: View {
                     .frame(width: stopButtonSize, height: stopButtonSize)
                     .background(Color.white.opacity(0.18), in: Circle())
             }
-            .accessibilityLabel("Arrêter la lecture")
+            .accessibilityLabel("Arrêter l'écoute")
         }
     }
 }
@@ -142,7 +143,6 @@ struct NowPlayingLiveActivityWidget: Widget {
                 releaseId: context.attributes.releaseId,
                 albumTitle: context.attributes.albumTitle,
                 artistName: context.attributes.artistName,
-                statusText: context.state.statusText,
                 imageData: context.state.coverImageData,
                 coverSize: 56,
                 cornerRadius: 10,
@@ -160,7 +160,6 @@ struct NowPlayingLiveActivityWidget: Widget {
                         releaseId: context.attributes.releaseId,
                         albumTitle: context.attributes.albumTitle,
                         artistName: context.attributes.artistName,
-                        statusText: context.state.statusText,
                         imageData: context.state.coverImageData,
                         coverSize: 50,
                         cornerRadius: 9,

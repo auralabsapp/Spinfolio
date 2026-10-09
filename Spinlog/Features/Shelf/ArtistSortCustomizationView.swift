@@ -14,6 +14,13 @@ struct ArtistSortCustomizationView: View {
         case customized = "Personnalisés"
 
         var id: String { rawValue }
+
+        var title: String {
+            switch self {
+            case .all: return String(localized: "Tous")
+            case .customized: return String(localized: "Personnalisés")
+            }
+        }
     }
 
     private var allArtists: [String] {
@@ -63,7 +70,7 @@ struct ArtistSortCustomizationView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Personnalisation du tri")
                         .font(.subheadline.weight(.semibold))
-                    Text("Définissez comment chaque artiste doit être ordonné dans tous vos tris par artiste (meuble physique, Collection et Wantlist). Vos règles personnalisées sont prioritaires.")
+                    Text("Définis comment chaque artiste doit être ordonné dans tous tes tris par artiste (meuble physique, Collection et Wantlist). Tes règles personnalisées sont prioritaires.")
                         .font(.caption)
                         .foregroundStyle(Color.appSecondaryText)
                 }
@@ -74,9 +81,9 @@ struct ArtistSortCustomizationView: View {
                 Picker("Filtre", selection: $filterMode) {
                     ForEach(FilterMode.allCases) { mode in
                         if mode == .customized {
-                            Text("\(mode.rawValue) (\(shelfPreferences.customArtistSortOverrides.count))").tag(mode)
+                            Text("\(mode.title) (\(shelfPreferences.customArtistSortOverrides.count))").tag(mode)
                         } else {
-                            Text("\(mode.rawValue) (\(allArtists.count))").tag(mode)
+                            Text("\(mode.title) (\(allArtists.count))").tag(mode)
                         }
                     }
                 }
@@ -157,7 +164,7 @@ struct ArtistSortCustomizationView: View {
             }
             Button("Annuler", role: .cancel) {}
         } message: {
-            Text("Toutes vos règles personnalisées d'ordonnancement d'artistes seront effacées.")
+            Text("Toutes tes règles personnalisées d'ordonnancement d'artistes seront effacées.")
         }
     }
 }
@@ -460,7 +467,7 @@ private struct ArtistSortEditSheet: View {
 
     @ViewBuilder
     private func suggestionRow(
-        title: String,
+        title: LocalizedStringResource,
         value: String,
         isSelected: Bool,
         action: @escaping () -> Void

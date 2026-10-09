@@ -180,6 +180,9 @@ final class TabNavigationCoordinator {
     var scrollToTopOfCollectionTrigger = 0
     var scrollToTopOfWantlistTrigger = 0
     var scrollToOrganizationSectionTrigger = 0
+    /// Alerte à ouvrir dès que `WantlistView` peut résoudre l'élément (au lancement à froid, la
+    /// wantlist n'est pas encore chargée au moment du tap sur la notification).
+    var pendingWantlistAlertReleaseId: Int?
 
     /// Destination actuellement au sommet de chaque onglet
     var currentTopDestination: [AppTab: SearchDestination] = [:]
@@ -267,6 +270,14 @@ final class TabNavigationCoordinator {
         }
         selectedTab = .wantlist
         scrollToTopOfWantlistTrigger += 1
+    }
+
+    func openWantlistAlert(releaseId: Int) {
+        if !wantlistPath.isEmpty {
+            wantlistPath = NavigationPath()
+        }
+        selectedTab = .wantlist
+        pendingWantlistAlertReleaseId = releaseId
     }
 
     func openSettings() {

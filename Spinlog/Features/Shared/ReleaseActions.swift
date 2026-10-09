@@ -230,7 +230,7 @@ final class ReleaseActions {
             }
         } catch {
             collectionInstances = previousInstances
-            message = "Impossible d'enregistrer la note sur Discogs."
+            message = String(localized: "Impossible d'enregistrer la note sur Discogs.")
         }
         isUpdatingRating = false
     }
@@ -272,7 +272,7 @@ final class ReleaseActions {
             collectionInstances[index].notes = previousNotes
             localStore.saveCollectionItems([collectionInstances[index]], username: username, folderId: instance.folderId)
             localStore.saveCollectionItems([collectionInstances[index]], username: username, folderId: DiscogsConstants.allFolderId)
-            message = "Impossible d'enregistrer le prix d'achat sur Discogs."
+            message = String(localized: "Impossible d'enregistrer le prix d'achat sur Discogs.")
         }
     }
 

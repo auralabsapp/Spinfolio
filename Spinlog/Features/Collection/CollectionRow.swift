@@ -132,11 +132,11 @@ struct CollectionRow: View {
     }
 
     private var customFieldsLabel: String {
-        customFieldsCount == 1 ? "1 info perso" : "\(customFieldsCount) infos perso"
+        String(localized: "\(customFieldsCount) infos perso")
     }
 
     private var tagsLabel: String {
-        tags.count == 1 ? "1 tag" : "\(tags.count) tags"
+        String(localized: "\(tags.count) tags")
     }
 
     private var yearAndDateLine: String? {
@@ -144,11 +144,11 @@ struct CollectionRow: View {
         let date = item.dateAddedDate?.formatted(Date.FormatStyle(date: .numeric, time: .omitted))
         switch (year, date) {
         case let (.some(y), .some(d)):
-            return "\(y) · Ajouté le \(d)"
+            return String(localized: "\(y) · Ajouté le \(d)")
         case let (.some(y), .none):
             return y
         case let (.none, .some(d)):
-            return "Ajouté le \(d)"
+            return String(localized: "Ajouté le \(d)")
         case (.none, .none):
             return nil
         }

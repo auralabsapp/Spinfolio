@@ -54,13 +54,13 @@ final class DiscogsAPIClient {
         var errorDescription: String? {
             switch self {
             case .invalidURL:
-                return "URL Discogs invalide."
+                return String(localized: "URL Discogs invalide.")
             case .invalidResponse:
-                return "Réponse Discogs invalide."
+                return String(localized: "Réponse Discogs invalide.")
             case .rateLimited:
-                return "Trop de requêtes vers Discogs, réessaie dans quelques instants."
+                return String(localized: "Trop de requêtes vers Discogs, réessaie dans quelques instants.")
             case .http(let status, let message):
-                return message ?? "Erreur Discogs (\(status))."
+                return message ?? String(localized: "Erreur Discogs (\(String(status))).")
             }
         }
     }

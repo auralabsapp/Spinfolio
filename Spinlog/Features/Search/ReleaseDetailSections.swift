@@ -76,11 +76,11 @@ struct ReleaseQuickActionsBar: View {
     private var collectionButtonTitle: String {
         if actions.isInCollection {
             if actions.instancesCount > 1 {
-                return "En collection (\(actions.instancesCount))"
+                return String(localized: "En collection (\(actions.instancesCount))")
             }
-            return "En collection"
+            return String(localized: "En collection")
         }
-        return "Collection"
+        return String(localized: "Collection")
     }
 
     private var collectionButtonLabel: some View {
@@ -318,7 +318,7 @@ struct ReleaseQuickActionsBar: View {
             }
         } message: {
             if let inst = instancePendingDeletion {
-                Text("Voulez-vous retirer cet exemplaire (dossier « \(actions.folderName(for: inst.folderId)) ») de votre collection Discogs ?")
+                Text("Retirer cet exemplaire (dossier « \(actions.folderName(for: inst.folderId)) ») de ta collection Discogs ?")
             }
         }
         .confirmationDialog(
@@ -331,7 +331,7 @@ struct ReleaseQuickActionsBar: View {
             }
             Button("Annuler", role: .cancel) {}
         } message: {
-            Text("Tous vos exemplaires de cet album seront retirés de votre collection Discogs.")
+            Text("Tous tes exemplaires de cet album seront retirés de ta collection Discogs.")
         }
         .confirmationDialog(
             "Retirer de la collection ?",
@@ -343,7 +343,7 @@ struct ReleaseQuickActionsBar: View {
             }
             Button("Annuler", role: .cancel) {}
         } message: {
-            Text("Voulez-vous retirer cet album de votre collection Discogs ?")
+            Text("Veux-tu retirer cet album de ta collection Discogs ?")
         }
         .confirmationDialog(
             "Retirer de la wantlist ?",
@@ -355,7 +355,7 @@ struct ReleaseQuickActionsBar: View {
             }
             Button("Annuler", role: .cancel) {}
         } message: {
-            Text("Voulez-vous retirer cet album de votre wantlist Discogs ?")
+            Text("Veux-tu retirer cet album de ta wantlist Discogs ?")
         }
         .alert("Discogs", isPresented: Binding(
             get: { actions.message != nil },
@@ -388,11 +388,11 @@ struct MarketplaceButton: View {
                         .foregroundStyle(.primary)
 
                     if let lowestPrice {
-                        Text("\(numForSale) exemplaire\(numForSale > 1 ? "s" : "") en vente dès \(lowestPrice.formatted(.currency(code: "USD")))")
+                        Text("\(numForSale) exemplaires en vente dès \(lowestPrice.formatted(.currency(code: "USD")))")
                             .font(.caption)
                             .foregroundStyle(Color.appSecondaryText)
                     } else {
-                        Text("\(numForSale) exemplaire\(numForSale > 1 ? "s" : "") en vente")
+                        Text("\(numForSale) exemplaires en vente")
                             .font(.caption)
                             .foregroundStyle(Color.appSecondaryText)
                     }
@@ -677,7 +677,7 @@ struct MyItemCard: View {
             }
         } message: {
             if let item = itemPendingDeletion {
-                Text("Voulez-vous retirer cet exemplaire (dossier « \(actions.folderName(for: item.folderId)) ») de votre collection Discogs ?")
+                Text("Retirer cet exemplaire (dossier « \(actions.folderName(for: item.folderId)) ») de ta collection Discogs ?")
             }
         }
         .sheet(item: $priceEditTarget) { item in
@@ -732,16 +732,15 @@ struct ListeningLogCard: View {
 
     private var listeningControls: some View {
         HStack(spacing: 12) {
-            // Bouton Lecture (icône seule)
             Button(action: onLogListening) {
-                Image(systemName: "play.fill")
+                Image(systemName: "opticaldisc.fill")
                     .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(isPlayingThisRelease ? Color.white : Color.spinlogPink)
                     .frame(width: 40, height: 40)
                     .background(isPlayingThisRelease ? Color.spinlogPink : Color.spinlogPinkBadge, in: Circle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Lancer une écoute")
+            .accessibilityLabel("J'écoute ce disque sur la platine")
 
             // Bouton Stop (toujours visible, grisé et désactivé si aucune écoute)
             Button(action: {
@@ -761,14 +760,14 @@ struct ListeningLogCard: View {
 
             Spacer(minLength: 8)
 
-            // Si lecture en cours : pilule "En cours"
+            // Si écoute en cours : pilule "Écoute en cours"
             // Sinon : nombre d'écoutes et date de dernière écoute sur 2 lignes
             if isPlayingThisRelease {
                 HStack(spacing: 6) {
                     Circle()
                         .fill(Color.spinlogPink)
                         .frame(width: 7, height: 7)
-                    Text("En cours")
+                    Text("Écoute en cours")
                         .font(.caption.bold())
                         .foregroundStyle(Color.spinlogPink)
                 }
@@ -779,13 +778,13 @@ struct ListeningLogCard: View {
             } else {
                 VStack(alignment: .trailing, spacing: 2) {
                     if playCount > 0 {
-                        Text(playCount == 1 ? "Écouté 1 fois" : "Écouté \(playCount) fois")
+                        Text("Écouté \(playCount) fois")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(Color.primary)
                             .lineLimit(1)
 
                         if let relativeText = relativeLastListeningText {
-                            Text("Dernier passage : \(relativeText)")
+                            Text("Dernière écoute : \(relativeText)")
                                 .font(.caption)
                                 .foregroundStyle(Color.appSecondaryText)
                                 .lineLimit(1)
@@ -795,7 +794,7 @@ struct ListeningLogCard: View {
                             .font(.subheadline.weight(.medium))
                             .foregroundStyle(Color.appSecondaryText)
                             .lineLimit(1)
-                        Text("Touchez Lecture pour lancer")
+                        Text("Touche le disque quand tu l'écoutes")
                             .font(.caption2)
                             .foregroundStyle(Color.appTertiaryText)
                             .lineLimit(1)
@@ -831,7 +830,7 @@ struct ReleaseRatingCard: View {
                             .onTapGesture {
                                 onSetRating(rating == value ? 0 : value)
                             }
-                            .accessibilityLabel("\(value) étoile\(value > 1 ? "s" : "")")
+                            .accessibilityLabel("\(value) étoiles")
                             .accessibilityAddTraits(.isButton)
                     }
                 }
@@ -937,7 +936,7 @@ private struct SwipeableInstanceRow: View {
                 HStack(spacing: 8) {
                     let filledNotes = item.notes.filter { !$0.value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
                     if !filledNotes.isEmpty {
-                        Text(filledNotes.count == 1 ? "1 info perso" : "\(filledNotes.count) infos perso")
+                        Text("\(filledNotes.count) infos perso")
                             .font(.caption2.weight(.medium))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
@@ -1098,9 +1097,9 @@ struct ReleaseInfoCard: View {
 
     private var masterLabelText: String {
         if let masterYear, masterYear > 0 {
-            return "Sortie originale en \(masterYear) – voir le master"
+            return String(localized: "Sortie originale en \(masterYear) – voir le master")
         }
-        return "Voir le master"
+        return String(localized: "Voir le master")
     }
 
     private func fetchMasterYearIfNeeded() async {
@@ -1262,7 +1261,7 @@ struct ReleaseCompaniesSection: View {
                             .foregroundStyle(Color.spinlogPink)
                             .frame(width: 20)
                         VStack(alignment: .leading, spacing: 1) {
-                            Text(company.entityTypeName?.isEmpty == false ? company.entityTypeName! : "Société")
+                            Text(company.entityTypeName?.isEmpty == false ? company.entityTypeName! : String(localized: "Société"))
                                 .font(.subheadline)
                             Text(company.name)
                                 .font(.caption)
@@ -1378,7 +1377,7 @@ struct ReleaseImagesGallery: View {
                                 .shadow(color: .black.opacity(0.12), radius: 5, x: 0, y: 2)
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel(images[index].type == "primary" ? "Pochette de l'album" : "Photo \(index + 1) de la release")
+                        .accessibilityLabel(images[index].type == "primary" ? Text("Pochette de l'album") : Text("Photo \(index + 1) de la release"))
                         .accessibilityHint("Voir en plein écran")
                     }
                 }
@@ -1418,11 +1417,11 @@ struct ListeningToastBanner: View {
         HStack(spacing: 12) {
             switch type {
             case .started:
-                Image(systemName: "play.fill")
+                Image(systemName: "opticaldisc.fill")
                     .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(Color.spinlogPink)
 
-                Text("Lecture démarrée")
+                Text("Écoute sur platine démarrée")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Color.primary)
 
@@ -1441,7 +1440,7 @@ struct ListeningToastBanner: View {
                     .font(.system(size: 17, weight: .bold))
                     .foregroundStyle(colorScheme == .dark ? Color.white.opacity(0.75) : Color(uiColor: .systemGray))
 
-                Text("Lecture stoppée")
+                Text("Écoute arrêtée")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Color.primary)
 

@@ -98,7 +98,7 @@ enum CollectionPDFExporter {
         let format = UIGraphicsPDFRendererFormat()
         format.documentInfo = [
             kCGPDFContextCreator as String: AppInfo.name,
-            kCGPDFContextTitle as String: "Déclaration de collection \(AppInfo.name) - \(username)"
+            kCGPDFContextTitle as String: String(localized: "Déclaration de collection \(AppInfo.name) - \(username)")
         ]
         let renderer = UIGraphicsPDFRenderer(bounds: CGRect(origin: .zero, size: pageSize), format: format)
 
@@ -208,7 +208,7 @@ private struct PDFCoverPageView: View {
         .background(Color.white)
     }
 
-    private func infoRow(_ label: String, _ value: String) -> some View {
+    private func infoRow(_ label: LocalizedStringResource, _ value: String) -> some View {
         HStack(alignment: .firstTextBaseline) {
             Text(label)
                 .font(.system(size: 12))

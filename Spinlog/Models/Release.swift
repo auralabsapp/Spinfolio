@@ -226,13 +226,17 @@ struct Release: Decodable, Identifiable, Sendable {
     var formattedReleasedDate: String? {
         guard let released, !released.isEmpty else { return nil }
         let formatter = DateFormatter()
+        // Format fixe (dates Discogs) : locale POSIX, sans quoi un calendrier non grégorien
+        // (bouddhiste, japonais…) réglé sur l'appareil fausse l'analyse.
+        formatter.locale = Locale(identifier: "en_US_POSIX")
         for pattern in ["yyyy-MM-dd", "yyyy-MM", "yyyy"] {
             formatter.dateFormat = pattern
             if let date = formatter.date(from: released) {
                 let style: Date.FormatStyle = pattern == "yyyy"
                     ? .dateTime.year()
                     : (pattern == "yyyy-MM" ? .dateTime.month(.wide).year() : .dateTime.weekday(.wide).month(.wide).day().year())
-                return date.formatted(style.locale(Locale(identifier: "fr_FR")))
+                // Langue de l'appareil (le français était forcé, y compris dans l'interface anglaise).
+                return date.formatted(style)
             }
         }
         return released

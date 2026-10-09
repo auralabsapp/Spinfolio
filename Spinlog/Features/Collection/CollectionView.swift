@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct CollectionView: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var viewModel = CollectionViewModel.shared
     @State private var authManager = DiscogsAuthManager.shared
     @State private var tagStore = TagStore.shared
@@ -29,15 +30,14 @@ struct CollectionView: View {
             .navigationTitle("Collection")
             .navigationSubtitle(navigationSubtitle)
             .navigationBarTitleDisplayMode(.large)
-            .searchDestinations()
+                        .searchDestinations()
             .searchable(text: $viewModel.searchText, prompt: "Rechercher dans ta collection")
             .scrollDismissesKeyboard(.immediately)
             .toolbar {
                 if isSelecting {
-                    // En mode sélection, la barre d'icônes habituelle (dossier, "...", disque au
-                    // hasard) s'efface au profit d'une unique coche pour en sortir. Les actions en
-                    // lot (dossier, tag, corbeille) apparaissent dans la barre du bas, à la place
-                    // de la barre d'onglets, façon app Fichiers.
+                    // En mode sélection, la barre d'icônes habituelle s'efface au profit d'une
+                    // unique coche pour en sortir. Les actions en lot apparaissent dans la
+                    // barre du bas, façon app Fichiers.
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
                             withAnimation {
@@ -50,136 +50,24 @@ struct CollectionView: View {
                         .accessibilityLabel("Terminer la sélection")
                     }
                 } else if !viewModel.folders.isEmpty || !viewModel.items.isEmpty {
-                    // Bouton "..." façon app Fichiers : regroupe Sélectionner, Dossier, Tri,
-                    // Filtres et Affichage en un seul point d'entrée plutôt que plusieurs boutons
-                    // de toolbar séparés.
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Menu {
+                    // Sur iPhone (compact), bouton aléatoire direct dans la barre.
+                    // Sur iPad (regular), un seul ToolbarItem pour éviter que la barre supérieure
+                    // n'entre en collision avec la barre d'onglets flottante iPadOS (ce qui provoquait
+                    // un débordement des onglets et masquait le menu d'options).
+                    if horizontalSizeClass == .compact {
+                        ToolbarItem(placement: .topBarTrailing) {
                             Button {
-                                withAnimation {
-                                    isSelecting.toggle()
-                                    if !isSelecting {
-                                        selectedItemIds.removeAll()
-                                    }
-                                }
+                                pickRandomAlbum()
                             } label: {
-                                Label(isSelecting ? "Terminé" : "Sélectionner", systemImage: isSelecting ? "checkmark.circle.fill" : "checkmark.circle")
+                                Image(systemName: "shuffle")
                             }
-
-                            Divider()
-
-                            if viewModel.folders.count > 1 {
-                                Menu {
-                                    ForEach(viewModel.folders.sorted { $0.count > $1.count }) { folder in
-                                        Button {
-                                            Task { await viewModel.selectFolder(folder.id) }
-                                        } label: {
-                                            HStack {
-                                                Text("\(folder.name) (\(folder.count))")
-                                                if folder.id == viewModel.selectedFolderId {
-                                                    Spacer()
-                                                    Image(systemName: "checkmark")
-                                                }
-                                            }
-                                        }
-                                    }
-                                } label: {
-                                    Label("Dossier : \(currentFolderName)", systemImage: viewModel.selectedFolderId == DiscogsConstants.allFolderId ? "folder" : "folder.fill")
-                                }
-                            }
-
-                            Menu {
-                                Picker("Trier par", selection: $viewModel.sortOption) {
-                                    ForEach(CollectionSortOption.allCases) { option in
-                                        Label(option.rawValue, systemImage: option.systemImage).tag(option)
-                                    }
-                                }
-
-                                Picker("Sens", selection: $viewModel.sortAscending) {
-                                    Label("Croissant", systemImage: "arrow.up").tag(true)
-                                    Label("Décroissant", systemImage: "arrow.down").tag(false)
-                                }
-                            } label: {
-                                Label("Tri : \(viewModel.sortOption.rawValue)", systemImage: viewModel.sortOption.systemImage)
-                            }
-
-                            Menu {
-                                if viewModel.hasActiveFilters {
-                                    Button(role: .destructive) {
-                                        viewModel.clearFilters()
-                                    } label: {
-                                        Label("Effacer les filtres", systemImage: "xmark.circle")
-                                    }
-                                    Divider()
-                                }
-
-                                if !tagStore.allTags.isEmpty {
-                                    Button {
-                                        showingTagFilterSheet = true
-                                    } label: {
-                                        Label(tagFilterMenuTitle(viewModel.selectedTags), systemImage: "tag")
-                                    }
-                                }
-
-                                let formats = viewModel.availableFormats
-                                if !formats.isEmpty {
-                                    Menu {
-                                        Button("Tous les formats") {
-                                            viewModel.selectedFormat = nil
-                                        }
-                                        ForEach(formats, id: \.self) { format in
-                                            Button {
-                                                viewModel.selectedFormat = (viewModel.selectedFormat == format ? nil : format)
-                                            } label: {
-                                                HStack {
-                                                    Text(format)
-                                                    if viewModel.selectedFormat == format {
-                                                        Spacer()
-                                                        Image(systemName: "checkmark")
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    } label: {
-                                        Label(
-                                            viewModel.selectedFormat != nil ? "Format : \(viewModel.selectedFormat!)" : "Filtrer par format",
-                                            systemImage: "square.stack.3d.up"
-                                        )
-                                    }
-                                }
-                            } label: {
-                                Label(
-                                    "Filtres",
-                                    systemImage: viewModel.hasActiveFilters
-                                        ? "line.3.horizontal.decrease.circle.fill"
-                                        : "line.3.horizontal.decrease.circle"
-                                )
-                            }
-
-                            Menu {
-                                Picker("Mode d'affichage", selection: $displayMode) {
-                                    ForEach(LibraryDisplayMode.allCases) { mode in
-                                        Label(mode.title, systemImage: mode.systemImage)
-                                            .tag(mode)
-                                    }
-                                }
-                            } label: {
-                                Label("Affichage : \(displayMode.title)", systemImage: displayMode.systemImage)
-                            }
-                        } label: {
-                            Image(systemName: "ellipsis.circle")
+                            .accessibilityLabel("Disque au hasard")
+                            .disabled(viewModel.sections.flatMap(\.items).isEmpty)
                         }
-                        .accessibilityLabel("Options")
                     }
 
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            pickRandomAlbum()
-                        } label: {
-                            Image(systemName: "shuffle")
-                        }
-                        .accessibilityLabel("Disque au hasard")
-                        .disabled(viewModel.sections.flatMap(\.items).isEmpty)
+                        trailingToolbarMenu
                     }
                 }
             }
@@ -219,11 +107,11 @@ struct CollectionView: View {
                 }
             } message: {
                 if let item = itemPendingDeletion {
-                    Text("Voulez-vous retirer « \(item.basicInformation.title) » de votre collection Discogs ?")
+                    Text("Veux-tu retirer « \(item.basicInformation.title) » de ta collection Discogs ?")
                 }
             }
             .confirmationDialog(
-                "Supprimer \(selectedItemIds.count) exemplaire\(selectedItemIds.count > 1 ? "s" : "") de la collection ?",
+                "Supprimer \(selectedItemIds.count) exemplaires de la collection ?",
                 isPresented: $showingBulkDeleteConfirmation,
                 titleVisibility: .visible
             ) {
@@ -241,7 +129,7 @@ struct CollectionView: View {
                 }
                 Button("Annuler", role: .cancel) {}
             } message: {
-                Text("Cette action retire définitivement ces exemplaires de votre collection Discogs.")
+                Text("Cette action retire définitivement ces exemplaires de ta collection Discogs.")
             }
             .confirmationDialog(
                 moveConfirmationTitle,
@@ -310,6 +198,154 @@ struct CollectionView: View {
             ) {
                 Button("OK", role: .cancel) {}
             }
+    }
+
+
+    // MARK: - Menus d'options de la barre d'outils
+
+    @ViewBuilder
+    private var foldersMenu: some View {
+        if viewModel.folders.count > 1 {
+            Menu {
+                Picker("Dossier", selection: Binding(
+                    get: { viewModel.selectedFolderId },
+                    set: { newId in if let newId { Task { await viewModel.selectFolder(newId) } } }
+                )) {
+                    ForEach(viewModel.folders.sorted { $0.count > $1.count }) { folder in
+                        Text("\(folder.name) (\(folder.count))")
+                            .tag(folder.id)
+                    }
+                }
+            } label: {
+                Label("Dossier : \(currentFolderName)", systemImage: viewModel.selectedFolderId == DiscogsConstants.allFolderId ? "folder" : "folder.fill")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var sortMenu: some View {
+        Menu {
+            Picker("Trier par", selection: $viewModel.sortOption) {
+                ForEach(CollectionSortOption.allCases) { option in
+                    Label(option.title, systemImage: option.systemImage).tag(option)
+                }
+            }
+
+            Picker("Sens", selection: $viewModel.sortAscending) {
+                Label("Croissant", systemImage: "arrow.up").tag(true)
+                Label("Décroissant", systemImage: "arrow.down").tag(false)
+            }
+        } label: {
+            Label("Tri : \(viewModel.sortOption.title)", systemImage: viewModel.sortOption.systemImage)
+        }
+    }
+
+    @ViewBuilder
+    private var filterMenu: some View {
+        Menu {
+            if viewModel.hasActiveFilters {
+                Button(role: .destructive) {
+                    viewModel.clearFilters()
+                } label: {
+                    Label("Effacer les filtres", systemImage: "xmark.circle")
+                }
+                Divider()
+            }
+
+            if !tagStore.allTags.isEmpty {
+                Button {
+                    showingTagFilterSheet = true
+                } label: {
+                    Label(tagFilterMenuTitle(viewModel.selectedTags), systemImage: "tag")
+                }
+            }
+
+            let formats = viewModel.availableFormats
+            if !formats.isEmpty {
+                Menu {
+                    Button("Tous les formats") {
+                        viewModel.selectedFormat = nil
+                    }
+                    ForEach(formats, id: \.self) { format in
+                        Button {
+                            viewModel.selectedFormat = (viewModel.selectedFormat == format ? nil : format)
+                        } label: {
+                            HStack {
+                                Text(format)
+                                if viewModel.selectedFormat == format {
+                                    Spacer()
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    Label(
+                        viewModel.selectedFormat != nil ? "Format : \(viewModel.selectedFormat!)" : "Filtrer par format",
+                        systemImage: "square.stack.3d.up"
+                    )
+                }
+            }
+        } label: {
+            Label(
+                "Filtres",
+                systemImage: viewModel.hasActiveFilters
+                    ? "line.3.horizontal.decrease.circle.fill"
+                    : "line.3.horizontal.decrease.circle"
+            )
+        }
+    }
+
+    @ViewBuilder
+    private var displayModeMenu: some View {
+        Menu {
+            Picker("Mode d'affichage", selection: $displayMode) {
+                ForEach(LibraryDisplayMode.allCases) { mode in
+                    Label(mode.title, systemImage: mode.systemImage)
+                        .tag(mode)
+                }
+            }
+        } label: {
+            Label("Affichage : \(displayMode.title)", systemImage: displayMode.systemImage)
+        }
+    }
+
+    @ViewBuilder
+    private var trailingToolbarMenu: some View {
+        Menu {
+            // Sur iPad uniquement (où l'icône shuffle directe est retirée de la barre pour libérer
+            // l'espace nécessaire à la barre d'onglets flottante). Sur iPhone, l'icône est déjà
+            // directement accessible dans la barre d'outils.
+            if horizontalSizeClass == .regular {
+                Button {
+                    pickRandomAlbum()
+                } label: {
+                    Label("Disque au hasard", systemImage: "shuffle")
+                }
+                .disabled(viewModel.sections.flatMap(\.items).isEmpty)
+            }
+
+            Button {
+                withAnimation {
+                    isSelecting.toggle()
+                    if !isSelecting {
+                        selectedItemIds.removeAll()
+                    }
+                }
+            } label: {
+                Label(isSelecting ? "Terminé" : "Sélectionner", systemImage: isSelecting ? "checkmark.circle.fill" : "checkmark.circle")
+            }
+
+            Divider()
+
+            foldersMenu
+            sortMenu
+            filterMenu
+            displayModeMenu
+        } label: {
+            Image(systemName: "ellipsis")
+        }
+        .accessibilityLabel("Options")
     }
 
     private func stopListening(for item: CollectionItem) {
@@ -551,14 +587,14 @@ struct CollectionView: View {
                                         Button {
                                             stopListening(for: item)
                                         } label: {
-                                            Label("Stop", systemImage: "stop.fill")
+                                            Label("Arrêter l'écoute", systemImage: "stop.fill")
                                         }
                                         .tint(Color(uiColor: .systemGray))
                                     } else {
                                         Button {
                                             triggerListeningLog(for: item)
                                         } label: {
-                                            Label("Lecture", systemImage: "play.fill")
+                                            Label("J'écoute", systemImage: "opticaldisc.fill")
                                         }
                                         .tint(Color.spinlogPink)
                                     }
@@ -625,16 +661,16 @@ struct CollectionView: View {
         guard let currentFolder else { return "" }
         if viewModel.hasActiveFilters {
             let filteredCount = viewModel.sections.flatMap(\.items).count
-            return "\(currentFolder.name) · \(filteredCount)/\(currentFolder.count) élément\(currentFolder.count == 1 ? "" : "s")"
+            return String(localized: "\(currentFolder.name) · \(filteredCount)/\(currentFolder.count) éléments")
         }
-        return "\(currentFolder.name) · \(currentFolder.count) élément\(currentFolder.count == 1 ? "" : "s")"
+        return String(localized: "\(currentFolder.name) · \(currentFolder.count) éléments")
     }
 
     @ViewBuilder
     private var content: some View {
 
         if !authManager.isAuthenticated {
-            LoginPromptView(message: "Connecte-toi à Discogs pour voir et gérer ta collection.")
+            LoginPromptView(message: String(localized: "Connecte-toi à Discogs pour voir et gérer ta collection."))
         } else if viewModel.isLoading && viewModel.items.isEmpty {
             ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if let error = viewModel.errorMessage, viewModel.items.isEmpty {
@@ -687,10 +723,22 @@ struct CollectionView: View {
 
                         switch displayMode {
                         case .carousel:
-                            ScrollView(.vertical, showsIndicators: false) {
-                                collectionViewCarousel
-                                    .padding(.top, 24)
-                                    .padding(.bottom, 16)
+                            // Contrairement au mode Liste (`List` défile nativement) et au mode
+                            // Mosaïque (`CollectionMosaicView` a son propre `ScrollView` vertical),
+                            // `CollectionCarouselView` n'a qu'un `ScrollView` horizontal en interne.
+                            // Sans aucune vue de défilement verticale dans la hiérarchie, le grand
+                            // titre de navigation ne s'affiche pas correctement — il faut ce
+                            // `ScrollView` vertical même si son contenu ne défile pas lui-même.
+                            // La hauteur disponible est mesurée ICI, avant d'entrer dans le
+                            // `ScrollView` : lui donner un `.frame(maxHeight: .infinity)` par
+                            // l'intérieur (comme c'était fait dans `CollectionCarouselView`)
+                            // pousserait le `ScrollView` à proposer une hauteur de contenu quasi
+                            // infinie à son enfant, le rendant démesurément grand.
+                            GeometryReader { geo in
+                                ScrollView(.vertical, showsIndicators: false) {
+                                    collectionViewCarousel
+                                        .frame(minHeight: geo.size.height)
+                                }
                             }
                         case .grid:
                             CollectionMosaicView(

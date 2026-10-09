@@ -301,9 +301,9 @@ final class WantlistAlertStore {
 
     private func postNotification(for alert: WantlistAlert, price: Double) async {
         let content = UNMutableNotificationContent()
-        content.title = "🎯 Bonne affaire Wantlist !"
+        content.title = String(localized: "🎯 Bonne affaire Wantlist !")
         let formattedPrice = price.formatted(.currency(code: alert.currency))
-        content.body = "« \(alert.albumTitle) » (\(alert.artistName)) est disponible dès \(formattedPrice) sur Discogs !"
+        content.body = String(localized: "« \(alert.albumTitle) » (\(alert.artistName)) est disponible dès \(formattedPrice) sur Discogs !")
         content.sound = .default
         content.userInfo = [
             "releaseId": alert.releaseId,

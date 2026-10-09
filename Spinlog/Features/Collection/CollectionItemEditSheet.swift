@@ -65,8 +65,8 @@ struct CollectionItemEditSheet: View {
                         // cette fiche hors ligne (les tags ne sont jamais synchronisés avec
                         // Discogs) : annoncer une synchro différée serait trompeur.
                         OfflineBannerView(customMessage: fields.isEmpty
-                            ? "Certaines informations ne sont pas disponibles hors ligne"
-                            : "Les modifications seront synchronisées avec Discogs au retour du réseau"
+                            ? String(localized: "Certaines informations ne sont pas disponibles hors ligne")
+                            : String(localized: "Les modifications seront synchronisées avec Discogs au retour du réseau")
                         )
                     }
 
@@ -171,7 +171,7 @@ struct CollectionItemEditSheet: View {
                         }
 
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Contrairement aux tags qui sont des données locales, ces champs sont synchronisés avec votre compte Discogs. La validation s'effectue automatiquement en cliquant en dehors du champ ou sur la coche.")
+                            Text("Contrairement aux tags qui sont des données locales, ces champs sont synchronisés avec ton compte Discogs. La validation s'effectue automatiquement en cliquant en dehors du champ ou sur la coche.")
                                 .font(.footnote)
                                 .foregroundStyle(Color.appSecondaryText)
 
@@ -263,7 +263,7 @@ struct CollectionItemEditSheet: View {
                 }
                 Button("Annuler", role: .cancel) {}
             } message: {
-                Text("Cet exemplaire sera définitivement retiré de votre collection Discogs.")
+                Text("Cet exemplaire sera définitivement retiré de ta collection Discogs.")
             }
             .task {
                 if fields.isEmpty, let username = DiscogsAuthManager.shared.username {
@@ -307,7 +307,7 @@ struct CollectionItemEditSheet: View {
 
     private func saveField(_ field: CollectionField, value: String) async {
         guard let (username, credentials) = DiscogsAuthManager.shared.session else {
-            errorMessage = "Vous devez être connecté à Discogs pour enregistrer ces modifications."
+            errorMessage = String(localized: "Tu dois être connecté à Discogs pour enregistrer ces modifications.")
             showingErrorAlert = true
             return
         }
@@ -362,7 +362,7 @@ struct CollectionItemEditSheet: View {
             withAnimation {
                 _ = savingFieldIds.remove(field.id)
             }
-            errorMessage = "Impossible d'enregistrer sur Discogs : \(error.localizedDescription)"
+            errorMessage = String(localized: "Impossible d'enregistrer sur Discogs : \(error.localizedDescription)")
             showingErrorAlert = true
         }
     }

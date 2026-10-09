@@ -6,8 +6,10 @@ private struct PremiumFeatureInfo: Identifiable {
     let id = UUID()
     let icon: String
     let color: Color
-    let title: String
-    let description: String
+    // `LocalizedStringResource` : les libellés sont extraits dans le catalogue et traduits
+    // (en `String`, ils s'affichaient toujours en français).
+    let title: LocalizedStringResource
+    let description: LocalizedStringResource
 }
 
 /// Liste des fonctionnalités actuellement réservées aux comptes premium, tenue à jour
@@ -23,7 +25,7 @@ private let premiumFeatures: [PremiumFeatureInfo] = [
         icon: "icloud.fill",
         color: .cyan,
         title: "Synchronisation iCloud",
-        description: "Synchronise tags, journal d'écoute, préférences et personnalisations de tri entre tous tes appareils connectés au même compte."
+        description: "Synchronise tags, journal d'écoute sur platine, préférences et personnalisations de tri entre tous tes appareils connectés au même compte."
     ),
     PremiumFeatureInfo(
         icon: "arrow.down.circle.fill",
@@ -52,8 +54,8 @@ private let premiumFeatures: [PremiumFeatureInfo] = [
     PremiumFeatureInfo(
         icon: "waveform",
         color: .spinlogPink,
-        title: "Palmarès d'écoute & Podiums",
-        description: "Découvre tes albums et artistes les plus écoutés, tes podiums du mois et de l'année et l'analyse complète de tes sessions dans Statistiques."
+        title: "Palmarès d'écoute sur platine",
+        description: "Découvre tes albums et artistes les plus écoutés sur ta platine, tes podiums du mois et de l'année dans Statistiques. Les lectures Apple Music ne sont pas comptées."
     ),
     PremiumFeatureInfo(
         icon: "paintpalette.fill",

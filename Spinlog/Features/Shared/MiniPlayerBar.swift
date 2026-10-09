@@ -84,7 +84,7 @@ struct MiniPlayerBar: View {
                                     )
 
                                     AutoScrollingText(
-                                        text: item.artistName,
+                                        text: "\(item.artistName) • Apple Music",
                                         font: .caption,
                                         color: Color.appSecondaryText
                                     )
@@ -104,7 +104,7 @@ struct MiniPlayerBar: View {
                             }
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("\(item.trackTitle), \(item.artistName). \(formatTime(effectiveTime)) sur \(formatTime(service.totalDuration)). Toucher pour ouvrir l'album.")
+                        .accessibilityLabel("\(item.trackTitle), \(item.artistName), lecture sur Apple Music. \(formatTime(effectiveTime)) sur \(formatTime(service.totalDuration)). Touche pour ouvrir l'album.")
 
                         // 4. Bouton pause à droite réduit et compact (centré verticalement par rapport au texte)
                         Button {
@@ -234,10 +234,10 @@ struct MiniPlayerBar: View {
                         .frame(width: 36, height: 36)
                         .shadow(color: .black.opacity(0.18), radius: 3, x: 0, y: 1.5)
 
-                        // 2. Titre de l'album et sous-titre "Lecture en cours sur votre platine"
+                        // 2. Titre de l'album et sous-titre "Écoute en cours sur la platine"
                         VStack(alignment: .leading, spacing: 0.5) {
                             AutoScrollingText(
-                                text: activityManager.activeAlbumTitle ?? "Album vinyle",
+                                text: activityManager.activeAlbumTitle ?? String(localized: "Album vinyle"),
                                 font: .subheadline.weight(.semibold),
                                 color: .primary
                             )
@@ -253,7 +253,7 @@ struct MiniPlayerBar: View {
                     }
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("\(activityManager.activeAlbumTitle ?? ""), \(activityManager.activeArtistName ?? ""). Lecture en cours sur votre platine. Toucher pour ouvrir l'album.")
+                .accessibilityLabel("\(activityManager.activeAlbumTitle ?? ""), \(activityManager.activeArtistName ?? ""). Écoute en cours sur la platine. Touche pour ouvrir l'album.")
 
                 // 3. Badge "Sur platine" avec icône vinyle rose Spinlog animée
                 HStack(spacing: 5) {
@@ -312,9 +312,9 @@ struct MiniPlayerBar: View {
 
     private func turntableSubtitle(artist: String?) -> String {
         if let artist, !artist.trimmingCharacters(in: .whitespaces).isEmpty {
-            return "\(artist) • Lecture en cours sur votre platine"
+            return String(localized: "\(artist) • Écoute en cours sur la platine")
         } else {
-            return "Lecture en cours sur votre platine"
+            return String(localized: "Écoute en cours sur la platine")
         }
     }
 }
@@ -436,24 +436,21 @@ struct MiniPlayerContainerModifier: ViewModifier {
     @State private var service = AppleMusicPlaybackService.shared
     private var activityManager = NowPlayingActivityManager.shared
 
-    /// Le `safeAreaInset` n'est monté que lorsqu'il y a effectivement quelque chose à afficher :
-    /// même vide, sa seule présence force une renégociation de la zone de sécurité à chaque image
-    /// pendant le défilement, en concurrence avec `.tabBarMinimizeBehavior(.onScrollDown)` qui
-    /// redimensionne déjà la barre d'onglets au scroll — perceptible comme des saccades même sans
-    /// aucune lecture en cours.
     private var isActive: Bool {
         (service.currentItem != nil && service.isPlaying)
             || (activityManager.activeReleaseId != nil && activityManager.isAnyPlaying)
     }
 
     func body(content: Content) -> some View {
-        if isActive {
-            content.safeAreaInset(edge: .bottom) {
+        // Applique `safeAreaInset` directement sur `content` sans modifier l'identité structurelle
+        // de la vue parente (`if/else` détruisait et recréait toute la hiérarchie de navigation/scroll).
+        content.safeAreaInset(edge: .bottom) {
+            if isActive {
                 MiniPlayerBar()
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
             }
-        } else {
-            content
         }
+        .animation(.spring(response: 0.35, dampingFraction: 0.85), value: isActive)
     }
 }
 

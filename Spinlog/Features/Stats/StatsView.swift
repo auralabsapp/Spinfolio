@@ -7,7 +7,9 @@ struct YearReleasesSheetData: Identifiable {
     let year: Int
     let items: [CollectionItem]
     var type: String = "additions" // "additions" ou "originalYears"
-    var titlePrefix: String = "Ajoutés en"
+    /// Titre complet de la feuille (« Ajoutés en 2021 », « Sortis dans les années 1990 »…) :
+    /// construit d'un bloc plutôt que par préfixe + année, l'ordre des mots variant selon la langue.
+    var title: String
 }
 
 struct GenreReleasesSheetData: Identifiable {
@@ -38,8 +40,8 @@ private enum PodiumPeriod: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .yearly: return "Cette année"
-        case .monthly: return "Ce mois-ci"
+        case .yearly: return String(localized: "Cette année")
+        case .monthly: return String(localized: "Ce mois-ci")
         }
     }
 }
@@ -52,8 +54,8 @@ private enum TopEntityKind: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .albums: return "Albums"
-        case .artists: return "Artistes"
+        case .albums: return String(localized: "Albums")
+        case .artists: return String(localized: "Artistes")
         }
     }
 }
@@ -66,8 +68,8 @@ private enum OriginalYearsGranularity: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .year: return "Par année"
-        case .decade: return "Par décennie"
+        case .year: return String(localized: "Par année")
+        case .decade: return String(localized: "Par décennie")
         }
     }
 }
@@ -143,7 +145,7 @@ struct StatsView: View {
     @ViewBuilder
     private var content: some View {
         if !authManager.isAuthenticated {
-            LoginPromptView(message: "Connecte-toi à Discogs pour voir tes statistiques.")
+            LoginPromptView(message: String(localized: "Connecte-toi à Discogs pour voir tes statistiques."))
         } else if viewModel.isLoadingOverview {
             ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
@@ -156,7 +158,7 @@ struct StatsView: View {
                         // alors que la plupart des autres sections viennent du cache local et
                         // fonctionnent très bien hors ligne.
                         if !networkMonitor.isConnected {
-                            OfflineBannerView(customMessage: "Certaines statistiques (compteurs, cote de marché) nécessitent une connexion réseau")
+                            OfflineBannerView(customMessage: String(localized: "Certaines statistiques (compteurs, cote de marché) nécessitent une connexion réseau"))
                         }
 
                         countersRow
@@ -222,7 +224,7 @@ struct StatsView: View {
             StatCounterCard(
                 title: "Collection",
                 value: viewModel.totalCollectionCount.map(String.init) ?? "–",
-                subtitle: viewModel.totalCollectionCount.map { $0 == 1 ? "album" : "albums" },
+                subtitle: viewModel.totalCollectionCount.map { $0 == 1 ? String(localized: "album") : String(localized: "albums") },
                 systemImage: "square.stack.fill",
                 tint: Color.spinlogPink
             ) {
@@ -231,7 +233,7 @@ struct StatsView: View {
             StatCounterCard(
                 title: "Wantlist",
                 value: viewModel.totalWantlistCount.map(String.init) ?? "–",
-                subtitle: viewModel.totalWantlistCount.map { $0 == 1 ? "album" : "albums" },
+                subtitle: viewModel.totalWantlistCount.map { $0 == 1 ? String(localized: "album") : String(localized: "albums") },
                 systemImage: "heart.fill",
                 tint: Color.spinlogPink
             ) {
@@ -240,7 +242,7 @@ struct StatsView: View {
             StatCounterCard(
                 title: "Artistes",
                 value: viewModel.uniqueArtistsCount.map(String.init) ?? "–",
-                subtitle: viewModel.uniqueArtistsCount.map { $0 == 1 ? "artiste" : "artistes" },
+                subtitle: viewModel.uniqueArtistsCount.map { $0 == 1 ? String(localized: "artiste") : String(localized: "artistes") },
                 systemImage: "person.2.fill",
                 tint: Color.spinlogPink
             )
@@ -421,7 +423,7 @@ struct StatsView: View {
                                     .font(.system(size: 32, weight: .heavy, design: .rounded))
                                     .foregroundStyle(color)
 
-                                Text("\(selected.count) album\(selected.count > 1 ? "s" : "")")
+                                Text("\(selected.count) albums")
                                     .font(.caption2.weight(.medium))
                                     .foregroundStyle(Color.appSecondaryText)
 
@@ -586,7 +588,7 @@ struct StatsView: View {
     }
 
     private func genreColor(for name: String, index: Int) -> Color {
-        if name == "Autres" || name == "Non spécifié" {
+        if name == StatsViewModel.othersLabel || name == StatsViewModel.unspecifiedLabel {
             return Color(white: 0.55)
         }
         let palette: [Color] = [
@@ -663,7 +665,7 @@ struct StatsView: View {
                                     .font(.system(size: 32, weight: .heavy, design: .rounded))
                                     .foregroundStyle(color)
 
-                                Text("\(selected.count) exemplaire\(selected.count > 1 ? "s" : "")")
+                                Text("\(selected.count) exemplaires")
                                     .font(.caption2.weight(.medium))
                                     .foregroundStyle(Color.appSecondaryText)
 
@@ -691,7 +693,7 @@ struct StatsView: View {
                                     .foregroundStyle(Color.spinlogPink)
                                     .padding(.bottom, 2)
 
-                                Text("\(viewModel.mediaFormatDistribution.count) support\(viewModel.mediaFormatDistribution.count > 1 ? "s" : "")")
+                                Text("\(viewModel.mediaFormatDistribution.count) supports")
                                     .font(.subheadline.weight(.semibold))
                                     .foregroundStyle(.primary)
 
@@ -709,7 +711,7 @@ struct StatsView: View {
                     // "Vinyles" est sélectionnée, dans un fondu discret sous le camembert — c'est
                     // la façon la plus lisible de montrer une sous-catégorie sans surcharger le
                     // graphique principal d'une 2e couronne en permanence.
-                    if selectedMediaFormatName == "Vinyles", !viewModel.vinylSizeBreakdown.isEmpty {
+                    if selectedMediaFormatName == ShelfMediaCategory.vinyl12.broadFormatLabel, !viewModel.vinylSizeBreakdown.isEmpty {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Détail par taille")
                                 .font(.caption2.weight(.semibold))
@@ -828,10 +830,11 @@ struct StatsView: View {
     }
 
     private func mediaFormatColor(for name: String) -> Color {
+        // Comparé aux libellés traduits de `ShelfMediaCategory` (mêmes valeurs que les parts).
         switch name {
-        case "Vinyles": return Color.spinlogPink
-        case "CD": return Color(red: 0.28, green: 0.52, blue: 0.95)
-        case "Cassettes": return Color(red: 0.98, green: 0.58, blue: 0.22)
+        case ShelfMediaCategory.vinyl12.broadFormatLabel: return Color.spinlogPink
+        case ShelfMediaCategory.cd.broadFormatLabel: return Color(red: 0.28, green: 0.52, blue: 0.95)
+        case ShelfMediaCategory.cassette.broadFormatLabel: return Color(red: 0.98, green: 0.58, blue: 0.22)
         default: return Color(white: 0.55)
         }
     }
@@ -897,7 +900,7 @@ struct StatsView: View {
                                     .font(.system(size: 32, weight: .heavy, design: .rounded))
                                     .foregroundStyle(color)
 
-                                Text("\(selected.count) album\(selected.count > 1 ? "s" : "")")
+                                Text("\(selected.count) albums")
                                     .font(.caption2.weight(.medium))
                                     .foregroundStyle(Color.appSecondaryText)
 
@@ -1039,7 +1042,9 @@ struct StatsView: View {
             }
 
             if currentOriginalYearsDistribution.count > maxVisibleBars {
-                Text("Glisser latéralement pour afficher les autres \(originalYearsGranularity == .decade ? "décennies" : "années")")
+                (originalYearsGranularity == .decade
+                    ? Text("Glisser latéralement pour afficher les autres décennies")
+                    : Text("Glisser latéralement pour afficher les autres années"))
                     .font(.caption2)
                     .foregroundStyle(Color.appSecondaryText)
             }
@@ -1100,14 +1105,14 @@ struct StatsView: View {
                                                     }
                                                 } else {
                                                     let items: [CollectionItem]
-                                                    let titlePrefix: String
+                                                    let title: String
                                                     switch originalYearsGranularity {
                                                     case .year:
                                                         items = viewModel.items(forOriginalYear: year)
-                                                        titlePrefix = "Sortis en"
+                                                        title = String(localized: "Sortis en \(String(year))")
                                                     case .decade:
                                                         items = viewModel.items(forOriginalDecade: year)
-                                                        titlePrefix = "Sortis dans les années"
+                                                        title = String(localized: "Sortis dans les années \(String(year))")
                                                     }
                                                     withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
                                                         selectedOriginalYear = tappedYear
@@ -1116,7 +1121,7 @@ struct StatsView: View {
                                                             year: year,
                                                             items: items,
                                                             type: "originalYears",
-                                                            titlePrefix: titlePrefix
+                                                            title: title
                                                         )
                                                     }
 
@@ -1151,7 +1156,7 @@ struct StatsView: View {
                             Spacer()
 
                             if viewModel.missingMastersCount > 0 {
-                                Text("\(viewModel.missingMastersCount) restant\(viewModel.missingMastersCount > 1 ? "s" : "")")
+                                Text("\(viewModel.missingMastersCount) restants")
                                     .font(.caption2)
                                     .foregroundStyle(Color.appTertiaryText)
                             }
@@ -1242,7 +1247,7 @@ struct StatsView: View {
                                                         year: year,
                                                         items: items,
                                                         type: "additions",
-                                                        titlePrefix: "Ajoutés en"
+                                                        title: String(localized: "Ajoutés en \(String(year))")
                                                     )
                                                 }
 
@@ -1451,7 +1456,7 @@ struct StatsView: View {
         )
     }
 
-    private func valuationRow(title: String, value: String) -> some View {
+    private func valuationRow(title: LocalizedStringResource, value: String) -> some View {
         HStack {
             Text(title)
                 .font(.subheadline)
@@ -1475,19 +1480,22 @@ struct StatsView: View {
             if !premiumStore.isPremium {
                 PremiumLockedCard(
                     icon: "waveform",
-                    title: "Palmarès d'écoute & Podiums",
+                    title: "Palmarès d'écoute sur platine",
                     message: viewModel.totalListeningSessionsCount > 0
-                        ? "Tu as déjà enregistré \(viewModel.totalListeningSessionsCount) écoute\(viewModel.totalListeningSessionsCount > 1 ? "s" : ""). Passe premium pour révéler tes classements, artistes favoris et podiums !"
-                        : "Passe premium pour révéler tes classements d'albums et artistes les plus écoutés, podiums mensuels et annuels."
+                        ? "Tu as déjà enregistré \(viewModel.totalListeningSessionsCount) écoutes sur platine. Passe premium pour révéler tes classements, artistes favoris et podiums !"
+                        : "Passe premium pour révéler tes classements d'albums et artistes les plus écoutés sur platine, podiums mensuels et annuels."
                 )
             } else if viewModel.totalListeningSessionsCount < StatsViewModel.minimumListeningSessionsForRanking {
                 notEnoughListeningDataCard(
-                    "Enregistre au moins \(StatsViewModel.minimumListeningSessionsForRanking) écoutes (depuis une fiche album) pour débloquer tes classements."
+                    "Enregistre au moins \(StatsViewModel.minimumListeningSessionsForRanking) écoutes sur platine (bouton J'écoute d'une fiche album) pour débloquer tes classements."
                 )
             } else {
                 VStack(alignment: .leading, spacing: 20) {
                     topEntitiesCard
                     podiumSection
+                    Text("Basé sur tes écoutes sur platine. Les lectures Apple Music ne sont pas comptées.")
+                        .font(.caption)
+                        .foregroundStyle(Color.appSecondaryText)
                 }
             }
         }
@@ -1632,7 +1640,7 @@ struct StatsView: View {
                         .foregroundStyle(.primary)
                         .lineLimit(1)
 
-                    Text("\(entry.playCount) écoute\(entry.playCount > 1 ? "s" : "")")
+                    Text("\(entry.playCount) écoutes")
                         .font(.caption2.weight(.semibold))
                         .foregroundStyle(Color.spinlogPink)
                         .lineLimit(1)
@@ -1713,7 +1721,7 @@ struct StatsView: View {
 
                 Spacer(minLength: 8)
 
-                Text("\(entry.playCount) écoute\(entry.playCount > 1 ? "s" : "")")
+                Text("\(entry.playCount) écoutes")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(Color.spinlogPink)
                     .lineLimit(1)
@@ -1739,7 +1747,9 @@ struct StatsView: View {
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
-                Text("\(entry.totalPlays) session\(entry.totalPlays > 1 ? "s" : "") réparties sur \(entry.releaseCount) disque\(entry.releaseCount > 1 ? "s" : "")")
+                // Même unité que le classement des albums (« écoutes », plus « sessions ») ; deux
+                // textes imbriqués pour que chaque nombre ait sa propre règle de pluriel.
+                Text("\(Text("\(entry.totalPlays) écoutes")) · \(Text("\(entry.releaseCount) disques"))")
                     .font(.caption)
                     .foregroundStyle(Color.appSecondaryText)
                     .lineLimit(1)
@@ -1800,7 +1810,7 @@ struct StatsView: View {
         }
     }
 
-    private func notEnoughListeningDataCard(_ message: String) -> some View {
+    private func notEnoughListeningDataCard(_ message: LocalizedStringKey) -> some View {
         Text(message)
             .font(.caption)
             .foregroundStyle(Color.appSecondaryText)
@@ -1838,7 +1848,7 @@ private struct GenreReleasesSheetView: View {
                     .listStyle(.plain)
                 }
             }
-            .navigationTitle("\(data.genre) · \(data.items.count) \(data.items.count <= 1 ? "album" : "albums")")
+            .navigationTitle("\(data.genre) · \(data.items.count) albums")
             .navigationBarTitleDisplayMode(.inline)
             .searchDestinations()
             .toolbar {
@@ -1877,7 +1887,7 @@ private struct MediaFormatReleasesSheetView: View {
                     .listStyle(.plain)
                 }
             }
-            .navigationTitle("\(data.title) · \(data.items.count) \(data.items.count <= 1 ? "album" : "albums")")
+            .navigationTitle("\(data.title) · \(data.items.count) albums")
             .navigationBarTitleDisplayMode(.inline)
             .searchDestinations()
             .toolbar {
@@ -1916,7 +1926,7 @@ private struct ArtistReleasesSheetView: View {
                     .listStyle(.plain)
                 }
             }
-            .navigationTitle("\(data.artist) · \(data.items.count) \(data.items.count <= 1 ? "album" : "albums")")
+            .navigationTitle("\(data.artist) · \(data.items.count) albums")
             .navigationBarTitleDisplayMode(.inline)
             .searchDestinations()
             .toolbar {
@@ -1955,7 +1965,7 @@ private struct YearReleasesSheetView: View {
                     .listStyle(.plain)
                 }
             }
-            .navigationTitle("\(data.titlePrefix) \(String(data.year)) · \(data.items.count) \(data.items.count <= 1 ? "élément" : "éléments")")
+            .navigationTitle(Text("\(data.title) · \(data.items.count) éléments"))
             .navigationBarTitleDisplayMode(.inline)
             .searchDestinations()
             .toolbar {
@@ -1968,7 +1978,7 @@ private struct YearReleasesSheetView: View {
 }
 
 private struct StatCounterCard: View {
-    let title: String
+    let title: LocalizedStringResource
     let value: String
     var subtitle: String? = nil
     let systemImage: String

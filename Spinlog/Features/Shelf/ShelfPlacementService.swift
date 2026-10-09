@@ -26,22 +26,22 @@ enum ShelfScope: Sendable, Equatable {
     var badgeText: String {
         switch self {
         case .allFolders:
-            return "Tous les dossiers"
+            return String(localized: "Tous les dossiers")
         case .specificFolder(let name, _):
-            return "Dossier : \(name)"
+            return String(localized: "Dossier : \(name)")
         case .unassignedFolder:
-            return "Tous les dossiers"
+            return String(localized: "Tous les dossiers")
         }
     }
 
     var scopeDescription: String {
         switch self {
         case .allFolders:
-            return "Tous les dossiers de la collection"
+            return String(localized: "Tous les dossiers de la collection")
         case .specificFolder(let name, _):
-            return "Limité au dossier « \(name) »"
+            return String(localized: "Limité au dossier « \(name) »")
         case .unassignedFolder:
-            return "Tous les dossiers (disque hors dossier)"
+            return String(localized: "Tous les dossiers (disque hors dossier)")
         }
     }
 }
@@ -104,21 +104,21 @@ struct ShelfNeighbors: Sendable {
         if isSoleRecord {
             switch scope {
             case .specificFolder(let name, _):
-                return "C'est le seul « \(category.lowercasedDisplayName) » de votre dossier « \(name) ». Déposez-le où vous voulez !"
+                return String(localized: "C'est le seul « \(category.lowercasedDisplayName) » de ton dossier « \(name) ». Dépose-le où tu veux !")
             case .allFolders, .unassignedFolder:
-                return "C'est le premier « \(category.lowercasedDisplayName) » de votre collection. Déposez-le où vous voulez dans cet espace de rangement !"
+                return String(localized: "C'est le premier « \(category.lowercasedDisplayName) » de ta collection. Dépose-le où tu veux dans cet espace de rangement !")
             }
         }
         if let previous, let next {
-            return "À ranger entre « \(previous.artistNames) – \(previous.title)\(yearSuffix(for: previous)) » et « \(next.artistNames) – \(next.title)\(yearSuffix(for: next)) »."
+            return String(localized: "À ranger entre « \(previous.artistNames) – \(previous.title)\(yearSuffix(for: previous)) » et « \(next.artistNames) – \(next.title)\(yearSuffix(for: next)) ».")
         }
         if let next, previous == nil {
-            return "À ranger tout au début de votre meuble, juste avant « \(next.artistNames) – \(next.title)\(yearSuffix(for: next)) »."
+            return String(localized: "À ranger tout au début de ton meuble, juste avant « \(next.artistNames) – \(next.title)\(yearSuffix(for: next)) ».")
         }
         if let previous, next == nil {
-            return "À ranger tout à la fin de votre meuble, juste après « \(previous.artistNames) – \(previous.title)\(yearSuffix(for: previous)) »."
+            return String(localized: "À ranger tout à la fin de ton meuble, juste après « \(previous.artistNames) – \(previous.title)\(yearSuffix(for: previous)) ».")
         }
-        return "Emplacement déterminé selon la règle \(strategy.title.lowercased())."
+        return String(localized: "Emplacement déterminé selon la règle \(strategy.title.lowercased()).")
     }
 
     @MainActor

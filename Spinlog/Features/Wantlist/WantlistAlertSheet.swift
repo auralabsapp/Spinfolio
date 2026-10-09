@@ -21,11 +21,11 @@ struct WantlistAlertSheet: View {
         NavigationStack {
             Form {
                 albumHeaderSection
+                alertSettingsSection
                 marketOverviewSection
                 if !viewModel.suggestions.isEmpty {
                     priceSuggestionsSection
                 }
-                alertSettingsSection
                 viewListingsSection
                 if existingAlert != nil {
                     deleteSection
@@ -74,7 +74,7 @@ struct WantlistAlertSheet: View {
                     dismiss()
                 }
             } message: {
-                Text("Pour recevoir des alertes même lorsque Spinlog est fermée, autorise les notifications dans les Réglages de ton iPhone.")
+                Text("Pour recevoir des alertes même lorsque \(AppInfo.name) est fermée, autorise les notifications dans les Réglages de ton iPhone.")
             }
         }
     }
@@ -116,7 +116,7 @@ struct WantlistAlertSheet: View {
                 HStack {
                     Label("En vente actuellement", systemImage: "cart")
                     Spacer()
-                    Text("\(stats.numForSale ?? 0) exemplaire\((stats.numForSale ?? 0) > 1 ? "s" : "")")
+                    Text("\(stats.numForSale ?? 0) exemplaires")
                         .foregroundStyle(Color.appSecondaryText)
                 }
 

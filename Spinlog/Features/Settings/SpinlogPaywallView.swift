@@ -38,8 +38,10 @@ private struct PaywallFeatureInfo: Identifiable {
     let id = UUID()
     let icon: String
     let color: Color
-    let title: String
-    let description: String
+    // `LocalizedStringResource` : les libellés sont extraits dans le catalogue et traduits
+    // (en `String`, ils s'affichaient toujours en français).
+    let title: LocalizedStringResource
+    let description: LocalizedStringResource
 }
 
 private let paywallFeatures: [PaywallFeatureInfo] = [
@@ -53,7 +55,7 @@ private let paywallFeatures: [PaywallFeatureInfo] = [
         icon: "icloud.fill",
         color: .cyan,
         title: "Synchronisation iCloud",
-        description: "Synchronise tags, journal d'écoutes, préférences et personnalisations de tri entre tous tes appareils connectés au même compte."
+        description: "Synchronise tags, journal d'écoute sur platine, préférences et personnalisations de tri entre tous tes appareils connectés au même compte."
     ),
     PaywallFeatureInfo(
         icon: "rectangle.stack.badge.plus",
@@ -82,8 +84,8 @@ private let paywallFeatures: [PaywallFeatureInfo] = [
     PaywallFeatureInfo(
         icon: "waveform",
         color: goldWarm,
-        title: "Palmarès d'écoute & Podiums",
-        description: "Découvre tes albums et artistes les plus écoutés, tes podiums du mois et de l'année et l'analyse complète de tes sessions dans Statistiques."
+        title: "Palmarès d'écoute sur platine",
+        description: "Découvre tes albums et artistes les plus écoutés sur ta platine, tes podiums du mois et de l'année dans Statistiques. Les lectures Apple Music ne sont pas comptées."
     ),
     PaywallFeatureInfo(
         icon: "paintpalette.fill",
@@ -161,13 +163,13 @@ struct SpinlogPaywallView: View {
             PaywallHeaderGraphicView()
 
             VStack(spacing: 6) {
-                Text("Obtenez un accès complet")
+                Text("Obtiens un accès complet")
                     .font(.system(size: 27, weight: .bold))
                     .foregroundStyle(.primary)
                     .multilineTextAlignment(.center)
 
                 HStack(spacing: 6) {
-                    Text("Passez à \(AppInfo.name)")
+                    Text("Passe à \(AppInfo.name)")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Color.appSecondaryText)
 

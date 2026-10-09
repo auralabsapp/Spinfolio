@@ -63,7 +63,7 @@ final class DiscogsAuthManager: NSObject {
 
     func login() async {
         guard !DiscogsSecrets.consumerKey.isEmpty, !DiscogsSecrets.consumerSecret.isEmpty else {
-            lastError = "Ajoute ton Consumer Key et Consumer Secret Discogs dans Secrets.swift (crée une app sur discogs.com/settings/developers) pour activer la connexion."
+            lastError = String(localized: "Ajoute ton Consumer Key et Consumer Secret Discogs dans Secrets.swift (crée une app sur discogs.com/settings/developers) pour activer la connexion.")
             return
         }
         guard !isAuthenticating else { return }
@@ -140,6 +140,21 @@ final class DiscogsAuthManager: NSObject {
         // Sans ce rechargement, le widget gardait l'ancien disque affiché jusqu'à son prochain
         // rafraîchissement système (minuit) : vider l'instantané ne suffit pas.
         WidgetCenter.shared.reloadTimelines(ofKind: WidgetKinds.randomAlbum)
+    }
+
+    // MARK: - Suppression complète des données locales et cloud (Guideline 5.1.1(v))
+
+    /// Supprime définitivement l'ensemble des données locales et synchronisées iCloud associées au compte connecté
+    /// (cache SwiftData, tags, journal d'écoute, préférences, zone CloudKit) et déconnecte l'utilisateur.
+    func deleteLocalAccountData() {
+        if let currentUsername = username {
+            CloudSyncEngine.shared.deleteCloudData(for: currentUsername)
+            LocalDataStore.shared.clearAllUserData(username: currentUsername)
+            TagStore.shared.clearAccountData(for: currentUsername)
+            ListeningLogStore.shared.clearAccountData(for: currentUsername)
+            CollectionPreferencesStore.setDefaultAddFolderId(CollectionPreferencesStore.alwaysAskFolderId, for: currentUsername)
+        }
+        logout()
     }
 
     /// Récupère le profil public Discogs pour mettre à jour l'avatar de l'utilisateur.
@@ -267,7 +282,7 @@ final class DiscogsAuthManager: NSObject {
 
     enum AuthError: LocalizedError {
         case invalidResponse
-        var errorDescription: String? { "Impossible de se connecter à Discogs." }
+        var errorDescription: String? { String(localized: "Impossible de se connecter à Discogs.") }
     }
 }
 

@@ -210,6 +210,18 @@ final class ListeningLogStore {
             CloudSyncEngine.shared.markSessionDirty(id: id)
         }
     }
+
+    // MARK: - Suppression complète des données utilisateur (Guideline 5.1.1(v))
+
+    /// Supprime définitivement le journal d'écoute associé à un utilisateur (mémoire + disque).
+    func clearAccountData(for username: String) {
+        guard let normalized = username.trimmingCharacters(in: .whitespacesAndNewlines).lowercased().nonEmpty else { return }
+        UserDefaults.standard.removeObject(forKey: storageKey(for: normalized))
+        if activeUsername == normalized {
+            sessions = []
+            NotificationCenter.default.post(name: .listeningLogChanged, object: nil)
+        }
+    }
 }
 
 extension Notification.Name {

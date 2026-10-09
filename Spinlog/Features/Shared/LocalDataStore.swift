@@ -764,6 +764,44 @@ final class LocalDataStore {
         let decoder = JSONDecoder()
         return entries.compactMap { try? decoder.decode(CollectionFolder.self, from: $0.payload) }
     }
+
+    // MARK: - Suppression complète des données utilisateur (Guideline 5.1.1(v))
+
+    /// Supprime l'intégralité des données en cache pour un utilisateur (collection, wantlist, dossiers, métadonnées).
+    func clearAllUserData(username: String) {
+        let colDescriptor = FetchDescriptor<CachedCollectionEntry>(
+            predicate: #Predicate<CachedCollectionEntry> { $0.username == username }
+        )
+        if let entries = try? context.fetch(colDescriptor) {
+            for entry in entries { context.delete(entry) }
+        }
+
+        let wantDescriptor = FetchDescriptor<CachedWantlistEntry>(
+            predicate: #Predicate<CachedWantlistEntry> { $0.username == username }
+        )
+        if let entries = try? context.fetch(wantDescriptor) {
+            for entry in entries { context.delete(entry) }
+        }
+
+        let folderDescriptor = FetchDescriptor<CachedFolderEntry>(
+            predicate: #Predicate<CachedFolderEntry> { $0.username == username }
+        )
+        if let entries = try? context.fetch(folderDescriptor) {
+            for entry in entries { context.delete(entry) }
+        }
+
+        let collectionMetaId = "\(username)_collection"
+        let wantlistMetaId = "\(username)_wantlist"
+        let metaDescriptor = FetchDescriptor<CachedFetchMetadata>(
+            predicate: #Predicate<CachedFetchMetadata> { $0.id == collectionMetaId || $0.id == wantlistMetaId }
+        )
+        if let entries = try? context.fetch(metaDescriptor) {
+            for entry in entries { context.delete(entry) }
+        }
+
+        try? context.save()
+        localDataStoreLogger.info("Données locales SwiftData purgées pour \(username)")
+    }
 }
 
 extension Notification.Name {

@@ -22,6 +22,23 @@ enum CollectionSortOption: String, CaseIterable, Identifiable, Codable {
 
     var id: String { rawValue }
 
+    /// Libellé affiché. `rawValue` (en français) reste la valeur persistée dans les préférences
+    /// et ne doit pas changer ; l'afficher directement empêchait toute traduction.
+    var title: String {
+        switch self {
+        case .artist: return String(localized: "Artiste")
+        case .title: return String(localized: "Album")
+        case .added: return String(localized: "Date d'ajout")
+        case .year: return String(localized: "Année")
+        case .genre: return String(localized: "Genre")
+        case .format: return String(localized: "Support")
+        case .label: return String(localized: "Label")
+        case .rating: return String(localized: "Note")
+        case .catalogNumber: return String(localized: "Référence")
+        case .shelf: return String(localized: "Meuble")
+        }
+    }
+
     var systemImage: String {
         switch self {
         case .artist: return "person"
@@ -115,24 +132,24 @@ extension SortableLibraryItem {
             return title.isEmpty ? "?" : title
         case .added:
             guard let date = dateAddedDate else { return "?" }
-            return date.formatted(.dateTime.month(.wide).year().locale(Locale(identifier: "fr_FR")))
+            return date.formatted(.dateTime.month(.wide).year())
         case .year:
             guard let year = basicInformation.year, year > 0 else { return "?" }
             return String(year)
         case .genre:
             let genre = basicInformation.genres?.first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            return genre.isEmpty ? "Genre inconnu" : genre
+            return genre.isEmpty ? String(localized: "Genre inconnu") : genre
         case .format:
             let format = basicInformation.formats?.first?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            return format.isEmpty ? "Autre" : format
+            return format.isEmpty ? String(localized: "Autre") : format
         case .label:
             let label = basicInformation.labels?.first?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            return label.isEmpty ? "Label inconnu" : label
+            return label.isEmpty ? String(localized: "Label inconnu") : label
         case .rating:
-            return rating > 0 ? "\(rating) étoile\(rating > 1 ? "s" : "")" : "Sans note"
+            return rating > 0 ? String(localized: "\(rating) étoiles") : String(localized: "Sans note")
         case .catalogNumber:
             let catno = basicInformation.labels?.first?.catno?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            return catno.isEmpty ? "Sans référence" : catno
+            return catno.isEmpty ? String(localized: "Sans référence") : catno
         }
     }
 
@@ -294,7 +311,7 @@ extension SortableLibraryItem {
         switch sort {
         case .added:
             guard let date = dateAddedDate else { return "?" }
-            return date.formatted(.dateTime.month(.wide).locale(Locale(identifier: "fr_FR")))
+            return date.formatted(.dateTime.month(.wide))
         case .shelf:
             return basicInformation.artistNames
         default:
@@ -362,11 +379,11 @@ extension SortableLibraryItem {
 
 func tagFilterMenuTitle(_ selectedTags: Set<String>) -> String {
     if selectedTags.isEmpty {
-        return "Filtrer par tag"
+        return String(localized: "Filtrer par tag")
     } else if selectedTags.count == 1 {
-        return "Tag : \(selectedTags.first!)"
+        return String(localized: "Tag : \(selectedTags.first!)")
     } else {
-        return "Tags (\(selectedTags.count))"
+        return String(localized: "Tags (\(selectedTags.count))")
     }
 }
 

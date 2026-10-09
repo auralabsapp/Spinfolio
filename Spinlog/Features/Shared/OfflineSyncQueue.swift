@@ -68,7 +68,7 @@ enum OfflineSyncError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .ambiguousInstance:
-            return "plusieurs exemplaires de ce disque, supprime-le manuellement"
+            return String(localized: "plusieurs exemplaires de ce disque, supprime-le manuellement")
         }
     }
 }
@@ -196,7 +196,7 @@ final class OfflineSyncQueue {
                 if updatedAction.retryCount >= 3 {
                     // Échec définitif : suppression de la file et notification de l'utilisateur
                     removeAction(id: action.id)
-                    lastErrorNotification = "Échec définitif de synchronisation : \(actionDescription(for: action)) (\(error.localizedDescription))"
+                    lastErrorNotification = String(localized: "Échec définitif de synchronisation : \(actionDescription(for: action)) (\(error.localizedDescription))")
                 } else {
                     // Mise à jour de l'action avec nouveau compteur
                     if let index = pendingActions.firstIndex(where: { $0.id == action.id }) {
@@ -354,12 +354,12 @@ final class OfflineSyncQueue {
 
     private func actionDescription(for action: PendingAction) -> String {
         switch action.type {
-        case .addToCollection: return "Ajout à la collection (release \(action.releaseId))"
-        case .removeFromCollection: return "Suppression de la collection (release \(action.releaseId))"
-        case .addToWantlist: return "Ajout à la wantlist (release \(action.releaseId))"
-        case .removeFromWantlist: return "Suppression de la wantlist (release \(action.releaseId))"
-        case .updateCollectionField: return "Modification d'un champ personnalisé (release \(action.releaseId))"
-        case .moveCollectionInstance: return "Changement de dossier (release \(action.releaseId))"
+        case .addToCollection: return String(localized: "Ajout à la collection (release \(String(action.releaseId)))")
+        case .removeFromCollection: return String(localized: "Suppression de la collection (release \(String(action.releaseId)))")
+        case .addToWantlist: return String(localized: "Ajout à la wantlist (release \(String(action.releaseId)))")
+        case .removeFromWantlist: return String(localized: "Suppression de la wantlist (release \(String(action.releaseId)))")
+        case .updateCollectionField: return String(localized: "Modification d'un champ personnalisé (release \(String(action.releaseId)))")
+        case .moveCollectionInstance: return String(localized: "Changement de dossier (release \(String(action.releaseId)))")
         }
     }
 }

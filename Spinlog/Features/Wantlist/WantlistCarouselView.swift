@@ -13,11 +13,29 @@ struct WantlistCarouselView: View {
     let onLoadMore: (WantlistItem) async -> Void
 
     private var alertStore = WantlistAlertStore.shared
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var currentItemId: Int?
-    @State private var containerWidth: CGFloat = 390
+    @State private var containerSize: CGSize = CGSize(width: 390, height: 600)
+
+    private var isPad: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad
+    }
+
+    private var isRegularDisplay: Bool {
+        isPad || horizontalSizeClass == .regular
+    }
 
     private var cardSize: CGFloat {
-        min(max(containerWidth * 0.72, 230), 290)
+        if isRegularDisplay {
+            let availableWidth = containerSize.width
+            let availableHeight = containerSize.height > 0 ? containerSize.height : 800
+            // Réserve ~260pt pour les métadonnées, boutons, scrubber et marges
+            let heightCap = max(availableHeight - 260, 340)
+            let widthCap = availableWidth * 0.70
+            return min(widthCap, heightCap, 540)
+        } else {
+            return min(max(containerSize.width * 0.72, 230), 290)
+        }
     }
 
     private var cardWidth: CGFloat {
@@ -25,7 +43,17 @@ struct WantlistCarouselView: View {
     }
 
     private var horizontalPadding: CGFloat {
-        max((containerWidth - cardSize) / 2, 0)
+        max((containerSize.width - cardSize) / 2, 0)
+    }
+
+    private var cardSpacing: CGFloat {
+        if isRegularDisplay {
+            // Sur iPad : espacement égal au padding horizontal + marge pour repousser
+            // la jaquette adjacente exactement hors de l'écran. Résultat : UNE SEULE jaquette est visible au repos.
+            return max(horizontalPadding + 20, 60)
+        } else {
+            return 28
+        }
     }
 
     private var items: [WantlistItem] {
@@ -46,16 +74,17 @@ struct WantlistCarouselView: View {
 
     var body: some View {
         ScrollViewReader { proxy in
-            VStack(spacing: 12) {
+            VStack(spacing: isRegularDisplay ? 18 : 12) {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    LazyHStack(spacing: 28) {
+                    LazyHStack(spacing: cardSpacing) {
                         ForEach(items) { item in
+                            let isRegularDisplay = isRegularDisplay
                             carouselCard(for: item, size: cardSize, cardWidth: cardWidth)
                                 .id(item.id)
                                 .scrollTransition(.interactive, axis: .horizontal) { content, phase in
                                     content
-                                        .scaleEffect(phase.isIdentity ? 1.0 : 0.88)
-                                        .opacity(phase.isIdentity ? 1.0 : 0.70)
+                                        .scaleEffect(phase.isIdentity ? 1.0 : (isRegularDisplay ? 0.92 : 0.88))
+                                        .opacity(phase.isIdentity ? 1.0 : (isRegularDisplay ? 0.0 : 0.70))
                                 }
                                 .task {
                                     await onLoadMore(item)
@@ -63,10 +92,10 @@ struct WantlistCarouselView: View {
                         }
                     }
                     .scrollTargetLayout()
-                    .padding(.top, 10)
+                    .padding(.horizontal, horizontalPadding)
+                    .padding(.top, isRegularDisplay ? 16 : 10)
                     .padding(.bottom, 6)
                 }
-                .contentMargins(.horizontal, horizontalPadding, for: .scrollContent)
                 .scrollTargetBehavior(.viewAligned)
                 .scrollPosition(id: $currentItemId, anchor: .center)
 
@@ -82,7 +111,7 @@ struct WantlistCarouselView: View {
                             }
                         }
                     }
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, isRegularDisplay ? 40 : 20)
                 }
 
                 // Indicateur de position (ex : "14 sur 85")
@@ -90,21 +119,26 @@ struct WantlistCarouselView: View {
                     positionIndicator
                 }
             }
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(
                 GeometryReader { geo in
                     Color.clear
-                        .preference(key: WantlistCarouselWidthPreferenceKey.self, value: geo.size.width)
+                        .preference(key: WantlistCarouselContainerSizeKey.self, value: geo.size)
                 }
             )
-            .onPreferenceChange(WantlistCarouselWidthPreferenceKey.self) { newWidth in
-                if newWidth > 0 && newWidth != containerWidth {
-                    containerWidth = newWidth
+            .onPreferenceChange(WantlistCarouselContainerSizeKey.self) { newSize in
+                if newSize.width > 0 && newSize != containerSize {
+                    containerSize = newSize
                 }
             }
             .onAppear {
                 if currentItemId == nil, let first = items.first {
                     currentItemId = first.id
+                }
+            }
+            .onChange(of: items.first?.id) { _, firstId in
+                if currentItemId == nil, let firstId {
+                    currentItemId = firstId
                 }
             }
         }
@@ -118,16 +152,16 @@ struct WantlistCarouselView: View {
         let alert = alertStore.alert(for: item.id)
         let isSelected = selectedItemIds.contains(item.id)
 
-        return VStack(spacing: 14) {
+        return VStack(spacing: isRegularDisplay ? 16 : 14) {
             // Pochette d'album sans disque vinyle sortant, parfaitement centrée
             ZStack {
                 NavigationLink(value: SearchDestination.release(item.id, coverURL: coverURL)) {
-                    AsyncCoverImage(url: coverURL, cornerRadius: 14, targetSize: size)
+                    AsyncCoverImage(url: coverURL, cornerRadius: isRegularDisplay ? 18 : 14, targetSize: size)
                         .frame(width: size, height: size)
                         .opacity(isSelecting ? (isSelected ? 1.0 : 0.45) : 1.0)
-                        .shadow(color: .black.opacity(isSelected ? 0.42 : 0.25), radius: 14, x: 0, y: 8)
+                        .shadow(color: .black.opacity(isSelected ? 0.45 : 0.28), radius: isRegularDisplay ? 20 : 14, x: 0, y: isRegularDisplay ? 10 : 8)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            RoundedRectangle(cornerRadius: isRegularDisplay ? 18 : 14, style: .continuous)
                                 .strokeBorder(
                                     isSelecting && isSelected
                                         ? Color.spinlogPink
@@ -138,14 +172,14 @@ struct WantlistCarouselView: View {
                         .overlay(alignment: .topTrailing) {
                             if isSelecting {
                                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                                    .font(.title2)
+                                    .font(isRegularDisplay ? .title : .title2)
                                     .foregroundStyle(isSelected ? Color.spinlogPink : Color.white)
                                     .background(
                                         Circle()
                                             .fill(isSelected ? Color.white : Color.black.opacity(0.5))
                                             .padding(2)
                                     )
-                                    .padding(12)
+                                    .padding(isRegularDisplay ? 16 : 12)
                                     .transition(.scale.combined(with: .opacity))
                             }
                         }
@@ -163,40 +197,40 @@ struct WantlistCarouselView: View {
             }
 
             // Informations textuelles
-            VStack(spacing: 4) {
+            VStack(spacing: isRegularDisplay ? 6 : 4) {
                 Text(info.title)
-                    .font(.headline)
+                    .font(isRegularDisplay ? .title2.weight(.bold) : .headline)
                     .foregroundStyle(.primary)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
-                    .frame(maxWidth: cardWidth)
+                    .frame(maxWidth: isRegularDisplay ? cardWidth * 1.15 : cardWidth)
 
                 Text(info.artistNames)
-                    .font(.subheadline.weight(.semibold))
+                    .font(isRegularDisplay ? .title3.weight(.semibold) : .subheadline.weight(.semibold))
                     .foregroundStyle(Color.spinlogPink)
                     .multilineTextAlignment(.center)
                     .lineLimit(1)
-                    .frame(maxWidth: cardWidth)
+                    .frame(maxWidth: isRegularDisplay ? cardWidth * 1.15 : cardWidth)
 
                 // Année & Format
                 HStack(spacing: 6) {
                     if let year = info.year, year > 0 {
                         Text(String(year))
-                            .font(.caption2.bold())
+                            .font(isRegularDisplay ? .footnote.bold() : .caption2.bold())
                     }
 
                     if let formats = info.formats, !formats.isEmpty {
                         if let year = info.year, year > 0 {
-                            Text("•").font(.caption2).foregroundStyle(.tertiary)
+                            Text("•").font(isRegularDisplay ? .footnote : .caption2).foregroundStyle(.tertiary)
                         }
                         Text(formats.compactMap(\.name).joined(separator: ", "))
-                            .font(.caption2)
+                            .font(isRegularDisplay ? .footnote : .caption2)
                             .lineLimit(1)
                     }
                 }
                 .foregroundStyle(Color.appSecondaryText)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 3)
+                .padding(.horizontal, isRegularDisplay ? 14 : 10)
+                .padding(.vertical, isRegularDisplay ? 4 : 3)
                 .background(Color.primary.opacity(0.05), in: Capsule())
                 .padding(.top, 2)
 
@@ -204,13 +238,13 @@ struct WantlistCarouselView: View {
                 if !isSelecting, let alert {
                     HStack(spacing: 4) {
                         Image(systemName: alert.isTriggered ? "bell.badge.fill" : "bell.fill")
-                            .font(.system(size: 10))
+                            .font(.system(size: isRegularDisplay ? 12 : 10))
                         Text("≤ \(alert.targetPrice.formatted(.currency(code: alert.currency)))")
-                            .font(.caption2.bold())
+                            .font(isRegularDisplay ? .footnote.bold() : .caption2.bold())
                     }
                     .foregroundStyle(alert.isTriggered ? .green : Color.spinlogPink)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
+                    .padding(.horizontal, isRegularDisplay ? 10 : 8)
+                    .padding(.vertical, isRegularDisplay ? 4 : 3)
                     .background(
                         alert.isTriggered ? Color.green.opacity(0.12) : Color.spinlogPinkBadge,
                         in: Capsule()
@@ -218,7 +252,7 @@ struct WantlistCarouselView: View {
                     .padding(.top, 2)
                 }
             }
-            .padding(.top, 6)
+            .padding(.top, isRegularDisplay ? 8 : 6)
             .contentShape(Rectangle())
             .onTapGesture {
                 if isSelecting {
@@ -235,17 +269,17 @@ struct WantlistCarouselView: View {
                         Image(systemName: alert != nil ? (alert?.isTriggered == true ? "bell.badge.fill" : "bell.fill") : "bell")
                         Text(alert != nil ? "Alerte active" : "Définir alerte prix")
                     }
-                    .font(.footnote.weight(.semibold))
+                    .font(isRegularDisplay ? .subheadline.weight(.semibold) : .footnote.weight(.semibold))
                     .foregroundStyle(alert != nil ? (alert?.isTriggered == true ? .green : Color.spinlogPink) : Color.primary)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, isRegularDisplay ? 18 : 14)
+                    .padding(.vertical, isRegularDisplay ? 10 : 8)
                     .background(
                         alert != nil ? (alert?.isTriggered == true ? Color.green.opacity(0.12) : Color.spinlogPinkBadge) : Color.primary.opacity(0.06),
                         in: Capsule()
                     )
                 }
                 .buttonStyle(.plain)
-                .padding(.top, 4)
+                .padding(.top, isRegularDisplay ? 8 : 4)
                 .transition(.opacity.combined(with: .scale(scale: 0.95)))
             }
         }
@@ -259,22 +293,22 @@ struct WantlistCarouselView: View {
         let currentIndex = items.firstIndex(where: { $0.id == currentItemId }) ?? 0
         return HStack(spacing: 6) {
             Image(systemName: "opticaldisc")
-                .font(.caption2)
+                .font(isRegularDisplay ? .footnote : .caption2)
                 .foregroundStyle(Color.spinlogPink)
             Text("\(currentIndex + 1) sur \(items.count)")
-                .font(.caption.weight(.semibold))
+                .font(isRegularDisplay ? .subheadline.weight(.semibold) : .caption.weight(.semibold))
                 .foregroundStyle(.secondary)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 6)
+        .padding(.horizontal, isRegularDisplay ? 18 : 14)
+        .padding(.vertical, isRegularDisplay ? 8 : 6)
         .background(.ultraThinMaterial, in: Capsule())
     }
 }
 
-private struct WantlistCarouselWidthPreferenceKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+private struct WantlistCarouselContainerSizeKey: PreferenceKey {
+    static var defaultValue: CGSize = .zero
+    static func reduce(value: inout CGSize, nextValue: () -> CGSize) {
         let next = nextValue()
-        if next > 0 { value = next }
+        if next != .zero { value = next }
     }
 }

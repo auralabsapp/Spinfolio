@@ -461,6 +461,22 @@ final class TagStore {
         }
         NotificationCenter.default.post(name: .tagsChanged, object: nil)
     }
+
+    // MARK: - Suppression complète des données utilisateur (Guideline 5.1.1(v))
+
+    /// Supprime définitivement les données de tags associées à un utilisateur (mémoire + disque).
+    func clearAccountData(for username: String) {
+        guard let normalized = Self.normalize(username) else { return }
+        UserDefaults.standard.removeObject(forKey: key(instanceStorageKey, for: normalized))
+        UserDefaults.standard.removeObject(forKey: key(legacyReleaseStorageKey, for: normalized))
+        UserDefaults.standard.removeObject(forKey: key(standaloneKey, for: normalized))
+        if activeUsername == normalized {
+            timestampedTagsByInstance = [:]
+            legacyTagsByRelease = [:]
+            standaloneTags = []
+            NotificationCenter.default.post(name: .tagsChanged, object: nil)
+        }
+    }
 }
 
 
