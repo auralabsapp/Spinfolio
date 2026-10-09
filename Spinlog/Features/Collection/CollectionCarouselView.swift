@@ -19,15 +19,18 @@ struct CollectionCarouselView: View {
     var scrollToTrigger: ScrollTargetTrigger? = nil
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-    @State private var currentItemId: Int?
+    // `ScrollPosition` (et non `scrollPosition(id:)`) : en plus de suivre l'identité de la carte
+    // centrée au fil du défilement normal, elle permet de sauter à un décalage (`x:`) calculé
+    // analytiquement — voir `animatedScroll` pour la raison de ce choix.
+    @State private var scrollPosition = ScrollPosition(idType: Int.self)
     @State private var displayItemId: Int?
-    @State private var randomScrollTask: Task<Void, Never>?
+    @State private var hasSetInitialPosition = false
     // Pas de valeur par défaut devinée (ex: 390x600) : tant que la vraie taille n'a pas été
     // mesurée par le `GeometryReader` ci-dessous, `trySetInitialPosition()` ne fixe pas encore
-    // `currentItemId`. Deviner une taille puis la corriger après coup laissait le `ScrollPosition`
-    // déjà établi sur un padding/largeur de carte erronés — `scrollPosition(id:)` ne recentre que
-    // lorsque l'id change, pas quand seule la géométrie change — d'où un espacement figé et faux
-    // entre les pochettes jusqu'à un changement de mode d'affichage (qui recrée toute la vue).
+    // `scrollPosition`. Deviner une taille puis la corriger après coup laissait le `ScrollPosition`
+    // déjà établi sur un padding/largeur de carte erronés — le `ScrollView` ne recentre que
+    // lorsque l'id/décalage cible change, pas quand seule la géométrie change — d'où un espacement
+    // figé et faux entre les pochettes jusqu'à un changement de mode d'affichage (qui recrée la vue).
     @State private var containerSize: CGSize = .zero
 
     private var isPad: Bool {
@@ -108,8 +111,13 @@ struct CollectionCarouselView: View {
                 .padding(.top, isRegularDisplay ? 16 : 10)
                 .padding(.bottom, 6)
             }
-            .scrollTargetBehavior(.viewAligned)
-            .scrollPosition(id: $currentItemId, anchor: .center)
+            // `limitBehavior: .never` : par défaut, `.viewAligned` limite le nombre de pochettes
+            // qu'un seul défilement peut traverser en largeur compacte (donc sur iPhone, voir la
+            // doc de `ViewAlignedScrollTargetBehavior`). Sans ce réglage, un tirage au sort lointain
+            // (bouton « Disque au hasard ») voyait son animation s'arrêter avant d'être centrée sur
+            // la bonne pochette, puisque la limite plafonnait le défilement avant la cible demandée.
+            .scrollTargetBehavior(.viewAligned(limitBehavior: .never))
+            .scrollPosition($scrollPosition, anchor: .center)
 
             // Barre de navigation rapide inférieure (Scrubber horizontal A-Z / Années)
             if indexEntries.count > 1 {
@@ -152,39 +160,51 @@ struct CollectionCarouselView: View {
         .onChange(of: items.first?.id) { _, _ in
             trySetInitialPosition()
         }
-        .onChange(of: currentItemId) { _, newValue in
-            if let newValue {
-                displayItemId = newValue
+        .onChange(of: scrollPosition) { _, newValue in
+            if let newId = newValue.viewID(type: Int.self) {
+                displayItemId = newId
             }
         }
         .onChange(of: scrollToTrigger) { _, newTrigger in
             guard let newTrigger else { return }
             animatedScroll(to: newTrigger.id, isRandom: true)
         }
-        .onDisappear {
-            randomScrollTask?.cancel()
-        }
     }
 
     /// Fixe la position de défilement initiale (1er album) une seule fois, et seulement après
     /// avoir mesuré la vraie largeur du conteneur — voir le commentaire sur `containerSize`.
     private func trySetInitialPosition() {
-        guard currentItemId == nil, containerSize.width > 0, let first = items.first else { return }
-        currentItemId = first.id
+        guard !hasSetInitialPosition, containerSize.width > 0, let first = items.first else { return }
+        hasSetInitialPosition = true
+        scrollPosition.scrollTo(id: first.id)
         displayItemId = first.id
     }
 
-    /// Fait défiler directement vers l'album tiré au sort en un mouvement continu, fluide et naturel.
+    /// Fait défiler vers l'album ciblé (tiré au sort, ou choisi via la barre de navigation rapide).
+    ///
+    /// On calcule le décalage cible analytiquement plutôt que de sauter par identité
+    /// (`scrollTo(id:)`) : toutes les cartes du carrousel ont exactement la même largeur et le
+    /// même espacement (`cardWidth`/`cardSpacing`), donc la position de n'importe quel index se
+    /// déduit sans dépendre de la matérialisation réelle de sa carte dans le `LazyHStack`. Un saut
+    /// par identité vers une cible encore jamais affichée dépend de cette matérialisation pour
+    /// connaître sa géométrie exacte : selon son état d'avancement au moment du calcul, l'animation
+    /// pouvait s'arrêter avant d'être centrée, ou être systématiquement décalée. Le calcul direct
+    /// n'a pas ce problème : il donne le même résultat pour une carte voisine ou à l'autre bout de
+    /// la collection. (`horizontalPadding` ajoute une marge symétrique de part et d'autre du
+    /// contenu, exactement égale à la moitié de l'espace libre, donc elle s'annule avec la moitié de
+    /// la largeur du conteneur dans ce calcul — voir le détail dans l'historique de ce fichier.)
     private func animatedScroll(to targetId: Int, isRandom: Bool) {
-        randomScrollTask?.cancel()
+        guard let targetIndex = items.firstIndex(where: { $0.id == targetId }) else { return }
 
         if isRandom {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         }
 
+        displayItemId = targetId
+        let targetOffsetX = CGFloat(targetIndex) * (cardWidth + cardSpacing)
+
         withAnimation(.spring(response: 0.58, dampingFraction: 0.86)) {
-            currentItemId = targetId
-            displayItemId = targetId
+            scrollPosition.scrollTo(x: targetOffsetX)
         }
     }
 
