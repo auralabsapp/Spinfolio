@@ -109,15 +109,15 @@
     },
     "%@ · %@" : {
       "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ · %2$@"
-          }
-        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
+            "value" : "%1$@ · %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
             "value" : "%1$@ · %2$@"
           }
         }
@@ -1635,6 +1635,46 @@
         }
       }
     },
+    "%lld versions" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld version"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld versions"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld version"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld versions"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld vidéos" : {
       "localizations" : {
         "en" : {
@@ -2145,6 +2185,16 @@
         }
       }
     },
+    "Accès à Apple Music désactivé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Music Access Disabled"
+          }
+        }
+      }
+    },
     "Actualisation automatique" : {
       "localizations" : {
         "en" : {
@@ -2437,6 +2487,26 @@
         }
       }
     },
+    "album en wantlist" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "album in wantlist"
+          }
+        }
+      }
+    },
+    "album possédé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "owned album"
+          }
+        }
+      }
+    },
     "Album vinyle" : {
       "localizations" : {
         "en" : {
@@ -2463,6 +2533,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Albums"
+          }
+        }
+      }
+    },
+    "albums en wantlist" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "albums in wantlist"
+          }
+        }
+      }
+    },
+    "albums possédés" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "owned albums"
           }
         }
       }
@@ -2959,6 +3049,16 @@
         }
       }
     },
+    "Aucun résultat Apple Music pour cette section." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "No Apple Music results for this section."
+          }
+        }
+      }
+    },
     "Aucun tag créé" : {
       "localizations" : {
         "en" : {
@@ -3285,6 +3385,16 @@
         }
       }
     },
+    "Cet artiste n'est ni dans ta collection ni dans ta wantlist : sa fiche nécessite une connexion réseau." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This artist isn't in your collection or wantlist: their page requires a network connection."
+          }
+        }
+      }
+    },
     "Cet exemplaire sera définitivement retiré de ta collection Discogs." : {
       "localizations" : {
         "en" : {
@@ -3553,6 +3663,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "How Does It Work?"
+          }
+        }
+      }
+    },
+    "Compilations" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Compilations"
           }
         }
       }
@@ -4190,6 +4310,26 @@
         }
       }
     },
+    "Discographie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Discography"
+          }
+        }
+      }
+    },
+    "Discographie indisponible sur Apple Music pour le moment." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discography unavailable on Apple Music right now."
+          }
+        }
+      }
+    },
     "Discogs" : {
       "localizations" : {
         "en" : {
@@ -4226,6 +4366,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Discogs isn't responding: the change will sync automatically."
+          }
+        }
+      }
+    },
+    "Disponible au retour du réseau." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Available once you're back online."
           }
         }
       }
@@ -5688,6 +5838,26 @@
         }
       }
     },
+    "La photo, la biographie et la discographie de l'artiste viennent d'Apple Music. Autorise %@ à y accéder dans les Réglages." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The artist's photo, biography, and discography come from Apple Music. Allow %@ to access it in Settings."
+          }
+        }
+      }
+    },
+    "La photo, la biographie et la discographie s'afficheront au retour du réseau." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The photo, biography, and discography will appear once you're back online."
+          }
+        }
+      }
+    },
     "La recherche Discogs nécessite une connexion réseau." : {
       "localizations" : {
         "en" : {
@@ -6011,6 +6181,16 @@
         }
       }
     },
+    "Lives" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Live"
+          }
+        }
+      }
+    },
     "Localisation" : {
       "localizations" : {
         "en" : {
@@ -6077,16 +6257,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Median"
-          }
-        }
-      }
-    },
-    "Membres" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Members"
           }
         }
       }
@@ -6640,6 +6810,16 @@
         }
       }
     },
+    "Ouvrir dans Apple Music" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open in Apple Music"
+          }
+        }
+      }
+    },
     "Ouvrir dans Safari" : {
       "localizations" : {
         "en" : {
@@ -6732,6 +6912,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "By Decade"
+          }
+        }
+      }
+    },
+    "Partager l'artiste" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share Artist"
           }
         }
       }
@@ -7102,6 +7292,16 @@
         }
       }
     },
+    "Possédé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Owned"
+          }
+        }
+      }
+    },
     "Possesseurs" : {
       "localizations" : {
         "en" : {
@@ -7443,6 +7643,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fetches all your albums, folders, wantlist, and album covers"
+          }
+        }
+      }
+    },
+    "Réessayer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try Again"
           }
         }
       }
@@ -7888,6 +8098,16 @@
         }
       }
     },
+    "Section" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Section"
+          }
+        }
+      }
+    },
     "Sélectionner" : {
       "localizations" : {
         "en" : {
@@ -8004,6 +8224,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "If you deleted the default \"Media Condition\" field, recreate it the same way but as a dropdown-type field, with these values: Mint (M), Near Mint (NM or M-), Very Good Plus (VG+), Very Good (VG), Good Plus (G+), Good (G), Fair (F), Poor (P)."
+          }
+        }
+      }
+    },
+    "Singles & EP" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Singles & EPs"
           }
         }
       }

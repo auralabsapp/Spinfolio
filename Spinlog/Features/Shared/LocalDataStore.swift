@@ -681,6 +681,27 @@ final class LocalDataStore {
         return Set(((try? context.fetch(descriptor)) ?? []).map(\.releaseId))
     }
 
+    /// Payloads JSON bruts de toute la collection en cache (tous dossiers, donc un même
+    /// exemplaire peut apparaître plusieurs fois), sans les décoder : à décoder hors du fil
+    /// principal par l'appelant, pour ne pas bloquer l'interface sur une grosse collection.
+    func collectionPayloads(username: String) -> [Data] {
+        var descriptor = FetchDescriptor<CachedCollectionEntry>(
+            predicate: #Predicate<CachedCollectionEntry> { $0.username == username }
+        )
+        descriptor.propertiesToFetch = [\.payload]
+        return ((try? context.fetch(descriptor)) ?? []).map(\.payload)
+    }
+
+    /// Payloads JSON bruts de toute la wantlist en cache, sans les décoder (voir
+    /// `collectionPayloads`).
+    func wantlistPayloads(username: String) -> [Data] {
+        var descriptor = FetchDescriptor<CachedWantlistEntry>(
+            predicate: #Predicate<CachedWantlistEntry> { $0.username == username }
+        )
+        descriptor.propertiesToFetch = [\.payload]
+        return ((try? context.fetch(descriptor)) ?? []).map(\.payload)
+    }
+
     /// Un seul élément de la wantlist en cache, sans décoder toute la wantlist.
     func getWantlistItem(username: String, releaseId: Int) -> WantlistItem? {
         let targetId = "\(username)_\(releaseId)"

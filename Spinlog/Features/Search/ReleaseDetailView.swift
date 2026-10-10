@@ -201,25 +201,24 @@ struct ReleaseDetailView: View {
                         // Remontés sur la jaquette, centrés, et disparaissant très progressivement lors du swipe up
                         VStack(spacing: 6) {
                             Text(release.title)
-                                .font(.title2.bold())
+                                .font(.title.bold())
                                 .foregroundStyle(.white)
                                 .multilineTextAlignment(.center)
                                 .lineLimit(3)
-                                .shadow(color: .black.opacity(0.65), radius: 6, x: 0, y: 2)
+                                // Deux ombres superposées : un contour net et rapproché pour détacher
+                                // les lettres de la jaquette, plus un halo large et diffus pour rester
+                                // lisible même sur un fond clair.
+                                .shadow(color: .black.opacity(0.9), radius: 3, x: 0, y: 1)
+                                .shadow(color: .black.opacity(0.7), radius: 14, x: 0, y: 4)
 
-                            if !release.artistNames.isEmpty {
-                                Text(release.artistNames)
-                                    .font(.headline.weight(.semibold))
-                                    .foregroundStyle(.white.opacity(0.92))
-                                    .multilineTextAlignment(.center)
-                                    .lineLimit(2)
-                                    .shadow(color: .black.opacity(0.65), radius: 6, x: 0, y: 2)
+                            if let artists = release.artists, !artists.isEmpty {
+                                artistCreditsRow(artists)
                             }
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.horizontal, 24)
-                        .padding(.top, 44)
-                        .padding(.bottom, 28)
+                        .padding(.top, 38)
+                        .padding(.bottom, 32)
                         .opacity(titleOpacity)
                         .background(heroToInfoGradient)
 
@@ -643,6 +642,34 @@ struct ReleaseDetailView: View {
             parts.append(String(localized: "\(videosCount) vidéos"))
         }
         return parts.joined(separator: " · ")
+    }
+
+    /// Remplace l'ancien texte unique `release.artistNames` : chaque artiste devient son propre
+    /// lien vers sa fiche (`ArtistDetailView`), séparés par le connecteur Discogs (`join`, ex:
+    /// "&", "Featuring") en texte brut non cliquable — même principe que `CreditsSection`
+    /// plus bas dans ce fichier. Non-wrapping par simplicité (la quasi-totalité des releases ont
+    /// 1 à 3 artistes) ; au-delà, le nom tronque proprement plutôt que de retourner à la ligne.
+    private func artistCreditsRow(_ artists: [ReleaseArtist]) -> some View {
+        HStack(spacing: 4) {
+            ForEach(Array(artists.enumerated()), id: \.offset) { index, artist in
+                NavigationLink(value: SearchDestination.artist(artist.id)) {
+                    Text(artist.displayName)
+                }
+                .buttonStyle(.plain)
+
+                if index < artists.count - 1 {
+                    let join = artist.join?.trimmingCharacters(in: .whitespaces) ?? ""
+                    Text(join.isEmpty ? "," : join)
+                }
+            }
+        }
+        .font(.title3.weight(.semibold))
+        .foregroundStyle(.white.opacity(0.92))
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+        .shadow(color: .black.opacity(0.9), radius: 3, x: 0, y: 1)
+        .shadow(color: .black.opacity(0.7), radius: 14, x: 0, y: 4)
+        .frame(maxWidth: .infinity)
     }
 
     private func parallaxHeroCover(for release: Release) -> some View {
