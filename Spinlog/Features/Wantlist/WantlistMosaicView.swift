@@ -18,6 +18,7 @@ struct WantlistMosaicView: View {
     private let columns = [
         GridItem(.flexible(), spacing: 6),
         GridItem(.flexible(), spacing: 6),
+        GridItem(.flexible(), spacing: 6),
         GridItem(.flexible(), spacing: 6)
     ]
 
@@ -36,7 +37,9 @@ struct WantlistMosaicView: View {
                             count: section.items.count
                         )
                         .id(section.key)
-                        .padding(.vertical, 6)
+                        // Voir le même commentaire dans CollectionMosaicView : même hauteur
+                        // totale que l'en-tête en mode Liste.
+                        .padding(.vertical, 2)
                         .padding(.horizontal, 2)
                         .background(.regularMaterial)
                     }
@@ -59,7 +62,7 @@ struct WantlistMosaicView: View {
 
         return ZStack {
             NavigationLink(value: SearchDestination.release(item.id, coverURL: coverURL)) {
-                AsyncCoverImage(url: coverURL, cornerRadius: 6, showsBorder: true, targetSize: 130)
+                AsyncCoverImage(url: coverURL, cornerRadius: 6, showsBorder: true, targetSize: 100)
                     .aspectRatio(1, contentMode: .fit)
                     .opacity(isSelecting ? (isSelected ? 1.0 : 0.45) : 1.0)
                     .overlay {

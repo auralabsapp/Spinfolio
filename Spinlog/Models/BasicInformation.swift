@@ -52,7 +52,7 @@ struct BasicInformation: Codable, Sendable {
         self.masterId = masterId
     }
 
-    var artistNames: String {
+    nonisolated var artistNames: String {
         (artists ?? []).map(\.name).joined(separator: ", ")
     }
 }

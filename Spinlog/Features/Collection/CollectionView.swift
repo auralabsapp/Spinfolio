@@ -575,10 +575,17 @@ struct CollectionView: View {
                     token: viewModel.indexToken(for: section),
                     title: viewModel.displayTitle(for: section),
                     count: section.items.count
-                )) {
+                )
+                    // Même fond que l'en-tête de section en mode Mosaïque.
+                    .background(.regularMaterial)
+                ) {
                     ForEach(section.items) { item in
                         rowContent(for: item)
                             .id(item.id)
+                            // Resserre les lignes : les marges verticales par défaut de `List`
+                            // (~11pt en haut et en bas) ajoutent plus de vide que le contenu de
+                            // la ligne lui-même (pochette 80pt + texte).
+                            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                             .listRowBackground(collectionRowHighlight(for: item))
                             .task { await viewModel.loadMoreIfNeeded(current: item) }
                             .swipeActions(edge: .leading, allowsFullSwipe: true) {

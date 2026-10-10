@@ -54,7 +54,7 @@ enum CollectionSortOption: String, CaseIterable, Identifiable, Codable {
         }
     }
 
-    var defaultAscending: Bool {
+    nonisolated var defaultAscending: Bool {
         switch self {
         case .added, .rating:
             return false
@@ -95,32 +95,49 @@ enum CollectionSortOption: String, CaseIterable, Identifiable, Codable {
 /// élément — `CollectionItem` et `WantlistItem` s'y conforment, ce qui permet à l'onglet
 /// Wantlist de réutiliser exactement la même logique de tri/sections que la Collection.
 protocol SortableLibraryItem: Identifiable {
-    var id: Int { get }
-    var basicInformation: BasicInformation { get }
-    var rating: Int { get }
-    var dateAddedDate: Date? { get }
-    var libraryItemTags: [String] { get }
+    nonisolated var id: Int { get }
+    nonisolated var basicInformation: BasicInformation { get }
+    nonisolated var rating: Int { get }
+    nonisolated var dateAddedDate: Date? { get }
+    nonisolated var libraryItemTags: [String] { get }
 }
 
 extension CollectionItem: SortableLibraryItem {
-    var libraryItemTags: [String] {
-        TagStore.shared.tags(for: instanceId, releaseId: releaseId)
+    /// `nonisolated` + `assumeIsolated` : accédé depuis la tâche détachée de
+    /// `CollectionViewModel.computeSections()`, mais seulement quand aucun filtre de tag n'est
+    /// actif (ce code est alors mort au runtime dans ce contexte) — voir le garde-fou dans
+    /// `recomputeSections()`. `TagStore` reste un singleton isolé sur l'acteur principal pour
+    /// tous ses autres appelants (édition de tags...).
+    nonisolated var libraryItemTags: [String] {
+        MainActor.assumeIsolated {
+            TagStore.shared.tags(for: instanceId, releaseId: releaseId)
+        }
     }
 }
 
 extension SortableLibraryItem {
     /// Clé de regroupement : une section par valeur distincte (pas juste par lettre), pour
     /// que la ligne 2 de l'en-tête puisse afficher la valeur complète.
-    func sectionKey(for sort: CollectionSortOption) -> String {
+    /// `nonisolated` : voir le commentaire sur `libraryItemTags` — le cas `.shelf` qui touche
+    /// `ShelfPreferencesStore` (isolé sur l'acteur principal) n'est jamais atteint depuis la
+    /// tâche détachée de `CollectionViewModel.computeSections()`, qui exclut ce tri.
+    nonisolated func sectionKey(for sort: CollectionSortOption) -> String {
         switch sort {
         case .artist:
             let name = basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
             return name.isEmpty ? "?" : name
         case .shelf:
+            let prefs = MainActor.assumeIsolated {
+                (
+                    ShelfPreferencesStore.shared.ignoreArticles,
+                    ShelfPreferencesStore.shared.sortByLastName,
+                    ShelfPreferencesStore.shared.customArtistSortOverrides
+                )
+            }
             let artist = basicInformation.artistNames.shelfArtistSortKey(
-                ignoreArticles: ShelfPreferencesStore.shared.ignoreArticles,
-                sortByLastName: ShelfPreferencesStore.shared.sortByLastName,
-                overrides: ShelfPreferencesStore.shared.customArtistSortOverrides
+                ignoreArticles: prefs.0,
+                sortByLastName: prefs.1,
+                overrides: prefs.2
             )
             let trimmed = artist.trimmingCharacters(in: .whitespacesAndNewlines)
             guard let firstChar = trimmed.first else { return "#" }
@@ -155,11 +172,12 @@ extension SortableLibraryItem {
 
     /// Compare deux éléments selon le critère de tri choisi afin de garantir un classement
     /// parfait et déterministe tant en local qu'en ligne.
-    func isOrderedBefore(_ other: Self, for sort: CollectionSortOption) -> Bool {
+    nonisolated func isOrderedBefore(_ other: Self, for sort: CollectionSortOption) -> Bool {
         isOrderedBefore(other, for: sort, ascending: sort.defaultAscending)
     }
 
-    func isOrderedBefore(_ other: Self, for sort: CollectionSortOption, ascending: Bool) -> Bool {
+    /// `nonisolated` : voir le commentaire sur `sectionKey` — même garantie pour `.shelf`.
+    nonisolated func isOrderedBefore(_ other: Self, for sort: CollectionSortOption, ascending: Bool) -> Bool {
         switch sort {
         case .shelf:
             if ascending {
@@ -286,9 +304,18 @@ extension SortableLibraryItem {
         }
     }
 
-    private func compareShelf(to other: Self) -> Bool {
+    /// `nonisolated` : voir le commentaire sur `sectionKey` — même garantie pour `.shelf`.
+    private nonisolated func compareShelf(to other: Self) -> Bool {
         let yA = basicInformation.year
         let yB = other.basicInformation.year
+        let prefs = MainActor.assumeIsolated {
+            (
+                ShelfPreferencesStore.shared.sortStrategy,
+                ShelfPreferencesStore.shared.ignoreArticles,
+                ShelfPreferencesStore.shared.sortByLastName,
+                ShelfPreferencesStore.shared.customArtistSortOverrides
+            )
+        }
         return ShelfPlacementService.compare(
             artistA: basicInformation.artistNames,
             titleA: basicInformation.title,
@@ -298,10 +325,10 @@ extension SortableLibraryItem {
             titleB: other.basicInformation.title,
             yearB: yB,
             idB: other.id,
-            strategy: ShelfPreferencesStore.shared.sortStrategy,
-            ignoreArticles: ShelfPreferencesStore.shared.ignoreArticles,
-            sortByLastName: ShelfPreferencesStore.shared.sortByLastName,
-            customOverrides: ShelfPreferencesStore.shared.customArtistSortOverrides
+            strategy: prefs.0,
+            ignoreArticles: prefs.1,
+            sortByLastName: prefs.2,
+            customOverrides: prefs.3
         )
     }
 
@@ -355,7 +382,8 @@ func libraryIndexToken<Item: SortableLibraryItem>(for section: (key: String, ite
 }
 
 extension SortableLibraryItem {
-    func matchesLibraryFilters(tags: Set<String> = [], format: String?, searchText: String) -> Bool {
+    /// `nonisolated` : voir le commentaire sur `libraryItemTags`.
+    nonisolated func matchesLibraryFilters(tags: Set<String> = [], format: String?, searchText: String) -> Bool {
         if !tags.isEmpty {
             let itemTags = Set(libraryItemTags.map { $0.folding(options: .diacriticInsensitive, locale: .current).lowercased() })
             let normalizedSelectedTags = Set(tags.map { $0.folding(options: .diacriticInsensitive, locale: .current).lowercased() })

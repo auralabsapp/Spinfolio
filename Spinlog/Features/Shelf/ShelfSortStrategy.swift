@@ -77,7 +77,9 @@ enum ShelfSortStrategy: String, CaseIterable, Identifiable, Codable, Sendable {
 
 /// Outils d'aide au tri alphabétique physique des artistes (inversion « Prénom Nom » -> « Nom, Prénom »,
 /// préservation des groupes et ensembles musicaux, gestion des articles et des suffixes Discogs).
-enum ArtistShelfSortHelper {
+/// `nonisolated` : table de données et fonctions pures, sans aucun état partagé — appelée
+/// depuis la tâche détachée de `CollectionViewModel.computeSections()` pour le tri `.shelf`.
+nonisolated enum ArtistShelfSortHelper {
     /// Nettoie les numéros de désambiguïsation Discogs (ex: « Bill Evans (3) » -> « Bill Evans »).
     static func cleanDiscogsSuffix(_ name: String) -> String {
         name.replacingOccurrences(of: #"\s*\(\d+\)"#, with: "", options: .regularExpression)
@@ -174,7 +176,7 @@ extension String {
     /// - Ignore les articles initiaux (« The Beatles » -> « Beatles »)
     /// - Inverse les artistes solo (« David Bowie » -> « Bowie, David »)
     /// - Préserve les formations (« Pink Floyd », « Led Zeppelin », « Dave Matthews Band »)
-    func shelfArtistSortKey(
+    nonisolated func shelfArtistSortKey(
         ignoreArticles: Bool = true,
         sortByLastName: Bool = false,
         overrides: [String: String]? = nil
@@ -270,7 +272,7 @@ extension String {
     }
 
     /// Extrait l'article initial s'il existe : ("Beatles", "The") pour "The Beatles"
-    func extractingInitialArticle() -> (core: String, article: String?) {
+    nonisolated func extractingInitialArticle() -> (core: String, article: String?) {
         let text = self.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return ("", nil) }
 
@@ -298,7 +300,7 @@ extension String {
 
     /// Normalise le nom d'un artiste en plaçant les articles initiaux en fin de nom (« Beatles, The »)
     /// si `ignoreArticles` est actif, ou conserve « The Beatles » si inactif.
-    func normalizedForArtistSorting(ignoreArticles: Bool = true) -> String {
+    nonisolated func normalizedForArtistSorting(ignoreArticles: Bool = true) -> String {
         guard ignoreArticles else {
             return self.trimmingCharacters(in: .whitespacesAndNewlines)
         }

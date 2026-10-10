@@ -325,9 +325,63 @@ final class CollectionViewModel {
     /// rigoureusement déterministe (même en cache ou hors-ligne). Recalculé par
     /// `recomputeSections()` uniquement quand `items`/tri/filtres changent réellement.
     private(set) var sections: [(key: String, items: [CollectionItem])] = []
+    /// Incrémenté à chaque appel de `recomputeSections()` : permet au calcul détaché le plus
+    /// récent de détecter qu'un appel plus récent l'a entre-temps rendu obsolète, et de ne pas
+    /// écraser `sections` avec un résultat périmé.
+    private var sectionsComputeGeneration = 0
 
+    /// Tri + regroupement de la collection : coûteux (`localizedStandardCompare` répété sur
+    /// chaque paire comparée, sans mise en cache) et synchrone sur le thread principal. Pendant
+    /// la synchro de pages en arrière-plan juste après le lancement (`startBackgroundSync`), ce
+    /// recalcul se redéclenchait à chaque page reçue — ~une fois par seconde, au rythme du
+    /// débit imposé par l'API Discogs — pour un coût mesuré de 300-400ms à chaque fois,
+    /// provoquant des saccades si l'utilisateur faisait défiler la liste pendant cette fenêtre.
+    /// Le tri `.shelf` et le filtrage par tag restent synchrones (ils lisent respectivement
+    /// `ShelfPreferencesStore` et `TagStore`, isolés sur l'acteur principal) ; les autres cas
+    /// sont calculés sur une tâche détachée à partir d'un instantané des données, puis appliqués
+    /// d'un coup sur l'acteur principal.
     private func recomputeSections() {
-        let sorted = filteredItems.sorted { $0.isOrderedBefore($1, for: sortOption, ascending: sortAscending) }
+        guard sortOption != .shelf, selectedTags.isEmpty else {
+            sections = Self.computeSections(
+                items: items, sortOption: sortOption, ascending: sortAscending,
+                tags: selectedTags, format: selectedFormat, searchText: searchText
+            )
+            return
+        }
+
+        sectionsComputeGeneration += 1
+        let generation = sectionsComputeGeneration
+        let itemsSnapshot = items
+        let currentSortOption = sortOption
+        let currentAscending = sortAscending
+        let currentTags = selectedTags
+        let currentFormat = selectedFormat
+        let currentSearchText = searchText
+
+        Task.detached(priority: .userInitiated) { [weak self] in
+            let result = Self.computeSections(
+                items: itemsSnapshot, sortOption: currentSortOption, ascending: currentAscending,
+                tags: currentTags, format: currentFormat, searchText: currentSearchText
+            )
+            guard let self else { return }
+            await self.applyComputedSections(result, generation: generation)
+        }
+    }
+
+    @MainActor
+    private func applyComputedSections(_ result: [(key: String, items: [CollectionItem])], generation: Int) {
+        guard generation == sectionsComputeGeneration else { return }
+        sections = result
+    }
+
+    /// `nonisolated` : appelée depuis la tâche détachée de `recomputeSections()`, donc jamais sur
+    /// l'acteur principal pour les critères autres que `.shelf` (qui ne passe jamais par ici).
+    private nonisolated static func computeSections(
+        items: [CollectionItem], sortOption: CollectionSortOption, ascending: Bool,
+        tags: Set<String>, format: String?, searchText: String
+    ) -> [(key: String, items: [CollectionItem])] {
+        let filtered = items.filter { $0.matchesLibraryFilters(tags: tags, format: format, searchText: searchText) }
+        let sorted = filtered.sorted { $0.isOrderedBefore($1, for: sortOption, ascending: ascending) }
         var order: [String] = []
         var groups: [String: [CollectionItem]] = [:]
         for item in sorted {
@@ -338,7 +392,7 @@ final class CollectionViewModel {
             }
             groups[key]?.append(item)
         }
-        sections = order.map { ($0, groups[$0] ?? []) }
+        return order.map { ($0, groups[$0] ?? []) }
     }
 
     /// Jetons pour la barre de navigation rapide sur le bord droit : lettres pour un tri
@@ -365,10 +419,6 @@ final class CollectionViewModel {
     /// Valeur affichée en 2e ligne de l'en-tête (voir `CollectionItem.sectionDisplayTitle`).
     func displayTitle(for section: (key: String, items: [CollectionItem])) -> String {
         section.items.first?.sectionDisplayTitle(for: sortOption) ?? section.key
-    }
-
-    private var filteredItems: [CollectionItem] {
-        items.filter { $0.matchesLibraryFilters(tags: selectedTags, format: selectedFormat, searchText: searchText) }
     }
 
     func loadFoldersAndItems(isSilent: Bool = false) async {
@@ -591,7 +641,7 @@ final class CollectionViewModel {
     /// changement de dossier/tri annule cette tâche pour la remplacer par une nouvelle.
     private func startBackgroundSync(username: String, folderId: Int, credentials: DiscogsCredentials) {
         backgroundSyncTask?.cancel()
-        backgroundSyncTask = Task { [weak self] in
+        backgroundSyncTask = Task(priority: .utility) { [weak self] in
             guard let self else { return }
             var reachedLastPage = false
             while !Task.isCancelled {

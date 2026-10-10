@@ -44,9 +44,21 @@ struct AsyncCoverImage: View {
                 placeholder.overlay { ProgressView() }
             }
             .onSuccess { result in
-                if let avg = result.image.averageColor {
-                    ReleaseColorCache.shared.register(color: avg, url: urlString)
-                    onAverageColorLoaded?(avg)
+                // Le calcul de la couleur moyenne (dessin CGContext de l'image entière dans un
+                // contexte 1x1) s'exécutait directement ici, sur le thread principal — `onSuccess`
+                // de KFImage y est livré pour pouvoir mettre à jour l'état SwiftUI. Pendant un
+                // défilement avec beaucoup de nouvelles pochettes chargées d'un coup, ce dessin
+                // répété contribuait aux saccades. Il ne sert qu'à préchauffer `ReleaseColorCache`
+                // (dégradé de la fiche détail) : aucune UI ne dépend de sa mise à jour synchrone,
+                // donc le dessin lui-même part sur une tâche détachée, et seule l'écriture dans le
+                // cache (bon marché) revient sur l'acteur principal.
+                let image = result.image
+                Task.detached(priority: .utility) {
+                    guard let avg = image.averageColor else { return }
+                    await MainActor.run {
+                        ReleaseColorCache.shared.register(color: avg, url: urlString)
+                        onAverageColorLoaded?(avg)
+                    }
                 }
             }
             .fade(duration: 0.2)
@@ -72,7 +84,10 @@ struct AsyncCoverImage: View {
 
 extension UIImage {
     /// Calcule la couleur moyenne de l'image (format RGBA) via un contexte bitmap 1x1 ultra-rapide.
-    var averageColor: UIColor? {
+    /// `nonisolated` : pur calcul CGContext sans aucun état partagé, appelé depuis une tâche
+    /// détachée pour ne pas bloquer le thread principal — l'isolation `MainActor` par défaut du
+    /// projet ne s'applique ici que par inférence, pas par une vraie dépendance à l'acteur.
+    nonisolated var averageColor: UIColor? {
         guard let cgImage = self.cgImage else { return nil }
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         var pixel: [UInt8] = [0, 0, 0, 0]

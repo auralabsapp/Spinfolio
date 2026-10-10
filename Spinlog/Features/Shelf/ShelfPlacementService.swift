@@ -179,7 +179,10 @@ enum ShelfPlacementService {
     }
 
     /// Compare deux éléments de bibliothèque selon la stratégie de rangement choisie.
-    static func compare(
+    /// `nonisolated` : pur calcul sur des valeurs déjà résolues, appelé depuis la tâche détachée
+    /// de `CollectionViewModel.computeSections()` pour le tri `.shelf` — contrairement à la
+    /// surcharge `@MainActor` ci-dessus qui lit `ShelfPreferencesStore` en direct.
+    nonisolated static func compare(
         artistA: String,
         titleA: String,
         yearA: Int?,

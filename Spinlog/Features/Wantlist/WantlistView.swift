@@ -351,9 +351,15 @@ struct WantlistView: View {
                     token: viewModel.indexToken(for: section),
                     title: viewModel.displayTitle(for: section),
                     count: section.items.count
-                )) {
+                )
+                    // Même fond que l'en-tête de section en mode Mosaïque.
+                    .background(.regularMaterial)
+                ) {
                     ForEach(section.items) { item in
                         rowContent(for: item)
+                            // Voir le même commentaire dans CollectionView : resserre les lignes
+                            // en réduisant les marges verticales par défaut de `List`.
+                            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                             .task { await viewModel.loadMoreIfNeeded(current: item) }
                             .swipeActions(edge: .trailing) {
                                 if !isSelecting && !viewModel.isOfflineAndStale {

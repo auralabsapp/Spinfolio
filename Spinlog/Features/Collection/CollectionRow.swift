@@ -68,7 +68,7 @@ struct CollectionRow: View {
                                 .lineLimit(1)
                         }
                     }
-                    .padding(.top, 3)
+                    .padding(.top, 1)
                 }
 
                 // Bloc 3 : Étiquette exemplaire et badges (interligne accru après la ligne 4)
@@ -102,13 +102,13 @@ struct CollectionRow: View {
                                 .foregroundStyle(Color.tagForeground)
                         }
                     }
-                    .padding(.top, 3)
+                    .padding(.top, 1)
                 }
             }
 
             Spacer(minLength: 0)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 2)
     }
 
     private var coverURL: String? {

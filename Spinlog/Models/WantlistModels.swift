@@ -33,8 +33,13 @@ struct WantlistItem: Codable, Identifiable, Sendable {
 /// que `CollectionItem` (voir `CollectionSortOption.swift`) — même construction d'écran
 /// pour Collection et Wantlist.
 extension WantlistItem: SortableLibraryItem {
-    var libraryItemTags: [String] {
-        TagStore.shared.tags(for: id, releaseId: releaseId)
+    /// `nonisolated` + `assumeIsolated` : exigé par le protocole `SortableLibraryItem` (voir
+    /// `CollectionSortOption.swift`) ; `WantlistViewModel` l'appelle toujours depuis l'acteur
+    /// principal, donc l'hypothèse d'isolation est toujours vraie ici.
+    nonisolated var libraryItemTags: [String] {
+        MainActor.assumeIsolated {
+            TagStore.shared.tags(for: id, releaseId: releaseId)
+        }
     }
 }
 
