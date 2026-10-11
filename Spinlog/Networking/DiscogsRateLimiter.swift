@@ -10,6 +10,11 @@ import Foundation
 actor DiscogsRateLimiter {
     static let shared = DiscogsRateLimiter()
 
+    /// Priorité des requêtes émises par la tâche en cours (voir `DiscogsRequestPriority`).
+    /// `TaskLocal` : la tâche de fond l'active une fois pour tout son travail, sans passer de
+    /// paramètre à chaque endpoint.
+    @TaskLocal static var priority: DiscogsRequestPriority = .normal
+
     private(set) var limit: Int?
     private(set) var remaining: Int?
 
@@ -20,6 +25,60 @@ actor DiscogsRateLimiter {
     /// toute requête concurrente ou dérive d'horloge.
     private let maxRequestsPerMinute = 50
     private let rollingWindowSeconds: TimeInterval = 60
+
+    /// Dernière requête de priorité normale (action de l'utilisateur, synchro de la collection,
+    /// résolution des années…) : les requêtes de fond leur laissent la place.
+    private var lastNormalRequestDate: Date?
+    /// Dernier créneau accordé à une requête de fond.
+    private var lastBackgroundSlot: Date?
+    /// Une requête de fond ne part qu'après ce délai sans requête normale…
+    private let backgroundQuietPeriod: TimeInterval = 8
+    /// …si moins de requêtes que ce plafond sont parties dans la dernière minute (la moitié du
+    /// quota reste ainsi toujours disponible pour l'utilisateur)…
+    private let backgroundMaxRequestsPerMinute = 25
+    /// …et au plus une toutes les 3 secondes (20 par minute).
+    private let backgroundMinSpacing: TimeInterval = 3
+
+    /// Point d'entrée du client : attend un créneau selon la priorité de la tâche courante.
+    func waitForSlot(priority: DiscogsRequestPriority) async throws {
+        switch priority {
+        case .normal:
+            lastNormalRequestDate = Date()
+            try await waitForSlot()
+        case .background:
+            try await waitForBackgroundSlot()
+        }
+    }
+
+    /// Attend que l'app soit « au calme » côté Discogs (voir les constantes ci-dessus), puis
+    /// prend un créneau ordinaire. Revérifié après chaque attente : une requête normale arrivée
+    /// entre-temps repousse la requête de fond.
+    private func waitForBackgroundSlot() async throws {
+        while true {
+            let now = Date()
+            pruneOldTimestamps()
+            var readyAt = now
+            if let lastNormalRequestDate {
+                readyAt = max(readyAt, lastNormalRequestDate.addingTimeInterval(backgroundQuietPeriod))
+            }
+            if let lastBackgroundSlot {
+                readyAt = max(readyAt, lastBackgroundSlot.addingTimeInterval(backgroundMinSpacing))
+            }
+            if recentRequestTimestamps.count >= backgroundMaxRequestsPerMinute,
+               let oldest = recentRequestTimestamps.first {
+                readyAt = max(readyAt, oldest.addingTimeInterval(rollingWindowSeconds + 0.5))
+            }
+            if let remaining, remaining <= 10 {
+                // Solde Discogs bas : on le laisse se reconstituer pour l'utilisateur.
+                readyAt = max(readyAt, now.addingTimeInterval(15))
+            }
+            let delay = readyAt.timeIntervalSince(now)
+            if delay <= 0 { break }
+            try await Task.sleep(for: .seconds(delay))
+        }
+        lastBackgroundSlot = Date()
+        try await waitForSlot()
+    }
 
     /// À appeler juste avant d'envoyer une requête : patiente si le quota local ou celui
     /// annoncé par Discogs (`X-Discogs-Ratelimit-Remaining`) est épuisé.
@@ -96,4 +155,11 @@ actor DiscogsRateLimiter {
         let now = Date()
         recentRequestTimestamps.removeAll { now.timeIntervalSince($0) > rollingWindowSeconds }
     }
+}
+
+/// Priorité d'une requête Discogs : `.background` pour le travail que l'utilisateur n'attend pas
+/// (classement des discographies en tâche de fond), qui cède systématiquement la place au reste.
+enum DiscogsRequestPriority: Sendable {
+    case normal
+    case background
 }

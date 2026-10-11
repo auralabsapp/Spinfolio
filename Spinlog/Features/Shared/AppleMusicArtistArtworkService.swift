@@ -16,19 +16,11 @@ enum DiscographySection: String, CaseIterable, Identifiable {
     case compilations = "compilation-albums"
 
     var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .albums: String(localized: "Albums")
-        case .singlesAndEPs: String(localized: "Singles & EP")
-        case .liveAlbums: String(localized: "Lives")
-        case .compilations: String(localized: "Compilations")
-        }
-    }
 }
 
 /// Résumé minimal d'un album Apple Music tel que renvoyé par les vues de discographie d'un
-/// artiste — juste de quoi afficher une ligne et rapprocher par titre avec la collection locale.
+/// artiste — juste de quoi rapprocher par titre avec la collection locale, pour départager des
+/// homonymes (voir `bestCandidate`).
 struct AppleMusicAlbumSummary: Identifiable, Sendable {
     let id: String
     let name: String
@@ -38,11 +30,10 @@ struct AppleMusicAlbumSummary: Identifiable, Sendable {
 }
 
 /// Récupère des informations sur un artiste depuis le catalogue Apple Music (MusicKit) : sa photo
-/// (classement "Artistes les plus écoutés" des Stats, en-tête de `ArtistDetailView`), son nom, sa
-/// biographie et sa discographie par section (`ArtistDetailView`). En cas de refus de permission,
-/// d'absence de résultat ou d'erreur réseau, les méthodes renvoient `nil` sans lever d'erreur :
-/// à l'appelant de choisir l'état à afficher (simple absence de vignette dans les Stats, état
-/// « indisponible » avec nouvel essai pour la discographie de la page artiste).
+/// (classement "Artistes les plus écoutés" des Stats, en-tête de `ArtistDetailView`), son nom et
+/// sa biographie (`ArtistDetailView`). En cas de refus de permission, d'absence de résultat ou
+/// d'erreur réseau, les méthodes renvoient `nil` sans lever d'erreur : à l'appelant de choisir
+/// l'état à afficher (simple absence de vignette ou de biographie).
 @MainActor
 final class AppleMusicArtistArtworkService {
     static let shared = AppleMusicArtistArtworkService()
@@ -90,20 +81,6 @@ final class AppleMusicArtistArtworkService {
     /// pour son en-tête. Pas de cache dédié : l'URL se déduit sans réseau de l'artiste résolu.
     func artworkURL(for artistName: String, size: Int = 160) async -> URL? {
         await resolvedArtist(for: artistName)?.artwork?.url(width: size, height: size)
-    }
-
-    /// Discographie d'un artiste pour une section Apple Music donnée (Albums, Singles & EP,
-    /// Lives, Compilations). `nil` si l'artiste n'est pas trouvé sur Apple Music ou en cas
-    /// d'erreur réseau : l'appelant doit alors afficher un état indisponible plutôt qu'une
-    /// discographie tronquée sans prévenir. Un échec n'est pas mémorisé (nouvel essai possible).
-    func albums(for artistName: String, section: DiscographySection, artworkSize: Int = 300) async -> [AppleMusicAlbumSummary]? {
-        guard let artist = await resolvedArtist(for: artistName) else { return nil }
-        do {
-            return try await fetchAlbums(artistID: artist.id, section: section, artworkSize: artworkSize)
-        } catch {
-            logger.error("Récupération de la discographie (\(section.rawValue, privacy: .public)) échouée pour \(artistName, privacy: .public) : \(error, privacy: .public)")
-            return nil
-        }
     }
 
     /// Plafond de sécurité de la pagination : au-delà, la liste est tronquée plutôt que de

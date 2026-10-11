@@ -1051,12 +1051,11 @@ private struct InstanceGainBadge: View {
         Group {
             if let convertedPurchase {
                 let gain = marketPrice - convertedPurchase
-                let percent = convertedPurchase > 0 ? (gain / convertedPurchase) : 0
                 let isPositive = gain >= 0
                 HStack(spacing: 3) {
                     Image(systemName: isPositive ? "arrow.up.right" : "arrow.down.right")
                         .font(.system(size: 8, weight: .bold))
-                    Text("\(isPositive ? "+" : "")\(gain.formatted(.currency(code: marketCurrency).precision(.fractionLength(0)))) (\(percent.formatted(.percent.precision(.fractionLength(0)).sign(strategy: .always()))))")
+                    Text("\(isPositive ? "+" : "")\(gain.formatted(.currency(code: marketCurrency).precision(.fractionLength(0))))")
                 }
                 .font(.caption2.weight(.medium))
                 .padding(.horizontal, 6)

@@ -141,6 +141,11 @@ final class WantlistViewModel {
         section.items.first?.sectionDisplayTitle(for: sortOption) ?? section.key
     }
 
+    /// Artistes nommés par l'en-tête de la section, cliquables (voir `LibrarySectionHeader.artists`).
+    func headerArtists(for section: (key: String, items: [WantlistItem])) -> [ReleaseArtist] {
+        section.items.first?.sectionHeaderArtists(for: sortOption) ?? []
+    }
+
     private let authManager = DiscogsAuthManager.shared
     private let networkMonitor = NetworkMonitor.shared
     private let localStore = LocalDataStore.shared

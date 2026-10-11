@@ -329,6 +329,10 @@ final class CollectionViewModel {
     /// récent de détecter qu'un appel plus récent l'a entre-temps rendu obsolète, et de ne pas
     /// écraser `sections` avec un résultat périmé.
     private var sectionsComputeGeneration = 0
+    /// Vrai pendant le calcul détaché des sections (voir `recomputeSections`) : `sections` est
+    /// alors vide ou périmé sans que la recherche soit en cause. Au lancement, la vue affiche un
+    /// indicateur de chargement plutôt que « Aucun résultat » le temps du premier tri.
+    private(set) var isComputingSections = false
 
     /// Tri + regroupement de la collection : coûteux (`localizedStandardCompare` répété sur
     /// chaque paire comparée, sans mise en cache) et synchrone sur le thread principal. Pendant
@@ -346,9 +350,13 @@ final class CollectionViewModel {
                 items: items, sortOption: sortOption, ascending: sortAscending,
                 tags: selectedTags, format: selectedFormat, searchText: searchText
             )
+            // Annule l'éventuel calcul détaché en cours : son résultat serait périmé.
+            sectionsComputeGeneration += 1
+            isComputingSections = false
             return
         }
 
+        isComputingSections = true
         sectionsComputeGeneration += 1
         let generation = sectionsComputeGeneration
         let itemsSnapshot = items
@@ -372,6 +380,7 @@ final class CollectionViewModel {
     private func applyComputedSections(_ result: [(key: String, items: [CollectionItem])], generation: Int) {
         guard generation == sectionsComputeGeneration else { return }
         sections = result
+        isComputingSections = false
     }
 
     /// `nonisolated` : appelée depuis la tâche détachée de `recomputeSections()`, donc jamais sur
@@ -419,6 +428,11 @@ final class CollectionViewModel {
     /// Valeur affichée en 2e ligne de l'en-tête (voir `CollectionItem.sectionDisplayTitle`).
     func displayTitle(for section: (key: String, items: [CollectionItem])) -> String {
         section.items.first?.sectionDisplayTitle(for: sortOption) ?? section.key
+    }
+
+    /// Artistes nommés par l'en-tête de la section, cliquables (voir `LibrarySectionHeader.artists`).
+    func headerArtists(for section: (key: String, items: [CollectionItem])) -> [ReleaseArtist] {
+        section.items.first?.sectionHeaderArtists(for: sortOption) ?? []
     }
 
     func loadFoldersAndItems(isSilent: Bool = false) async {

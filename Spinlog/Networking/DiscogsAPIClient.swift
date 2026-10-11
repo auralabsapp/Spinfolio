@@ -90,6 +90,21 @@ final class DiscogsAPIClient {
         return try decoder.decode(T.self, from: data)
     }
 
+    /// Comme `request`, mais décode la réponse hors du fil principal : pour les réponses
+    /// volumineuses reçues en série (classement des discographies), dont le décodage répété
+    /// pourrait saccader l'interface. `T` doit être déclaré `nonisolated` (décodable hors de
+    /// l'acteur principal).
+    func requestDecodingInBackground<T: Decodable & Sendable>(
+        path: String,
+        queryItems: [URLQueryItem] = [],
+        credentials: DiscogsCredentials? = nil
+    ) async throws -> T {
+        let (data, _) = try await perform(path: path, method: "GET", queryItems: queryItems, credentials: credentials)
+        return try await Task.detached(priority: .utility) {
+            try JSONDecoder().decode(T.self, from: data)
+        }.value
+    }
+
     /// Requête sans corps de réponse exploitable (ex: DELETE qui renvoie 204/200 vide).
     @discardableResult
     func requestVoid(
@@ -128,7 +143,7 @@ final class DiscogsAPIClient {
             urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         }
         for attempt in 0...2 {
-            try await rateLimiter.waitForSlot()
+            try await rateLimiter.waitForSlot(priority: DiscogsRateLimiter.priority)
 
             // Signé à chaque tentative, juste avant l'envoi : un retry après 429 repart plusieurs
             // secondes plus tard, et réutiliser le même `oauth_nonce`/`oauth_timestamp` peut être

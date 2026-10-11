@@ -14,14 +14,24 @@ struct ShelfPlacementView: View {
     @State private var authManager = DiscogsAuthManager.shared
     @State private var viewModel = ShelfPlacementViewModel()
 
-    private var neighbors: ShelfNeighbors {
-        viewModel.neighbors(
+    /// Calculés une seule fois à l'ouverture, plutôt qu'à chaque image de rendu comme le ferait
+    /// une propriété calculée ordinaire : cette recherche relit et redécode toute la collection
+    /// locale puis la trie entièrement (voir `ShelfPlacementService.findNeighborsInLocalStore`) —
+    /// un calcul coûteux, répété à chaque accès (`neighbors.previous`, `.next`, `.scope`… une
+    /// dizaine de fois par rendu), qui retardait visiblement l'apparition de la feuille.
+    private let neighbors: ShelfNeighbors
+
+    init(targetRelease: Release, customCollection: [Release]? = nil) {
+        self.targetRelease = targetRelease
+        self.customCollection = customCollection
+        let preferences = ShelfPreferencesStore.shared
+        self.neighbors = ShelfPlacementViewModel().neighbors(
             for: targetRelease,
             customCollection: customCollection,
             strategy: preferences.sortStrategy,
             ignoreArticles: preferences.ignoreArticles,
             restrictToSameFolder: preferences.restrictToSameFolder,
-            username: authManager.username
+            username: DiscogsAuthManager.shared.username
         )
     }
 
@@ -67,13 +77,7 @@ struct ShelfPlacementView: View {
                             horizontalTriptychSection
                         }
 
-                        // 3. Carte d'explication naturelle
-                        VStack(alignment: .leading, spacing: 8) {
-                            SectionEyebrow(title: "Instructions de rangement", icon: "text.alignleft")
-                            instructionCard
-                        }
-
-                        // 4. Règle de classement physique active
+                        // 3. Règle de classement physique active
                         VStack(alignment: .leading, spacing: 8) {
                             SectionEyebrow(title: "Méthode de classement", icon: "slider.horizontal.3")
                             sortStrategyCard
@@ -157,39 +161,27 @@ struct ShelfPlacementView: View {
 
             // Jauge de progression horizontale
             if neighbors.totalCount > 1 {
-                VStack(spacing: 4) {
-                    GeometryReader { geo in
-                        let ratio = CGFloat(neighbors.positionIndex - 1) / CGFloat(max(neighbors.totalCount - 1, 1))
-                        let width = geo.size.width
+                GeometryReader { geo in
+                    let ratio = CGFloat(neighbors.positionIndex - 1) / CGFloat(max(neighbors.totalCount - 1, 1))
+                    let width = geo.size.width
 
-                        ZStack(alignment: .leading) {
-                            Capsule()
-                                .fill(Color.primary.opacity(0.08))
-                                .frame(height: 5)
+                    ZStack(alignment: .leading) {
+                        Capsule()
+                            .fill(Color.primary.opacity(0.08))
+                            .frame(height: 5)
 
-                            Capsule()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [Color.spinlogPink.opacity(0.7), Color.spinlogPink],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
+                        Capsule()
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.spinlogPink.opacity(0.7), Color.spinlogPink],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
                                 )
-                                .frame(width: max(width * ratio, 6), height: 5)
-                        }
-                    }
-                    .frame(height: 5)
-
-                    HStack {
-                        Text("Début")
-                            .font(.caption2.weight(.medium))
-                            .foregroundStyle(Color.appTertiaryText)
-                        Spacer()
-                        Text("Fin")
-                            .font(.caption2.weight(.medium))
-                            .foregroundStyle(Color.appTertiaryText)
+                            )
+                            .frame(width: max(width * ratio, 6), height: 5)
                     }
                 }
+                .frame(height: 5)
                 .padding(.top, 2)
             }
         }
@@ -247,7 +239,7 @@ struct ShelfPlacementView: View {
             HStack(spacing: 3) {
                 Image(systemName: "arrow.down")
                     .font(.caption2.weight(.bold))
-                Text("À RANGER ICI")
+                Text("ICI")
                     .font(.caption2.weight(.heavy))
             }
             .foregroundStyle(.white)
@@ -388,111 +380,16 @@ struct ShelfPlacementView: View {
                         .font(.caption2.weight(.bold))
                         .foregroundStyle(color)
                         .multilineTextAlignment(.center)
-                        .padding(.horizontal, 4)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.8)
+                        .frame(width: 64)
                 }
-            }
-
-            VStack(spacing: 2) {
-                Text(title)
-                    .font(.caption2.weight(.medium))
-                    .foregroundStyle(Color.appSecondaryText)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
             }
         }
         .frame(maxWidth: .infinity)
     }
 
-    // MARK: - 3. Carte d'explication textuelle naturelle
-
-    private var instructionCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            if let previous = neighbors.previous, let next = neighbors.next {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("À ranger entre")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(Color.appSecondaryText)
-
-                    neighborDiscLine(release: previous, isLeft: true)
-                }
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("et")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(Color.appSecondaryText)
-
-                    neighborDiscLine(release: next, isLeft: false)
-                }
-            } else if let next = neighbors.next {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("À ranger tout au début du meuble")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(Color.appSecondaryText)
-
-                    Text("juste avant")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(Color.appSecondaryText)
-
-                    neighborDiscLine(release: next, isLeft: false)
-                }
-            } else if let previous = neighbors.previous {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("À ranger tout à la fin du meuble")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(Color.appSecondaryText)
-
-                    Text("juste après")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(Color.appSecondaryText)
-
-                    neighborDiscLine(release: previous, isLeft: true)
-                }
-            } else {
-                Text(neighbors.explanationText)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.primary)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .appleMusicGroupedCard()
-    }
-
-    private func neighborDiscLine(release: Release, isLeft: Bool) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 6) {
-            Image(systemName: isLeft ? "arrow.left" : "arrow.right")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(isLeft ? Color.blue : Color.purple)
-
-            styledNeighborText(for: release)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    /// Combine trois segments stylés différemment (artiste en gras, titre en semi-gras, année
-    /// en gris) au sein d'un seul `Text` fluide : la concaténation `Text + Text` est dépréciée
-    /// en faveur de l'interpolation de `Text` dans un autre `Text`, qui produit le même rendu.
-    private func styledNeighborText(for release: Release) -> Text {
-        let artistPart = Text(release.artistNames.isEmpty ? "" : "\(release.artistNames) – ")
-            .font(.subheadline.weight(.bold))
-            .foregroundColor(.primary)
-        let titlePart = Text(release.title)
-            .font(.subheadline.weight(.semibold))
-            .foregroundColor(.primary)
-        let yearPart = Text(neighborYearText(for: release))
-            .font(.footnote)
-            .foregroundColor(Color.appSecondaryText)
-        return Text("\(artistPart)\(titlePart)\(yearPart)")
-    }
-
-    private func neighborYearText(for release: Release) -> String {
-        guard let year = release.effectiveShelfYear(useOriginalYear: preferences.sortStrategy.usesMasterYear), year > 0 else {
-            return ""
-        }
-        return " (\(year))"
-    }
-
-    // MARK: - 4. Règle de classement active
+    // MARK: - 3. Règle de classement active
 
     private var sortStrategyCard: some View {
         Button {

@@ -141,7 +141,10 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
                 .onChange(of: scenePhase) { _, newPhase in
                     if newPhase == .background {
                         WantlistAlertStore.shared.scheduleBackgroundCheck()
+                        DiscogsCategoryBackfillService.shared.stop()
                     } else if newPhase == .active {
+                        // Classement des discographies de la bibliothèque, discret (voir le service).
+                        DiscogsCategoryBackfillService.shared.start()
                         Task {
                             await NowPlayingActivityManager.shared.checkExpiry()
                         }

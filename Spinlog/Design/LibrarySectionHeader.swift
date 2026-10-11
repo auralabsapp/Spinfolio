@@ -7,6 +7,9 @@ struct LibrarySectionHeader: View {
     let token: String
     let title: String
     let count: Int
+    /// Artistes nommés par `title` (tri par artiste ou par meuble) : le titre devient alors un
+    /// lien vers leur fiche. Vide pour les autres tris (album, année, label…).
+    var artists: [ReleaseArtist] = []
 
     var body: some View {
         HStack(alignment: .center, spacing: 8) {
@@ -16,7 +19,7 @@ struct LibrarySectionHeader: View {
                     .foregroundStyle(Color.spinlogPink)
 
                 if displayToken != title && !title.isEmpty {
-                    Text(title)
+                    ArtistNameLinks(artists: artists, fallback: title)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.primary)
                         .lineLimit(1)

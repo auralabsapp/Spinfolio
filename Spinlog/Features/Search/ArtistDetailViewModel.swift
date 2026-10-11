@@ -8,9 +8,8 @@ final class ArtistDetailViewModel {
     /// Nom de l'artiste tel que connu de Discogs, qui ne sert qu'à l'identifier : nom à
     /// rechercher sur Apple Music, repli du titre (voir `title`). Tiré de la fiche Discogs, ou
     /// à défaut (hors ligne) de la collection/wantlist locale. `nil` : page non chargée.
-    /// Tout ce qui s'affiche sur cette page vient d'Apple Music (photo, nom, biographie,
-    /// discographie), sauf les indications de possession, tirées de la collection et de la
-    /// wantlist de l'utilisateur.
+    /// La page affiche Apple Music (photo, nom, biographie) puis la discographie Discogs ; les
+    /// indications de possession viennent de la collection et de la wantlist de l'utilisateur.
     private(set) var artistName: String?
     private(set) var artworkURL: URL?
     /// Vrai tant que la photo Apple Music est en cours de recherche/téléchargement.
@@ -33,61 +32,35 @@ final class ArtistDetailViewModel {
     private(set) var appleMusicAccess: AppleMusicArtistArtworkService.Access?
     private(set) var isLoading = true
     private(set) var errorMessage: String?
+    /// Vrai si le cache local de la collection a plus de 6 heures (règle des CGU Discogs, voir
+    /// `LocalDataStore.isCollectionStale`) : hors ligne, la page affiche alors le même bandeau
+    /// « Instantané archivé du… » que la Collection, puisque la possession et le nom affichés en
+    /// proviennent. Évalué au chargement et au retour du réseau (lecture SwiftData : pas à chaque
+    /// rendu).
+    private(set) var isLibrarySnapshotStale = false
 
-    /// Les éditions d'un même album au catalogue Apple Music (Deluxe, Explicit, remasterisée…),
-    /// regroupées sous un titre normalisé — voir `AppleMusicArtistArtworkService.normalizeTitle`.
-    struct AlbumGroup: Identifiable {
-        let titleKey: String
-        /// Édition affichée : le titre le plus court (en général l'édition standard), puis la
-        /// plus ancienne à égalité.
-        let representative: AppleMusicAlbumSummary
-        let versionCount: Int
-        /// Année de la plus ancienne des éditions, soit celle de la sortie originale.
-        let originalYear: String?
-        var id: String { representative.id }
-    }
-
-    /// État de chargement d'une section de discographie Apple Music. Distingue explicitement
-    /// « indisponible » (artiste introuvable ou erreur réseau) de « en cours » : confondre les
-    /// deux laissait un indicateur de chargement tourner indéfiniment après un échec. Les
-    /// groupes sont calculés une seule fois au chargement, pas à chaque rendu : la vue est
-    /// réévaluée à chaque image du défilement (fondu du titre).
-    enum SectionState {
-        case loading
-        case loaded([AlbumGroup])
-        case unavailable
-    }
-
-    private(set) var sectionStates: [DiscographySection: SectionState] = [:]
-    var selectedSection: DiscographySection = .albums
-
-    /// Statut d'une œuvre par rapport à la collection locale de l'utilisateur, déterminé par
-    /// rapprochement de titre (Apple Music ne connaît pas les identifiants Discogs).
+    /// Statut d'une œuvre par rapport à la collection locale de l'utilisateur (voir
+    /// `StatusBadgeView`).
     enum OwnershipStatus {
         case owned
         case inWantlist
     }
 
-    struct DiscographyEntry: Identifiable {
-        let group: AlbumGroup
-        /// Les deux indicateurs sont indépendants : un album peut être à la fois possédé et en
-        /// wantlist (ex. un pressage différent désiré en plus de celui déjà possédé) — un simple
-        /// statut unique masquerait l'un des deux badges.
-        let isOwned: Bool
-        let isInWantlist: Bool
-        /// Fiche album à ouvrir (ton exemplaire, ou le master qui regroupe tes pressages) si
-        /// possédé ou en wantlist — `nil` sinon (rien à ouvrir).
-        let destination: SearchDestination?
-        var id: String { group.id }
-    }
-
-    /// Un exemplaire de la collection ou de la wantlist locale crédité à cet artiste.
+    /// Un exemplaire de la collection ou de la wantlist locale (tous artistes confondus : la
+    /// discographie Discogs rapproche par identifiant de master/release, sans dépendre des
+    /// crédits d'artiste du disque).
     private struct LibraryRecord {
         let releaseId: Int
-        let titleKey: String
+        /// Titre normalisé, seulement pour les disques crédités à cet artiste : compte les albums
+        /// distincts du résumé (`ownedCount`/`wantlistCount`) et aide à identifier l'artiste
+        /// sur Apple Music (voir `prepareAppleMusic`). `nil` pour les disques d'autres artistes.
+        let titleKey: String?
         let masterId: Int?
         let coverURL: String?
         let dateAdded: Date?
+        /// Noms et descriptions de formats du pressage (« Vinyl », « LP », « Album »…) : classent
+        /// sans requête la section Discogs d'un master dont l'utilisateur possède un pressage.
+        let formatTokens: [String]
     }
 
     /// Indexés par identifiant de release : une notification d'ajout/retrait (voir
@@ -98,6 +71,11 @@ final class ArtistDetailViewModel {
     /// Titres normalisés possédés/désirés de cet artiste, dérivés des exemplaires ci-dessus.
     private(set) var ownedKeys: Set<String> = []
     private(set) var wantlistKeys: Set<String> = []
+    /// Exemplaires regroupés par master, pour les badges de la discographie Discogs : calculés
+    /// une fois par changement, pas à chaque rendu (la vue est réévaluée à chaque image du
+    /// défilement).
+    private var ownedByMaster: [Int: [LibraryRecord]] = [:]
+    private var wantedByMaster: [Int: [LibraryRecord]] = [:]
 
     /// Nombre d'albums distincts de cet artiste présents dans la collection/wantlist locales,
     /// affiché en résumé sous la photo. Un même album peut compter dans les deux.
@@ -105,7 +83,6 @@ final class ArtistDetailViewModel {
     var wantlistCount: Int { wantlistKeys.count }
 
     private var artistId: Int?
-    @ObservationIgnored private var appleMusicPreparation: Task<Void, Never>?
     @ObservationIgnored private var isRefreshingAppleMusic = false
     @ObservationIgnored nonisolated(unsafe) private var observerTokens: [NSObjectProtocol] = []
 
@@ -117,39 +94,309 @@ final class ArtistDetailViewModel {
         observerTokens.forEach(NotificationCenter.default.removeObserver)
     }
 
-    /// Titre de la page : le nom Apple Music. Seule exception à la règle « rien de Discogs »,
-    /// quand l'artiste est introuvable sur Apple Music (ou l'accès refusé) : le nom Discogs,
-    /// débarrassé de son suffixe d'homonymie (« Ghost (32) » → « Ghost »), pour ne pas laisser
-    /// la page sans titre.
+    /// Titre de la page : le nom Apple Music ; à défaut (artiste introuvable sur Apple Music, ou
+    /// accès refusé), le nom Discogs, débarrassé de son suffixe d'homonymie (« Ghost (32) » →
+    /// « Ghost »), pour ne pas laisser la page sans titre.
     var title: String {
         if let appleMusicName { return appleMusicName }
         return AppleMusicArtistArtworkService.strippingDiscogsDisambiguation(artistName ?? "")
     }
 
-    var visibleSectionState: SectionState {
-        sectionStates[selectedSection] ?? .loading
+    // MARK: - Discographie Discogs
+
+    /// État de la section « Discographie Discogs » : œuvres principales de l'artiste, avec
+    /// possession rapprochée par identifiant de master/release.
+    enum DiscogsDiscographyState: Equatable {
+        /// Aucune page encore reçue.
+        case loading
+        /// Au moins une page reçue. `isLoadingMore` : pages suivantes en cours ; `isTruncated` :
+        /// liste partielle (plafond de pages atteint, ou échec d'une page suivante).
+        case loaded(isLoadingMore: Bool, isTruncated: Bool)
+        /// Échec avant la première page (erreur réseau, hors ligne).
+        case unavailable
     }
 
-    /// Vrai s'il manque encore un élément Apple Music à la page (artiste non identifié, photo
-    /// ou section affichée non chargée) — pour n'afficher le bandeau hors ligne qu'à bon escient.
-    var hasIncompleteAppleMusicContent: Bool {
-        if appleMusicName == nil || artworkURL == nil { return true }
-        if case .loaded = visibleSectionState { return false }
-        return true
+    struct DiscogsWorkEntry: Identifiable {
+        let work: ArtistReleaseItem
+        let isOwned: Bool
+        let isInWantlist: Bool
+        /// Fiche de ton exemplaire (à défaut, de celui en wantlist) ; sinon, pour un master, sa
+        /// fiche master. `nil` pour une release isolée ni possédée ni en wantlist : la ligne reste
+        /// alors purement informative.
+        let destination: SearchDestination?
+        var id: String { work.id }
     }
 
-    /// Lignes de discographie à afficher, à partir des groupes déjà calculés et de l'index de
-    /// possession : un ajout/retrait de collection ou de wantlist se reflète immédiatement sur
-    /// les badges, sans recharger la discographie.
-    func entries(for groups: [AlbumGroup]) -> [DiscographyEntry] {
-        groups.map { group in
-            DiscographyEntry(
-                group: group,
-                isOwned: ownedKeys.contains(group.titleKey),
-                isInWantlist: wantlistKeys.contains(group.titleKey),
-                destination: destination(forTitleKey: group.titleKey)
+    /// Page de l'artiste sur discogs.com, pour la mention d'attribution exigée par les CGU de
+    /// l'API Discogs sous la section qui affiche leurs données (voir `DiscogsAttributionLink`).
+    var discogsArtistURL: URL? {
+        artistId.flatMap { URL(string: "https://www.discogs.com/artist/\($0)") }
+    }
+
+    private(set) var discogsDiscographyState: DiscogsDiscographyState = .loading
+    private(set) var discogsWorks: [ArtistReleaseItem] = []
+    @ObservationIgnored private var isLoadingDiscogsDiscography = false
+
+    /// Section de chaque œuvre (clé : `ArtistReleaseItem.id`), au fur et à mesure du classement.
+    /// Une œuvre absente n'est pas encore classée et n'apparaît dans aucune section.
+    private(set) var discogsCategories: [String: DiscogsWorkCategory] = [:]
+
+    /// Choix du sélecteur de la discographie Discogs : une section, ou l'option temporaire
+    /// « Tri en cours » qui regroupe les œuvres pas encore ventilées. Distinct de
+    /// `DiscogsWorkCategory`, dont les valeurs sont persistées (cache, iCloud) : une œuvre n'est
+    /// jamais « classée » en cours de tri.
+    enum DiscogsSectionFilter: Hashable, Identifiable {
+        case category(DiscogsWorkCategory)
+        case pending
+
+        var id: String {
+            switch self {
+            case .category(let category): category.rawValue
+            case .pending: "pending"
+            }
+        }
+    }
+
+    var selectedDiscogsFilter: DiscogsSectionFilter = .category(.albums)
+
+    /// Œuvres pas encore ventilées dans une section.
+    var pendingDiscogsCount: Int {
+        discogsWorks.reduce(0) { count, work in discogsCategories[work.id] == nil ? count + 1 : count }
+    }
+
+    /// Les quatre sections, puis « Tri en cours » tant qu'il reste des œuvres à ventiler : elle
+    /// se vide au fil du classement et disparaît une fois vide.
+    var discogsFilterOptions: [DiscogsSectionFilter] {
+        let categories = DiscogsWorkCategory.allCases.map(DiscogsSectionFilter.category)
+        return pendingDiscogsCount > 0 ? categories + [.pending] : categories
+    }
+
+    func title(for filter: DiscogsSectionFilter) -> String {
+        switch filter {
+        case .category(let category):
+            return category.title
+        case .pending:
+            // Après un classement interrompu (erreurs réseau), les œuvres restantes ne sont plus
+            // « en cours » de tri : on le dit plutôt que de laisser croire que ça avance.
+            return isSortingDiscogsWorks ? String(localized: "Tri en cours") : String(localized: "Non classées")
+        }
+    }
+
+    /// Vrai tant que des œuvres peuvent encore être ventilées : pages en cours de chargement, ou
+    /// classement en cours.
+    var isSortingDiscogsWorks: Bool {
+        if discogsClassificationProgress != nil { return true }
+        switch discogsDiscographyState {
+        case .loading, .loaded(isLoadingMore: true, isTruncated: _): return true
+        default: return false
+        }
+    }
+
+    struct ClassificationProgress: Equatable {
+        let done: Int
+        let total: Int
+    }
+
+    /// Classement en cours (masters dont il faut lire le pressage principal) ; `nil` sinon.
+    private(set) var discogsClassificationProgress: ClassificationProgress?
+    @ObservationIgnored private var isClassifyingDiscogsWorks = false
+
+    /// La liste brute inclut toutes les apparitions de l'artiste (des milliers d'entrées pour
+    /// un artiste prolifique), alors que le filtre « rôle principal » ne peut se faire que côté
+    /// app : au-delà de ce plafond (1 000 entrées brutes), la liste est signalée comme partielle.
+    private static let maxDiscogsDiscographyPages = 10
+
+    /// Lignes de la discographie Discogs, avec leur statut de possession : un master est
+    /// « possédé » si l'un de tes exemplaires s'y rattache, une release isolée si tu la
+    /// possèdes elle-même.
+    func discogsEntries() -> [DiscogsWorkEntry] {
+        discogsWorks.filter { work in
+            switch selectedDiscogsFilter {
+            case .category(let category): discogsCategories[work.id] == category
+            case .pending: discogsCategories[work.id] == nil
+            }
+        }.map { work in
+            let owned = libraryRecords(for: work, in: ownedRecords, byMaster: ownedByMaster)
+            let wanted = libraryRecords(for: work, in: wantedRecords, byMaster: wantedByMaster)
+            let target = (owned.isEmpty ? wanted : owned)
+                .max { ($0.dateAdded ?? .distantPast) < ($1.dateAdded ?? .distantPast) }
+            let destination: SearchDestination? = if let target {
+                .release(target.releaseId, coverURL: target.coverURL)
+            } else if work.kind == .master {
+                // Œuvre ni possédée ni en wantlist : sa fiche master (la même que depuis une
+                // fiche album), qui liste toutes ses éditions.
+                .master(work.discogsId)
+            } else {
+                nil
+            }
+            return DiscogsWorkEntry(
+                work: work,
+                isOwned: !owned.isEmpty,
+                isInWantlist: !wanted.isEmpty,
+                destination: destination
             )
         }
+    }
+
+    private func libraryRecords(
+        for work: ArtistReleaseItem,
+        in records: [Int: LibraryRecord],
+        byMaster: [Int: [LibraryRecord]]
+    ) -> [LibraryRecord] {
+        switch work.kind {
+        case .master: byMaster[work.discogsId] ?? []
+        case .release: records[work.discogsId].map { [$0] } ?? []
+        case nil: []
+        }
+    }
+
+    func retryDiscogsDiscography() async {
+        await loadDiscogsDiscography()
+    }
+
+    func retryDiscogsClassification() async {
+        await classifyDiscogsWorks()
+    }
+
+    /// Range chaque œuvre dans une section (Albums, Singles & EP, Compilations, Autres), comme
+    /// sur le site discogs.com — l'API ne fournit pas ces sections, elles se déduisent du format.
+    /// Sans requête quand c'est possible : release isolée (format fourni par la liste), master
+    /// déjà classé (cache permanent), ou master dont l'utilisateur possède ou recherche un
+    /// pressage (format présent dans la collection/wantlist locale). Sinon, par la recherche
+    /// Discogs puis le pressage principal (voir `DiscogsWorkClassifier`), au rythme imposé par
+    /// l'API ; la liste se range au fil de l'eau et le résultat est mémorisé pour les fois
+    /// suivantes.
+    private func classifyDiscogsWorks() async {
+        guard !isClassifyingDiscogsWorks else { return }
+        isClassifyingDiscogsWorks = true
+        defer {
+            isClassifyingDiscogsWorks = false
+            discogsClassificationProgress = nil
+            DiscogsWorkCategoryCache.shared.flush()
+        }
+
+        let pending = applyImmediateCategories()
+        guard !pending.isEmpty else {
+            leavePendingFilterIfEmpty()
+            return
+        }
+
+        guard let artistName else { return }
+        var done = 0
+        discogsClassificationProgress = ClassificationProgress(done: 0, total: pending.count)
+        let workIdsByMaster = Dictionary(pending.map { ($0.work.discogsId, $0.work.id) }, uniquingKeysWith: { first, _ in first })
+        await DiscogsWorkClassifier.classify(
+            pending.map { DiscogsWorkClassifier.PendingMaster(masterId: $0.work.discogsId, mainRelease: $0.mainRelease) },
+            artistName: artistName
+        ) { masterId, category in
+            guard let workId = workIdsByMaster[masterId] else { return }
+            discogsCategories[workId] = category
+            done += 1
+            discogsClassificationProgress = ClassificationProgress(done: done, total: pending.count)
+            leavePendingFilterIfEmpty()
+        }
+    }
+
+    /// « Tri en cours » disparaît du sélecteur une fois vide : s'il était sélectionné, on revient
+    /// sur Albums plutôt que de laisser une sélection sans option correspondante.
+    private func leavePendingFilterIfEmpty() {
+        if selectedDiscogsFilter == .pending && pendingDiscogsCount == 0 {
+            selectedDiscogsFilter = .category(.albums)
+        }
+    }
+
+    /// Classe tout ce qui peut l'être sans requête et renvoie les masters restants (avec leur
+    /// pressage principal à lire). Appelé à chaque page reçue : les sections se remplissent dès
+    /// le chargement, sans attendre la dernière page.
+    @discardableResult
+    private func applyImmediateCategories() -> [(work: ArtistReleaseItem, mainRelease: Int)] {
+        var pending: [(work: ArtistReleaseItem, mainRelease: Int)] = []
+        for work in discogsWorks where discogsCategories[work.id] == nil {
+            if let category = immediateCategory(for: work) {
+                discogsCategories[work.id] = category
+            } else if let mainRelease = work.mainRelease {
+                pending.append((work, mainRelease))
+            } else {
+                // Master sans pressage principal renseigné : rien à lire, rangé dans « Autres ».
+                discogsCategories[work.id] = .other
+            }
+        }
+        return pending
+    }
+
+    private func immediateCategory(for work: ArtistReleaseItem) -> DiscogsWorkCategory? {
+        switch work.kind {
+        case .release:
+            return work.format.map(DiscogsDiscography.category(fromFormatSummary:)) ?? .other
+        case .master:
+            if let cached = DiscogsWorkCategoryCache.shared.category(forMasterId: work.discogsId) {
+                return cached
+            }
+            // Pressage local de ce master : son format suffit à classer l'œuvre. Pas mémorisé
+            // dans le cache : il décrit un pressage de l'utilisateur, pas le pressage principal.
+            let localPressings = (ownedByMaster[work.discogsId] ?? []) + (wantedByMaster[work.discogsId] ?? [])
+            if let tokens = localPressings.first(where: { !$0.formatTokens.isEmpty })?.formatTokens {
+                return DiscogsDiscography.category(fromFormatTokens: tokens)
+            }
+            return nil
+        case nil:
+            return .other
+        }
+    }
+
+    /// Charge la discographie page par page : la liste s'affiche et s'enrichit à chaque page
+    /// reçue, sans attendre la dernière (chaque page passe par le limiteur de débit du client
+    /// Discogs, soit environ une par seconde).
+    private func loadDiscogsDiscography() async {
+        guard let artistId, !isLoadingDiscogsDiscography else { return }
+        if case .loaded(isLoadingMore: false, isTruncated: false) = discogsDiscographyState {
+            // Liste complète : il peut seulement rester des œuvres à classer (ex. retour du réseau).
+            await classifyDiscogsWorks()
+            return
+        }
+        guard NetworkMonitor.shared.isConnected else {
+            if discogsWorks.isEmpty { discogsDiscographyState = .unavailable }
+            return
+        }
+        isLoadingDiscogsDiscography = true
+        defer { isLoadingDiscogsDiscography = false }
+
+        discogsDiscographyState = .loading
+        discogsWorks = []
+        var rawItems: [ArtistReleaseItem] = []
+        var page = 1
+        var totalPages = 1
+        while page <= min(totalPages, Self.maxDiscogsDiscographyPages) {
+            do {
+                let response = try await DiscogsAPIClient.shared.artistReleases(
+                    artistId: artistId,
+                    page: page,
+                    credentials: DiscogsAuthManager.shared.credentials
+                )
+                totalPages = response.pagination.pages
+                rawItems += response.releases
+                discogsWorks = DiscogsDiscography.mainWorks(from: rawItems)
+                applyImmediateCategories()
+                let lastPage = min(totalPages, Self.maxDiscogsDiscographyPages)
+                discogsDiscographyState = .loaded(
+                    isLoadingMore: page < lastPage,
+                    isTruncated: page >= lastPage && totalPages > Self.maxDiscogsDiscographyPages
+                )
+                page += 1
+            } catch {
+                discogsDiscographyState = rawItems.isEmpty
+                    ? .unavailable
+                    : .loaded(isLoadingMore: false, isTruncated: true)
+                break
+            }
+        }
+        await classifyDiscogsWorks()
+    }
+
+    /// Vrai s'il manque encore un élément Apple Music à la page (artiste non identifié ou
+    /// photo non chargée) — pour n'afficher le bandeau hors ligne qu'à bon escient.
+    var hasIncompleteAppleMusicContent: Bool {
+        appleMusicName == nil || artworkURL == nil
     }
 
     /// Charge la page en deux temps. D'abord l'identité de l'artiste (son nom, à rechercher sur
@@ -166,6 +413,7 @@ final class ArtistDetailViewModel {
         errorMessage = nil
         // Lecture locale lancée tout de suite, en parallèle de la requête Discogs.
         let library = startLocalLibraryDecoding()
+        refreshLibrarySnapshotStaleness()
         var discogsName: String?
         var discogsError: Error?
         // Testé avant la requête : le mode hors ligne simulé (options développeur) coupe
@@ -190,7 +438,10 @@ final class ArtistDetailViewModel {
         artistName = name
         applyLocalMembership(collection: collection, wantlist: wantlist)
         isLoading = false
+        // Discographie Discogs et contenu Apple Music se chargent en parallèle.
+        async let discogsDiscography: Void = loadDiscogsDiscography()
         await refreshAppleMusic(for: name)
+        await discogsDiscography
     }
 
     /// À appeler au retour au premier plan : si l'accès à Apple Music était refusé et vient
@@ -205,40 +456,32 @@ final class ArtistDetailViewModel {
     /// toute la page si elle s'était arrêtée sur une erreur.
     private func handleConnectionRestored() async {
         guard let artistId else { return }
+        refreshLibrarySnapshotStaleness()
         guard let artistName else {
             await load(artistId: artistId)
             return
         }
-        guard appleMusicAccess == .authorized else { return }
-        await refreshAppleMusic(for: artistName)
+        // Ne relance rien si la discographie Discogs est déjà complète (voir sa garde).
+        async let discogsDiscography: Void = loadDiscogsDiscography()
+        if appleMusicAccess == .authorized {
+            await refreshAppleMusic(for: artistName)
+        }
+        await discogsDiscography
     }
 
     /// Unique chemin de chargement Apple Music (premier affichage, retour depuis les Réglages,
     /// retour du réseau) : ne recharge que ce qui manque encore, sans effacer ce qui est déjà
-    /// affiché. Les autres sections de discographie sont chargées paresseusement (voir
-    /// `loadSectionIfNeeded`), au moment où l'utilisateur les sélectionne.
+    /// affiché.
     private func refreshAppleMusic(for name: String) async {
         guard !isRefreshingAppleMusic else { return }
         isRefreshingAppleMusic = true
         defer { isRefreshingAppleMusic = false }
 
-        // Une section restée indisponible sera retentée à sa prochaine sélection.
-        for (section, state) in sectionStates {
-            if case .unavailable = state { sectionStates[section] = nil }
-        }
-        let section = selectedSection
-        var needsSection = true
-        if case .loaded = sectionStates[section] { needsSection = false }
-        if needsSection { sectionStates[section] = .loading }
         if appleMusicName == nil { isResolvingAppleMusicArtist = true }
         if artworkURL == nil { isLoadingArtwork = true }
 
-        // Mémorisée avant toute suspension, pour qu'une section sélectionnée entre-temps
-        // l'attende (voir `loadSectionIfNeeded`).
-        let preparation = Task { await self.prepareAppleMusic(for: name) }
-        appleMusicPreparation = preparation
-        await preparation.value
-        await loadAppleMusicContent(for: name, section: needsSection ? section : nil)
+        await prepareAppleMusic(for: name)
+        await loadAppleMusicContent(for: name)
     }
 
     /// Vérifie l'accès (avec l'invite système si elle n'a jamais été présentée), puis identifie
@@ -252,13 +495,11 @@ final class ArtistDetailViewModel {
         guard access == .authorized else {
             isResolvingAppleMusicArtist = false
             isLoadingArtwork = false
-            sectionStates = [:]
             return
         }
         guard NetworkMonitor.shared.isConnected else {
             isResolvingAppleMusicArtist = false
             isLoadingArtwork = false
-            markLoadingSectionsUnavailable()
             return
         }
         await service.prepareArtist(named: name, knownAlbumTitles: ownedKeys.union(wantlistKeys))
@@ -268,8 +509,8 @@ final class ArtistDetailViewModel {
         isResolvingAppleMusicArtist = false
     }
 
-    /// Photo et biographie si elles manquent encore, et la section demandée.
-    private func loadAppleMusicContent(for name: String, section: DiscographySection?) async {
+    /// Photo et biographie si elles manquent encore.
+    private func loadAppleMusicContent(for name: String) async {
         guard appleMusicAccess == .authorized, NetworkMonitor.shared.isConnected else { return }
         let service = AppleMusicArtistArtworkService.shared
         let needsArtwork = artworkURL == nil
@@ -290,87 +531,18 @@ final class ArtistDetailViewModel {
                     self.biography = await service.editorialNotes(for: name)
                 }
             }
-            if let section {
-                group.addTask { @MainActor in
-                    await self.fetchSection(section, artistName: name)
-                }
-            }
-        }
-    }
-
-    /// Appelée quand l'utilisateur sélectionne une section. Recharge aussi une section restée
-    /// indisponible (ex. erreur réseau passagère) : revenir dessus suffit à retenter.
-    func loadSectionIfNeeded(_ section: DiscographySection) async {
-        guard let artistName, appleMusicAccess != .denied else { return }
-        switch sectionStates[section] {
-        case .loading, .loaded:
-            return
-        case .unavailable, nil:
-            sectionStates[section] = .loading
-            await appleMusicPreparation?.value
-            guard appleMusicAccess == .authorized else {
-                sectionStates[section] = nil
-                return
-            }
-            guard NetworkMonitor.shared.isConnected else {
-                sectionStates[section] = .unavailable
-                return
-            }
-            await fetchSection(section, artistName: artistName)
-        }
-    }
-
-    func retrySelectedSection() async {
-        await loadSectionIfNeeded(selectedSection)
-    }
-
-    private func markLoadingSectionsUnavailable() {
-        for (section, state) in sectionStates {
-            if case .loading = state { sectionStates[section] = .unavailable }
-        }
-    }
-
-    /// Suppose la section déjà marquée `.loading` par l'appelant (ce qui évite qu'un second
-    /// appel concurrent ne relance la même requête).
-    private func fetchSection(_ section: DiscographySection, artistName: String) async {
-        if let albums = await AppleMusicArtistArtworkService.shared.albums(for: artistName, section: section) {
-            sectionStates[section] = .loaded(Self.groupEditions(albums))
-        } else {
-            sectionStates[section] = .unavailable
-        }
-    }
-
-    /// Regroupe les éditions d'un même album en conservant l'ordre du catalogue (position de la
-    /// première édition rencontrée).
-    private static func groupEditions(_ albums: [AppleMusicAlbumSummary]) -> [AlbumGroup] {
-        var order: [String] = []
-        var versionsByKey: [String: [AppleMusicAlbumSummary]] = [:]
-        for album in albums {
-            let key = AppleMusicArtistArtworkService.normalizeTitle(album.name)
-            if versionsByKey[key] == nil {
-                order.append(key)
-            }
-            versionsByKey[key, default: []].append(album)
-        }
-        return order.compactMap { key in
-            guard let versions = versionsByKey[key],
-                  let representative = versions.min(by: { lhs, rhs in
-                      if lhs.name.count != rhs.name.count { return lhs.name.count < rhs.name.count }
-                      return (lhs.releaseDate ?? "9999") < (rhs.releaseDate ?? "9999")
-                  }) else { return nil }
-            // Dates au format ISO (« 1991-09-24 », parfois juste « 1991 ») : l'ordre
-            // lexicographique est aussi l'ordre chronologique.
-            let earliestDate = versions.compactMap(\.releaseDate).min()
-            return AlbumGroup(
-                titleKey: key,
-                representative: representative,
-                versionCount: versions.count,
-                originalYear: earliestDate.flatMap { $0.count >= 4 ? String($0.prefix(4)) : nil }
-            )
         }
     }
 
     // MARK: - Possession locale
+
+    private func refreshLibrarySnapshotStaleness() {
+        guard let username = DiscogsAuthManager.shared.username else {
+            isLibrarySnapshotStale = false
+            return
+        }
+        isLibrarySnapshotStale = LocalDataStore.shared.isCollectionStale(username: username, folderId: DiscogsConstants.allFolderId)
+    }
 
     /// Lit la collection et la wantlist locales. Le décodage JSON des payloads se fait hors du
     /// fil principal : sur une grosse collection, il figeait l'interface à l'ouverture de la page.
@@ -395,43 +567,44 @@ final class ArtistDetailViewModel {
         return nil
     }
 
-    /// Exemplaires de la collection et de la wantlist locales crédités à cet artiste, identifié
-    /// par son identifiant Discogs plutôt que par son nom : une comparaison de noms par
+    /// Index de la collection et de la wantlist locales. Les disques crédités à cet artiste sont
+    /// reconnus par son identifiant Discogs plutôt que par son nom : une comparaison de noms par
     /// inclusion rattachait à tort « Ghostface Killah » à « Ghost », par exemple.
     private func applyLocalMembership(collection: [LibraryPayloadSummary], wantlist: [LibraryPayloadSummary]) {
         var owned: [Int: LibraryRecord] = [:]
         for summary in collection {
-            guard let record = record(for: summary) else { continue }
-            owned[summary.releaseId] = record
+            owned[summary.releaseId] = record(for: summary)
         }
         var wanted: [Int: LibraryRecord] = [:]
         for summary in wantlist {
-            guard let record = record(for: summary) else { continue }
-            wanted[summary.releaseId] = record
+            wanted[summary.releaseId] = record(for: summary)
         }
         ownedRecords = owned
         wantedRecords = wanted
     }
 
-    private func record(for summary: LibraryPayloadSummary) -> LibraryRecord? {
-        guard isCredited(artistIds: summary.artistIds, artistNames: summary.artistNames) else { return nil }
+    private func record(for summary: LibraryPayloadSummary) -> LibraryRecord {
+        let credited = isCredited(artistIds: summary.artistIds, artistNames: summary.artistNames)
         return LibraryRecord(
             releaseId: summary.releaseId,
-            titleKey: AppleMusicArtistArtworkService.normalizeTitle(summary.title),
+            // Normalisation (expressions régulières) réservée aux disques de cet artiste.
+            titleKey: credited ? AppleMusicArtistArtworkService.normalizeTitle(summary.title) : nil,
             masterId: summary.masterId,
             coverURL: summary.thumb,
-            dateAdded: summary.dateAdded
+            dateAdded: summary.dateAdded,
+            formatTokens: summary.formatTokens
         )
     }
 
-    private func record(for info: BasicInformation, releaseId: Int, dateAdded: Date?) -> LibraryRecord? {
-        guard isCredited(artistIds: (info.artists ?? []).map(\.id), artistNames: info.artistNames) else { return nil }
+    private func record(for info: BasicInformation, releaseId: Int, dateAdded: Date?) -> LibraryRecord {
+        let credited = isCredited(artistIds: (info.artists ?? []).map(\.id), artistNames: info.artistNames)
         return LibraryRecord(
             releaseId: releaseId,
-            titleKey: AppleMusicArtistArtworkService.normalizeTitle(info.title),
+            titleKey: credited ? AppleMusicArtistArtworkService.normalizeTitle(info.title) : nil,
             masterId: info.masterId,
             coverURL: info.thumb,
-            dateAdded: dateAdded
+            dateAdded: dateAdded,
+            formatTokens: (info.formats ?? []).flatMap { [$0.name] + ($0.descriptions ?? []) }
         )
     }
 
@@ -446,27 +619,10 @@ final class ArtistDetailViewModel {
     }
 
     private func rebuildMembershipIndex() {
-        ownedKeys = Set(ownedRecords.values.map(\.titleKey))
-        wantlistKeys = Set(wantedRecords.values.map(\.titleKey))
-    }
-
-    /// Fiche à ouvrir pour un titre : l'exemplaire possédé (à défaut, celui en wantlist). Si
-    /// plusieurs pressages différents de ce titre sont concernés, la fiche master — qui les
-    /// regroupe tous — plutôt qu'un pressage pris arbitrairement ; à défaut de master commun,
-    /// le pressage ajouté le plus récemment.
-    private func destination(forTitleKey key: String) -> SearchDestination? {
-        let owned = ownedRecords.values.filter { $0.titleKey == key }
-        let candidates = owned.isEmpty ? wantedRecords.values.filter { $0.titleKey == key } : owned
-        guard !candidates.isEmpty else { return nil }
-        if candidates.count == 1, let only = candidates.first {
-            return .release(only.releaseId, coverURL: only.coverURL)
-        }
-        let masterIds = Set(candidates.map(\.masterId))
-        if masterIds.count == 1, let masterId = masterIds.first ?? nil {
-            return .master(masterId)
-        }
-        let mostRecent = candidates.max { ($0.dateAdded ?? .distantPast) < ($1.dateAdded ?? .distantPast) }
-        return mostRecent.map { .release($0.releaseId, coverURL: $0.coverURL) }
+        ownedKeys = Set(ownedRecords.values.compactMap(\.titleKey))
+        wantlistKeys = Set(wantedRecords.values.compactMap(\.titleKey))
+        ownedByMaster = Dictionary(grouping: ownedRecords.values.filter { $0.masterId != nil }) { $0.masterId ?? 0 }
+        wantedByMaster = Dictionary(grouping: wantedRecords.values.filter { $0.masterId != nil }) { $0.masterId ?? 0 }
     }
 
     /// Suit les ajouts/retraits faits ailleurs dans l'app (ex. depuis une fiche album ouverte
@@ -500,9 +656,8 @@ final class ArtistDetailViewModel {
             },
             center.addObserver(forName: .wantlistItemAdded, object: nil, queue: .main) { [weak self] note in
                 MainActor.assumeIsolated {
-                    guard let self, let item = note.userInfo?["item"] as? WantlistItem,
-                          let record = self.record(for: item.basicInformation, releaseId: item.id, dateAdded: item.dateAddedDate) else { return }
-                    self.wantedRecords[item.id] = record
+                    guard let self, let item = note.userInfo?["item"] as? WantlistItem else { return }
+                    self.wantedRecords[item.id] = self.record(for: item.basicInformation, releaseId: item.id, dateAdded: item.dateAddedDate)
                 }
             },
             center.addObserver(forName: .wantlistItemRemoved, object: nil, queue: .main) { [weak self] note in
@@ -521,8 +676,7 @@ final class ArtistDetailViewModel {
     }
 
     private func handleCollectionItemAdded(_ item: CollectionItem) {
-        guard let record = record(for: item.basicInformation, releaseId: item.releaseId, dateAdded: item.dateAddedDate) else { return }
-        ownedRecords[item.releaseId] = record
+        ownedRecords[item.releaseId] = record(for: item.basicInformation, releaseId: item.releaseId, dateAdded: item.dateAddedDate)
     }
 }
 
@@ -535,13 +689,18 @@ nonisolated private struct LibraryPayloadSummary: Decodable, Sendable {
             let id: Int
             let name: String
         }
+        nonisolated struct FormatRef: Decodable, Sendable {
+            let name: String
+            let descriptions: [String]?
+        }
         let title: String
         let thumb: String?
         let masterId: Int?
         let artists: [ArtistRef]?
+        let formats: [FormatRef]?
 
         private enum CodingKeys: String, CodingKey {
-            case title, thumb, artists
+            case title, thumb, artists, formats
             case masterId = "master_id"
         }
     }
@@ -556,6 +715,7 @@ nonisolated private struct LibraryPayloadSummary: Decodable, Sendable {
     var thumb: String? { info.thumb }
     var masterId: Int? { info.masterId }
     var artists: [Info.ArtistRef] { info.artists ?? [] }
+    var formatTokens: [String] { (info.formats ?? []).flatMap { [$0.name] + ($0.descriptions ?? []) } }
     var artistIds: [Int] { (info.artists ?? []).map(\.id) }
     var artistNames: String { (info.artists ?? []).map(\.name).joined(separator: ", ") }
 

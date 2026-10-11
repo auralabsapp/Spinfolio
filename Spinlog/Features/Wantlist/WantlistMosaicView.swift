@@ -6,7 +6,12 @@ struct WantlistMosaicView: View {
     let sections: [(key: String, items: [WantlistItem])]
     let indexToken: ((key: String, items: [WantlistItem])) -> String
     let displayTitle: ((key: String, items: [WantlistItem])) -> String
+    let headerArtists: ((key: String, items: [WantlistItem])) -> [ReleaseArtist]
     let hasVerticalIndexBar: Bool
+    /// Nom de la zone de défilement dans laquelle les en-têtes de section rapportent leur
+    /// position (voir `reportingSectionOffset`, pour la pastille de position de
+    /// `SectionIndexBar` côté appelant).
+    let sectionsCoordinateSpace: String
     var isSelecting: Bool = false
     var selectedItemIds: Set<Int> = []
     var onToggleSelection: ((WantlistItem) -> Void)? = nil
@@ -34,7 +39,8 @@ struct WantlistMosaicView: View {
                         LibrarySectionHeader(
                             token: indexToken(section),
                             title: displayTitle(section),
-                            count: section.items.count
+                            count: section.items.count,
+                            artists: headerArtists(section)
                         )
                         .id(section.key)
                         // Voir le même commentaire dans CollectionMosaicView : même hauteur
@@ -42,14 +48,16 @@ struct WantlistMosaicView: View {
                         .padding(.vertical, 2)
                         .padding(.horizontal, 2)
                         .background(.regularMaterial)
+                        .reportingSectionOffset(key: section.key, coordinateSpace: sectionsCoordinateSpace)
                     }
                 }
             }
             .padding(.leading, 12)
-            .padding(.trailing, hasVerticalIndexBar ? 26 : 12)
+            .padding(.trailing, hasVerticalIndexBar ? 30 : 12)
             .padding(.top, 4)
             .padding(.bottom, 24)
         }
+        .coordinateSpace(name: sectionsCoordinateSpace)
     }
 
     // MARK: - Vignette d'une pochette dans la mosaïque

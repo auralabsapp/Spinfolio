@@ -31,6 +31,10 @@ private nonisolated enum SyncedRecordKind: Equatable {
     /// La bibliothèque de tags "autonomes" (créés sans être encore appliqués à un exemplaire —
     /// voir `TagStore.standaloneTags`) : un seul enregistrement singleton par compte.
     case standaloneTags
+    /// Sections (Albums, Singles & EP…) des masters Discogs déjà classés (voir
+    /// `DiscogsWorkCategoryCache`) : un seul enregistrement singleton par compte. Partagé pour
+    /// qu'un classement fait sur un appareil (une requête par master) serve aux autres.
+    case discogsWorkCategories
 
     private static let tagPrefix = "tags_"
     private static let sessionPrefix = "session_"
@@ -39,6 +43,7 @@ private nonisolated enum SyncedRecordKind: Equatable {
     private static let snapshotPrefix = "snapshot_"
     private static let wantlistAlertPrefix = "alert_"
     private static let standaloneTagsRecordName = "standaloneTags"
+    private static let discogsWorkCategoriesRecordName = "discogsWorkCategories"
 
     var recordName: String {
         switch self {
@@ -49,6 +54,7 @@ private nonisolated enum SyncedRecordKind: Equatable {
         case .collectionSnapshot(let dayStamp): return "\(Self.snapshotPrefix)\(dayStamp)"
         case .wantlistAlert(let releaseId): return "\(Self.wantlistAlertPrefix)\(releaseId)"
         case .standaloneTags: return Self.standaloneTagsRecordName
+        case .discogsWorkCategories: return Self.discogsWorkCategoriesRecordName
         }
     }
 
@@ -61,6 +67,7 @@ private nonisolated enum SyncedRecordKind: Equatable {
         case .collectionSnapshot: return "CollectionValueSnapshot"
         case .wantlistAlert: return "WantlistAlert"
         case .standaloneTags: return "StandaloneTags"
+        case .discogsWorkCategories: return "DiscogsWorkCategories"
         }
     }
 
@@ -82,6 +89,7 @@ private nonisolated enum SyncedRecordKind: Equatable {
             return .wantlistAlert(releaseId: releaseId)
         }
         if recordName == standaloneTagsRecordName { return .standaloneTags }
+        if recordName == discogsWorkCategoriesRecordName { return .discogsWorkCategories }
         return nil
     }
 }
@@ -431,6 +439,11 @@ final class CloudSyncEngine {
         markDirty(.standaloneTags)
     }
 
+    /// Signale que de nouveaux masters Discogs ont été classés (voir `DiscogsWorkCategoryCache`).
+    func markDiscogsWorkCategoriesDirty() {
+        markDirty(.discogsWorkCategories)
+    }
+
     /// Regroupe plusieurs signalements rapprochés en un seul envoi : CKSyncEngine ne doit pas
     /// recevoir plusieurs appels concurrents à `sendChanges()`, et ce serait de toute façon
     /// redondant (un seul envoi couvre déjà tous les changements en attente).
@@ -566,6 +579,7 @@ final class CloudSyncEngine {
             markCollectionPreferencesDirty()
             markShelfPreferencesDirty()
             markStandaloneTagsDirty()
+            markDiscogsWorkCategoriesDirty()
             // Marqué tout de suite, sans attendre la confirmation réseau : les changements sont
             // déjà enregistrés dans l'état persisté du moteur (`state.add` dans `markDirty`), qui
             // les redélivrera lui-même même si cet envoi immédiat échoue (ex: throttling).
@@ -774,6 +788,17 @@ final class CloudSyncEngine {
             let resolved = allowMerge ? remoteStandaloneTags.union(TagStore.shared.standaloneTags) : remoteStandaloneTags
             cloudSyncLogger.log("apply(remoteRecord:) tags autonomes — remote=\(remoteStandaloneTags.count) allowMerge=\(allowMerge) résultat=\(resolved.count)")
             TagStore.shared.applyRemoteStandaloneTags(resolved)
+
+        case .discogsWorkCategories:
+            guard let remoteCategories = try? JSONDecoder().decode([String: String].self, from: payload) else {
+                cloudSyncLogger.error("apply(remoteRecord:) — payload illisible pour les sections Discogs")
+                return
+            }
+            // Toujours fusionné, quel que soit `allowMerge` : un classement est une propriété
+            // publique du master, identique sur tous les appareils — rien à départager ni à
+            // supprimer, contrairement aux données de l'utilisateur.
+            cloudSyncLogger.log("apply(remoteRecord:) sections Discogs — remote=\(remoteCategories.count)")
+            DiscogsWorkCategoryCache.shared.applyRemote(remoteCategories)
         }
     }
 
@@ -846,6 +871,9 @@ final class CloudSyncEngine {
 
         case .standaloneTags:
             return try? JSONEncoder().encode(TagStore.shared.standaloneTags)
+
+        case .discogsWorkCategories:
+            return try? JSONEncoder().encode(DiscogsWorkCategoryCache.shared.syncPayload)
         }
     }
 }

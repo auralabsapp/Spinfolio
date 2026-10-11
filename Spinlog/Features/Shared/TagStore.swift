@@ -332,6 +332,14 @@ final class TagStore {
                 TimestampedTag(name: name, addedAt: existingByName[name] ?? now)
             }
         }
+        // Ce retrait était-il le dernier exemplaire à porter ce tag ? S'il reste dans la
+        // bibliothèque (ni créé à la volée ni jamais vu ailleurs), le faire disparaître
+        // silencieusement de "Gestion des tags" serait surprenant : on le garde comme tag
+        // autonome (même mécanisme que "Créer le tag" sans l'appliquer), avec 0 exemplaire
+        // affiché en face. Il ne disparaît plus que par une suppression volontaire (`deleteTag`).
+        if instanceCount(for: tag) == 0 && standaloneTags.insert(tag).inserted {
+            CloudSyncEngine.shared.markStandaloneTagsDirty()
+        }
         persist()
         CloudSyncEngine.shared.markTagsDirty(instanceId: instanceId)
     }

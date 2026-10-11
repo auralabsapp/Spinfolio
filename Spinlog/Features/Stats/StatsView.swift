@@ -30,6 +30,10 @@ struct ArtistReleasesSheetData: Identifiable {
     var id: String { artist }
     let artist: String
     let items: [CollectionItem]
+
+    /// Artistes Discogs derrière `artist` : tous les disques du groupe portent les mêmes noms
+    /// (voir `StatsViewModel.items(forArtist:)`), le premier suffit.
+    var artists: [ReleaseArtist] { items.first?.basicInformation.artists ?? [] }
 }
 
 private enum PodiumPeriod: String, CaseIterable, Identifiable {
@@ -481,7 +485,7 @@ struct StatsView: View {
                                             UIImpactFeedbackGenerator(style: .light).impactOccurred()
                                             let items = viewModel.items(forGenre: selectedGenreName, style: entry.name)
                                             selectedMediaFormatData = MediaFormatReleasesSheetData(
-                                                title: "\(entry.name) · \(selectedGenreName)",
+                                                title: "\(selectedGenreName) · \(entry.name)",
                                                 items: items
                                             )
                                         } label: {
@@ -1736,7 +1740,20 @@ struct StatsView: View {
         .buttonStyle(.plain)
     }
 
+    /// Ouvre la fiche de l'artiste (ou, pour une collaboration, du premier artiste crédité).
+    @ViewBuilder
     private func topArtistRow(rank: Int, entry: TopArtistEntry) -> some View {
+        if let artist = entry.artists.first {
+            NavigationLink(value: SearchDestination.artist(artist.id)) {
+                topArtistRowContent(rank: rank, entry: entry, showsChevron: true)
+            }
+            .buttonStyle(.plain)
+        } else {
+            topArtistRowContent(rank: rank, entry: entry, showsChevron: false)
+        }
+    }
+
+    private func topArtistRowContent(rank: Int, entry: TopArtistEntry, showsChevron: Bool) -> some View {
         HStack(spacing: 12) {
             rankBadge(rank)
 
@@ -1756,9 +1773,16 @@ struct StatsView: View {
             }
 
             Spacer(minLength: 0)
+
+            if showsChevron {
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(Color.appTertiaryText)
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
+        .contentShape(Rectangle())
     }
 
     /// Photo circulaire de l'artiste récupérée sur Apple Music (voir
@@ -1930,6 +1954,22 @@ private struct ArtistReleasesSheetView: View {
             .navigationBarTitleDisplayMode(.inline)
             .searchDestinations()
             .toolbar {
+                // Même titre, mais le nom de l'artiste ouvre sa fiche (dans la pile de la feuille,
+                // comme les albums de la liste).
+                ToolbarItem(placement: .principal) {
+                    HStack(spacing: 0) {
+                        ArtistNameLinks(
+                            artists: data.artists,
+                            fallback: data.artist,
+                            displayName: { ArtistShelfSortHelper.cleanDiscogsSuffix($0.name) }
+                        )
+                        .foregroundStyle(Color.spinlogPink)
+                        Text(verbatim: " · ")
+                        Text("\(data.items.count) albums")
+                    }
+                    .font(.headline)
+                    .lineLimit(1)
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     SheetCloseButton()
                 }

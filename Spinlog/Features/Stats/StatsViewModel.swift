@@ -55,6 +55,9 @@ struct TopArtistEntry: Identifiable {
     let name: String
     let totalPlays: Int
     let releaseCount: Int
+    /// Artistes Discogs derrière `name` (plusieurs pour un disque en collaboration), pour ouvrir
+    /// leur fiche depuis le classement.
+    let artists: [ReleaseArtist]
     var id: String { name }
 }
 
@@ -806,6 +809,7 @@ final class StatsViewModel {
         let releases = releaseById
         var playsByArtist: [String: Int] = [:]
         var releasesByArtist: [String: Set<Int>] = [:]
+        var discogsArtistsByName: [String: [ReleaseArtist]] = [:]
 
         for session in listeningStore.sessions {
             guard let item = releases[session.releaseId] else { continue }
@@ -813,10 +817,18 @@ final class StatsViewModel {
             guard !artist.isEmpty else { continue }
             playsByArtist[artist, default: 0] += 1
             releasesByArtist[artist, default: []].insert(session.releaseId)
+            if discogsArtistsByName[artist] == nil {
+                discogsArtistsByName[artist] = item.basicInformation.artists ?? []
+            }
         }
 
         return playsByArtist.map { name, totalPlays in
-            TopArtistEntry(name: name, totalPlays: totalPlays, releaseCount: releasesByArtist[name]?.count ?? 0)
+            TopArtistEntry(
+                name: name,
+                totalPlays: totalPlays,
+                releaseCount: releasesByArtist[name]?.count ?? 0,
+                artists: discogsArtistsByName[name] ?? []
+            )
         }
         .sorted { $0.totalPlays != $1.totalPlays ? $0.totalPlays > $1.totalPlays : $0.name < $1.name }
     }

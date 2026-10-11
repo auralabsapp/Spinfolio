@@ -66,7 +66,7 @@ struct ArtistDetailView: View {
                 }
 
                 // Mêmes emplacement et style que sur la fiche album ; liens vers la page Apple
-                // Music de l'artiste (aucun lien Discogs sur cette page).
+                // Music de l'artiste (le lien Discogs est sous la section « Discographie Discogs »).
                 if let url = viewModel.appleMusicURL {
                     ToolbarItemGroup(placement: .topBarTrailing) {
                         ShareLink(item: url) {
@@ -88,9 +88,6 @@ struct ArtistDetailView: View {
                 }
             }
             .task { await viewModel.load(artistId: artistId) }
-            .task(id: viewModel.selectedSection) {
-                await viewModel.loadSectionIfNeeded(viewModel.selectedSection)
-            }
             // Retour depuis les Réglages iOS après avoir accordé l'accès à Apple Music.
             .onChange(of: scenePhase) { _, phase in
                 guard phase == .active else { return }
@@ -140,11 +137,21 @@ struct ArtistDetailView: View {
                             .background(heroToInfoGradient)
 
                         VStack(alignment: .leading, spacing: 20) {
-                            // Seulement s'il manque quelque chose : hors ligne avec une page déjà
-                            // complète (chargée avant la coupure), il n'y a rien à signaler.
-                            if !networkMonitor.isConnected && viewModel.hasIncompleteAppleMusicContent
-                                && viewModel.appleMusicAccess != .denied {
-                                OfflineBannerView(customMessage: String(localized: "La photo, la biographie et la discographie s'afficheront au retour du réseau."))
+                            if !networkMonitor.isConnected {
+                                if viewModel.isLibrarySnapshotStale {
+                                    // Même bandeau, mêmes conditions que la Collection (cache de
+                                    // plus de 6 heures) : la possession et le nom affichés ici en
+                                    // proviennent.
+                                    OfflineBannerView(
+                                        lastSyncDate: OfflineDownloadManager.shared.lastSyncDate,
+                                        itemCount: OfflineDownloadManager.shared.offlineItemCount
+                                    )
+                                } else if viewModel.hasIncompleteAppleMusicContent && viewModel.appleMusicAccess != .denied {
+                                    // Cache récent, mais il manque des éléments Apple Music : seulement
+                                    // s'il manque quelque chose (une page déjà complète, chargée avant
+                                    // la coupure, n'a rien à signaler).
+                                    OfflineBannerView(customMessage: String(localized: "La photo et la biographie s'afficheront au retour du réseau."))
+                                }
                             }
 
                             if viewModel.ownedCount > 0 || viewModel.wantlistCount > 0 {
@@ -159,9 +166,10 @@ struct ArtistDetailView: View {
                                         .font(.body)
                                         .transition(.opacity)
                                 }
-
-                                discographySection
                             }
+
+                            // Indépendante d'Apple Music : affichée même si son accès est refusé.
+                            discogsDiscographySection
                         }
                         .padding()
                         .background(infoBackgroundColor)
@@ -255,18 +263,115 @@ struct ArtistDetailView: View {
         }
     }
 
-    /// Discographie entièrement issue d'Apple Music (voir `AppleMusicArtistArtworkService`), qui
-    /// distingue nativement albums studio, singles/EP, lives et compilations. Le statut
-    /// Possédé/Wantlist est calculé par rapprochement de titre avec la collection et la wantlist
-    /// locales de l'utilisateur (voir `ArtistDetailViewModel.entries(for:)`).
+    /// Sélecteur de section de la discographie Discogs : segmenté (pleine largeur) si ses
+    /// libellés tiennent en entier — `ViewThatFits` compare la taille idéale de chaque option à
+    /// la largeur disponible ; sinon (petit iPhone, grandes tailles de texte), des pastilles qui
+    /// défilent horizontalement, plutôt que des segments aux libellés tronqués.
+    private func sectionPicker<Option: Hashable & Identifiable>(
+        selection: Binding<Option>,
+        options: [Option],
+        title: @escaping (Option) -> String
+    ) -> some View {
+        ViewThatFits(in: .horizontal) {
+            Picker("Section", selection: selection) {
+                ForEach(options) { option in
+                    Text(title(option)).tag(option)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(options) { option in
+                        sectionChip(title: title(option), isSelected: selection.wrappedValue == option) {
+                            selection.wrappedValue = option
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func sectionChip(title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.subheadline.weight(isSelected ? .semibold : .regular))
+                .foregroundStyle(isSelected ? Color.white : Color.primary)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 7)
+                .background(isSelected ? Color.spinlogPink : Color.primary.opacity(0.08), in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    /// Ligne de la discographie : pochette, titre, ligne secondaire (année…) et pastilles de
+    /// possession.
+    private func workRow<Subtitle: View>(
+        coverURL: String?,
+        title: String,
+        isOwned: Bool,
+        isInWantlist: Bool,
+        @ViewBuilder subtitle: () -> Subtitle
+    ) -> some View {
+        HStack(spacing: 12) {
+            AsyncCoverImage(url: coverURL, cornerRadius: 6, targetSize: 56)
+                .frame(width: 56, height: 56)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.subheadline)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                HStack(spacing: 4) {
+                    subtitle()
+                }
+                .font(.caption)
+                .foregroundStyle(Color.appSecondaryText)
+            }
+
+            Spacer(minLength: 8)
+
+            statusBadges(isOwned: isOwned, isInWantlist: isInWantlist)
+        }
+        .padding(.vertical, 6)
+        // Toute la ligne réagit au toucher : avec `.buttonStyle(.plain)`, seules les zones
+        // dessinées (pochette, textes, pastilles) le faisaient, pas l'espace vide du `Spacer`.
+        .contentShape(Rectangle())
+        // Lue comme un seul élément par VoiceOver (titre, année, statut).
+        .accessibilityElement(children: .combine)
+    }
+
+    /// Pastilles affichées uniquement quand il y a quelque chose à signaler : une pastille
+    /// « Non possédé » sur chaque autre ligne alourdissait la liste sans rien apprendre.
     @ViewBuilder
-    private var discographySection: some View {
+    private func statusBadges(isOwned: Bool, isInWantlist: Bool) -> some View {
+        if isOwned || isInWantlist {
+            VStack(alignment: .trailing, spacing: 4) {
+                if isOwned {
+                    StatusBadgeView(status: .owned)
+                }
+                if isInWantlist {
+                    StatusBadgeView(status: .inWantlist)
+                }
+            }
+        }
+    }
+
+    // MARK: - Discographie Discogs
+
+    /// Œuvres principales de l'artiste selon Discogs (masters et releases isolées), seule
+    /// discographie de la page. Une œuvre possédée ou en wantlist ouvre la fiche de ton
+    /// exemplaire ; un master non possédé, sa fiche master ; une release isolée non possédée
+    /// reste purement informative (ni lien, ni chevron).
+    private var discogsDiscographySection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionEyebrow(title: "Discographie", icon: "square.stack")
+            SectionEyebrow(title: "Discographie Discogs", icon: "opticaldisc")
 
-            sectionSelector
+            // Juste sous le titre, pour rester visible quelle que soit la section affichée.
+            discogsClassificationStatus
 
-            switch viewModel.visibleSectionState {
+            switch viewModel.discogsDiscographyState {
             case .loading:
                 ProgressView()
                     .frame(maxWidth: .infinity)
@@ -280,131 +385,121 @@ struct ArtistDetailView: View {
                     .padding(.vertical, 12)
             case .unavailable:
                 VStack(spacing: 10) {
-                    Text("Discographie indisponible sur Apple Music pour le moment.")
+                    Text("Discographie Discogs indisponible pour le moment.")
                         .font(.caption)
                         .foregroundStyle(Color.appSecondaryText)
                         .multilineTextAlignment(.center)
                     Button("Réessayer") {
-                        Task { await viewModel.retrySelectedSection() }
+                        Task { await viewModel.retryDiscogsDiscography() }
                     }
                     .font(.subheadline.weight(.semibold))
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
-            case .loaded(let albums) where albums.isEmpty:
-                Text("Aucun résultat Apple Music pour cette section.")
-                    .font(.caption)
-                    .foregroundStyle(Color.appSecondaryText)
-                    .padding(.vertical, 8)
-            case .loaded(let albums):
-                VStack(spacing: 0) {
-                    ForEach(viewModel.entries(for: albums)) { entry in
-                        if let destination = entry.destination {
-                            NavigationLink(value: destination) {
-                                discographyRow(for: entry)
+            case .loaded(let isLoadingMore, let isTruncated):
+                if viewModel.discogsWorks.isEmpty && !isLoadingMore {
+                    Text("Aucun album principal de cet artiste sur Discogs.")
+                        .font(.caption)
+                        .foregroundStyle(Color.appSecondaryText)
+                        .padding(.vertical, 8)
+                } else {
+                    sectionPicker(
+                        selection: $viewModel.selectedDiscogsFilter,
+                        options: viewModel.discogsFilterOptions,
+                        title: viewModel.title(for:)
+                    )
+
+                    let entries = viewModel.discogsEntries()
+                    if entries.isEmpty {
+                        // Section vide pour l'instant si le classement est encore en cours.
+                        if !viewModel.isSortingDiscogsWorks {
+                            Text("Aucune œuvre dans cette section.")
+                                .font(.caption)
+                                .foregroundStyle(Color.appSecondaryText)
+                                .padding(.vertical, 8)
+                        }
+                    } else {
+                        LazyVStack(spacing: 0) {
+                            ForEach(entries) { entry in
+                                if let destination = entry.destination {
+                                    NavigationLink(value: destination) {
+                                        discogsRow(for: entry)
+                                    }
+                                    .buttonStyle(.plain)
+                                } else {
+                                    discogsRow(for: entry)
+                                }
                             }
-                            .buttonStyle(.plain)
-                        } else {
-                            discographyRow(for: entry)
                         }
                     }
+
+                    if isLoadingMore {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                    }
+                }
+                if isTruncated {
+                    Text("Discographie partielle : seules les sorties les plus récentes ont pu être chargées.")
+                        .font(.caption2)
+                        .foregroundStyle(Color.appSecondaryText)
+                }
+                // Mention exigée par les CGU de l'API Discogs à côté des données qui en
+                // proviennent (titres, années, pochettes de cette section).
+                if !viewModel.discogsWorks.isEmpty, let url = viewModel.discogsArtistURL {
+                    DiscogsAttributionLink(url: url)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top, 4)
                 }
             }
         }
     }
 
-    /// Sélecteur segmenté (pleine largeur) si ses libellés tiennent en entier — `ViewThatFits`
-    /// compare la taille idéale de chaque option à la largeur disponible ; sinon (petit iPhone,
-    /// grandes tailles de texte), des pastilles qui défilent horizontalement, plutôt que des
-    /// segments aux libellés tronqués (« Singles & … », « Compil… »).
-    private var sectionSelector: some View {
-        ViewThatFits(in: .horizontal) {
-            Picker("Section", selection: $viewModel.selectedSection) {
-                ForEach(DiscographySection.allCases) { section in
-                    Text(section.title).tag(section)
-                }
-            }
-            .pickerStyle(.segmented)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(DiscographySection.allCases) { section in
-                        sectionChip(for: section)
-                    }
-                }
-            }
-        }
-    }
-
-    private func sectionChip(for section: DiscographySection) -> some View {
-        let isSelected = viewModel.selectedSection == section
-        return Button {
-            viewModel.selectedSection = section
-        } label: {
-            Text(section.title)
-                .font(.subheadline.weight(isSelected ? .semibold : .regular))
-                .foregroundStyle(isSelected ? Color.white : Color.primary)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 7)
-                .background(isSelected ? Color.spinlogPink : Color.primary.opacity(0.08), in: Capsule())
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
-    }
-
-    private func discographyRow(for entry: ArtistDetailViewModel.DiscographyEntry) -> some View {
-        let group = entry.group
-        return HStack(spacing: 12) {
-            AsyncCoverImage(url: group.representative.artworkURL?.absoluteString, cornerRadius: 6, targetSize: 56)
-                .frame(width: 56, height: 56)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(group.representative.name)
-                    .font(.subheadline)
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                // Année de la sortie originale, et nombre d'éditions regroupées sur cette ligne
-                // (Deluxe, Explicit, remasterisée…) quand il y en a plusieurs.
-                HStack(spacing: 4) {
-                    if let year = group.originalYear {
-                        Text(year)
-                    }
-                    if group.originalYear != nil && group.versionCount > 1 {
-                        Text(verbatim: "·")
-                    }
-                    if group.versionCount > 1 {
-                        Text("\(group.versionCount) versions")
-                    }
-                }
-                .font(.caption)
-                .foregroundStyle(Color.appSecondaryText)
-            }
-
-            Spacer(minLength: 8)
-
-            statusBadges(for: entry)
-        }
-        .padding(.vertical, 6)
-    }
-
-    /// Pastilles affichées uniquement quand il y a quelque chose à signaler : une pastille
-    /// « Non possédé » sur chaque autre ligne alourdissait la liste sans rien apprendre.
+    /// Progression du classement des œuvres en sections (une requête par master encore jamais
+    /// classé, au rythme de l'API Discogs ; mémorisé ensuite), ou œuvres restées non classées
+    /// après un classement interrompu, avec nouvel essai.
     @ViewBuilder
-    private func statusBadges(for entry: ArtistDetailViewModel.DiscographyEntry) -> some View {
-        if entry.isOwned || entry.isInWantlist {
-            VStack(alignment: .trailing, spacing: 4) {
-                if entry.isOwned {
-                    StatusBadgeView(status: .owned)
-                }
-                if entry.isInWantlist {
-                    StatusBadgeView(status: .inWantlist)
+    private var discogsClassificationStatus: some View {
+        if let progress = viewModel.discogsClassificationProgress {
+            HStack(spacing: 8) {
+                ProgressView()
+                    .controlSize(.small)
+                Text("Classement des œuvres : \(progress.done)/\(progress.total)")
+                    .font(.caption)
+                    .foregroundStyle(Color.appSecondaryText)
+                    .monospacedDigit()
+            }
+        } else if !viewModel.isSortingDiscogsWorks && viewModel.pendingDiscogsCount > 0 {
+            HStack(spacing: 8) {
+                Text("\(viewModel.pendingDiscogsCount) œuvres non classées")
+                    .font(.caption)
+                    .foregroundStyle(Color.appSecondaryText)
+                // Hors ligne, le classement reprend seul au retour du réseau.
+                if networkMonitor.isConnected {
+                    Button("Réessayer") {
+                        Task { await viewModel.retryDiscogsClassification() }
+                    }
+                    .font(.caption.weight(.semibold))
                 }
             }
         }
     }
 
-    /// Résumé "X possédés / Y en wantlist" sous la photo — basé sur le même index titre/statut
-    /// que les badges de la discographie (voir `ArtistDetailViewModel.ownedCount`/`wantlistCount`),
+    private func discogsRow(for entry: ArtistDetailViewModel.DiscogsWorkEntry) -> some View {
+        workRow(
+            coverURL: entry.work.thumb,
+            title: entry.work.title,
+            isOwned: entry.isOwned,
+            isInWantlist: entry.isInWantlist
+        ) {
+            if let year = entry.work.year, year > 0 {
+                Text(verbatim: String(year))
+            }
+        }
+    }
+
+    /// Résumé "X possédés / Y en wantlist" sous la photo — albums distincts de cet artiste
+    /// (voir `ArtistDetailViewModel.ownedCount`/`wantlistCount`),
     /// masqué entièrement si l'utilisateur n'a aucun lien avec cet artiste dans sa collection.
     private var ownershipSummaryRow: some View {
         HStack(spacing: 24) {
@@ -443,7 +538,7 @@ struct ArtistDetailView: View {
         }
     }
 
-    /// Remplace biographie et discographie quand l'accès à Apple Music est refusé : sans cette
+    /// Remplace la biographie quand l'accès à Apple Music est refusé : sans cette
     /// explication, la page restait quasi vide sans dire pourquoi. Seuls les Réglages iOS
     /// permettent de revenir sur un refus (l'invite système ne se représente plus) ; la page se
     /// complète d'elle-même au retour dans l'app (voir `refreshAfterReturningToForeground`).
@@ -454,7 +549,7 @@ struct ArtistDetailView: View {
                 .foregroundStyle(Color.spinlogPink)
             Text("Accès à Apple Music désactivé")
                 .font(.headline)
-            Text("La photo, la biographie et la discographie de l'artiste viennent d'Apple Music. Autorise \(AppInfo.name) à y accéder dans les Réglages.")
+            Text("La photo et la biographie de l'artiste viennent d'Apple Music. Autorise \(AppInfo.name) à y accéder dans les Réglages.")
                 .font(.subheadline)
                 .foregroundStyle(Color.appSecondaryText)
                 .multilineTextAlignment(.center)

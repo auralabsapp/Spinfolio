@@ -7,10 +7,15 @@ struct CollectionMosaicView: View {
     let sections: [(key: String, items: [CollectionItem])]
     let indexToken: ((key: String, items: [CollectionItem])) -> String
     let displayTitle: ((key: String, items: [CollectionItem])) -> String
+    let headerArtists: ((key: String, items: [CollectionItem])) -> [ReleaseArtist]
     let copyBadge: (CollectionItem) -> String?
     let isPlaying: (Int) -> Bool
     let highlightedItemId: Int?
     let hasVerticalIndexBar: Bool
+    /// Nom de la zone de défilement dans laquelle les en-têtes de section rapportent leur
+    /// position (voir `reportingSectionOffset`, pour la pastille de position de
+    /// `SectionIndexBar` côté appelant).
+    let sectionsCoordinateSpace: String
     var isSelecting: Bool = false
     var selectedItemIds: Set<Int> = []
     var onToggleSelection: ((CollectionItem) -> Void)? = nil
@@ -40,7 +45,8 @@ struct CollectionMosaicView: View {
                         LibrarySectionHeader(
                             token: indexToken(section),
                             title: displayTitle(section),
-                            count: section.items.count
+                            count: section.items.count,
+                            artists: headerArtists(section)
                         )
                         .id(section.key)
                         // Même hauteur totale que l'en-tête en mode Liste : celui-ci cumule son
@@ -50,14 +56,16 @@ struct CollectionMosaicView: View {
                         .padding(.vertical, 2)
                         .padding(.horizontal, 2)
                         .background(.regularMaterial)
+                        .reportingSectionOffset(key: section.key, coordinateSpace: sectionsCoordinateSpace)
                     }
                 }
             }
             .padding(.leading, 12)
-            .padding(.trailing, hasVerticalIndexBar ? 26 : 12)
+            .padding(.trailing, hasVerticalIndexBar ? 30 : 12)
             .padding(.top, 4)
             .padding(.bottom, 24)
         }
+        .coordinateSpace(name: sectionsCoordinateSpace)
     }
 
     // MARK: - Vignette d'une pochette dans la mosaïque

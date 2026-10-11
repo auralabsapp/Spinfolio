@@ -98,6 +98,7 @@
       }
     },
     "%@ – " : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -473,6 +474,16 @@
         }
       }
     },
+    "%@%@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@%2$@"
+          }
+        }
+      }
+    },
     "%@%@ (%@)" : {
       "localizations" : {
         "en" : {
@@ -490,6 +501,7 @@
       }
     },
     "%@%@%@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1419,6 +1431,46 @@
         }
       }
     },
+    "%lld œuvres non classées" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld unsorted work"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld unsorted works"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld œuvre non classée"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld œuvres non classées"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld photos" : {
       "localizations" : {
         "en" : {
@@ -1628,46 +1680,6 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld tags"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "%lld versions" : {
-      "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld version"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld versions"
-                }
-              }
-            }
-          }
-        },
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld version"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld versions"
                 }
               }
             }
@@ -2088,6 +2100,7 @@
       }
     },
     "À ranger entre" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2113,16 +2126,6 @@
         }
       }
     },
-    "À RANGER ICI" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "SHELVE HERE"
-          }
-        }
-      }
-    },
     "À ranger tout à la fin de ton meuble, juste après « %@ – %@%@ »." : {
       "localizations" : {
         "en" : {
@@ -2140,6 +2143,7 @@
       }
     },
     "À ranger tout à la fin du meuble" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2166,6 +2170,7 @@
       }
     },
     "À ranger tout au début du meuble" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2929,6 +2934,16 @@
         }
       }
     },
+    "Aucun album principal de cet artiste sur Discogs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No main releases by this artist on Discogs."
+          }
+        }
+      }
+    },
     "Aucun album trouvé pour ce genre." : {
       "localizations" : {
         "en" : {
@@ -3049,16 +3064,6 @@
         }
       }
     },
-    "Aucun résultat Apple Music pour cette section." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "machine_translated",
-            "value" : "No Apple Music results for this section."
-          }
-        }
-      }
-    },
     "Aucun tag créé" : {
       "localizations" : {
         "en" : {
@@ -3075,6 +3080,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No complete local archive"
+          }
+        }
+      }
+    },
+    "Aucune œuvre dans cette section." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No works in this section."
           }
         }
       }
@@ -3617,6 +3632,22 @@
         }
       }
     },
+    "Classement des œuvres : %lld/%lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sorting works: %1$lld/%2$lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Classement des œuvres : %1$lld/%2$lld"
+          }
+        }
+      }
+    },
     "Clé de tri (ex: Bowie, David)" : {
       "localizations" : {
         "en" : {
@@ -3867,6 +3898,26 @@
         }
       }
     },
+    "Cote actuelle indisponible hors ligne." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Current value unavailable offline."
+          }
+        }
+      }
+    },
+    "Cote actuelle indisponible pour le moment." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Current value unavailable right now."
+          }
+        }
+      }
+    },
     "Cote Discogs — maximum" : {
       "localizations" : {
         "en" : {
@@ -4044,16 +4095,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Unlock your collection's full potential"
-          }
-        }
-      }
-    },
-    "Début" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Start"
           }
         }
       }
@@ -4310,22 +4351,32 @@
         }
       }
     },
-    "Discographie" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "machine_translated",
-            "value" : "Discography"
-          }
-        }
-      }
-    },
-    "Discographie indisponible sur Apple Music pour le moment." : {
+    "Discographie Discogs" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Discography unavailable on Apple Music right now."
+            "value" : "Discogs Discography"
+          }
+        }
+      }
+    },
+    "Discographie Discogs indisponible pour le moment." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discogs discography unavailable right now."
+          }
+        }
+      }
+    },
+    "Discographie partielle : seules les sorties les plus récentes ont pu être chargées." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partial discography: only the most recent releases could be loaded."
           }
         }
       }
@@ -4888,6 +4939,7 @@
       }
     },
     "et" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5185,16 +5237,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Filters"
-          }
-        }
-      }
-    },
-    "Fin" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "End"
           }
         }
       }
@@ -5729,6 +5771,7 @@
       }
     },
     "Instructions de rangement" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5789,6 +5832,7 @@
       }
     },
     "juste après" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5799,6 +5843,7 @@
       }
     },
     "juste avant" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5838,22 +5883,22 @@
         }
       }
     },
-    "La photo, la biographie et la discographie de l'artiste viennent d'Apple Music. Autorise %@ à y accéder dans les Réglages." : {
+    "La photo et la biographie de l'artiste viennent d'Apple Music. Autorise %@ à y accéder dans les Réglages." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The artist's photo, biography, and discography come from Apple Music. Allow %@ to access it in Settings."
+            "value" : "The artist's photo and biography come from Apple Music. Allow %@ to access it in Settings."
           }
         }
       }
     },
-    "La photo, la biographie et la discographie s'afficheront au retour du réseau." : {
+    "La photo et la biographie s'afficheront au retour du réseau." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The photo, biography, and discography will appear once you're back online."
+            "value" : "The photo and biography will appear once you're back online."
           }
         }
       }
@@ -6177,16 +6222,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Public Lists"
-          }
-        }
-      }
-    },
-    "Lives" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "machine_translated",
-            "value" : "Live"
           }
         }
       }
@@ -6607,6 +6642,16 @@
         }
       }
     },
+    "Non classées" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unsorted"
+          }
+        }
+      }
+    },
     "Non spécifié" : {
       "localizations" : {
         "en" : {
@@ -6776,16 +6821,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Where to Shelve This Record"
-          }
-        }
-      }
-    },
-    "Où ranger cet album ?" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Where to Shelve This Album?"
           }
         }
       }
@@ -7764,6 +7799,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enter the price you paid for each album and compare it to its real-time Discogs value to see whether your albums have gained value."
+          }
+        }
+      }
+    },
+    "Renseigne ton prix d'achat dans les champs personnalisés ci-dessous pour suivre la plus-value de cet exemplaire." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter your purchase price in the custom fields below to track this copy's gain."
           }
         }
       }
@@ -9495,6 +9540,16 @@
         }
       }
     },
+    "Tri en cours" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sorting"
+          }
+        }
+      }
+    },
     "Trier par" : {
       "localizations" : {
         "en" : {
@@ -10114,6 +10169,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Shaded area = Discogs low/high range; line = median value."
+          }
+        }
+      }
+    },
+    "Emplacement de cet album" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This Album's Spot"
+          }
+        }
+      }
+    },
+    "ICI" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HERE"
           }
         }
       }

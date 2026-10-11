@@ -306,29 +306,45 @@ extension SortableLibraryItem {
 
     /// `nonisolated` : voir le commentaire sur `sectionKey` — même garantie pour `.shelf`.
     private nonisolated func compareShelf(to other: Self) -> Bool {
-        let yA = basicInformation.year
-        let yB = other.basicInformation.year
-        let prefs = MainActor.assumeIsolated {
-            (
-                ShelfPreferencesStore.shared.sortStrategy,
+        let (strategy, ignoreArticles, sortByLastName, customOverrides, masterYears) = MainActor.assumeIsolated {
+            let strategy = ShelfPreferencesStore.shared.sortStrategy
+            return (
+                strategy,
                 ShelfPreferencesStore.shared.ignoreArticles,
                 ShelfPreferencesStore.shared.sortByLastName,
-                ShelfPreferencesStore.shared.customArtistSortOverrides
+                ShelfPreferencesStore.shared.customArtistSortOverrides,
+                strategy.usesMasterYear ? LocalDataStore.shared.getAllMasterYears() : nil
             )
         }
+
+        // Même résolution que `Release.effectiveShelfYear`, utilisée par le guide de rangement
+        // physique : comparer directement `basicInformation.year` (l'année du PRESSAGE) donnait
+        // un ordre différent du guide dès qu'une réédition portait une année distincte de la
+        // sortie originale (ex. deux rééditions de 2009 d'albums sortis en 1979 et 1980 : triées
+        // par titre faute de départager sur cette année identique, au lieu de respecter la
+        // chronologie réelle des masters).
+        func resolvedYear(_ info: BasicInformation) -> Int? {
+            if strategy.usesMasterYear, let masterId = info.masterId, masterId > 0,
+               let masterYear = masterYears?[masterId], masterYear > 0 {
+                return masterYear
+            }
+            let year = info.year
+            return (year != nil && year! > 0) ? year : nil
+        }
+
         return ShelfPlacementService.compare(
             artistA: basicInformation.artistNames,
             titleA: basicInformation.title,
-            yearA: yA,
+            yearA: resolvedYear(basicInformation),
             idA: id,
             artistB: other.basicInformation.artistNames,
             titleB: other.basicInformation.title,
-            yearB: yB,
+            yearB: resolvedYear(other.basicInformation),
             idB: other.id,
-            strategy: prefs.0,
-            ignoreArticles: prefs.1,
-            sortByLastName: prefs.2,
-            customOverrides: prefs.3
+            strategy: strategy,
+            ignoreArticles: ignoreArticles,
+            sortByLastName: sortByLastName,
+            customOverrides: customOverrides
         )
     }
 
@@ -343,6 +359,19 @@ extension SortableLibraryItem {
             return basicInformation.artistNames
         default:
             return sectionKey(for: sort)
+        }
+    }
+}
+
+extension SortableLibraryItem {
+    /// Artistes nommés par l'en-tête de section (voir `sectionDisplayTitle`), pour en faire un
+    /// lien vers leur fiche : seulement pour les tris dont l'en-tête affiche l'artiste.
+    func sectionHeaderArtists(for sort: CollectionSortOption) -> [ReleaseArtist] {
+        switch sort {
+        case .artist, .shelf:
+            return basicInformation.artists ?? []
+        default:
+            return []
         }
     }
 }

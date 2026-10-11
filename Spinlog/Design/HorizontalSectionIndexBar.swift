@@ -4,6 +4,9 @@ import SwiftUI
 /// positionnée en bas du mode Carrousel pour naviguer instantanément entre les sections.
 struct HorizontalSectionIndexBar: View {
     let entries: [(token: String, sectionKey: String)]
+    /// Jeton de la section actuellement affichée au centre du carrousel : entoure le jeton
+    /// correspondant d'une bulle, pour se repérer dans le défilement sans avoir à toucher la
+    /// barre — même principe que `SectionIndexBar` (barre verticale, listes et mosaïques).
     var currentToken: String? = nil
     let onSelect: (String) -> Void
 
@@ -22,11 +25,20 @@ struct HorizontalSectionIndexBar: View {
             HStack(spacing: 0) {
                 ForEach(entries, id: \.token) { entry in
                     let isSelected = activeToken == entry.token
+                    // Pendant un glissé, la grosse bulle flottante (ci-dessous) fait déjà office
+                    // d'indicateur : la bulle de position au repos ne s'affiche pas en même temps.
+                    let isCurrent = !isDragging && currentToken == entry.token
                     Text(railLabel(for: entry.token))
                         .font(.system(size: entries.count > 18 ? 9 : 11, weight: isSelected ? .black : .semibold, design: .rounded))
                         .lineLimit(1)
                         .minimumScaleFactor(0.6)
-                        .foregroundStyle(isSelected ? Color.spinlogPink : Color.secondary)
+                        .foregroundStyle(isCurrent ? .white : (isSelected ? Color.spinlogPink : Color.secondary))
+                        .frame(width: 20, height: 20)
+                        .background {
+                            if isCurrent {
+                                Circle().fill(Color.spinlogPurple)
+                            }
+                        }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .contentShape(Rectangle())
                 }
@@ -68,6 +80,10 @@ struct HorizontalSectionIndexBar: View {
                 }
             }
             .animation(.spring(response: 0.25, dampingFraction: 0.8), value: dragToken)
+            // Anime aussi la position de la bulle : sans ça, son déplacement suivait le doigt au
+            // repère près (même fréquence que le glissé), ce qui donnait un mouvement saccadé
+            // plutôt que fluide d'un jeton à l'autre.
+            .animation(.easeOut(duration: 0.12), value: touchX)
         }
         .frame(height: 28)
         .padding(.horizontal, 10)

@@ -268,12 +268,15 @@ struct CollectionCarouselView: View {
                     .lineLimit(2)
                     .frame(maxWidth: isRegularDisplay ? cardWidth * 1.15 : cardWidth)
 
-                Text(info.artistNames)
+                // Chaque nom ouvre la fiche de l'artiste ; en mode sélection, le toucher
+                // revient au bloc de texte (sélection du disque).
+                ArtistNameLinks(artists: info.artists ?? [], fallback: info.artistNames)
                     .font(isRegularDisplay ? .title3.weight(.semibold) : .subheadline.weight(.semibold))
                     .foregroundStyle(Color.spinlogPink)
                     .multilineTextAlignment(.center)
                     .lineLimit(1)
                     .frame(maxWidth: isRegularDisplay ? cardWidth * 1.15 : cardWidth)
+                    .allowsHitTesting(!isSelecting)
 
                 // Année & Format
                 HStack(spacing: 6) {

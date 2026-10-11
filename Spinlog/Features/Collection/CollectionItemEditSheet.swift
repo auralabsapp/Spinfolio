@@ -28,6 +28,15 @@ struct CollectionItemEditSheet: View {
     @State private var showingErrorAlert = false
     @State private var showingDeleteConfirmation = false
 
+    // MARK: - Plus-value de l'exemplaire
+    /// Instance dédiée à la seule lecture de la cote marketplace (`refreshMarketEstimateIfNeeded`),
+    /// sans rapport avec les dossiers/champs déjà gérés par cette feuille : pas de coût particulier
+    /// à la créer ici, ses dépendances (compte, réseau, cache local) sont toutes des singletons.
+    @State private var actions = ReleaseActions()
+    @State private var purchasePriceEUR: Double?
+    @State private var marketEstimateEUR: Double?
+    @State private var isLoadingGain = false
+
     init(
         item: CollectionItem,
         fields: [CollectionField],
@@ -104,16 +113,7 @@ struct CollectionItemEditSheet: View {
                         }
                     }
 
-                    if !PremiumStore.shared.isPremium {
-                        VStack(alignment: .leading, spacing: 10) {
-                            SectionEyebrow(title: "Plus-value de l'exemplaire", icon: "arrow.left.arrow.right")
-                            PremiumLockedCard(
-                                icon: "arrow.left.arrow.right",
-                                title: "Plus-value de l'exemplaire",
-                                message: "Passe premium pour renseigner ton prix d'achat et suivre la plus-value de cet album."
-                            )
-                        }
-                    }
+                    gainSection
 
                     VStack(alignment: .leading, spacing: 10) {
                         SectionEyebrow(title: "Tags de l'exemplaire", icon: "tag.fill")
@@ -214,9 +214,18 @@ struct CollectionItemEditSheet: View {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                     }
             )
-            .navigationTitle("Modifier")
+            .navigationTitle("Mon exemplaire")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                // Élément invisible de la même taille que le bouton de fermeture, côté opposé :
+                // sans lui, la barre ne centre le titre que dans l'espace restant après ce bouton
+                // (absent à gauche), ce qui le décale visiblement vers la gauche.
+                ToolbarItem(placement: .topBarLeading) {
+                    SheetCloseButton()
+                        .opacity(0)
+                        .disabled(true)
+                        .accessibilityHidden(true)
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     SheetCloseButton()
                 }
@@ -279,6 +288,150 @@ struct CollectionItemEditSheet: View {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    /// Valeur brute d'un champ : d'abord l'état local déjà chargé dans la feuille (reflète un
+    /// prix d'achat tout juste modifié plus bas, sans fermer/rouvrir), sinon l'exemplaire tel que
+    /// chargé à l'ouverture.
+    private func rawFieldValue(_ fieldId: Int) -> String {
+        fieldValues[fieldId] ?? item.value(forFieldId: fieldId)
+    }
+
+    private var purchasePriceFieldId: Int? {
+        guard let username = DiscogsAuthManager.shared.username else { return nil }
+        return CollectionPreferencesStore.purchasePriceFieldId(for: username)
+    }
+
+    /// Même logique que `MyItemCard.declaredCondition` sur la fiche release : le champ "état du
+    /// disque" choisi dans les réglages (auto-détecté ou sélectionné manuellement), sinon une
+    /// détection par mots-clés parmi les champs déjà chargés. Affine l'estimation de cote
+    /// (sinon `refreshMarketEstimateIfNeeded` retombe sur une moyenne).
+    private var declaredCondition: String? {
+        if let username = DiscogsAuthManager.shared.username,
+           let configuredFieldId = CollectionPreferencesStore.mediaConditionFieldId(for: username) {
+            let value = rawFieldValue(configuredFieldId)
+            return value.isEmpty ? nil : value
+        }
+        guard let field = fields.first(where: { field in
+            let normalized = field.name.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
+            guard !normalized.contains("sleeve"), !normalized.contains("pochette") else { return false }
+            return normalized.contains("media condition") || normalized.contains("etat du media") || normalized.contains("etat du disque")
+        }) else { return nil }
+        let value = rawFieldValue(field.id)
+        return value.isEmpty ? nil : value
+    }
+
+    /// Prix d'achat brut (montant + devise), tel que renseigné dans les champs personnalisés —
+    /// `nil` si le champ n'est pas configuré ou laissé vide.
+    private var purchasePrice: (amount: Double, currency: String)? {
+        guard let fieldId = purchasePriceFieldId, let username = DiscogsAuthManager.shared.username else { return nil }
+        let raw = rawFieldValue(fieldId).trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !raw.isEmpty else { return nil }
+        return PurchasePriceParser.parse(raw, defaultCurrency: CollectionPreferencesStore.defaultCurrency(for: username))
+    }
+
+    /// Plus/moins-value de l'exemplaire par rapport à son prix d'achat, toujours exprimée en
+    /// euros (prix d'achat et cote marketplace sont chacun dans leur propre devise d'origine).
+    @ViewBuilder
+    private var gainSection: some View {
+        if !PremiumStore.shared.isPremium {
+            VStack(alignment: .leading, spacing: 10) {
+                SectionEyebrow(title: "Plus-value de l'exemplaire", icon: "arrow.left.arrow.right")
+                PremiumLockedCard(
+                    icon: "arrow.left.arrow.right",
+                    title: "Plus-value de l'exemplaire",
+                    message: "Passe premium pour renseigner ton prix d'achat et suivre la plus-value de cet album."
+                )
+            }
+        } else {
+            VStack(alignment: .leading, spacing: 10) {
+                SectionEyebrow(title: "Plus-value de l'exemplaire", icon: "arrow.left.arrow.right")
+
+                if purchasePrice == nil {
+                    Text("Renseigne ton prix d'achat dans les champs personnalisés ci-dessous pour suivre la plus-value de cet exemplaire.")
+                        .font(.subheadline)
+                        .foregroundStyle(Color.appSecondaryText)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .appleMusicGroupedCard()
+                } else if isLoadingGain {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 20)
+                        .appleMusicGroupedCard()
+                } else if let purchasePriceEUR, let marketEstimateEUR {
+                    VStack(spacing: 0) {
+                        HStack {
+                            Text("Prix d'achat")
+                                .font(.subheadline)
+                            Spacer()
+                            Text(purchasePriceEUR.formatted(.currency(code: "EUR")))
+                                .font(.subheadline.weight(.semibold))
+                                .monospacedDigit()
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+
+                        Divider().opacity(0.15).padding(.leading, 14)
+
+                        HStack {
+                            Text("Cote actuelle")
+                                .font(.subheadline)
+                            Spacer()
+                            Text(marketEstimateEUR.formatted(.currency(code: "EUR")))
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Color.spinlogPink)
+                                .monospacedDigit()
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+
+                        Divider().opacity(0.15).padding(.leading, 14)
+
+                        let gain = marketEstimateEUR - purchasePriceEUR
+                        let percent = purchasePriceEUR > 0 ? gain / purchasePriceEUR : 0
+                        HStack {
+                            Text("Plus-value latente")
+                                .font(.subheadline.weight(.semibold))
+                            Spacer()
+                            Text("\(gain >= 0 ? "+" : "")\(gain.formatted(.currency(code: "EUR").precision(.fractionLength(0)))) (\(percent.formatted(.percent.precision(.fractionLength(0)).sign(strategy: .always()))))")
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(gain >= 0 ? Color.gainPositive : Color.gainNegative)
+                                .monospacedDigit()
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                    }
+                    .appleMusicGroupedCard()
+                } else {
+                    Text(networkMonitor.isConnected ? "Cote actuelle indisponible pour le moment." : "Cote actuelle indisponible hors ligne.")
+                        .font(.subheadline)
+                        .foregroundStyle(Color.appSecondaryText)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .appleMusicGroupedCard()
+                }
+            }
+            .task(id: "\(item.releaseId)_\(declaredCondition ?? "")_\(purchasePrice?.amount ?? 0)_\(purchasePrice?.currency ?? "")") {
+                guard let purchasePrice else {
+                    purchasePriceEUR = nil
+                    marketEstimateEUR = nil
+                    return
+                }
+                isLoadingGain = true
+                async let purchaseConversion = CurrencyConversionService.shared.convert(purchasePrice.amount, from: purchasePrice.currency, to: "EUR")
+                async let estimate = actions.refreshMarketEstimateIfNeeded(releaseId: item.releaseId, condition: declaredCondition)
+                purchasePriceEUR = await purchaseConversion
+                if let marketEstimate = await estimate {
+                    marketEstimateEUR = await CurrencyConversionService.shared.convert(marketEstimate.price, from: marketEstimate.currency, to: "EUR")
+                } else {
+                    marketEstimateEUR = nil
+                }
+                isLoadingGain = false
             }
         }
     }
@@ -372,6 +525,12 @@ struct CollectionItemEditSheet: View {
 /// (texte, case à cocher, menu déroulant), ou en pleine largeur pour les zones de texte longues.
 /// Dispose d'un bouton coche dédié pour forcer la validation et l'envoi immédiat à Discogs,
 /// et valide automatiquement dès que l'utilisateur clique en dehors du champ (perte de focus).
+/// Même carte par ligne que le reste de la feuille (dossier, tags…) : pas de fond supplémentaire
+/// propre à chaque contrôle, qui ferait double emploi avec `.appleMusicGroupedCard()` et
+/// alourdirait la liste. Un menu déroulant ou une case à cocher se signalent déjà d'eux-mêmes
+/// (chevron système, interrupteur) ; un simple champ texte, sans ce genre d'indice visuel natif,
+/// reçoit un petit crayon discret tant qu'il est vide et qu'on n'y touche pas — une fois rempli,
+/// sa valeur s'affiche dans le rose de l'app, cet indice-là suffit.
 private struct CollectionFieldControl: View {
     let field: CollectionField
     @Binding var value: String
@@ -382,6 +541,14 @@ private struct CollectionFieldControl: View {
 
     @FocusState private var isFocused: Bool
 
+    private var hasValue: Bool {
+        !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var showsEditHint: Bool {
+        !isFocused && !isDirty && !isSaving && !justSaved && !hasValue
+    }
+
     var body: some View {
         Group {
             if field.isTextArea {
@@ -391,10 +558,12 @@ private struct CollectionFieldControl: View {
                             .font(.subheadline)
                             .foregroundStyle(.primary)
                         Spacer()
+                        editHintIcon
                         trailingStatusView
                     }
                     TextField(field.name, text: $value, axis: .vertical)
                         .font(.subheadline)
+                        .foregroundStyle(hasValue ? Color.spinlogPink : .primary)
                         .lineLimit(3...6)
                         .focused($isFocused)
                 }
@@ -430,7 +599,7 @@ private struct CollectionFieldControl: View {
                     }
                     .pickerStyle(.menu)
                     .labelsHidden()
-                    .tint(Color.appSecondaryText)
+                    .tint(Color.spinlogPink)
 
                     trailingStatusView
                 }
@@ -442,9 +611,10 @@ private struct CollectionFieldControl: View {
                         .font(.subheadline)
                         .foregroundStyle(.primary)
                     Spacer()
+                    editHintIcon
                     TextField(field.name, text: $value)
                         .font(.subheadline)
-                        .foregroundStyle(Color.appSecondaryText)
+                        .foregroundStyle(hasValue ? Color.spinlogPink : .primary)
                         .multilineTextAlignment(.trailing)
                         .focused($isFocused)
                         .onSubmit {
@@ -472,6 +642,19 @@ private struct CollectionFieldControl: View {
             if (field.isDropdown || field.isCheckbox) && isDirty && !isSaving {
                 onSave()
             }
+        }
+    }
+
+    /// Crayon discret, même symbole que l'action de swipe "Modifier" ailleurs dans l'app : le
+    /// seul indice dont un simple champ texte a besoin pour se signaler comme modifiable, sans
+    /// repasser dessus un fond ou une bordure qui romprait avec le reste de la feuille.
+    @ViewBuilder
+    private var editHintIcon: some View {
+        if showsEditHint {
+            Image(systemName: "pencil")
+                .font(.caption2)
+                .foregroundStyle(Color.appTertiaryText)
+                .transition(.opacity)
         }
     }
 

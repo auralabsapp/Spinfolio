@@ -481,7 +481,7 @@ struct ReleaseDetailView: View {
         if !premiumStore.isPremium {
             PremiumLockedCard(
                 icon: "books.vertical.fill",
-                title: "Où ranger cet album ?",
+                title: "Emplacement de cet album",
                 message: "Passe premium pour savoir instantanément où intercaler ce disque dans ton meuble."
             )
         } else if let release {
@@ -510,7 +510,7 @@ struct ReleaseDetailView: View {
                 .frame(width: 28, height: 28)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Où ranger cet album ?")
+                Text("Emplacement de cet album")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
 
@@ -567,7 +567,7 @@ struct ReleaseDetailView: View {
             if !premiumStore.isPremium {
                 PremiumLockedCard(
                     icon: "books.vertical.fill",
-                    title: "Où ranger cet album ?",
+                    title: "Emplacement de cet album",
                     message: "Passe premium pour savoir instantanément où intercaler ce disque dans ton meuble."
                 )
             } else {
@@ -576,11 +576,17 @@ struct ReleaseDetailView: View {
                     .foregroundStyle(Color.appSecondaryText)
 
                 Button {
+                    // Masque l'encart "Ajouté à ta collection !" : une fois qu'on a demandé
+                    // l'emplacement, ce rappel n'a plus d'utilité et ne doit pas rester affiché
+                    // derrière la feuille de rangement (ni persister une fois celle-ci refermée).
+                    withAnimation {
+                        actions.justAddedReleaseId = nil
+                    }
                     activeSheet = .shelfPlacement(targetRelease)
                 } label: {
                     HStack(spacing: 8) {
                         Image(systemName: "books.vertical.fill")
-                        Text("Où ranger cet album ?")
+                        Text("Emplacement de cet album")
                         Spacer()
                         Image(systemName: "chevron.right")
                     }

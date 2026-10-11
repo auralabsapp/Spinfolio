@@ -20,6 +20,13 @@ struct WantlistView: View {
     @State private var selectedItemIds: Set<Int> = []
     @State private var isBulkProcessing = false
     @State private var showingBulkDeleteConfirmation = false
+    /// Clé (`section.key`) de la section actuellement épinglée en haut, mesurée via
+    /// `SectionHeaderOffsetKey` — pour la pastille de position de `SectionIndexBar`.
+    @State private var currentSectionKey: String? = nil
+    /// Nom de la zone de défilement dans laquelle les en-têtes de section rapportent leur
+    /// position (voir `reportingSectionOffset`) : un seul nom suffit pour le mode Liste et le mode
+    /// Mosaïque, mutuellement exclusifs (`displayMode`).
+    private static let sectionsCoordinateSpace = "wantlistSections"
 
     private func requestAlertSheet(for item: WantlistItem) {
         if premiumStore.isPremium {
@@ -320,13 +327,36 @@ struct WantlistView: View {
             sections: viewModel.sections,
             indexToken: { viewModel.indexToken(for: $0) },
             displayTitle: { viewModel.displayTitle(for: $0) },
+            headerArtists: { viewModel.headerArtists(for: $0) },
             hasVerticalIndexBar: viewModel.indexEntries.count > 1,
+            sectionsCoordinateSpace: Self.sectionsCoordinateSpace,
             isSelecting: isSelecting,
             selectedItemIds: selectedItemIds,
             onToggleSelection: { toggleSelection($0) },
             onAlertTap: { requestAlertSheet(for: $0) },
             onLoadMore: { await viewModel.loadMoreIfNeeded(current: $0) }
         )
+    }
+
+    /// Barre de navigation rapide, en overlay sur la vue qui défile effectivement (liste ou
+    /// grille) — voir le commentaire au point d'appel.
+    @ViewBuilder
+    private func indexBarOverlay(proxy: ScrollViewProxy) -> some View {
+        if viewModel.indexEntries.count > 1 {
+            SectionIndexBar(entries: viewModel.indexEntries, currentToken: currentIndexToken) { sectionKey in
+                proxy.scrollTo(sectionKey, anchor: .top)
+            }
+            .padding(.trailing, 4)
+            .transition(.opacity)
+        }
+    }
+
+    /// Jeton de `currentSectionKey` dans la barre de navigation rapide (plusieurs sections —
+    /// un artiste par section — peuvent partager le même jeton, leur première lettre commune).
+    private var currentIndexToken: String? {
+        guard let currentSectionKey,
+              let section = viewModel.sections.first(where: { $0.key == currentSectionKey }) else { return nil }
+        return viewModel.indexToken(for: section)
     }
 
     @ViewBuilder
@@ -350,10 +380,13 @@ struct WantlistView: View {
                 Section(header: LibrarySectionHeader(
                     token: viewModel.indexToken(for: section),
                     title: viewModel.displayTitle(for: section),
-                    count: section.items.count
+                    count: section.items.count,
+                    artists: viewModel.headerArtists(for: section)
                 )
                     // Même fond que l'en-tête de section en mode Mosaïque.
                     .background(.regularMaterial)
+                    // Pour la pastille de position de `SectionIndexBar` (voir `currentSectionKey`).
+                    .reportingSectionOffset(key: section.key, coordinateSpace: Self.sectionsCoordinateSpace)
                 ) {
                     ForEach(section.items) { item in
                         rowContent(for: item)
@@ -393,6 +426,7 @@ struct WantlistView: View {
                 .id(section.key)
             }
         }
+        .coordinateSpace(name: Self.sectionsCoordinateSpace)
         .listStyle(.plain)
         .listSectionSpacing(.compact)
         // Voir le même modifier dans CollectionView : sans ça, `List` impose une
@@ -410,7 +444,7 @@ struct WantlistView: View {
         }
         .safeAreaInset(edge: .trailing) {
             if viewModel.indexEntries.count > 1 {
-                Color.clear.frame(width: 24)
+                Color.clear.frame(width: 28)
             }
         }
         .animation(.spring(response: 0.3, dampingFraction: 0.85), value: isSelecting)
@@ -461,43 +495,46 @@ struct WantlistView: View {
             }
         } else {
             ScrollViewReader { proxy in
-                ZStack(alignment: .trailing) {
-                    VStack(spacing: 0) {
-                        if viewModel.isOfflineAndStale {
-                            OfflineBannerView(
-                                lastSyncDate: OfflineDownloadManager.shared.lastSyncDate,
-                                itemCount: OfflineDownloadManager.shared.offlineItemCount
-                            )
-                        }
+                VStack(spacing: 0) {
+                    if viewModel.isOfflineAndStale {
+                        OfflineBannerView(
+                            lastSyncDate: OfflineDownloadManager.shared.lastSyncDate,
+                            itemCount: OfflineDownloadManager.shared.offlineItemCount
+                        )
+                    }
 
-                        switch displayMode {
-                        case .carousel:
-                            wantlistViewCarousel
-                        case .grid:
-                            wantlistViewGrid
-                        case .list:
-                            wantlistViewList
-                        }
-                    }
-                    .safeAreaInset(edge: .top) {
-                        // Mode liste exclu : sa propre `List` intègre déjà la barre de filtres
-                        // comme ligne (voir `wantlistViewList`).
-                        if displayMode != .list, viewModel.hasActiveFilters {
-                            LibraryActiveFiltersBar(
-                                selectedFormat: $viewModel.selectedFormat,
-                                onClearAll: viewModel.clearFilters
-                            )
-                                                    }
-                    }
-                    if (displayMode == .list || displayMode == .grid), viewModel.indexEntries.count > 1 {
-                        SectionIndexBar(entries: viewModel.indexEntries) { sectionKey in
-                            proxy.scrollTo(sectionKey, anchor: .top)
-                        }
-                        .padding(.trailing, 4)
-                        .transition(.opacity)
+                    switch displayMode {
+                    case .carousel:
+                        wantlistViewCarousel
+                    case .grid:
+                        wantlistViewGrid
+                            // Voir `SectionIndexBar.measuredHeight` et le commentaire dans
+                            // `CollectionView` : ancré en bas, la zone sous le grand titre restant
+                            // stable par le bas pendant le défilement.
+                            .overlay(alignment: .bottomTrailing) { indexBarOverlay(proxy: proxy) }
+                    case .list:
+                        wantlistViewList
+                            .overlay(alignment: .bottomTrailing) { indexBarOverlay(proxy: proxy) }
                     }
                 }
                 .animation(.easeInOut(duration: 0.2), value: viewModel.indexEntries.count > 1)
+                // Section actuellement épinglée en haut, pour la pastille de position de
+                // `SectionIndexBar` : ne déclenche un nouveau rendu que lorsqu'elle change
+                // réellement, pas à chaque image du défilement (voir `currentSectionKey`).
+                .onPreferenceChange(SectionHeaderOffsetKey.self) { offsets in
+                    let topKey = SectionScrollTracking.topSectionKey(from: offsets)
+                    if topKey != currentSectionKey { currentSectionKey = topKey }
+                }
+                .safeAreaInset(edge: .top) {
+                    // Mode liste exclu : sa propre `List` intègre déjà la barre de filtres
+                    // comme ligne (voir `wantlistViewList`).
+                    if displayMode != .list, viewModel.hasActiveFilters {
+                        LibraryActiveFiltersBar(
+                            selectedFormat: $viewModel.selectedFormat,
+                            onClearAll: viewModel.clearFilters
+                        )
+                    }
+                }
                 .onChange(of: viewModel.sortOption) {
                     withAnimation { proxy.scrollTo(viewModel.sections.first?.key, anchor: .top) }
                 }

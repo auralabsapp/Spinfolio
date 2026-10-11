@@ -49,6 +49,26 @@ extension DiscogsAPIClient {
         try await request(path: "artists/\(id)", credentials: credentials)
     }
 
+    /// Une page de la discographie d'un artiste, de la plus récente à la plus ancienne. Inclut
+    /// ses apparitions secondaires : à filtrer avec `DiscogsDiscography.mainWorks`.
+    func artistReleases(
+        artistId: Int,
+        page: Int = 1,
+        perPage: Int = DiscogsConstants.maxPageSize,
+        credentials: DiscogsCredentials? = nil
+    ) async throws -> ArtistReleasesResponse {
+        try await request(
+            path: "artists/\(artistId)/releases",
+            queryItems: [
+                URLQueryItem(name: "sort", value: "year"),
+                URLQueryItem(name: "sort_order", value: "desc"),
+                URLQueryItem(name: "page", value: String(page)),
+                URLQueryItem(name: "per_page", value: String(perPage))
+            ],
+            credentials: credentials
+        )
+    }
+
     func userProfile(username: String, credentials: DiscogsCredentials? = nil) async throws -> DiscogsUserProfile {
         try await request(path: "users/\(username)", credentials: credentials)
     }

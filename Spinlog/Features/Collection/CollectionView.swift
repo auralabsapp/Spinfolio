@@ -24,6 +24,13 @@ struct CollectionView: View {
     @State private var showingBulkTagManagement = false
     @State private var pendingMoveFolder: CollectionFolder? = nil
     private var activityManager = NowPlayingActivityManager.shared
+    /// Clé (`section.key`) de la section actuellement épinglée en haut, mesurée via
+    /// `SectionHeaderOffsetKey` — pour la pastille de position de `SectionIndexBar`.
+    @State private var currentSectionKey: String? = nil
+    /// Nom de la zone de défilement dans laquelle les en-têtes de section rapportent leur
+    /// position (voir `reportingSectionOffset`) : un seul nom suffit pour le mode Liste et le mode
+    /// Mosaïque, mutuellement exclusifs (`displayMode`).
+    private static let sectionsCoordinateSpace = "collectionSections"
 
     var body: some View {
         content
@@ -546,7 +553,26 @@ struct CollectionView: View {
         }
     }
 
+    /// Barre de navigation rapide, en overlay sur la vue qui défile effectivement (liste ou
+    /// grille) — voir le commentaire au point d'appel.
+    @ViewBuilder
+    private func indexBarOverlay(proxy: ScrollViewProxy) -> some View {
+        if viewModel.indexEntries.count > 1 {
+            SectionIndexBar(entries: viewModel.indexEntries, currentToken: currentIndexToken) { sectionKey in
+                proxy.scrollTo(sectionKey, anchor: .top)
+            }
+            .padding(.trailing, 4)
+            .transition(.opacity)
+        }
+    }
 
+    /// Jeton de `currentSectionKey` dans la barre de navigation rapide (plusieurs sections —
+    /// un artiste par section — peuvent partager le même jeton, leur première lettre commune).
+    private var currentIndexToken: String? {
+        guard let currentSectionKey,
+              let section = viewModel.sections.first(where: { $0.key == currentSectionKey }) else { return nil }
+        return viewModel.indexToken(for: section)
+    }
 
     @ViewBuilder
     private var collectionViewList: some View {
@@ -574,10 +600,13 @@ struct CollectionView: View {
                 Section(header: LibrarySectionHeader(
                     token: viewModel.indexToken(for: section),
                     title: viewModel.displayTitle(for: section),
-                    count: section.items.count
+                    count: section.items.count,
+                    artists: viewModel.headerArtists(for: section)
                 )
                     // Même fond que l'en-tête de section en mode Mosaïque.
                     .background(.regularMaterial)
+                    // Pour la pastille de position de `SectionIndexBar` (voir `currentSectionKey`).
+                    .reportingSectionOffset(key: section.key, coordinateSpace: Self.sectionsCoordinateSpace)
                 ) {
                     ForEach(section.items) { item in
                         rowContent(for: item)
@@ -640,6 +669,7 @@ struct CollectionView: View {
                 .id(section.key)
             }
         }
+        .coordinateSpace(name: Self.sectionsCoordinateSpace)
         .listStyle(.plain)
         .listSectionSpacing(.compact)
         .environment(\.defaultMinListHeaderHeight, 0)
@@ -647,7 +677,7 @@ struct CollectionView: View {
         // élastique habituel et peut être tirée vers le bas sur une distance excessive, bien
         // au-delà de son contenu réel.
         .scrollBounceBehavior(.basedOnSize)
-        // Le défileur système partage le même liseré de 20-24pt que `SectionIndexBar` sur le
+        // Le défileur système partage le même liseré que `SectionIndexBar` sur le
         // bord droit : sans ça, sa barre grise native (proportionnelle à la hauteur du contenu,
         // donc parfois très longue) s'affiche en permanence superposée aux jetons de notre propre
         // barre de navigation rapide — visible comme une longue barre verticale "bizarre".
@@ -657,7 +687,7 @@ struct CollectionView: View {
         }
         .safeAreaInset(edge: .trailing) {
             if viewModel.indexEntries.count > 1 {
-                Color.clear.frame(width: 24)
+                Color.clear.frame(width: 28)
             }
         }
         .animation(.spring(response: 0.3, dampingFraction: 0.85), value: isSelecting)
@@ -700,6 +730,12 @@ struct CollectionView: View {
             .refreshable {
                 await viewModel.refresh()
             }
+        } else if viewModel.sections.isEmpty && viewModel.isComputingSections
+                    && viewModel.searchText.isEmpty && !viewModel.hasActiveFilters {
+            // Premier tri encore en cours (calculé hors du fil principal) : sans ce cas, la
+            // collection affichait « Aucun résultat » une ou deux secondes au lancement. Pas
+            // pendant une recherche ou un filtrage, où l'indicateur clignoterait à chaque frappe.
+            ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if viewModel.sections.isEmpty {
             VStack(spacing: 0) {
                 if viewModel.isOfflineAndStale {
@@ -719,87 +755,93 @@ struct CollectionView: View {
             }
         } else {
             ScrollViewReader { proxy in
-                ZStack(alignment: .trailing) {
-                    VStack(spacing: 0) {
-                        if viewModel.isOfflineAndStale {
-                            OfflineBannerView(
-                                lastSyncDate: OfflineDownloadManager.shared.lastSyncDate,
-                                itemCount: OfflineDownloadManager.shared.offlineItemCount
-                            )
-                        }
+                VStack(spacing: 0) {
+                    if viewModel.isOfflineAndStale {
+                        OfflineBannerView(
+                            lastSyncDate: OfflineDownloadManager.shared.lastSyncDate,
+                            itemCount: OfflineDownloadManager.shared.offlineItemCount
+                        )
+                    }
 
-                        switch displayMode {
-                        case .carousel:
-                            // Contrairement au mode Liste (`List` défile nativement) et au mode
-                            // Mosaïque (`CollectionMosaicView` a son propre `ScrollView` vertical),
-                            // `CollectionCarouselView` n'a qu'un `ScrollView` horizontal en interne.
-                            // Sans aucune vue de défilement verticale dans la hiérarchie, le grand
-                            // titre de navigation ne s'affiche pas correctement — il faut ce
-                            // `ScrollView` vertical même si son contenu ne défile pas lui-même.
-                            // La hauteur disponible est mesurée ICI, avant d'entrer dans le
-                            // `ScrollView` : lui donner un `.frame(maxHeight: .infinity)` par
-                            // l'intérieur (comme c'était fait dans `CollectionCarouselView`)
-                            // pousserait le `ScrollView` à proposer une hauteur de contenu quasi
-                            // infinie à son enfant, le rendant démesurément grand.
-                            GeometryReader { geo in
-                                ScrollView(.vertical, showsIndicators: false) {
-                                    collectionViewCarousel
-                                        .frame(minHeight: geo.size.height)
-                                }
+                    switch displayMode {
+                    case .carousel:
+                        // Contrairement au mode Liste (`List` défile nativement) et au mode
+                        // Mosaïque (`CollectionMosaicView` a son propre `ScrollView` vertical),
+                        // `CollectionCarouselView` n'a qu'un `ScrollView` horizontal en interne.
+                        // Sans aucune vue de défilement verticale dans la hiérarchie, le grand
+                        // titre de navigation ne s'affiche pas correctement — il faut ce
+                        // `ScrollView` vertical même si son contenu ne défile pas lui-même.
+                        // La hauteur disponible est mesurée ICI, avant d'entrer dans le
+                        // `ScrollView` : lui donner un `.frame(maxHeight: .infinity)` par
+                        // l'intérieur (comme c'était fait dans `CollectionCarouselView`)
+                        // pousserait le `ScrollView` à proposer une hauteur de contenu quasi
+                        // infinie à son enfant, le rendant démesurément grand.
+                        GeometryReader { geo in
+                            ScrollView(.vertical, showsIndicators: false) {
+                                collectionViewCarousel
+                                    .frame(minHeight: geo.size.height)
                             }
-                        case .grid:
-                            CollectionMosaicView(
-                                sections: viewModel.sections,
-                                indexToken: { viewModel.indexToken(for: $0) },
-                                displayTitle: { viewModel.displayTitle(for: $0) },
-                                copyBadge: { viewModel.copyBadge(for: $0) },
-                                isPlaying: { activityManager.isPlaying(releaseId: $0) },
-                                highlightedItemId: highlightedItemId,
-                                hasVerticalIndexBar: viewModel.indexEntries.count > 1,
-                                isSelecting: isSelecting,
-                                selectedItemIds: selectedItemIds,
-                                onToggleSelection: { toggleSelection($0) },
-                                onTriggerListening: { triggerListeningLog(for: $0) },
-                                onStopListening: { stopListening(for: $0) },
-                                onShelfPlacement: { item in
-                                    if !premiumStore.isPremium {
-                                        showingPremiumSheet = true
-                                    } else {
-                                        shelfTargetRelease = Release(from: item)
-                                    }
-                                },
-                                onEditItem: { item in
-                                    editingItem = item
-                                },
-                                onDeleteItem: { item in
-                                    itemPendingDeletion = item
-                                },
-                                onLoadMore: { await viewModel.loadMoreIfNeeded(current: $0) }
-                            )
-                        case .list:
-                            collectionViewList
                         }
-                    }
-                    .safeAreaInset(edge: .top) {
-                        // Mode liste exclu : sa propre `List` intègre déjà la barre de filtres
-                        // comme ligne (voir `collectionViewList`).
-                        if displayMode != .list, viewModel.hasActiveFilters {
-                            LibraryActiveFiltersBar(
-                                selectedTags: $viewModel.selectedTags,
-                                selectedFormat: $viewModel.selectedFormat,
-                                onClearAll: viewModel.clearFilters
-                            )
-                        }
-                    }
-                    if (displayMode == .list || displayMode == .grid), viewModel.indexEntries.count > 1 {
-                        SectionIndexBar(entries: viewModel.indexEntries) { sectionKey in
-                            proxy.scrollTo(sectionKey, anchor: .top)
-                        }
-                        .padding(.trailing, 4)
-                        .transition(.opacity)
+                    case .grid:
+                        CollectionMosaicView(
+                            sections: viewModel.sections,
+                            indexToken: { viewModel.indexToken(for: $0) },
+                            displayTitle: { viewModel.displayTitle(for: $0) },
+                            headerArtists: { viewModel.headerArtists(for: $0) },
+                            copyBadge: { viewModel.copyBadge(for: $0) },
+                            isPlaying: { activityManager.isPlaying(releaseId: $0) },
+                            highlightedItemId: highlightedItemId,
+                            hasVerticalIndexBar: viewModel.indexEntries.count > 1,
+                            sectionsCoordinateSpace: Self.sectionsCoordinateSpace,
+                            isSelecting: isSelecting,
+                            selectedItemIds: selectedItemIds,
+                            onToggleSelection: { toggleSelection($0) },
+                            onTriggerListening: { triggerListeningLog(for: $0) },
+                            onStopListening: { stopListening(for: $0) },
+                            onShelfPlacement: { item in
+                                if !premiumStore.isPremium {
+                                    showingPremiumSheet = true
+                                } else {
+                                    shelfTargetRelease = Release(from: item)
+                                }
+                            },
+                            onEditItem: { item in
+                                editingItem = item
+                            },
+                            onDeleteItem: { item in
+                                itemPendingDeletion = item
+                            },
+                            onLoadMore: { await viewModel.loadMoreIfNeeded(current: $0) }
+                        )
+                        // Attachée directement à la vue qui défile (ici, en grille), ancrée en
+                        // bas : voir `SectionIndexBar.measuredHeight` pour la raison (la zone
+                        // disponible sous le grand titre de navigation s'agrandit par le haut
+                        // pendant le défilement, le bas restant stable).
+                        .overlay(alignment: .bottomTrailing) { indexBarOverlay(proxy: proxy) }
+                    case .list:
+                        collectionViewList
+                            .overlay(alignment: .bottomTrailing) { indexBarOverlay(proxy: proxy) }
                     }
                 }
                 .animation(.easeInOut(duration: 0.2), value: viewModel.indexEntries.count > 1)
+                // Section actuellement épinglée en haut, pour la pastille de position de
+                // `SectionIndexBar` : ne déclenche un nouveau rendu que lorsqu'elle change
+                // réellement, pas à chaque image du défilement (voir `currentSectionKey`).
+                .onPreferenceChange(SectionHeaderOffsetKey.self) { offsets in
+                    let topKey = SectionScrollTracking.topSectionKey(from: offsets)
+                    if topKey != currentSectionKey { currentSectionKey = topKey }
+                }
+                .safeAreaInset(edge: .top) {
+                    // Mode liste exclu : sa propre `List` intègre déjà la barre de filtres
+                    // comme ligne (voir `collectionViewList`).
+                    if displayMode != .list, viewModel.hasActiveFilters {
+                        LibraryActiveFiltersBar(
+                            selectedTags: $viewModel.selectedTags,
+                            selectedFormat: $viewModel.selectedFormat,
+                            onClearAll: viewModel.clearFilters
+                        )
+                    }
+                }
                 // Changer de critère de tri réordonne la liste : on remonte en haut plutôt que de
                 // laisser le scroll à une position qui n'a plus de sens.
                 .onChange(of: viewModel.sortOption) {
