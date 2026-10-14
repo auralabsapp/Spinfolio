@@ -113,7 +113,7 @@ enum CollectionCSVExporter {
             rowValues.append(contentsOf: [
                 String(item.releaseId),
                 String(item.instanceId),
-                "https://www.discogs.com/release/\(item.releaseId)"
+                DiscogsConstants.websiteURL.appendingPathComponent("release/\(item.releaseId)").absoluteString
             ])
 
             csvLines.append(rowValues.map(escapeCSV).joined(separator: ";"))

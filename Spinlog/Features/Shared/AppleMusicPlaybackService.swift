@@ -132,7 +132,7 @@ final class AppleMusicPlaybackService {
 
         let resolvedTab = sourceTab ?? TabNavigationCoordinator.shared.selectedTab
 
-        withAnimation(.spring(response: 0.38, dampingFraction: 0.82)) {
+        withAnimation(.nowPlayingTransition) {
             playingTrackID = trackID
             isLoadingTrackID = nil
             currentItem = NowPlayingItem(
@@ -172,7 +172,7 @@ final class AppleMusicPlaybackService {
                 ApplicationMusicPlayer.shared.pause()
             }
         }
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
+        withAnimation(.nowPlayingTransition) {
             playingTrackID = nil
             currentItem = nil
             playbackTime = 0

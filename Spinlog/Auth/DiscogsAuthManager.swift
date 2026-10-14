@@ -59,6 +59,7 @@ final class DiscogsAuthManager: NSObject {
         TagStore.shared.setActiveUsername(self.username)
         ListeningLogStore.shared.setActiveUsername(self.username)
         CloudSyncEngine.shared.setActiveUsername(self.username)
+        WantlistAlertStore.shared.setActiveUsername(self.username)
     }
 
     func login() async {
@@ -98,6 +99,7 @@ final class DiscogsAuthManager: NSObject {
             TagStore.shared.setActiveUsername(username)
             ListeningLogStore.shared.setActiveUsername(username)
             CloudSyncEngine.shared.setActiveUsername(username)
+            WantlistAlertStore.shared.setActiveUsername(username)
             // Rejoue les actions hors ligne laissées en attente par ce compte lors d'une
             // session précédente (celles des autres comptes restent en file, voir `OfflineSyncQueue`).
             Task { await OfflineSyncQueue.shared.processQueue() }
@@ -120,6 +122,7 @@ final class DiscogsAuthManager: NSObject {
         TagStore.shared.setActiveUsername(nil)
         ListeningLogStore.shared.setActiveUsername(nil)
         CloudSyncEngine.shared.setActiveUsername(nil)
+        WantlistAlertStore.shared.setActiveUsername(nil)
         // Idem pour Collection/Wantlist/Recherche : ces vues restent montées en permanence dans
         // le TabView racine, donc leurs singletons ne se réinitialisent jamais tout seuls entre
         // deux comptes. Sans ce vidage, les items du compte précédent restaient affichés après
@@ -140,6 +143,12 @@ final class DiscogsAuthManager: NSObject {
         // Sans ce rechargement, le widget gardait l'ancien disque affiché jusqu'à son prochain
         // rafraîchissement système (minuit) : vider l'instantané ne suffit pas.
         WidgetCenter.shared.reloadTimelines(ofKind: WidgetKinds.randomAlbum)
+        // La connexion Apple Music est un réglage device-wide (lié à MusicKit, pas à un compte
+        // Discogs) : contrairement aux préférences de collection/rangement, qui sont propres à
+        // ce compte et synchronisées via iCloud (donc déjà prêtes à être retrouvées à la
+        // reconnexion ou sur un autre appareil), elle ne doit pas rester cochée pour le compte
+        // Discogs suivant qui se connecterait sur cet appareil.
+        AppleMusicAccountStore.shared.isConnected = false
     }
 
     // MARK: - Suppression complète des données locales et cloud (Guideline 5.1.1(v))
@@ -198,7 +207,10 @@ final class DiscogsAuthManager: NSObject {
     }
 
     private func authorize(requestToken: String) async throws -> String {
-        var components = URLComponents(string: "https://www.discogs.com/oauth/authorize")!
+        var components = URLComponents(
+            url: DiscogsConstants.websiteURL.appendingPathComponent("oauth/authorize"),
+            resolvingAgainstBaseURL: false
+        )!
         components.queryItems = [URLQueryItem(name: "oauth_token", value: requestToken)]
         guard let authorizeURL = components.url else { throw AuthError.invalidResponse }
 

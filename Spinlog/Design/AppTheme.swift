@@ -258,8 +258,15 @@ final class ThemeManager {
     var currentTheme: AppColorTheme {
         didSet {
             defaults.set(currentTheme.rawValue, forKey: storageKey)
+            if !isApplyingRemoteTheme {
+                CloudSyncEngine.shared.markAppPreferencesDirty()
+            }
         }
     }
+
+    /// Empêche `applyRemoteTheme` de redéclencher un envoi vers CloudKit : cette donnée en vient
+    /// déjà (même principe que `ShelfPreferencesStore.isApplyingRemoteShelfPreferences`).
+    private var isApplyingRemoteTheme = false
 
     private init() {
         var initialTheme: AppColorTheme = .signature
@@ -298,6 +305,13 @@ final class ThemeManager {
         if currentTheme.isPremiumOnly && !isPremium {
             currentTheme = .signature
         }
+    }
+
+    /// Applique un thème reçu d'iCloud. N'écrit qu'en local.
+    func applyRemoteTheme(_ theme: AppColorTheme) {
+        isApplyingRemoteTheme = true
+        currentTheme = theme
+        isApplyingRemoteTheme = false
     }
 }
 

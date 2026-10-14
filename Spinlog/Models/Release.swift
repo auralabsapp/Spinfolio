@@ -214,7 +214,7 @@ struct Release: Decodable, Identifiable, Sendable {
         if let uri, let url = URL(string: uri) {
             return url
         }
-        return URL(string: "https://www.discogs.com/release/\(id)")
+        return DiscogsConstants.websiteURL.appendingPathComponent("release/\(id)")
     }
 
     var primaryImageURL: String? {

@@ -25,7 +25,7 @@
   },
   "subscriptionGroups" : [
     {
-      "id" : "21482819",
+      "id" : "22419469",
       "localizations" : [
         {
           "description" : "Débloquez toutes les fonctionnalités de Spinlog",
@@ -62,7 +62,7 @@
           "productID" : "com.auralabs.Spinlog.premium.yearly",
           "recurringSubscriptionPeriod" : "P1Y",
           "referenceName" : "Spinlog Premium Annuel",
-          "subscriptionGroupID" : "21482819",
+          "subscriptionGroupID" : "22419469",
           "type" : "RecurringSubscription"
         },
         {
@@ -87,7 +87,7 @@
           "productID" : "com.auralabs.Spinlog.premium.monthly",
           "recurringSubscriptionPeriod" : "P1M",
           "referenceName" : "Spinlog Premium Mensuel",
-          "subscriptionGroupID" : "21482819",
+          "subscriptionGroupID" : "22419469",
           "type" : "RecurringSubscription"
         }
       ]

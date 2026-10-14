@@ -45,9 +45,13 @@ struct SectionIndexBar: View {
     /// `measuredHeight`) : ne dépend que de valeurs figées, jamais de la zone de sécurité
     /// dynamique sous le grand titre.
     private var centeringOffset: CGFloat {
-        guard let regionBottomFromScreenTop, let barHeight else { return 0 }
+        // `UIScreen.main` est dépréciée (iOS 26) : la scène connectée est le remplacement
+        // recommandé par Apple pour retrouver les dimensions de l'écran.
+        guard let regionBottomFromScreenTop, let barHeight,
+              let screenHeight = (UIApplication.shared.connectedScenes.first as? UIWindowScene)?.screen.bounds.height
+        else { return 0 }
         let currentCenterY = regionBottomFromScreenTop - barHeight / 2
-        let desiredCenterY = UIScreen.main.bounds.height / 2
+        let desiredCenterY = screenHeight / 2
         return desiredCenterY - currentCenterY
     }
 

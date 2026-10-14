@@ -82,7 +82,11 @@ struct CollectionItem: Codable, Identifiable, Sendable {
         self.notes = notes
     }
 
-    init(from decoder: Decoder) throws {
+    // `nonisolated` : pur (dé)codage sur `self`/les paramètres, sans aucun état partagé — sans ça,
+    // l'isolation par défaut de la cible (`SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`) rend la
+    // conformance `Decodable` inutilisable depuis un contexte réellement hors acteur (ex:
+    // `LocalDataStore`'s `Task.detached`, qui décode en arrière-plan).
+    nonisolated init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         releaseId = try container.decode(Int.self, forKey: .releaseId)
         folderId = try container.decode(Int.self, forKey: .folderId)
@@ -93,7 +97,7 @@ struct CollectionItem: Codable, Identifiable, Sendable {
         notes = try container.decodeIfPresent([CollectionFieldValue].self, forKey: .notes) ?? []
     }
 
-    func encode(to encoder: Encoder) throws {
+    nonisolated func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(releaseId, forKey: .releaseId)
         try container.encode(folderId, forKey: .folderId)

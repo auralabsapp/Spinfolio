@@ -13,6 +13,7 @@ struct WantlistView: View {
     @State private var showingPremiumSheet = false
     @State private var showingTagFilterSheet = false
     @State private var tagStore = TagStore.shared
+    @State private var alertStore = WantlistAlertStore.shared
     @AppStorage("wantlistDisplayMode") private var displayMode: LibraryDisplayMode = .list
     // MARK: - Sélection multiple (suppression en lot), tous modes, à l'image de
     // Collection — sans Déplacer/Tag, qui n'ont pas de sens côté wantlist.
@@ -142,7 +143,6 @@ struct WantlistView: View {
             .navigationSubtitle(navigationSubtitle)
             .navigationBarTitleDisplayMode(.large)
                         .searchDestinations()
-            .searchable(text: $viewModel.searchText, prompt: "Rechercher dans ta wantlist")
             .scrollDismissesKeyboard(.immediately)
     }
 
@@ -263,39 +263,15 @@ struct WantlistView: View {
         }
     }
 
-    /// `NavigationLink` toujours présent (même identité avant/pendant/après le mode sélection),
-    /// voir le même choix dans `CollectionView.rowContent` : c'est ce qui permet à la pastille de
-    /// `WantlistRow` d'apparaître/disparaître de façon animée plutôt qu'un remplacement brut de
-    /// toute la ligne. En mode sélection, un calque transparent au-dessus intercepte le tap pour
-    /// (dé)sélectionner au lieu de naviguer.
-    @ViewBuilder
-    private func rowContent(for item: WantlistItem) -> some View {
-        ZStack {
-            NavigationLink(value: SearchDestination.release(item.id, coverURL: item.basicInformation.coverImage ?? item.basicInformation.thumb)) {
-                WantlistRow(
-                    item: item,
-                    onAlertTap: { requestAlertSheet(for: item) },
-                    isSelecting: isSelecting,
-                    isSelected: selectedItemIds.contains(item.id)
-                )
-            }
-            .buttonStyle(.plain)
-            .allowsHitTesting(!isSelecting)
-
-            if isSelecting {
-                Color.clear
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        toggleSelection(item)
-                    }
-            }
-        }
-    }
 
     /// Nombre total d'éléments de la wantlist — valeur brute chargée (pas de notion de dossier
     /// ici), affichée sous le titre comme pour la Collection.
     private var navigationSubtitle: String {
-        guard !viewModel.items.isEmpty else { return "" }
+        // Voir le même commentaire dans CollectionView : un sous-titre vide pendant le chargement
+        // puis non vide une fois les données arrivées fait basculer la barre de navigation d'une
+        // à deux lignes, décalant le grand titre pile au moment où le squelette laisse place au
+        // contenu réel. Un texte de substitution dès le squelette réserve la place.
+        guard !viewModel.items.isEmpty else { return isShowingSkeleton ? "…" : "" }
         let total = viewModel.items.count
         if viewModel.hasActiveFilters {
             let filteredCount = viewModel.sections.flatMap(\.items).count
@@ -307,24 +283,31 @@ struct WantlistView: View {
     @ViewBuilder
     private var wantlistViewCarousel: some View {
         ScrollView(.vertical, showsIndicators: false) {
-            WantlistCarouselView(
-                sections: viewModel.sections,
-                indexEntries: viewModel.indexEntries,
-                isSelecting: isSelecting,
-                selectedItemIds: selectedItemIds,
-                onToggleSelection: { toggleSelection($0) },
-                onAlertTap: { requestAlertSheet(for: $0) },
-                onLoadMore: { await viewModel.loadMoreIfNeeded(current: $0) }
-            )
-            .padding(.top, 24)
-            .padding(.bottom, 16)
+            if isShowingSkeleton {
+                wantlistCarouselSkeletonContent
+                    .padding(.top, 24)
+                    .padding(.bottom, 16)
+            } else {
+                WantlistCarouselView(
+                    sections: viewModel.sections,
+                    indexEntries: viewModel.indexEntries,
+                    isSelecting: isSelecting,
+                    selectedItemIds: selectedItemIds,
+                    onToggleSelection: { toggleSelection($0) },
+                    onAlertTap: { requestAlertSheet(for: $0) },
+                    onLoadMore: { await viewModel.loadMoreIfNeeded(current: $0) }
+                )
+                .padding(.top, 24)
+                .padding(.bottom, 16)
+            }
         }
     }
 
     @ViewBuilder
     private var wantlistViewGrid: some View {
-        WantlistMosaicView(
+        LibraryMosaicView<WantlistItem>(
             sections: viewModel.sections,
+            isLoading: isShowingSkeleton,
             indexToken: { viewModel.indexToken(for: $0) },
             displayTitle: { viewModel.displayTitle(for: $0) },
             headerArtists: { viewModel.headerArtists(for: $0) },
@@ -333,8 +316,36 @@ struct WantlistView: View {
             isSelecting: isSelecting,
             selectedItemIds: selectedItemIds,
             onToggleSelection: { toggleSelection($0) },
-            onAlertTap: { requestAlertSheet(for: $0) },
-            onLoadMore: { await viewModel.loadMoreIfNeeded(current: $0) }
+            onLoadMore: { await viewModel.loadMoreIfNeeded(current: $0) },
+            cornerBadges: { item in
+                let alert = alertStore.alert(for: item.id)
+                return AnyView(
+                    Color.clear
+                        .overlay(alignment: .bottomTrailing) {
+                            if let alert {
+                                Image(systemName: alert.isTriggered ? "bell.badge.fill" : "bell.fill")
+                                    .font(.system(size: 9))
+                                    .foregroundStyle(alert.isTriggered ? .green : Color.spinlogPink)
+                                    .padding(4)
+                                    .background(.ultraThinMaterial, in: Circle())
+                                    .padding(4)
+                            }
+                        }
+                )
+            },
+            contextMenuContent: { item in
+                let alert = alertStore.alert(for: item.id)
+                return AnyView(
+                    Button {
+                        requestAlertSheet(for: item)
+                    } label: {
+                        Label(
+                            alert != nil ? "Modifier l'alerte prix" : "Définir une alerte prix",
+                            systemImage: alert != nil ? "bell.badge.fill" : "bell"
+                        )
+                    }
+                )
+            }
         )
     }
 
@@ -361,102 +372,81 @@ struct WantlistView: View {
 
     @ViewBuilder
     private var wantlistViewList: some View {
-        List {
-            // Voir le même commentaire dans CollectionView : en-tête de section épinglé plutôt
-            // qu'un sibling externe ou un `.safeAreaInset`, pour ne pas décrocher `.searchable()`
-            // tout en restant fixé en haut pendant le défilement (comme l'app Mail).
-            if viewModel.hasActiveFilters {
-                Section {
-                    EmptyView()
-                } header: {
+        LibraryListView<WantlistItem>(
+            sections: viewModel.sections,
+            isLoading: isShowingSkeleton,
+            skeletonLineCount: 2,
+            skeletonCoverSize: WantlistRow.coverSize,
+            indexToken: { viewModel.indexToken(for: $0) },
+            displayTitle: { viewModel.displayTitle(for: $0) },
+            headerArtists: { viewModel.headerArtists(for: $0) },
+            hasActiveFilters: viewModel.hasActiveFilters,
+            activeFiltersBar: {
+                AnyView(
                     LibraryActiveFiltersBar(
                         selectedFormat: $viewModel.selectedFormat,
                         onClearAll: viewModel.clearFilters
                     )
-                    .textCase(nil)
-                }
-            }
-            ForEach(viewModel.sections, id: \.key) { section in
-                Section(header: LibrarySectionHeader(
-                    token: viewModel.indexToken(for: section),
-                    title: viewModel.displayTitle(for: section),
-                    count: section.items.count,
-                    artists: viewModel.headerArtists(for: section)
                 )
-                    // Même fond que l'en-tête de section en mode Mosaïque.
-                    .background(.regularMaterial)
-                    // Pour la pastille de position de `SectionIndexBar` (voir `currentSectionKey`).
-                    .reportingSectionOffset(key: section.key, coordinateSpace: Self.sectionsCoordinateSpace)
-                ) {
-                    ForEach(section.items) { item in
-                        rowContent(for: item)
-                            // Voir le même commentaire dans CollectionView : resserre les lignes
-                            // en réduisant les marges verticales par défaut de `List`.
-                            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
-                            .task { await viewModel.loadMoreIfNeeded(current: item) }
-                            .swipeActions(edge: .trailing) {
-                                if !isSelecting && !viewModel.isOfflineAndStale {
-                                    Button(role: .destructive) {
-                                        itemPendingDeletion = item
-                                    } label: {
-                                        Label("Supprimer", systemImage: "trash")
-                                    }
-                                    .tint(.red)
-
-                                    Button {
-                                        requestAlertSheet(for: item)
-                                    } label: {
-                                        Label("Alerte", systemImage: "bell")
-                                    }
-                                    .tint(Color.spinlogPink)
-                                }
-                            }
-                            .swipeActions(edge: .leading) {
-                                if !isSelecting && !viewModel.isOfflineAndStale {
-                                    Button {
-                                        Task { await viewModel.beginMoveToCollection(item) }
-                                    } label: {
-                                        Label("Vers la collection", systemImage: "square.stack.fill")
-                                    }
-                                    .tint(.accentColor)
-                                }
-                            }
+            },
+            sectionsCoordinateSpace: Self.sectionsCoordinateSpace,
+            hasVerticalIndexBar: viewModel.indexEntries.count > 1,
+            isSelecting: isSelecting,
+            selectedItemIds: selectedItemIds,
+            onToggleSelection: { toggleSelection($0) },
+            rowLabel: { item in
+                AnyView(
+                    WantlistRow(
+                        item: item,
+                        onAlertTap: { requestAlertSheet(for: item) },
+                        isSelecting: isSelecting,
+                        isSelected: selectedItemIds.contains(item.id)
+                    )
+                )
+            },
+            leadingSwipeActions: { item in
+                guard !viewModel.isOfflineAndStale else { return AnyView(EmptyView()) }
+                return AnyView(
+                    Button {
+                        Task { await viewModel.beginMoveToCollection(item) }
+                    } label: {
+                        Label("Vers la collection", systemImage: "square.stack.fill")
                     }
-                }
-                .id(section.key)
+                    .tint(.accentColor)
+                )
+            },
+            trailingSwipeActions: { item in
+                guard !viewModel.isOfflineAndStale else { return AnyView(EmptyView()) }
+                return AnyView(
+                    Group {
+                        Button(role: .destructive) {
+                            itemPendingDeletion = item
+                        } label: {
+                            Label("Supprimer", systemImage: "trash")
+                        }
+                        .tint(.red)
+
+                        Button {
+                            requestAlertSheet(for: item)
+                        } label: {
+                            Label("Alerte", systemImage: "bell")
+                        }
+                        .tint(Color.spinlogPink)
+                    }
+                )
+            },
+            onLoadMore: { await viewModel.loadMoreIfNeeded(current: $0) },
+            onRefresh: {
+                await viewModel.refresh()
+                Task { await WantlistAlertStore.shared.checkAlerts() }
             }
-        }
-        .coordinateSpace(name: Self.sectionsCoordinateSpace)
-        .listStyle(.plain)
-        .listSectionSpacing(.compact)
-        // Voir le même modifier dans CollectionView : sans ça, `List` impose une
-        // hauteur minimale de header généreuse peu importe le contenu réel.
-        .environment(\.defaultMinListHeaderHeight, 0)
-        // Voir le même modifier dans CollectionView : évite qu'une liste filtrée courte puisse
-        // être tirée vers le bas sur une distance excessive par rapport à son contenu réel.
-        .scrollBounceBehavior(.basedOnSize)
-        // Voir le même modifier dans CollectionView : sans ça, la barre de défilement système
-        // s'affiche superposée aux jetons de `SectionIndexBar` sur le bord droit.
-        .scrollIndicators(.hidden)
-        .refreshable {
-            await viewModel.refresh()
-            Task { await WantlistAlertStore.shared.checkAlerts() }
-        }
-        .safeAreaInset(edge: .trailing) {
-            if viewModel.indexEntries.count > 1 {
-                Color.clear.frame(width: 28)
-            }
-        }
-        .animation(.spring(response: 0.3, dampingFraction: 0.85), value: isSelecting)
-        .animation(.spring(response: 0.3, dampingFraction: 0.85), value: selectedItemIds)
+        )
     }
 
     @ViewBuilder
     private var content: some View {
         if !authManager.isAuthenticated {
             LoginPromptView(message: String(localized: "Connecte-toi à Discogs pour voir ta wantlist."))
-        } else if viewModel.isLoading && viewModel.items.isEmpty {
-            ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if let error = viewModel.errorMessage, viewModel.items.isEmpty {
             ScrollView {
                 ContentUnavailableView("Erreur", systemImage: "exclamationmark.triangle", description: Text(error))
@@ -465,7 +455,7 @@ struct WantlistView: View {
             .refreshable {
                 await viewModel.refresh()
             }
-        } else if viewModel.items.isEmpty {
+        } else if viewModel.items.isEmpty && !viewModel.isLoading {
             ScrollView {
                 ContentUnavailableView(
                     "Wantlist vide",
@@ -477,7 +467,7 @@ struct WantlistView: View {
             .refreshable {
                 await viewModel.refresh()
             }
-        } else if viewModel.sections.isEmpty {
+        } else if viewModel.sections.isEmpty && !isShowingSkeleton {
             VStack(spacing: 0) {
                 if viewModel.isOfflineAndStale {
                     OfflineBannerView(
@@ -549,6 +539,37 @@ struct WantlistView: View {
                 }
             }
         }
+    }
+
+    /// Vrai pendant le chargement initial (aucune donnée du tout) ou le premier tri (données déjà
+    /// là, sections pas encore prêtes) : pilote l'affichage du squelette neutre à l'intérieur même
+    /// de la hiérarchie de défilement réelle — voir le même principe, plus détaillé, dans
+    /// `CollectionView.isShowingSkeleton`. Sans le second cas, un changement de tri/recherche
+    /// affichait un bref « Aucun résultat » (sections vides) avant que le calcul détaché termine.
+    private var isShowingSkeleton: Bool {
+        (viewModel.isLoading && viewModel.items.isEmpty)
+            || (viewModel.sections.isEmpty && viewModel.isComputingSections
+                && viewModel.searchText.isEmpty && !viewModel.hasActiveFilters)
+    }
+
+    private var wantlistCarouselSkeletonContent: some View {
+        VStack(spacing: 20) {
+            Spacer(minLength: 0)
+
+            HStack(spacing: 16) {
+                SkeletonBlock(cornerRadius: 10, width: 90, height: 230)
+                SkeletonBlock(cornerRadius: 12, width: 230, height: 230)
+                SkeletonBlock(cornerRadius: 10, width: 90, height: 230)
+            }
+
+            VStack(spacing: 6) {
+                SkeletonBlock(width: 160, height: 18)
+                SkeletonBlock(width: 110, height: 14)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 

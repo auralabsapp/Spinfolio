@@ -244,6 +244,131 @@
         }
       }
     },
+    "%@ · %lld éléments · %lld artistes" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "%1$@ · %#@elements@ · %#@artists@"
+          },
+          "substitutions" : {
+            "artists" : {
+              "argNum" : 3,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "machine_translated",
+                      "value" : "%arg artist"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "machine_translated",
+                      "value" : "%arg artists"
+                    }
+                  },
+                  "zero" : {
+                    "stringUnit" : {
+                      "state" : "machine_translated",
+                      "value" : "%arg artists"
+                    }
+                  }
+                }
+              }
+            },
+            "elements" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "machine_translated",
+                      "value" : "%arg item"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "machine_translated",
+                      "value" : "%arg items"
+                    }
+                  },
+                  "zero" : {
+                    "stringUnit" : {
+                      "state" : "machine_translated",
+                      "value" : "%arg items"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "%1$@ · %#@elements@ · %#@artists@"
+          },
+          "substitutions" : {
+            "artists" : {
+              "argNum" : 3,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "machine_translated",
+                      "value" : "%arg artiste"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "machine_translated",
+                      "value" : "%arg artistes"
+                    }
+                  },
+                  "zero" : {
+                    "stringUnit" : {
+                      "state" : "machine_translated",
+                      "value" : "%arg artiste"
+                    }
+                  }
+                }
+              }
+            },
+            "elements" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "machine_translated",
+                      "value" : "%arg élément"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "machine_translated",
+                      "value" : "%arg éléments"
+                    }
+                  },
+                  "zero" : {
+                    "stringUnit" : {
+                      "state" : "machine_translated",
+                      "value" : "%arg élément"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%@ · %lld/%lld éléments" : {
       "localizations" : {
         "en" : {
@@ -367,11 +492,32 @@
       }
     },
     "%@ • Écoute en cours sur la platine" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ • Listening on the turntable"
+          }
+        }
+      }
+    },
+    "%@ • Écoute sur platine" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "%@ • Listening on the turntable"
+          }
+        }
+      }
+    },
+    "%@ • Lecture sur Apple Music" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "%@ • Playing on Apple Music"
           }
         }
       }
@@ -458,6 +604,22 @@
         }
       }
     },
+    "%@, %@, lecture sur Apple Music. Touche pour ouvrir l'album." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "%1$@, %2$@, playing on Apple Music. Tap to open the album."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@, lecture sur Apple Music. Touche pour ouvrir l'album."
+          }
+        }
+      }
+    },
     "%@, %@. Écoute en cours sur la platine. Touche pour ouvrir l'album." : {
       "localizations" : {
         "en" : {
@@ -474,8 +636,24 @@
         }
       }
     },
+    "%@. Écoute en cours sur la platine. Touche pour ouvrir l'album." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "%@. Listening on the turntable. Tap to open the album."
+          }
+        }
+      }
+    },
     "%@%@" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "%@%@"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "new",
@@ -1929,6 +2107,9 @@
         }
       }
     },
+    "0,00" : {
+
+    },
     "0.00" : {
       "localizations" : {
         "en" : {
@@ -2874,7 +3055,18 @@
         }
       }
     },
+    "Artiste, disque, label, code-barre…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Artist, record, label, barcode…"
+          }
+        }
+      }
+    },
     "Artiste, disque, label…" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4668,6 +4860,16 @@
         }
       }
     },
+    "Écoute sur platine" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Listening on the turntable"
+          }
+        }
+      }
+    },
     "Écoute sur platine & Live Activity" : {
       "localizations" : {
         "en" : {
@@ -4764,6 +4966,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Location on My Shelf"
+          }
+        }
+      }
+    },
+    "Emplacement de cet album" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This Album's Spot"
           }
         }
       }
@@ -5042,6 +5254,7 @@
       }
     },
     "Ex: 25.00" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5489,6 +5702,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Physical Shelving Guide"
+          }
+        }
+      }
+    },
+    "ICI" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HERE"
           }
         }
       }
@@ -6845,6 +7068,9 @@
         }
       }
     },
+    "Ouvre le Marketplace Discogs pour cette release" : {
+
+    },
     "Ouvrir dans Apple Music" : {
       "localizations" : {
         "en" : {
@@ -7623,6 +7849,7 @@
       }
     },
     "Rechercher dans ta collection" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7633,6 +7860,7 @@
       }
     },
     "Rechercher dans ta wantlist" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7712,7 +7940,7 @@
         }
       }
     },
-    "Règle de rangement" : {
+    "Règle de rangement dans le meuble" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8761,6 +8989,7 @@
       }
     },
     "Sur platine" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -10169,26 +10398,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Shaded area = Discogs low/high range; line = median value."
-          }
-        }
-      }
-    },
-    "Emplacement de cet album" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This Album's Spot"
-          }
-        }
-      }
-    },
-    "ICI" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "HERE"
           }
         }
       }

@@ -19,7 +19,7 @@ struct Artist: Decodable, Identifiable, Sendable {
     }
 
     var discogsWebURL: URL? {
-        URL(string: "https://www.discogs.com/artist/\(id)")
+        DiscogsConstants.websiteURL.appendingPathComponent("artist/\(id)")
     }
 }
 

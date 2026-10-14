@@ -276,6 +276,23 @@ final class ReleaseActions {
         }
     }
 
+    /// Écrit un champ personnalisé Discogs sur un exemplaire précis, dont l'appelant (ex:
+    /// `CollectionItemEditSheet`) a déjà toutes les informations en main (pas besoin de les
+    /// retrouver dans `collectionInstances`, contrairement à `updatePurchasePrice`) — il gère
+    /// lui-même l'état optimiste et le mode hors ligne (file d'attente), propres à son écran.
+    func updateCollectionField(folderId: Int, releaseId: Int, instanceId: Int, fieldId: Int, value: String) async throws {
+        guard let (username, credentials) = authManager.session else { return }
+        try await DiscogsAPIClient.shared.updateCollectionField(
+            username: username,
+            folderId: folderId,
+            releaseId: releaseId,
+            instanceId: instanceId,
+            fieldId: fieldId,
+            value: value,
+            credentials: credentials
+        )
+    }
+
     /// Estimation de la cote actuelle d'une release, à partir des suggestions de prix Discogs
     /// pour l'état renseigné (ou de leur moyenne si l'état est inconnu/non trouvé). Throttlé via
     /// `ReleasePriceSnapshot` : renvoie immédiatement la dernière valeur connue si elle date de

@@ -105,7 +105,7 @@ final class NowPlayingActivityManager {
         let duration = maxListeningDuration
 
         // Bascule immédiatement l'identifiant et les métadonnées pour le mini lecteur
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
+        withAnimation(.nowPlayingTransition) {
             self.activeReleaseId = releaseId
             self.activeAlbumTitle = albumTitle
             self.activeArtistName = artistName
@@ -285,7 +285,7 @@ final class NowPlayingActivityManager {
         autoStopTask?.cancel()
         autoStopTask = nil
         await endAllSystemActivities()
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
+        withAnimation(.nowPlayingTransition) {
             self.activeReleaseId = nil
             self.activeAlbumTitle = nil
             self.activeArtistName = nil
@@ -303,7 +303,7 @@ final class NowPlayingActivityManager {
             autoStopTask?.cancel()
             autoStopTask = nil
             currentActivity = nil
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
+            withAnimation(.nowPlayingTransition) {
                 self.activeReleaseId = nil
                 self.activeAlbumTitle = nil
                 self.activeArtistName = nil

@@ -1,6 +1,10 @@
 import SwiftUI
 
 struct MasterDetailView: View {
+    /// Partagée entre la vraie pochette et `masterDetailSkeleton`, pour que le squelette ne
+    /// puisse pas diverger silencieusement de la taille réelle.
+    private static let coverSize: CGFloat = 220
+
     let masterId: Int
 
     @Environment(\.colorScheme) private var colorScheme
@@ -15,6 +19,7 @@ struct MasterDetailView: View {
 
     var body: some View {
         content
+            .animation(.easeInOut(duration: 0.3), value: viewModel.isLoading)
             .navigationTitle(viewModel.master?.title ?? "")
             .navigationBarTitleDisplayMode(.inline)
             .disablesContentPopGesture()
@@ -24,9 +29,9 @@ struct MasterDetailView: View {
     @ViewBuilder
     private var content: some View {
         if viewModel.isLoading {
-            ProgressView()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            masterDetailSkeleton
                 .background(infoBackgroundColor.ignoresSafeArea())
+                .transition(.opacity)
         } else if let errorMessage = viewModel.errorMessage {
             ContentUnavailableView(
                 "Impossible de charger ce master",
@@ -48,7 +53,7 @@ struct MasterDetailView: View {
                             }
                         }
                     )
-                    .frame(width: 220, height: 220)
+                    .frame(width: Self.coverSize, height: Self.coverSize)
                     .frame(maxWidth: .infinity)
                     .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.40 : 0.16), radius: 16, y: 8)
 
@@ -75,17 +80,24 @@ struct MasterDetailView: View {
                     if !viewModel.versions.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Pressages (\(viewModel.versions.count))").font(.headline)
-                            ForEach(viewModel.versions) { version in
-                                NavigationLink(value: SearchDestination.release(version.id, coverURL: version.thumb)) {
-                                    HStack(spacing: 12) {
-                                        AsyncCoverImage(url: version.thumb, cornerRadius: 6)
-                                            .frame(width: 44, height: 44)
-                                        VStack(alignment: .leading, spacing: 2) {
-                                            Text([version.format, version.label].compactMap { $0 }.joined(separator: " · "))
-                                                .font(.subheadline)
-                                            Text([version.country, version.released].compactMap { $0 }.joined(separator: " · "))
-                                                .font(.caption)
-                                                .foregroundStyle(Color.appSecondaryText)
+                            // `LazyVStack` plutôt que `VStack` : un master populaire peut avoir
+                            // 50-150 pressages, et un `VStack` classique dans une `ScrollView`
+                            // instancie et décode d'un coup toutes leurs pochettes à l'ouverture,
+                            // provoquant un à-coup. `targetSize` évite en plus un décodage en
+                            // pleine résolution pour une miniature de 44pt.
+                            LazyVStack(alignment: .leading, spacing: 10) {
+                                ForEach(viewModel.versions) { version in
+                                    NavigationLink(value: SearchDestination.release(version.id, coverURL: version.thumb)) {
+                                        HStack(spacing: 12) {
+                                            AsyncCoverImage(url: version.thumb, cornerRadius: 6, targetSize: 44)
+                                                .frame(width: 44, height: 44)
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text([version.format, version.label].compactMap { $0 }.joined(separator: " · "))
+                                                    .font(.subheadline)
+                                                Text([version.country, version.released].compactMap { $0 }.joined(separator: " · "))
+                                                    .font(.caption)
+                                                    .foregroundStyle(Color.appSecondaryText)
+                                            }
                                         }
                                     }
                                 }
@@ -108,6 +120,31 @@ struct MasterDetailView: View {
             .onDisappear {
                 TabNavigationCoordinator.shared.unregisterTopDestination(.master(masterId))
             }
+            .transition(.opacity)
         }
+    }
+
+    /// Gabarit neutre affiché pendant le chargement, à la place d'une icône de chargement :
+    /// reproduit la structure réelle (pochette centrée, titre/artiste/année, puis des sections
+    /// titre + contenu pour la tracklist et les pressages) avec des blocs animés (voir
+    /// `SkeletonBlock`), pour que l'apparition du contenu réel ne fasse pas sauter la page.
+    private var masterDetailSkeleton: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                SkeletonBlock(cornerRadius: 12, width: Self.coverSize, height: Self.coverSize)
+                    .frame(maxWidth: .infinity)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    SkeletonBlock(width: 200, height: 22)
+                    SkeletonBlock(width: 140, height: 17)
+                    SkeletonBlock(cornerRadius: 10, width: 70, height: 20)
+                }
+
+                SkeletonSection(titleWidth: 90, contentHeight: 160)
+                SkeletonSection(titleWidth: 130, contentHeight: 150)
+            }
+            .padding()
+        }
+        .scrollDisabled(true)
     }
 }

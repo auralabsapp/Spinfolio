@@ -35,6 +35,12 @@ private nonisolated enum SyncedRecordKind: Equatable {
     /// `DiscogsWorkCategoryCache`) : un seul enregistrement singleton par compte. Partagé pour
     /// qu'un classement fait sur un appareil (une requête par master) serve aux autres.
     case discogsWorkCategories
+    /// Thème de couleur (`ThemeManager`), apparence clair/sombre/système et durée maximale de la
+    /// Live Activity d'écoute (`AppearancePreferencesStore`) : un seul enregistrement singleton
+    /// par compte. Contrairement à la connexion Apple Music (device-wide, jamais synchronisée et
+    /// réinitialisée à la déconnexion — voir `DiscogsAuthManager.logout()`), ces réglages sont
+    /// propres au compte Discogs et doivent se retrouver à la reconnexion ou sur un autre appareil.
+    case appPreferences
 
     private static let tagPrefix = "tags_"
     private static let sessionPrefix = "session_"
@@ -44,6 +50,7 @@ private nonisolated enum SyncedRecordKind: Equatable {
     private static let wantlistAlertPrefix = "alert_"
     private static let standaloneTagsRecordName = "standaloneTags"
     private static let discogsWorkCategoriesRecordName = "discogsWorkCategories"
+    private static let appPreferencesRecordName = "appPreferences"
 
     var recordName: String {
         switch self {
@@ -55,6 +62,7 @@ private nonisolated enum SyncedRecordKind: Equatable {
         case .wantlistAlert(let releaseId): return "\(Self.wantlistAlertPrefix)\(releaseId)"
         case .standaloneTags: return Self.standaloneTagsRecordName
         case .discogsWorkCategories: return Self.discogsWorkCategoriesRecordName
+        case .appPreferences: return Self.appPreferencesRecordName
         }
     }
 
@@ -68,6 +76,7 @@ private nonisolated enum SyncedRecordKind: Equatable {
         case .wantlistAlert: return "WantlistAlert"
         case .standaloneTags: return "StandaloneTags"
         case .discogsWorkCategories: return "DiscogsWorkCategories"
+        case .appPreferences: return "AppPreferences"
         }
     }
 
@@ -90,6 +99,7 @@ private nonisolated enum SyncedRecordKind: Equatable {
         }
         if recordName == standaloneTagsRecordName { return .standaloneTags }
         if recordName == discogsWorkCategoriesRecordName { return .discogsWorkCategories }
+        if recordName == appPreferencesRecordName { return .appPreferences }
         return nil
     }
 }
@@ -147,6 +157,14 @@ private struct SyncedShelfPreferences: Codable, Sendable {
     }
 }
 
+/// Instantané synchronisable du thème de couleur, de l'apparence et de la durée maximale de la
+/// Live Activity d'écoute (voir `ThemeManager`/`AppearancePreferencesStore`).
+private struct SyncedAppPreferences: Codable, Sendable {
+    let colorTheme: String
+    let appearance: String
+    let maxListeningDuration: TimeInterval
+}
+
 /// Instantané synchronisable d'un point d'historique de la valeur globale de la collection pour
 /// un jour donné (voir `CollectionSnapshot`).
 private struct SyncedCollectionSnapshot: Codable, Sendable {
@@ -181,6 +199,15 @@ final class CloudSyncEngine {
     /// `true` uniquement pendant le tout premier `fetchChanges()` réussi pour le compte actif sur
     /// cet appareil — voir `apply(remoteRecord:allowMerge:)`.
     private var isFirstHydrateForActiveAccount = false
+    /// `true` pendant toute la réapplication d'un lot de changements distants (`handleEvent`,
+    /// cas `.fetchedRecordZoneChanges`). `TagStore`/`LocalDataStore` ne doivent jamais redéclencher
+    /// un envoi (`markDirty`/`markDeleted`) pendant cette fenêtre : ils ne le font aujourd'hui que
+    /// par discipline (leurs méthodes `applyRemote*` sont des chemins de code dédiés, distincts de
+    /// leurs méthodes d'écriture normales), sans garde-fou explicite. Ce flag rend cet invariant
+    /// vérifiable au lieu de reposer uniquement sur cette convention — un futur appel égaré vers une
+    /// méthode d'écriture normale depuis le chemin "distant" échoue bruyamment (assertion en debug)
+    /// plutôt que de rouvrir silencieusement une boucle d'envoi vers iCloud.
+    private var isApplyingRemoteChange = false
     /// Mis à `true` par `handleEvent` dès qu'un enregistrement individuel échoue pendant l'envoi
     /// en cours (ex: `CKError.zoneBusy`/`.requestRateLimited` après une rafale de changements) —
     /// consulté par `scheduleSend()` pour appliquer le même délai qu'un échec global, qui sinon ne
@@ -359,6 +386,12 @@ final class CloudSyncEngine {
     // MARK: - Envoi (push)
 
     private func markDirty(_ kind: SyncedRecordKind) {
+        // Voir le commentaire sur `isApplyingRemoteChange` : un appel ici pendant la réapplication
+        // d'un changement distant indiquerait qu'une méthode d'écriture normale (au lieu d'un
+        // `applyRemote*`) a été invoquée par erreur depuis `apply(remoteRecord:)`, ce qui
+        // rouvrirait une boucle d'envoi vers iCloud.
+        assert(!isApplyingRemoteChange, "markDirty appelé pendant l'application d'un changement distant")
+        guard !isApplyingRemoteChange else { return }
         guard let syncEngine, let activeUsername else {
             cloudSyncLogger.log("markDirty(\(String(describing: kind), privacy: .public)) ignoré — syncEngine=\(self.syncEngine == nil ? "nil" : "ok", privacy: .public) activeUsername=\(self.activeUsername ?? "nil", privacy: .public)")
             return
@@ -374,6 +407,9 @@ final class CloudSyncEngine {
     }
 
     private func markDeleted(_ kind: SyncedRecordKind) {
+        // Voir le commentaire sur `isApplyingRemoteChange` dans `markDirty`.
+        assert(!isApplyingRemoteChange, "markDeleted appelé pendant l'application d'un changement distant")
+        guard !isApplyingRemoteChange else { return }
         guard let syncEngine, let activeUsername else {
             cloudSyncLogger.log("markDeleted(\(String(describing: kind), privacy: .public)) ignoré — syncEngine=\(self.syncEngine == nil ? "nil" : "ok", privacy: .public) activeUsername=\(self.activeUsername ?? "nil", privacy: .public)")
             return
@@ -442,6 +478,12 @@ final class CloudSyncEngine {
     /// Signale que de nouveaux masters Discogs ont été classés (voir `DiscogsWorkCategoryCache`).
     func markDiscogsWorkCategoriesDirty() {
         markDirty(.discogsWorkCategories)
+    }
+
+    /// Signale que le thème de couleur, l'apparence ou la durée maximale de la Live Activity
+    /// d'écoute ont changé (voir `ThemeManager`/`AppearancePreferencesStore`).
+    func markAppPreferencesDirty() {
+        markDirty(.appPreferences)
     }
 
     /// Regroupe plusieurs signalements rapprochés en un seul envoi : CKSyncEngine ne doit pas
@@ -580,6 +622,7 @@ final class CloudSyncEngine {
             markShelfPreferencesDirty()
             markStandaloneTagsDirty()
             markDiscogsWorkCategoriesDirty()
+            markAppPreferencesDirty()
             // Marqué tout de suite, sans attendre la confirmation réseau : les changements sont
             // déjà enregistrés dans l'état persisté du moteur (`state.add` dans `markDirty`), qui
             // les redélivrera lui-même même si cet envoi immédiat échoue (ex: throttling).
@@ -799,6 +842,20 @@ final class CloudSyncEngine {
             // supprimer, contrairement aux données de l'utilisateur.
             cloudSyncLogger.log("apply(remoteRecord:) sections Discogs — remote=\(remoteCategories.count)")
             DiscogsWorkCategoryCache.shared.applyRemote(remoteCategories)
+
+        case .appPreferences:
+            guard let prefs = try? JSONDecoder().decode(SyncedAppPreferences.self, from: payload) else {
+                cloudSyncLogger.error("apply(remoteRecord:) — payload illisible pour les préférences d'apparence")
+                return
+            }
+            // Scalaires, comme `.collectionPreferences` : pas de fusion possible, le serveur fait
+            // toujours autorité.
+            cloudSyncLogger.log("apply(remoteRecord:) préférences d'apparence")
+            ThemeManager.shared.applyRemoteTheme(AppColorTheme(rawValue: prefs.colorTheme) ?? ThemeManager.shared.currentTheme)
+            AppearancePreferencesStore.shared.applyRemotePreferences(
+                appearance: AppTheme(rawValue: prefs.appearance) ?? AppearancePreferencesStore.shared.appearance,
+                maxListeningDuration: prefs.maxListeningDuration
+            )
         }
     }
 
@@ -874,6 +931,14 @@ final class CloudSyncEngine {
 
         case .discogsWorkCategories:
             return try? JSONEncoder().encode(DiscogsWorkCategoryCache.shared.syncPayload)
+
+        case .appPreferences:
+            let prefs = SyncedAppPreferences(
+                colorTheme: ThemeManager.shared.currentTheme.rawValue,
+                appearance: AppearancePreferencesStore.shared.appearance.rawValue,
+                maxListeningDuration: AppearancePreferencesStore.shared.maxListeningDuration
+            )
+            return try? JSONEncoder().encode(prefs)
         }
     }
 }
@@ -918,6 +983,10 @@ extension CloudSyncEngine: CKSyncEngineDelegate {
 
         case .fetchedRecordZoneChanges(let fetchedChanges):
             cloudSyncLogger.log("fetchedRecordZoneChanges — \(fetchedChanges.modifications.count) modification(s), \(fetchedChanges.deletions.count) suppression(s)")
+            // Voir le commentaire sur `isApplyingRemoteChange` : couvre toute cette réapplication,
+            // pour que `markDirty`/`markDeleted` refusent bruyamment d'être appelées entre-temps.
+            isApplyingRemoteChange = true
+            defer { isApplyingRemoteChange = false }
             // Un lot peut contenir des centaines d'enregistrements (première synchro) : regroupés
             // pour que chaque store n'écrive sur disque et ne notifie l'UI qu'une fois par lot.
             TagStore.shared.performBatchUpdate {

@@ -81,9 +81,8 @@ final class LibraryMembershipStore {
     func notifyCollectionItemRemoved(releaseId: Int, instanceId: Int? = nil) {
         membershipDebugLogger.log("POST collectionItemRemoved release=\(releaseId) instance=\(instanceId ?? -1)")
         if let username = authManager.username {
-            let remaining = localStore.getCollectionItems(username: username, folderId: DiscogsConstants.allFolderId)
-                .filter { $0.releaseId == releaseId && (instanceId == nil || $0.instanceId != instanceId) }
-            if remaining.isEmpty {
+            let stillOwned = localStore.hasOtherCollectionInstance(username: username, releaseId: releaseId, excludingInstanceId: instanceId)
+            if !stillOwned {
                 markRemovedFromCollection(releaseId)
             }
         } else {

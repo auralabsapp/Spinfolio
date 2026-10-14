@@ -36,7 +36,7 @@ final class UserProfileViewModel {
             return url
         }
         guard let profile else { return nil }
-        return URL(string: "https://www.discogs.com/user/\(profile.username)")
+        return DiscogsConstants.websiteURL.appendingPathComponent("user/\(profile.username)")
     }
 
     // MARK: - 1. Identité & Contact

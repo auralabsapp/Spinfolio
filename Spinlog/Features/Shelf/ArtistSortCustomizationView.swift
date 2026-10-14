@@ -8,6 +8,10 @@ struct ArtistSortCustomizationView: View {
     @State private var editingArtist: String? = nil
     @State private var showingResetConfirmation = false
     @State private var filterMode: FilterMode = .all
+    /// Lecture disque (`getAllCollectionItemsSync`) mise en cache une seule fois à l'apparition de
+    /// l'écran, plutôt que refaite à chaque frappe dans la recherche : `allArtists` (et donc
+    /// `filteredArtists`) était recalculée — relecture disque comprise — à chaque caractère tapé.
+    @State private var collectionArtists: [String] = []
 
     enum FilterMode: String, CaseIterable, Identifiable {
         case all = "Tous"
@@ -24,20 +28,27 @@ struct ArtistSortCustomizationView: View {
     }
 
     private var allArtists: [String] {
-        var artistSet = Set<String>()
-        if let username = DiscogsAuthManager.shared.username {
-            let items = LocalDataStore.shared.getAllCollectionItems(username: username)
-            for item in items {
-                let cleaned = ArtistShelfSortHelper.cleanDiscogsSuffix(item.basicInformation.artistNames)
-                if !cleaned.isEmpty {
-                    artistSet.insert(cleaned)
-                }
-            }
-        }
+        var artistSet = Set(collectionArtists)
         for customArtist in shelfPreferences.customArtistSortOverrides.keys {
             artistSet.insert(customArtist)
         }
         return artistSet.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+    }
+
+    private func loadCollectionArtists() {
+        guard let username = DiscogsAuthManager.shared.username else {
+            collectionArtists = []
+            return
+        }
+        let items = LocalDataStore.shared.getAllCollectionItemsSync(username: username)
+        var artistSet = Set<String>()
+        for item in items {
+            let cleaned = ArtistShelfSortHelper.cleanDiscogsSuffix(item.basicInformation.artistNames)
+            if !cleaned.isEmpty {
+                artistSet.insert(cleaned)
+            }
+        }
+        collectionArtists = Array(artistSet)
     }
 
     private var filteredArtists: [String] {
@@ -148,6 +159,9 @@ struct ArtistSortCustomizationView: View {
         .navigationTitle("Tri des artistes")
         .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $searchText, prompt: "Rechercher un artiste...")
+        .task {
+            loadCollectionArtists()
+        }
         .sheet(item: Binding(
             get: { editingArtist.map { ArtistEditPayload(artist: $0) } },
             set: { editingArtist = $0?.artist }

@@ -6,8 +6,33 @@ final class WantlistAlertViewModel {
     private let alertStore = WantlistAlertStore.shared
     private let authManager = DiscogsAuthManager.shared
 
+    /// Texte brut tel que tapé (chiffres + séparateur décimal uniquement, jamais le symbole
+    /// monétaire : `TextField(value:format: .currency(...))` reformate le texte à chaque frappe et
+    /// perd la position du curseur dès que le symbole fait partie du texte édité — le 2e chiffre
+    /// tapé atterrit alors après le symbole au lieu de s'insérer dans le nombre). Vide tant que
+    /// l'utilisateur n'a saisi (ou repris) aucun montant — notamment quand il n'y a pas encore
+    /// d'alerte active sur ce disque : voir `setupInitialValues`, qui ne le pré-remplit alors plus
+    /// avec une suggestion de cote marketplace.
     var targetPriceString: String = ""
     var currency: String = "EUR"
+
+    var targetPrice: Double? {
+        let cleaned = targetPriceString.replacingOccurrences(of: ",", with: ".")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return Double(cleaned)
+    }
+
+    /// Symbole monétaire seul (ex: "€", "$" — pas le nom complet "Euro" que renverrait
+    /// `Locale.localizedString(forCurrencyCode:)`), affiché en permanence à côté du champ de
+    /// saisie, y compris quand il est vide — jamais à l'intérieur du texte édité (voir
+    /// `targetPriceString`).
+    var currencySymbol: String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.locale = Locale.current
+        formatter.currencyCode = currency
+        return formatter.currencySymbol ?? currency
+    }
 
     private(set) var isLoading = true
     private(set) var currentStats: MarketplaceStats?
@@ -17,16 +42,6 @@ final class WantlistAlertViewModel {
 
     func existingAlert(for item: WantlistItem) -> WantlistAlert? {
         alertStore.alert(for: item.id)
-    }
-
-    var parsedTargetPrice: Double? {
-        let cleaned = targetPriceString.replacingOccurrences(of: ",", with: ".")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        return Double(cleaned)
-    }
-
-    var currencySymbol: String {
-        Locale.current.localizedString(forCurrencyCode: currency) ?? currency
     }
 
     func applySuggestion(price: Double) {
@@ -66,11 +81,6 @@ final class WantlistAlertViewModel {
                         from: lowest.currency,
                         to: currency
                     )
-                }
-
-                // Pré-remplit si pas encore de valeur
-                if targetPriceString.isEmpty, let converted = convertedLowestPrice {
-                    targetPriceString = String(format: "%.2f", converted)
                 }
             }
         } catch {
@@ -116,7 +126,7 @@ final class WantlistAlertViewModel {
     /// peut alors se fermer), `false` si la permission de notification a été refusée — la vue
     /// doit alors proposer à l'utilisateur de continuer quand même via `saveAlertDirectly`.
     func saveAlert(for item: WantlistItem) async -> Bool {
-        guard let price = parsedTargetPrice, price > 0 else { return false }
+        guard let price = targetPrice, price > 0 else { return false }
 
         isSaving = true
         defer { isSaving = false }
@@ -134,7 +144,7 @@ final class WantlistAlertViewModel {
     }
 
     func saveAlertDirectly(for item: WantlistItem) {
-        guard let price = parsedTargetPrice, price > 0 else { return }
+        guard let price = targetPrice, price > 0 else { return }
 
         let alert = WantlistAlert(
             releaseId: item.id,

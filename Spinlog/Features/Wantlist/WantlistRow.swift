@@ -1,6 +1,11 @@
 import SwiftUI
 
 struct WantlistRow: View {
+    /// Référencée par `SkeletonLibraryRow` (via `LibraryListView`) pour que son gabarit de
+    /// chargement reste de la même taille que la vraie pochette, sans retaper la valeur — voir
+    /// le même principe sur `CollectionRow.coverSize`.
+    static let coverSize: CGFloat = 56
+
     let item: WantlistItem
     var onAlertTap: (() -> Void)? = nil
     var isSelecting: Bool = false
@@ -30,8 +35,8 @@ struct WantlistRow: View {
                     .transition(.scale.combined(with: .opacity))
             }
 
-            AsyncCoverImage(url: info.thumb ?? info.coverImage, cornerRadius: 8)
-                .frame(width: 56, height: 56)
+            AsyncCoverImage(url: info.thumb ?? info.coverImage, cornerRadius: 8, targetSize: Self.coverSize)
+                .frame(width: Self.coverSize, height: Self.coverSize)
                 .overlay {
                     if isSelecting && isSelected {
                         RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -39,7 +44,7 @@ struct WantlistRow: View {
                     }
                 }
                 .opacity(isSelecting ? (isSelected ? 1.0 : 0.45) : 1.0)
-                .animation(.spring(response: 0.28, dampingFraction: 0.85), value: isSelected)
+                .animation(.librarySelectionToggle, value: isSelected)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(info.title)

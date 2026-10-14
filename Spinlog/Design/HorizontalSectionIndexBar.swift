@@ -21,6 +21,11 @@ struct HorizontalSectionIndexBar: View {
     var body: some View {
         GeometryReader { geometry in
             let width = geometry.size.width
+            // Largeur fixe (20pt) tant qu'elle tient dans la largeur disponible ; sinon
+            // compressée pour que la barre entière reste toujours contenue dans l'écran — sans
+            // ça, un tri avec beaucoup de jetons distincts (A-Z complet) dépassait la largeur de
+            // l'écran, chaque jeton gardant son minimum de 20pt quel que soit leur nombre.
+            let itemWidth = entries.isEmpty ? 20 : min(20, width / CGFloat(entries.count))
 
             HStack(spacing: 0) {
                 ForEach(entries, id: \.token) { entry in
@@ -31,15 +36,15 @@ struct HorizontalSectionIndexBar: View {
                     Text(railLabel(for: entry.token))
                         .font(.system(size: entries.count > 18 ? 9 : 11, weight: isSelected ? .black : .semibold, design: .rounded))
                         .lineLimit(1)
-                        .minimumScaleFactor(0.6)
+                        .minimumScaleFactor(0.5)
                         .foregroundStyle(isCurrent ? .white : (isSelected ? Color.spinlogPink : Color.secondary))
-                        .frame(width: 20, height: 20)
+                        .frame(width: itemWidth, height: 20)
                         .background {
                             if isCurrent {
                                 Circle().fill(Color.spinlogPurple)
                             }
                         }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .frame(maxHeight: .infinity)
                         .contentShape(Rectangle())
                 }
             }

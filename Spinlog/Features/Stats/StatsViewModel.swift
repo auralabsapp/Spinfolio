@@ -74,6 +74,13 @@ final class StatsViewModel {
     /// représentatif pour être affiché (trop peu de données pour être pertinent).
     static let minimumListeningSessionsForRanking = 5
     private(set) var isLoadingOverview = false
+    /// Spécifique aux 3 appels de `loadCounters` (compteurs + derniers ajouts), indépendant de
+    /// `isLoadingOverview` : ce dernier passe à `false` dès que le cache local est appliqué, bien
+    /// avant que ces appels réseau n'aient forcément répondu (voir `loadOverview`). `true` dès la
+    /// création du ViewModel plutôt que `false` : sans ça, le squelette de "Derniers ajouts"
+    /// n'apparaissait qu'une fois `loadCounters` effectivement démarré, laissant un bref instant
+    /// sans rien (ni squelette, ni contenu) à l'arrivée sur l'onglet.
+    private(set) var isLoadingCounters = true
 
     private(set) var totalCollectionCount: Int?
     private(set) var totalWantlistCount: Int?
@@ -159,10 +166,45 @@ final class StatsViewModel {
     /// Dictionnaire en mémoire des années de masters connues [masterId: originalYear].
     private var masterYearsCache: [Int: Int] = [:]
 
-    /// Compteurs + derniers ajouts : chacun est un seul appel léger (`per_page` réduit).
+    /// Affiche d'abord tout ce que le cache local permet (répartitions, classements, historique),
+    /// sans attendre le réseau. Les compteurs Collection/Wantlist et les "derniers ajouts" sont 3
+    /// appels légers mais, derrière un quota Discogs bas, `DiscogsRateLimiter` peut espacer chacun
+    /// de 2 à 10s — ils n'alimentent que `countersRow`/`recentAdditionsSection`, qui savent déjà
+    /// s'afficher sans leur donnée ("–", section absente), donc plus question qu'ils retiennent
+    /// tout l'écran derrière le squelette pendant qu'ils répondent.
     func loadOverview() async {
-        guard let (username, credentials) = authManager.session else { return }
-        isLoadingOverview = true
+        guard let username = authManager.username else { return }
+
+        // Charge le cache local pérenne des MasterRecords (avant les calculs qui en dépendent)
+        masterYearsCache = localStore.getAllMasterYears()
+
+        // Une seule lecture (décodage complet) du cache de la collection, réutilisée par tous
+        // les calculs : auparavant, il était décodé trois fois et les répartitions calculées
+        // deux fois à chaque ouverture de l'écran.
+        let cached = await localStore.getCollectionItems(username: username, folderId: DiscogsConstants.allFolderId)
+        if !cached.isEmpty {
+            applyCollectionItems(cached)
+        }
+        // Squelette complet réservé au tout premier lancement (aucun cache nulle part) : dès que
+        // la collection est connue, même via ce cache, l'écran réel s'affiche — chaque section
+        // encore en attente de données fraîches (histogramme, compteurs...) a déjà son propre état
+        // intermédiaire (voir `isLoadingHistogram`, `countersRow`).
+        isLoadingOverview = cached.isEmpty
+
+        startHistogramLoad(hasFreshCache: !cached.isEmpty)
+
+        async let counters: Void = loadCounters(username: username)
+        async let valuation: Void = loadValuation()
+        async let invested: Void = computeTotalInvestedIfNeeded()
+        _ = await (counters, valuation, invested)
+    }
+
+    /// Compteurs Collection/Wantlist + derniers ajouts : 3 appels légers (`per_page` réduit),
+    /// indépendants du reste de l'écran (voir `loadOverview`).
+    private func loadCounters(username: String) async {
+        isLoadingCounters = true
+        defer { isLoadingCounters = false }
+        guard let credentials = authManager.credentials else { return }
         do {
             async let collectionCountRequest = DiscogsAPIClient.shared.collectionItems(
                 username: username, folderId: DiscogsConstants.allFolderId, page: 1, perPage: 1, credentials: credentials
@@ -176,15 +218,19 @@ final class StatsViewModel {
             let (collectionResponse, wantlistResponse, recentResponse) = try await (collectionCountRequest, wantlistCountRequest, recentRequest)
             totalCollectionCount = collectionResponse.pagination.items
             totalWantlistCount = wantlistResponse.pagination.items
-            recentAdditions = recentResponse.releases
+            // Même animation que les autres sections de l'écran (répartitions, classements…) au
+            // passage du squelette aux vraies pochettes, plutôt qu'un remplacement instantané.
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                recentAdditions = recentResponse.releases
+            }
         } catch {
             // Sans réseau (ou erreur transitoire), on retombe sur le cache local pour les 2
             // compteurs qui ont un équivalent exact (contrairement à la cote de marché, qui
             // n'en a aucun) : seuls les "derniers ajouts" restent vides. Si même ce cache est
             // vide (jamais synchronisé), on laisse le compteur à `nil` plutôt que d'afficher un
             // 0 trompeur — `countersRow` affiche alors "–".
-            let cachedCollection = localStore.getCollectionItems(username: username, folderId: DiscogsConstants.allFolderId)
-            let cachedWantlist = localStore.getWantlistItems(username: username)
+            let cachedCollection = await localStore.getCollectionItems(username: username, folderId: DiscogsConstants.allFolderId)
+            let cachedWantlist = await localStore.getWantlistItems(username: username)
             if !cachedCollection.isEmpty {
                 totalCollectionCount = cachedCollection.count
             }
@@ -192,22 +238,6 @@ final class StatsViewModel {
                 totalWantlistCount = cachedWantlist.count
             }
         }
-        isLoadingOverview = false
-
-        // Charge le cache local pérenne des MasterRecords (avant les calculs qui en dépendent)
-        masterYearsCache = localStore.getAllMasterYears()
-
-        // Une seule lecture (décodage complet) du cache de la collection, réutilisée par tous
-        // les calculs : auparavant, il était décodé trois fois et les répartitions calculées
-        // deux fois à chaque ouverture de l'écran.
-        let cached = localStore.getCollectionItems(username: username, folderId: DiscogsConstants.allFolderId)
-        if !cached.isEmpty {
-            applyCollectionItems(cached)
-        }
-
-        startHistogramLoad(hasFreshCache: !cached.isEmpty)
-        await loadValuation()
-        await computeTotalInvestedIfNeeded()
     }
 
     private func loadValuation() async {
@@ -757,14 +787,10 @@ final class StatsViewModel {
     /// Retourne la liste des disques de la collection ajoutés durant une année donnée,
     /// triés du plus récent au plus ancien par date d'ajout.
     func items(forYear year: Int) -> [CollectionItem] {
-        let source: [CollectionItem]
-        if !allCollectionItems.isEmpty {
-            source = allCollectionItems
-        } else if let username = authManager.username {
-            source = localStore.getCollectionItems(username: username, folderId: DiscogsConstants.allFolderId)
-        } else {
-            source = []
-        }
+        // Pas de repli réseau/cache ici si `allCollectionItems` est encore vide : cette méthode
+        // n'est appelée qu'au tap d'une barre de l'histogramme "Exemplaires ajoutés par année",
+        // qui ne peut lui-même s'afficher qu'une fois `allCollectionItems` déjà peuplé.
+        let source = allCollectionItems
         return source.filter { item in
             guard let date = item.dateAddedDate else { return false }
             return Calendar.current.component(.year, from: date) == year

@@ -20,8 +20,7 @@ struct SettingsIcon: View {
 }
 
 struct SettingsView: View {
-    @AppStorage("appTheme") private var appThemeRawValue = AppTheme.system.rawValue
-    @AppStorage(NowPlayingActivityManager.maxListeningDurationKey) private var maxListeningDuration: Double = NowPlayingActivityManager.defaultDuration
+    @State private var appearancePreferences = AppearancePreferencesStore.shared
     @State private var themeManager = ThemeManager.shared
     @State private var authManager = DiscogsAuthManager.shared
     @State private var tagStore = TagStore.shared
@@ -35,16 +34,8 @@ struct SettingsView: View {
     @State private var showingDeleteAccountConfirmation = false
     @State private var showingDeleteAccountWebsite = false
 
-    // Export CSV de la collection
-    @State private var isExportingCSV = false
-
-    // Export PDF "déclaration de collection" (assurance)
-    @State private var isExportingPDF = false
-
-    // Alertes
-    @State private var alertTitle = ""
-    @State private var alertMessage = ""
-    @State private var showingAlert = false
+    // Export CSV/PDF de la collection (appels réseau délégués à ce ViewModel)
+    @State private var exportViewModel = CollectionExportViewModel()
 
     // Dossier d'ajout par défaut
     @State private var availableFolders: [CollectionFolder] = []
@@ -91,10 +82,10 @@ struct SettingsView: View {
     @ViewBuilder
     private func applySheetsAndAlerts(to content: some View) -> some View {
         content
-            .alert(alertTitle, isPresented: $showingAlert) {
+            .alert(exportViewModel.alertTitle, isPresented: $exportViewModel.showingAlert) {
                 Button("OK", role: .cancel) {}
             } message: {
-                Text(alertMessage)
+                Text(exportViewModel.alertMessage)
             }
             .sheet(isPresented: $showingDiscogsWebsite) {
                 SafariView(url: DiscogsConstants.websiteURL)
@@ -318,7 +309,7 @@ struct SettingsView: View {
                 HStack(spacing: 14) {
                     SettingsIcon(systemName: "books.vertical.fill", backgroundColor: .indigo)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Règle de rangement")
+                        Text("Règle de rangement dans le meuble")
                             .foregroundStyle(.primary)
                         Text(shelfPreferences.sortStrategy.title)
                             .font(.caption2)
@@ -401,8 +392,8 @@ struct SettingsView: View {
     private var listeningSection: some View {
         Section {
             Picker(selection: Binding(
-                get: { Int(maxListeningDuration) },
-                set: { maxListeningDuration = Double($0) }
+                get: { Int(appearancePreferences.maxListeningDuration) },
+                set: { appearancePreferences.maxListeningDuration = Double($0) }
             )) {
                 ForEach(ListeningMaxDurationOption.allCases) { option in
                     Text(option.label)
@@ -613,7 +604,14 @@ struct SettingsView: View {
     @ViewBuilder
     private var appearanceSection: some View {
         Section {
-            Picker(selection: $appThemeRawValue) {
+            Picker(selection: Binding(
+                get: { appearancePreferences.appearance.rawValue },
+                set: { raw in
+                    if let theme = AppTheme(rawValue: raw) {
+                        appearancePreferences.appearance = theme
+                    }
+                }
+            )) {
                 ForEach(AppTheme.allCases) { theme in
                     Text(theme.title).tag(theme.rawValue)
                 }
@@ -669,7 +667,7 @@ struct SettingsView: View {
                 )
             } else {
                 Button {
-                    exportCollectionCSV()
+                    Task { await exportViewModel.exportCSV() }
                 } label: {
                     HStack(spacing: 14) {
                         SettingsIcon(systemName: "tablecells", backgroundColor: .green)
@@ -682,7 +680,7 @@ struct SettingsView: View {
                                 .foregroundStyle(Color.appSecondaryText)
                         }
                         Spacer()
-                        if isExportingCSV {
+                        if exportViewModel.isExportingCSV {
                             ProgressView()
                         } else {
                             Image(systemName: "square.and.arrow.up")
@@ -691,10 +689,10 @@ struct SettingsView: View {
                         }
                     }
                 }
-                .disabled(!authManager.isAuthenticated || isExportingCSV)
+                .disabled(!authManager.isAuthenticated || exportViewModel.isExportingCSV)
 
                 Button {
-                    exportCollectionPDF()
+                    Task { await exportViewModel.exportPDF() }
                 } label: {
                     HStack(spacing: 14) {
                         SettingsIcon(systemName: "doc.richtext", backgroundColor: .indigo)
@@ -707,7 +705,7 @@ struct SettingsView: View {
                                 .foregroundStyle(Color.appSecondaryText)
                         }
                         Spacer()
-                        if isExportingPDF {
+                        if exportViewModel.isExportingPDF {
                             ProgressView()
                         } else {
                             Image(systemName: "square.and.arrow.up")
@@ -716,7 +714,7 @@ struct SettingsView: View {
                         }
                     }
                 }
-                .disabled(!authManager.isAuthenticated || isExportingPDF)
+                .disabled(!authManager.isAuthenticated || exportViewModel.isExportingPDF)
             }
         } header: {
             Text("Export")
@@ -726,7 +724,7 @@ struct SettingsView: View {
     }
 
     private var pdfExportSubtitle: String {
-        if isExportingPDF {
+        if exportViewModel.isExportingPDF {
             return String(localized: "Génération du document en cours…")
         }
         if authManager.isAuthenticated {
@@ -737,206 +735,13 @@ struct SettingsView: View {
     }
 
     private var csvExportSubtitle: String {
-        if isExportingCSV {
+        if exportViewModel.isExportingCSV {
             return String(localized: "Génération du fichier en cours…")
         }
         if authManager.isAuthenticated {
             return String(localized: "Tous dossiers confondus avec tags et notes")
         } else {
             return String(localized: "Connexion à Discogs requise")
-        }
-    }
-
-    private func exportCollectionCSV() {
-        guard premiumStore.isPremium else {
-            showingPremiumFeaturesSheet = true
-            return
-        }
-
-        guard let username = authManager.username, authManager.isAuthenticated else {
-            alertTitle = String(localized: "Connexion requise")
-            alertMessage = String(localized: "Tu dois être connecté à ton compte Discogs pour exporter ta collection.")
-            showingAlert = true
-            return
-        }
-
-        isExportingCSV = true
-        Task {
-            // 1. Récupération des dossiers pour correspondance folderId -> folderName
-            var folders = LocalDataStore.shared.getFolders(username: username)
-            var fields: [CollectionField] = []
-
-            // 2. Si connecté, récupération des champs personnalisés et des dossiers frais
-            if NetworkMonitor.shared.isConnected, let credentials = authManager.credentials {
-                if let foldersResp = try? await DiscogsAPIClient.shared.collectionFolders(username: username, credentials: credentials) {
-                    folders = foldersResp.folders
-                    LocalDataStore.shared.saveFolders(folders, username: username)
-                }
-                fields = await ReleaseActions.fetchCollectionFields(username: username, credentials: credentials)
-            }
-
-            // 3. Récupération des vinyles de la collection (tous dossiers confondus via folderId 0)
-            var allItems: [CollectionItem] = []
-
-            if NetworkMonitor.shared.isConnected, let credentials = authManager.credentials {
-                do {
-                    allItems = try await DiscogsAPIClient.shared.fetchAllCollectionItems(
-                        username: username,
-                        folderId: DiscogsConstants.allFolderId,
-                        credentials: credentials
-                    )
-                    // Synchronisation du cache local
-                    LocalDataStore.shared.syncCollectionFolder(
-                        username: username,
-                        folderId: DiscogsConstants.allFolderId,
-                        fullItems: allItems
-                    )
-                } catch {
-                    allItems = LocalDataStore.shared.getAllCollectionItems(username: username)
-                }
-            } else {
-                allItems = LocalDataStore.shared.getAllCollectionItems(username: username)
-            }
-
-            // Filtrage de sécurité contre les entrées fantômes
-            allItems = allItems.filter { $0.instanceId > 0 && $0.instanceId != $0.releaseId }
-
-            guard !allItems.isEmpty else {
-                isExportingCSV = false
-                alertTitle = String(localized: "Collection vide")
-                alertMessage = String(localized: "Aucun album n'a été trouvé dans ta collection pour l'export.")
-                showingAlert = true
-                return
-            }
-
-            // 4. Génération du contenu CSV et écriture dans un fichier temporaire
-            let csvText = CollectionCSVExporter.generateCSV(
-                items: allItems,
-                folders: folders,
-                fields: fields,
-                tagStore: tagStore
-            )
-
-            let dateFormatter = DateFormatter()
-            dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-            dateFormatter.dateFormat = "yyyyMMdd-HHmmss"
-            let filename = "spinlog-collection-\(username)-\(dateFormatter.string(from: Date())).csv"
-            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
-
-            do {
-                try csvText.write(to: tempURL, atomically: true, encoding: .utf8)
-                isExportingCSV = false
-                ShareSheetPresenter.present(url: tempURL)
-            } catch {
-                isExportingCSV = false
-                alertTitle = String(localized: "Erreur de fichier")
-                alertMessage = String(localized: "Impossible de générer le fichier CSV : \(error.localizedDescription)")
-                showingAlert = true
-            }
-        }
-    }
-
-    private func exportCollectionPDF() {
-        guard premiumStore.isPremium else {
-            showingPremiumFeaturesSheet = true
-            return
-        }
-
-        guard let username = authManager.username, authManager.isAuthenticated else {
-            alertTitle = String(localized: "Connexion requise")
-            alertMessage = String(localized: "Tu dois être connecté à ton compte Discogs pour exporter ta collection.")
-            showingAlert = true
-            return
-        }
-
-        isExportingPDF = true
-        Task {
-            var folders = LocalDataStore.shared.getFolders(username: username)
-            var marketValue: CollectionValueResponse?
-
-            if NetworkMonitor.shared.isConnected, let credentials = authManager.credentials {
-                if let foldersResp = try? await DiscogsAPIClient.shared.collectionFolders(username: username, credentials: credentials) {
-                    folders = foldersResp.folders
-                    LocalDataStore.shared.saveFolders(folders, username: username)
-                }
-                marketValue = try? await DiscogsAPIClient.shared.collectionValue(username: username, credentials: credentials)
-            }
-
-            var allItems: [CollectionItem] = []
-            if NetworkMonitor.shared.isConnected, let credentials = authManager.credentials {
-                do {
-                    allItems = try await DiscogsAPIClient.shared.fetchAllCollectionItems(
-                        username: username,
-                        folderId: DiscogsConstants.allFolderId,
-                        credentials: credentials
-                    )
-                    LocalDataStore.shared.syncCollectionFolder(
-                        username: username,
-                        folderId: DiscogsConstants.allFolderId,
-                        fullItems: allItems
-                    )
-                } catch {
-                    allItems = LocalDataStore.shared.getAllCollectionItems(username: username)
-                }
-            } else {
-                allItems = LocalDataStore.shared.getAllCollectionItems(username: username)
-            }
-
-            allItems = allItems.filter { $0.instanceId > 0 && $0.instanceId != $0.releaseId }
-
-            guard !allItems.isEmpty else {
-                isExportingPDF = false
-                alertTitle = String(localized: "Collection vide")
-                alertMessage = String(localized: "Aucun album n'a été trouvé dans ta collection pour l'export.")
-                showingAlert = true
-                return
-            }
-
-            let purchasePriceFieldId = CollectionPreferencesStore.purchasePriceFieldId(for: username)
-            let mediaConditionFieldId = CollectionPreferencesStore.mediaConditionFieldId(for: username)
-            let currency = CollectionPreferencesStore.defaultCurrency(for: username)
-
-            var totalInvested: Double?
-            if let purchasePriceFieldId {
-                var total = 0.0
-                for item in allItems {
-                    let raw = item.value(forFieldId: purchasePriceFieldId).trimmingCharacters(in: .whitespacesAndNewlines)
-                    guard !raw.isEmpty, let parsed = PurchasePriceParser.parse(raw, defaultCurrency: currency) else { continue }
-                    total += await CurrencyConversionService.shared.convert(parsed.amount, from: parsed.currency, to: currency)
-                }
-                totalInvested = total
-            }
-
-            let coverImages = await CollectionPDFExporter.fetchCoverImages(for: allItems)
-
-            let pdfData = CollectionPDFExporter.generatePDF(
-                username: username,
-                items: allItems,
-                folders: folders,
-                purchasePriceFieldId: purchasePriceFieldId,
-                mediaConditionFieldId: mediaConditionFieldId,
-                defaultCurrency: currency,
-                totalInvested: totalInvested,
-                marketValue: marketValue,
-                coverImages: coverImages
-            )
-
-            let dateFormatter = DateFormatter()
-            dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-            dateFormatter.dateFormat = "yyyyMMdd-HHmmss"
-            let filename = "spinlog-declaration-\(username)-\(dateFormatter.string(from: Date())).pdf"
-            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
-
-            do {
-                try pdfData.write(to: tempURL, options: .atomic)
-                isExportingPDF = false
-                ShareSheetPresenter.present(url: tempURL)
-            } catch {
-                isExportingPDF = false
-                alertTitle = String(localized: "Erreur de fichier")
-                alertMessage = String(localized: "Impossible de générer le document PDF : \(error.localizedDescription)")
-                showingAlert = true
-            }
         }
     }
 

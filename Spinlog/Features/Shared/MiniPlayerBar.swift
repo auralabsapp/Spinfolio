@@ -1,27 +1,30 @@
 import SwiftUI
 
-/// Mini-lecteur audio flottant au-dessus de la barre d'onglets façon Liquid Glass (iOS 26 / Apple Music).
-/// Apparaît dès qu'un titre est en cours d'écoute.
-/// - Pochette à gauche.
-/// - Titre et artiste empilés verticalement au centre.
-/// - Position temporelle et durée (`0:12 / 0:30`) à droite, juste à côté du bouton pause.
-/// - Bouton pause avec symbole reprenant exactement la couleur d'arrière-plan du système.
-/// - Barre de progression tactile et interactive permettant de se déplacer instantanément dans le morceau.
-/// - Un appui sur le mini-lecteur ramène immédiatement l'utilisateur sur la vue (Release ou Master)
-///   d'où la lecture a été lancée.
+/// Mini-lecteur audio façon Liquid Glass (iOS 26 / Apple Music), posé en accessoire bas du `TabView`.
+/// Apparaît dès qu'un titre est en cours d'écoute, et adapte sa présentation à `tabViewBottomAccessoryPlacement` :
+/// - `.expanded` (barre d'onglets taille normale) : carte flottante complète au-dessus de la barre
+///   (pochette, titre/artiste, position/durée, barre de progression tactile).
+/// - `.inline` (barre d'onglets réduite au swipe up) : version compacte intégrée dans la pilule réduite,
+///   entre l'icône de l'onglet courant à gauche et l'icône de recherche à droite.
+/// Un appui sur le mini-lecteur ramène immédiatement l'utilisateur sur la vue (Release ou Master)
+/// d'où la lecture a été lancée.
 struct MiniPlayerBar: View {
     @State private var service = AppleMusicPlaybackService.shared
     private var activityManager = NowPlayingActivityManager.shared
     @State private var coordinator = TabNavigationCoordinator.shared
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.tabViewBottomAccessoryPlacement) private var accessoryPlacement
 
     @State private var isDraggingProgress = false
     @State private var scrubProgress: Double = 0.0
 
-    private var appleMusicRed: Color {
-        colorScheme == .dark
-            ? Color(red: 222 / 255, green: 56 / 255, blue: 72 / 255)
-            : Color(red: 246 / 255, green: 66 / 255, blue: 84 / 255)
+    /// Vrai dès qu'un titre Apple Music ou une écoute "platine" est active. Sert à piloter
+    /// `tabViewBottomAccessory(isEnabled:)` sur le `TabView` racine.
+    static var isActive: Bool {
+        let service = AppleMusicPlaybackService.shared
+        let activityManager = NowPlayingActivityManager.shared
+        return (service.currentItem != nil && service.isPlaying)
+            || (activityManager.activeReleaseId != nil && activityManager.isAnyPlaying)
     }
 
     /// Teinte gauche du dégradé, nettement plus lumineuse / pastel pour un contraste prononcé.
@@ -47,78 +50,191 @@ struct MiniPlayerBar: View {
 
     var body: some View {
         if let item = service.currentItem, service.isPlaying {
-            appleMusicPlayerView(item: item)
+            if accessoryPlacement == .inline {
+                compactAppleMusicPlayerView(item: item)
+            } else {
+                appleMusicPlayerView(item: item)
+            }
         } else if let releaseId = activityManager.activeReleaseId, activityManager.isAnyPlaying {
-            turntablePlayerView(releaseId: releaseId)
+            if accessoryPlacement == .inline {
+                compactTurntablePlayerView(releaseId: releaseId)
+            } else {
+                turntablePlayerView(releaseId: releaseId)
+            }
+        }
+    }
+
+    // MARK: - Présentation compacte (barre d'onglets réduite)
+
+    @ViewBuilder
+    private func compactAppleMusicPlayerView(item: NowPlayingItem) -> some View {
+        HStack(spacing: 10) {
+            HStack(spacing: 10) {
+                AsyncCoverImage(
+                    url: item.coverURL,
+                    cornerRadius: 6,
+                    showsBorder: true,
+                    targetSize: 30
+                )
+                .frame(width: 30, height: 30)
+
+                VStack(alignment: .leading, spacing: 0) {
+                    AutoScrollingText(
+                        text: item.trackTitle,
+                        font: .subheadline.weight(.semibold),
+                        color: .primary
+                    )
+
+                    AutoScrollingText(
+                        text: appleMusicSubtitle(artist: item.artistName),
+                        font: .caption,
+                        color: Color.appSecondaryText
+                    )
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(item.trackTitle), \(item.artistName), lecture sur Apple Music. Touche pour ouvrir l'album.")
+            .accessibilityAddTraits(.isButton)
+
+            Button {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                service.stop()
+            } label: {
+                Image(systemName: "stop.fill")
+                    .font(.system(size: 19, weight: .semibold))
+                    .foregroundStyle(Color.spinlogPink)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Mettre en pause et fermer le lecteur")
+        }
+        .padding(.leading, 16)
+        .padding(.trailing, 14)
+        .padding(.vertical, 10)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            coordinator.returnToPlayingItem(item)
+        }
+    }
+
+    @ViewBuilder
+    private func compactTurntablePlayerView(releaseId: Int) -> some View {
+        HStack(spacing: 10) {
+            HStack(spacing: 10) {
+                AsyncCoverImage(
+                    url: activityManager.activeCoverURL,
+                    cornerRadius: 6,
+                    showsBorder: true,
+                    targetSize: 30
+                )
+                .frame(width: 30, height: 30)
+
+                VStack(alignment: .leading, spacing: 0) {
+                    AutoScrollingText(
+                        text: activityManager.activeAlbumTitle ?? String(localized: "Album vinyle"),
+                        font: .subheadline.weight(.semibold),
+                        color: .primary
+                    )
+
+                    AutoScrollingText(
+                        text: turntableSubtitle(artist: activityManager.activeArtistName),
+                        font: .caption,
+                        color: Color.appSecondaryText
+                    )
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(activityManager.activeAlbumTitle ?? ""). Écoute en cours sur la platine. Touche pour ouvrir l'album.")
+            .accessibilityAddTraits(.isButton)
+
+            Button {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                Task {
+                    await activityManager.endCurrentActivity()
+                }
+            } label: {
+                Image(systemName: "stop.fill")
+                    .font(.system(size: 19, weight: .semibold))
+                    .foregroundStyle(Color.spinlogPink)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Arrêter l'écoute sur la platine")
+        }
+        .padding(.leading, 16)
+        .padding(.trailing, 14)
+        .padding(.vertical, 10)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            coordinator.returnToRelease(releaseId: releaseId, coverURL: activityManager.activeCoverURL)
         }
     }
 
     @ViewBuilder
     private func appleMusicPlayerView(item: NowPlayingItem) -> some View {
-        GlassEffectContainer {
-                ZStack(alignment: .bottom) {
+        ZStack(alignment: .bottom) {
                     // Contenu principal : parfaitement centré verticalement
                     HStack(spacing: 12) {
-                        // Zone cliquable : Pochette + Textes (ramène à la vue source)
-                        Button {
-                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                            coordinator.returnToPlayingItem(item)
-                        } label: {
-                            HStack(spacing: 12) {
-                                // 1. Jaquette à gauche (légèrement réduite)
-                                AsyncCoverImage(
-                                    url: item.coverURL,
-                                    cornerRadius: 7,
-                                    showsBorder: true,
-                                    targetSize: 36
+                        // Zone cliquable : Pochette + Textes + position temporelle (ramène à la vue source)
+                        HStack(spacing: 12) {
+                            // 1. Jaquette à gauche (légèrement réduite)
+                            AsyncCoverImage(
+                                url: item.coverURL,
+                                cornerRadius: 7,
+                                showsBorder: true,
+                                targetSize: 36
+                            )
+                            .frame(width: 36, height: 36)
+                            .shadow(color: .black.opacity(0.18), radius: 3, x: 0, y: 1.5)
+
+                            // 2. Titre et Artiste l'un en dessous de l'autre (avec défilement auto si trop long)
+                            VStack(alignment: .leading, spacing: 0.5) {
+                                AutoScrollingText(
+                                    text: item.trackTitle,
+                                    font: .subheadline.weight(.semibold),
+                                    color: .primary
                                 )
-                                .frame(width: 36, height: 36)
-                                .shadow(color: .black.opacity(0.18), radius: 3, x: 0, y: 1.5)
 
-                                // 2. Titre et Artiste l'un en dessous de l'autre (avec défilement auto si trop long)
-                                VStack(alignment: .leading, spacing: 0.5) {
-                                    AutoScrollingText(
-                                        text: item.trackTitle,
-                                        font: .subheadline.weight(.semibold),
-                                        color: .primary
-                                    )
+                                AutoScrollingText(
+                                    text: appleMusicSubtitle(artist: item.artistName),
+                                    font: .caption,
+                                    color: Color.appSecondaryText
+                                )
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .offset(y: -2)
 
-                                    AutoScrollingText(
-                                        text: "\(item.artistName) • Apple Music",
-                                        font: .caption,
-                                        color: Color.appSecondaryText
-                                    )
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .offset(y: -2)
-
-                                // 3. Position temporelle et durée juste à gauche du bouton pause (remontée également)
-                                if service.totalDuration > 0 {
-                                    Text("\(formatTime(effectiveTime)) / \(formatTime(service.totalDuration))")
-                                        .font(.caption)
-                                        .foregroundStyle(isDraggingProgress ? .primary : Color.appSecondaryText)
-                                        .monospacedDigit()
-                                        .offset(y: -2)
-                                        .animation(.easeInOut(duration: 0.15), value: isDraggingProgress)
-                                }
+                            // 3. Position temporelle et durée juste à gauche du bouton pause (remontée également)
+                            if service.totalDuration > 0 {
+                                Text("\(formatTime(effectiveTime)) / \(formatTime(service.totalDuration))")
+                                    .font(.caption)
+                                    .foregroundStyle(isDraggingProgress ? .primary : Color.appSecondaryText)
+                                    .monospacedDigit()
+                                    .offset(y: -2)
+                                    .animation(.easeInOut(duration: 0.15), value: isDraggingProgress)
                             }
                         }
-                        .buttonStyle(.plain)
+                        .accessibilityElement(children: .ignore)
                         .accessibilityLabel("\(item.trackTitle), \(item.artistName), lecture sur Apple Music. \(formatTime(effectiveTime)) sur \(formatTime(service.totalDuration)). Touche pour ouvrir l'album.")
+                        .accessibilityAddTraits(.isButton)
 
-                        // 4. Bouton pause à droite réduit et compact (centré verticalement par rapport au texte)
+                        // 4. Bouton Stop à droite (cercle rose Spinlog avec icône stop.fill), identique au mode platine
                         Button {
                             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                             service.stop()
                         } label: {
                             ZStack {
                                 Circle()
-                                    .fill(appleMusicRed)
+                                    .fill(Color.spinlogPink)
                                     .frame(width: 25, height: 25)
 
-                                Image(systemName: "pause.fill")
-                                    .font(.system(size: 9.5, weight: .bold))
-                                    .foregroundStyle(Color(uiColor: .systemBackground))
+                                Image(systemName: "stop.fill")
+                                    .font(.system(size: 8.5, weight: .bold))
+                                    .foregroundStyle(Color.white)
                             }
                             .frame(width: 36, height: 36)
                             .contentShape(Circle())
@@ -131,6 +247,11 @@ struct MiniPlayerBar: View {
                     .padding(.leading, 14)
                     .padding(.trailing, 10)
                     .padding(.vertical, 8)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        coordinator.returnToPlayingItem(item)
+                    }
 
                     // 5. Barre de progression tactile alignée sur le bord inférieur (ne décale pas le contenu)
                     if service.totalDuration > 0 {
@@ -202,76 +323,50 @@ struct MiniPlayerBar: View {
                         .animation(.easeInOut(duration: 0.15), value: isDraggingProgress)
                     }
                 }
-                .glassEffect(.regular.interactive())
-            }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 8)
-            .transition(
-                .asymmetric(
-                    insertion: .move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.94)),
-                    removal: .move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.94))
-                )
+        .transition(
+            .asymmetric(
+                insertion: .move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.94)),
+                removal: .move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.94))
             )
+        )
     }
 
     @ViewBuilder
     private func turntablePlayerView(releaseId: Int) -> some View {
-        GlassEffectContainer {
-            HStack(spacing: 12) {
-                // Zone cliquable : Pochette + Textes (ramène à l'album vinyle)
-                Button {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    coordinator.returnToRelease(releaseId: releaseId, coverURL: activityManager.activeCoverURL)
-                } label: {
-                    HStack(spacing: 12) {
-                        // 1. Jaquette à gauche (36x36, coins arrondis 7)
-                        AsyncCoverImage(
-                            url: activityManager.activeCoverURL,
-                            cornerRadius: 7,
-                            showsBorder: true,
-                            targetSize: 36
+        HStack(spacing: 12) {
+                // Zone combinée : Pochette + Textes (ramène à l'album vinyle)
+                HStack(spacing: 12) {
+                    // 1. Jaquette à gauche (36x36, coins arrondis 7)
+                    AsyncCoverImage(
+                        url: activityManager.activeCoverURL,
+                        cornerRadius: 7,
+                        showsBorder: true,
+                        targetSize: 36
+                    )
+                    .frame(width: 36, height: 36)
+                    .shadow(color: .black.opacity(0.18), radius: 3, x: 0, y: 1.5)
+
+                    // 2. Titre de l'album et sous-titre "Écoute sur platine"
+                    VStack(alignment: .leading, spacing: 0.5) {
+                        AutoScrollingText(
+                            text: activityManager.activeAlbumTitle ?? String(localized: "Album vinyle"),
+                            font: .subheadline.weight(.semibold),
+                            color: .primary
                         )
-                        .frame(width: 36, height: 36)
-                        .shadow(color: .black.opacity(0.18), radius: 3, x: 0, y: 1.5)
 
-                        // 2. Titre de l'album et sous-titre "Écoute en cours sur la platine"
-                        VStack(alignment: .leading, spacing: 0.5) {
-                            AutoScrollingText(
-                                text: activityManager.activeAlbumTitle ?? String(localized: "Album vinyle"),
-                                font: .subheadline.weight(.semibold),
-                                color: .primary
-                            )
-
-                            AutoScrollingText(
-                                text: turntableSubtitle(artist: activityManager.activeArtistName),
-                                font: .caption,
-                                color: Color.appSecondaryText
-                            )
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .offset(y: -2)
+                        AutoScrollingText(
+                            text: turntableSubtitle(artist: activityManager.activeArtistName),
+                            font: .caption,
+                            color: Color.appSecondaryText
+                        )
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .buttonStyle(.plain)
+                .accessibilityElement(children: .ignore)
                 .accessibilityLabel("\(activityManager.activeAlbumTitle ?? ""), \(activityManager.activeArtistName ?? ""). Écoute en cours sur la platine. Touche pour ouvrir l'album.")
+                .accessibilityAddTraits(.isButton)
 
-                // 3. Badge "Sur platine" avec icône vinyle rose Spinlog animée
-                HStack(spacing: 5) {
-                    Image(systemName: "record.circle.fill")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(Color.spinlogPink)
-                        .symbolEffect(.pulse, options: .repeating)
-
-                    Text("Sur platine")
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(Color.spinlogPink)
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color.spinlogPink.opacity(0.12), in: Capsule())
-                .offset(y: -2)
-
-                // 4. Bouton Stop à droite (cercle rose Spinlog avec icône stop.fill)
+                // 3. Bouton Stop à droite (cercle rose Spinlog avec icône stop.fill)
                 Button {
                     UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                     Task {
@@ -291,17 +386,17 @@ struct MiniPlayerBar: View {
                     .contentShape(Circle())
                 }
                 .buttonStyle(.plain)
-                .offset(y: -2)
                 .zIndex(2)
                 .accessibilityLabel("Arrêter l'écoute sur la platine")
             }
             .padding(.leading, 14)
             .padding(.trailing, 10)
             .padding(.vertical, 8)
-            .glassEffect(.regular.interactive())
-        }
-        .padding(.horizontal, 16)
-        .padding(.bottom, 8)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                coordinator.returnToRelease(releaseId: releaseId, coverURL: activityManager.activeCoverURL)
+            }
         .transition(
             .asymmetric(
                 insertion: .move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.94)),
@@ -310,11 +405,19 @@ struct MiniPlayerBar: View {
         )
     }
 
+    private func appleMusicSubtitle(artist: String) -> String {
+        if !artist.trimmingCharacters(in: .whitespaces).isEmpty {
+            return String(localized: "\(artist) • Lecture sur Apple Music")
+        } else {
+            return String(localized: "Lecture sur Apple Music")
+        }
+    }
+
     private func turntableSubtitle(artist: String?) -> String {
         if let artist, !artist.trimmingCharacters(in: .whitespaces).isEmpty {
-            return String(localized: "\(artist) • Écoute en cours sur la platine")
+            return String(localized: "\(artist) • Écoute sur platine")
         } else {
-            return String(localized: "Écoute en cours sur la platine")
+            return String(localized: "Écoute sur platine")
         }
     }
 }
@@ -430,34 +533,3 @@ private struct AutoScrollingText: View {
     }
 }
 
-/// Modifieur ajoutant le mini-lecteur audio dans le `safeAreaInset` inférieur d'un onglet,
-/// se positionnant automatiquement au millimètre près au-dessus de la barre d'onglets.
-struct MiniPlayerContainerModifier: ViewModifier {
-    @State private var service = AppleMusicPlaybackService.shared
-    private var activityManager = NowPlayingActivityManager.shared
-
-    private var isActive: Bool {
-        (service.currentItem != nil && service.isPlaying)
-            || (activityManager.activeReleaseId != nil && activityManager.isAnyPlaying)
-    }
-
-    func body(content: Content) -> some View {
-        // Applique `safeAreaInset` directement sur `content` sans modifier l'identité structurelle
-        // de la vue parente (`if/else` détruisait et recréait toute la hiérarchie de navigation/scroll).
-        content.safeAreaInset(edge: .bottom) {
-            if isActive {
-                MiniPlayerBar()
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
-        }
-        .animation(.spring(response: 0.35, dampingFraction: 0.85), value: isActive)
-    }
-}
-
-extension View {
-    /// Active la présence du mini-lecteur audio Liquid Glass au-dessus de la barre d'onglets
-    /// pour cette pile de navigation.
-    func withMiniPlayer() -> some View {
-        modifier(MiniPlayerContainerModifier())
-    }
-}

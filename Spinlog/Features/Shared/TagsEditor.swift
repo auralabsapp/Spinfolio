@@ -24,7 +24,13 @@ struct TagsEditor: View {
         FlowLayout(spacing: 8) {
             ForEach(tags, id: \.self) { tag in
                 TagPill(tag: tag) {
-                    store.removeTag(tag, from: instanceId, releaseId: releaseId)
+                    // Sans `withAnimation`, les pochettes restantes (et le bouton "Ajouter") se
+                    // replacent d'un bloc dans ce `FlowLayout` dès que celle-ci disparaît — très
+                    // visible dès qu'il y a assez de tags pour occuper plusieurs lignes, puisque
+                    // retirer un tag peut alors faire remonter toute une ligne d'un coup.
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                        store.removeTag(tag, from: instanceId, releaseId: releaseId)
+                    }
                 }
             }
 
@@ -71,6 +77,14 @@ struct ReleaseTagSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var store = TagStore.shared
     @State private var searchText = ""
+    /// Barre de recherche maison (voir `searchBar`) plutôt que `.searchable()` : ce dernier
+    /// réduit/masque le titre de la barre de navigation et déplace la croix de fermeture dès que
+    /// le champ prend le focus (comportement système lié à `UISearchController`), en plus
+    /// d'absorber le premier tap sur la croix pendant que la recherche est active — aucune des
+    /// deux ne doit se produire ici : la structure de la fenêtre doit rester identique, focus ou
+    /// non. Un simple `TextField` (même principe que `SearchView.searchBar`) n'a aucune de ces
+    /// intégrations spéciales à la barre de navigation.
+    @FocusState private var isSearchFieldFocused: Bool
     @State private var renameItem: TagRenameItem? = nil
     @State private var tagToDelete: String? = nil
     @State private var duplicateTagError: String? = nil
@@ -94,6 +108,47 @@ struct ReleaseTagSheet: View {
         store.addTag(tag, to: instanceId, releaseId: releaseId)
     }
 
+    /// Barre de recherche maison, même principe que `SearchView.searchBar` : un `TextField` nu
+    /// plutôt que `.searchable()`, pour que le focus n'affecte jamais le titre ni la position de
+    /// la croix de fermeture dans la barre de navigation (voir le commentaire sur
+    /// `isSearchFieldFocused`).
+    private var searchBar: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(Color.appSecondaryText)
+
+            TextField("Rechercher ou créer un tag", text: $searchText)
+                .textFieldStyle(.plain)
+                .submitLabel(.search)
+                .focused($isSearchFieldFocused)
+                .onSubmit {
+                    let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard !trimmed.isEmpty else { return }
+                    if exactMatchExists {
+                        duplicateTagError = trimmed
+                    } else {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        attemptAddTag(trimmed)
+                        searchText = ""
+                    }
+                }
+
+            if !searchText.isEmpty {
+                Button {
+                    searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(Color.appSecondaryText)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Effacer la recherche")
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(.fill.tertiary, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
     private var filteredTags: [String] {
         let all = store.allTags
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -111,6 +166,8 @@ struct ReleaseTagSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+                    searchBar
 
                     // Bouton de création directe et fluide via la recherche
                     if !trimmed.isEmpty && !exactMatchExists {
@@ -198,25 +255,22 @@ struct ReleaseTagSheet: View {
                 }
                 .padding()
             }
+            // `.simultaneousGesture` plutôt qu'un `.onTapGesture` exclusif : il se déclenche EN
+            // PLUS du tap d'une ligne ou d'un bouton (cocher/décocher un tag, "Créer et ajouter"…)
+            // au lieu de le remplacer, pour que fermer le clavier ne demande jamais un premier tap
+            // "perdu" avant que l'action elle-même ne soit prise en compte.
+            .simultaneousGesture(
+                TapGesture().onEnded {
+                    isSearchFieldFocused = false
+                }
+            )
             .swipeActionsContainer()
             .navigationTitle("Gestion des tags")
             .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Rechercher ou créer un tag")
             .onChange(of: searchText) { _, newValue in
                 if newValue.count > TagConstants.maxNameLength {
                     searchText = String(newValue.prefix(TagConstants.maxNameLength))
                     showingMaxLengthAlert = true
-                }
-            }
-            .onSubmit(of: .search) {
-                let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard !trimmed.isEmpty else { return }
-                if exactMatchExists {
-                    duplicateTagError = trimmed
-                } else {
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                    attemptAddTag(trimmed)
-                    searchText = ""
                 }
             }
             .toolbar {
@@ -306,10 +360,16 @@ struct ReleaseTagSheet: View {
         .accessibilityAddTraits(.isButton)
         .onTapGesture {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            if isApplied {
-                store.removeTag(tag, from: instanceId, releaseId: releaseId)
-            } else {
-                attemptAddTag(tag)
+            // Cette feuille n'affiche pas elle-même les pochettes de l'exemplaire (voir
+            // `TagsEditor.body`), mais la bascule doit tout de même être animée : sans ça, la
+            // ligne de pochettes réapparaît déjà dans son état final, non animée, dès que cette
+            // feuille se ferme.
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                if isApplied {
+                    store.removeTag(tag, from: instanceId, releaseId: releaseId)
+                } else {
+                    attemptAddTag(tag)
+                }
             }
         }
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {

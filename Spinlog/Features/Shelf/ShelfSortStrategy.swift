@@ -50,7 +50,9 @@ enum ShelfSortStrategy: String, CaseIterable, Identifiable, Codable, Sendable {
     }
 
     /// Indique si cette règle s'appuie sur l'année originale (Master) plutôt que sur celle du pressage.
-    var usesMasterYear: Bool {
+    /// `nonisolated` : pur calcul sur `self` (Sendable), appelé depuis `compareShelf`, qui est
+    /// `nonisolated` pour pouvoir trier hors du fil principal.
+    nonisolated var usesMasterYear: Bool {
         switch self {
         case .artistThenMasterYear, .chronologicalOnly:
             return true

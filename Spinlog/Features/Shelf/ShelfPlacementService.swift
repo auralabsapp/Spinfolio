@@ -407,7 +407,7 @@ enum ShelfPlacementService {
                 scope: .allFolders
             )
         }
-        var items = LocalDataStore.shared.getAllCollectionItems(username: username)
+        var items = LocalDataStore.shared.getAllCollectionItemsSync(username: username)
 
         var determinedScope: ShelfScope = .allFolders
 

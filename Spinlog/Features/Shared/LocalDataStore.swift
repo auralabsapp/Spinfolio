@@ -330,11 +330,29 @@ final class LocalDataStore {
         // rendait la synchro quadratique sur le main actor ; l'instantané complet est écrit une
         // seule fois, en fin de synchro, par `syncCollectionFolder`.
         if WidgetSnapshotStore.loadCollection().isEmpty {
-            let all = getAllCollectionItems(username: username)
+            let all = getAllCollectionItemsSync(username: username)
             if !all.isEmpty {
                 updateWidgetSnapshot(all)
             }
         }
+    }
+
+    /// Vrai s'il existe au moins un autre exemplaire de cette release que celui exclu. Aucun
+    /// décodage JSON ici (contrairement à l'ancien appel qui décodait toute la collection "All"
+    /// rien que pour comparer des `instanceId`) : `instanceId` est un champ propre du modèle
+    /// SwiftData, directement filtrable par la requête.
+    func hasOtherCollectionInstance(username: String, releaseId: Int, excludingInstanceId: Int?) -> Bool {
+        var descriptor = FetchDescriptor<CachedCollectionEntry>(
+            predicate: #Predicate<CachedCollectionEntry> {
+                $0.username == username && $0.releaseId == releaseId
+            }
+        )
+        descriptor.propertiesToFetch = [\.instanceId]
+        guard let entries = try? context.fetch(descriptor) else { return false }
+        if let excludingInstanceId {
+            return entries.contains { $0.instanceId != excludingInstanceId }
+        }
+        return !entries.isEmpty
     }
 
     /// Nombre de disques distincts (par release, comme l'instantané du widget) en cache pour ce
@@ -396,14 +414,14 @@ final class LocalDataStore {
             let knownReleaseCount = cachedReleaseCount(username: username)
             let currentSnapshotCount = WidgetSnapshotStore.loadCollection().count
             if knownReleaseCount > 0 && (currentSnapshotCount == 0 || knownReleaseCount > currentSnapshotCount) {
-                updateWidgetSnapshot(getAllCollectionItems(username: username))
+                updateWidgetSnapshot(getAllCollectionItemsSync(username: username))
             }
         }
     }
 
     /// Ravitaille le widget "Album du jour" à partir de tous les disques de la collection en cache.
     func refreshWidgetSnapshot(username: String) {
-        let all = getAllCollectionItems(username: username)
+        let all = getAllCollectionItemsSync(username: username)
         guard !all.isEmpty else { return }
         updateWidgetSnapshot(all)
     }
@@ -429,39 +447,78 @@ final class LocalDataStore {
         WidgetCenter.shared.reloadTimelines(ofKind: WidgetKinds.randomAlbum)
     }
 
-    func getCollectionItems(username: String, folderId: Int) -> [CollectionItem] {
+    /// Décodage pur, sans affinité d'acteur : exécuté depuis une `Task.detached` par les méthodes
+    /// `async` ci-dessous, pour que le JSON d'une grosse collection (potentiellement des centaines
+    /// d'exemplaires) se décode hors du fil principal plutôt que de bloquer l'UI pendant cette
+    /// passe CPU. `CollectionItem` est `Sendable`, donc son résultat traverse la frontière d'acteur
+    /// sans copie défensive supplémentaire.
+    nonisolated private static func decodeCollectionItems(from payloads: [Data]) -> [CollectionItem] {
+        let decoder = JSONDecoder()
+        return payloads.compactMap { try? decoder.decode(CollectionItem.self, from: $0) }
+    }
+
+    func getCollectionItems(username: String, folderId: Int) async -> [CollectionItem] {
         let descriptor = FetchDescriptor<CachedCollectionEntry>(
             predicate: #Predicate<CachedCollectionEntry> {
                 $0.username == username && $0.folderId == folderId
             }
         )
         guard let entries = try? context.fetch(descriptor) else { return [] }
-        let decoder = JSONDecoder()
-        return entries.compactMap { try? decoder.decode(CollectionItem.self, from: $0.payload) }
+        let payloads = entries.map(\.payload)
+        return await Task.detached(priority: .userInitiated) {
+            Self.decodeCollectionItems(from: payloads)
+        }.value
     }
 
-    func getAllCollectionItems(username: String) -> [CollectionItem] {
-        let allInFolder0 = getCollectionItems(username: username, folderId: DiscogsConstants.allFolderId)
+    func getAllCollectionItems(username: String) async -> [CollectionItem] {
+        let allInFolder0 = await getCollectionItems(username: username, folderId: DiscogsConstants.allFolderId)
         let descriptor = FetchDescriptor<CachedCollectionEntry>(
             predicate: #Predicate<CachedCollectionEntry> {
                 $0.username == username
             }
         )
         guard let entries = try? context.fetch(descriptor) else { return allInFolder0 }
-        let decoder = JSONDecoder()
+        let payloads = entries.map(\.payload)
+        let decoded = await Task.detached(priority: .userInitiated) {
+            Self.decodeCollectionItems(from: payloads)
+        }.value
         var seen = Set<Int>()
         var items: [CollectionItem] = []
-        for entry in entries {
-            if let item = try? decoder.decode(CollectionItem.self, from: entry.payload),
-               !seen.contains(item.instanceId) {
-                seen.insert(item.instanceId)
-                items.append(item)
-            }
+        for item in decoded where !seen.contains(item.instanceId) {
+            seen.insert(item.instanceId)
+            items.append(item)
         }
         return items.count > allInFolder0.count ? items : allInFolder0
     }
 
+    /// Variante synchrone de `getAllCollectionItems`, pour les quelques appelants hors contexte
+    /// `async` (bookkeeping interne du widget ; écrans secondaires comme la personnalisation du
+    /// tri des artistes ou le placement en rayon, dont les propriétés calculées de vue ne peuvent
+    /// pas devenir `async` sans une restructuration que leur fréquence d'usage ne justifie pas).
+    /// Hors du chemin de chargement affiché à l'utilisateur au lancement (Collection/Stats), seul
+    /// vrai objectif de la variante `async`.
+    func getAllCollectionItemsSync(username: String) -> [CollectionItem] {
+        let descriptor = FetchDescriptor<CachedCollectionEntry>(
+            predicate: #Predicate<CachedCollectionEntry> {
+                $0.username == username
+            }
+        )
+        guard let entries = try? context.fetch(descriptor) else { return [] }
+        let decoded = Self.decodeCollectionItems(from: entries.map(\.payload))
+        var seen = Set<Int>()
+        var items: [CollectionItem] = []
+        for item in decoded where !seen.contains(item.instanceId) {
+            seen.insert(item.instanceId)
+            items.append(item)
+        }
+        return items
+    }
+
     /// Récupère l'ensemble des exemplaires d'une release donnée enregistrés pour un utilisateur.
+    /// Synchrone (contrairement à `getAllCollectionItems`) : filtré par release, son volume reste
+    /// toujours minime (quelques exemplaires d'un même disque au plus) — passer par
+    /// `Task.detached` ici coûterait plus cher que le décodage lui-même, et casserait la garantie
+    /// "latence nulle" documentée par certains appelants (ex. `ReleaseActions.prepareInitialStatus`).
     func getCollectionItems(username: String, releaseId: Int) -> [CollectionItem] {
         let descriptor = FetchDescriptor<CachedCollectionEntry>(
             predicate: #Predicate<CachedCollectionEntry> {
@@ -469,12 +526,11 @@ final class LocalDataStore {
             }
         )
         guard let entries = try? context.fetch(descriptor) else { return [] }
-        let decoder = JSONDecoder()
+        let decoded = Self.decodeCollectionItems(from: entries.map(\.payload))
         var seen = Set<Int>()
         var items: [CollectionItem] = []
-        for entry in entries {
-            if let item = try? decoder.decode(CollectionItem.self, from: entry.payload),
-               !seen.contains(item.instanceId) {
+        for item in decoded {
+            if !seen.contains(item.instanceId) {
                 seen.insert(item.instanceId)
                 items.append(item)
             }
@@ -712,13 +768,20 @@ final class LocalDataStore {
         return try? JSONDecoder().decode(WantlistItem.self, from: entry.payload)
     }
 
-    func getWantlistItems(username: String) -> [WantlistItem] {
+    nonisolated private static func decodeWantlistItems(from payloads: [Data]) -> [WantlistItem] {
+        let decoder = JSONDecoder()
+        return payloads.compactMap { try? decoder.decode(WantlistItem.self, from: $0) }
+    }
+
+    func getWantlistItems(username: String) async -> [WantlistItem] {
         let descriptor = FetchDescriptor<CachedWantlistEntry>(
             predicate: #Predicate<CachedWantlistEntry> { $0.username == username }
         )
         guard let entries = try? context.fetch(descriptor) else { return [] }
-        let decoder = JSONDecoder()
-        return entries.compactMap { try? decoder.decode(WantlistItem.self, from: $0.payload) }
+        let payloads = entries.map(\.payload)
+        return await Task.detached(priority: .userInitiated) {
+            Self.decodeWantlistItems(from: payloads)
+        }.value
     }
 
     func removeWantlistItem(username: String, releaseId: Int) {

@@ -52,7 +52,7 @@ struct YouTubePlayerView: UIViewRepresentable {
         </head>
         <body>
             <iframe
-                src="https://www.youtube.com/embed/\(videoID)?playsinline=1&rel=0&autoplay=1&origin=https://www.discogs.com"
+                src="https://www.youtube.com/embed/\(videoID)?playsinline=1&rel=0&autoplay=1&origin=\(DiscogsConstants.websiteURL.absoluteString)"
                 frameborder="0"
                 allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                 allowfullscreen>
@@ -60,7 +60,7 @@ struct YouTubePlayerView: UIViewRepresentable {
         </body>
         </html>
         """
-        webView.loadHTMLString(html, baseURL: URL(string: "https://www.discogs.com"))
+        webView.loadHTMLString(html, baseURL: DiscogsConstants.websiteURL)
     }
 }
 

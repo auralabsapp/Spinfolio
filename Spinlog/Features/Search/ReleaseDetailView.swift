@@ -71,6 +71,7 @@ struct ReleaseDetailView: View {
 
     var body: some View {
         content
+            .animation(.easeInOut(duration: 0.3), value: viewModel.isLoading)
             .navigationBarBackButtonHidden(true)
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbarBackground(.hidden, for: .tabBar)
@@ -179,9 +180,9 @@ struct ReleaseDetailView: View {
     @ViewBuilder
     private var content: some View {
         if viewModel.isLoading {
-            ProgressView()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            releaseDetailSkeleton
                 .background(infoBackgroundColor.ignoresSafeArea())
+                .transition(.opacity)
         } else if let errorMessage = viewModel.errorMessage {
             ContentUnavailableView(
                 "Impossible de charger la release",
@@ -444,7 +445,37 @@ struct ReleaseDetailView: View {
             .onDisappear {
                 TabNavigationCoordinator.shared.unregisterTopDestination(.release(releaseId, coverURL: initialCoverURL))
             }
+            .transition(.opacity)
         }
+    }
+
+    /// Gabarit neutre affiché pendant le chargement, à la place d'une icône de chargement :
+    /// pochette en plein bord (comme la vraie jaquette héro, pas de titre/artiste superposé tant
+    /// qu'on ne l'a pas), les 2 boutons d'action, puis des sections génériques titre + contenu
+    /// (voir `SkeletonBlock`), pour que l'apparition du contenu réel ne fasse pas sauter la page.
+    private var releaseDetailSkeleton: some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                SkeletonBlock(cornerRadius: 0)
+                    .aspectRatio(1, contentMode: .fit)
+                    .padding(.bottom, 24)
+
+                VStack(alignment: .leading, spacing: 32) {
+                    HStack(spacing: 10) {
+                        SkeletonBlock(cornerRadius: 21, height: 42)
+                        SkeletonBlock(cornerRadius: 21, height: 42)
+                    }
+
+                    SkeletonSection(contentHeight: 70)
+                    SkeletonSection(contentHeight: 130)
+                    SkeletonSection(contentHeight: 160)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+            }
+        }
+        .ignoresSafeArea(edges: .top)
+        .scrollDisabled(true)
     }
 
     /// Release reconstruite avec le dossier commun à tous les exemplaires possédés, pour la
@@ -739,380 +770,6 @@ struct ReleaseDetailView: View {
         .accessibilityAddTraits(.isButton)
     }
 
-}
-
-/// Feuille modale (bottom sheet) regroupant les données complémentaires de la release
-struct ReleaseOtherInfoSheet: View {
-    let release: Release
-
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    if let credits = release.extraartists, !credits.isEmpty {
-                        CreditsSection(credits: credits)
-                    }
-
-                    if let companies = release.companies, !companies.isEmpty {
-                        ReleaseCompaniesSection(companies: companies)
-                    }
-
-                    if let identifiers = release.identifiers, !identifiers.isEmpty {
-                        ReleaseIdentifiersSection(identifiers: identifiers)
-                    }
-                }
-                .padding()
-            }
-            .navigationTitle("Autres informations")
-            .navigationBarTitleDisplayMode(.inline)
-            .searchDestinations()
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    SheetCloseButton()
-                }
-            }
-        }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
-    }
-}
-
-/// Feuille modale (bottom sheet) regroupant les photos et vidéos de la release.
-/// Le visualiseur plein écran est présenté ici même (imbriqué), et non depuis la vue racine :
-/// deux présentations modales déclenchées comme frères l'une de l'autre (sheet + fullScreenCover
-/// tous deux attachés à `ReleaseDetailView`) entrent en conflit quand la seconde est déclenchée
-/// alors que la première est déjà affichée — la mise en plein écran restait alors silencieusement
-/// sans effet.
-struct ReleaseMediaSheet: View {
-    let images: [DiscogsImage]?
-    let videos: [ReleaseVideo]?
-
-    @State private var imageViewerRequest: ImageViewerRequest?
-
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    if let images, images.count > 1 {
-                        ReleaseImagesGallery(images: images, onSelect: { index in
-                            imageViewerRequest = ImageViewerRequest(startIndex: index)
-                        })
-                    }
-
-                    if let videos, !videos.isEmpty {
-                        ReleaseVideosSection(videos: videos)
-                    }
-                }
-                .padding()
-            }
-            .navigationTitle("Photos et vidéos")
-            .navigationBarTitleDisplayMode(.inline)
-            .searchDestinations()
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    SheetCloseButton()
-                }
-            }
-        }
-        .fullScreenCover(item: $imageViewerRequest) { request in
-            ImageViewerView(images: images ?? [], startIndex: request.startIndex)
-        }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
-    }
-}
-
-struct TracklistSection: View {
-    let tracklist: [Track]
-    let artistName: String
-    let albumTitle: String
-    var coverURL: String? = nil
-    var destination: SearchDestination? = nil
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                SectionEyebrow(title: "Titres", icon: "music.note.list", style: .subsection)
-                Spacer()
-                if tracklist.contains(where: { !$0.isHeading }) {
-                    Text("Lecture sur Apple Music")
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(Color.appSecondaryText)
-                }
-            }
-            VStack(spacing: 0) {
-                ForEach(Array(tracklist.enumerated()), id: \.element.id) { index, track in
-                    HStack(alignment: .center, spacing: 10) {
-                        if track.isHeading {
-                            Image(systemName: "music.note")
-                                .font(.caption2)
-                                .foregroundStyle(Color.spinlogPink)
-                                .frame(width: 22, height: 22)
-                                .background(Color.spinlogPinkBadge, in: RoundedRectangle(cornerRadius: 5, style: .continuous))
-                        }
-                        Text(track.position)
-                            .font(.caption)
-                            .foregroundStyle(Color.appSecondaryText)
-                            .frame(width: 28, alignment: .leading)
-                        Text(track.title)
-                            .font(.subheadline)
-                        Spacer()
-                        if track.isHeading {
-                            if let duration = track.duration, !duration.isEmpty {
-                                Text(duration).font(.caption).foregroundStyle(Color.appSecondaryText)
-                            }
-                        } else {
-                            TrackPlayButton(
-                                trackID: track.id,
-                                artistName: artistName,
-                                albumTitle: albumTitle,
-                                trackTitle: track.title,
-                                duration: track.duration,
-                                coverURL: coverURL,
-                                destination: destination
-                            )
-                        }
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-
-                    if index < tracklist.count - 1 {
-                        Divider().opacity(0.15).padding(.leading, 14)
-                    }
-                }
-
-                if let totalDuration {
-                    Divider().opacity(0.15)
-                    HStack {
-                        Text("Durée totale").font(.subheadline.bold())
-                        Spacer()
-                        Text(totalDuration).font(.subheadline).foregroundStyle(Color.appSecondaryText)
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                }
-            }
-            .padding(.vertical, 4)
-        }
-    }
-
-    private var totalDuration: String? {
-        let totalSeconds = tracklist.compactMap { seconds(from: $0.duration) }.reduce(0, +)
-        guard totalSeconds > 0 else { return nil }
-        return String(format: "%d:%02d", totalSeconds / 60, totalSeconds % 60)
-    }
-
-    private func seconds(from duration: String?) -> Int? {
-        guard let duration, let colonIndex = duration.firstIndex(of: ":") else { return nil }
-        let minutesPart = duration[..<colonIndex]
-        let secondsPart = duration[duration.index(after: colonIndex)...]
-        guard let minutes = Int(minutesPart), let seconds = Int(secondsPart) else { return nil }
-        return minutes * 60 + seconds
-    }
-}
-
-/// Bouton de lecture placé en face de chaque titre de la tracklist : extrait de 30s par défaut,
-/// ou morceau complet si Apple Music est connecté avec un abonnement actif (voir
-/// `AppleMusicAccountStore` dans Réglages). Reste simplement inopérant si aucune correspondance
-/// n'est trouvée dans le catalogue Apple Music — pas d'état d'erreur visible pour ce qui reste une
-/// fonctionnalité décorative.
-private struct TrackPlayButton: View {
-    let trackID: String
-    let artistName: String
-    let albumTitle: String
-    let trackTitle: String
-    let duration: String?
-    var coverURL: String? = nil
-    var destination: SearchDestination? = nil
-
-    @Environment(\.colorScheme) private var colorScheme
-    @State private var service = AppleMusicPlaybackService.shared
-
-    private var isPlaying: Bool { service.playingTrackID == trackID }
-    private var isLoading: Bool { service.isLoadingTrackID == trackID }
-    /// `nil` tant que la correspondance n'a pas encore été vérifiée (voir `.task` ci-dessous).
-    private var matchStatus: Bool? { service.matchStatus(for: trackID) }
-    private var hasMatch: Bool { matchStatus == true }
-
-    /// Teinte Apple Music adaptée au thème :
-    /// - Thème sombre : rouge adouci et profond
-    /// - Thème clair : rouge plus lumineux pour ne pas paraître trop sombre sur fond clair
-    private var appleMusicRed: Color {
-        colorScheme == .dark
-            ? Color(red: 222 / 255, green: 56 / 255, blue: 72 / 255)
-            : Color(red: 246 / 255, green: 66 / 255, blue: 84 / 255)
-    }
-
-    /// Couleur de secours pour l'indicateur de chargement alignée sur l'arrière-plan.
-    private var symbolColor: Color {
-        Color(uiColor: .systemBackground)
-    }
-
-    var body: some View {
-        HStack(spacing: 8) {
-            if let duration, !duration.isEmpty {
-                Text(duration)
-                    .font(.caption)
-                    .foregroundStyle(Color.appSecondaryText)
-            }
-
-            // Petite forme d'onde animée façon Apple Music visible uniquement pendant la lecture
-            if isPlaying {
-                Image(systemName: "waveform")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(appleMusicRed)
-                    .symbolEffect(.variableColor.iterative.reversing, options: .repeating)
-                    .transition(
-                        .asymmetric(
-                            insertion: .scale(scale: 0.5).combined(with: .opacity).combined(with: .move(edge: .trailing)),
-                            removal: .scale(scale: 0.5).combined(with: .opacity).combined(with: .move(edge: .trailing))
-                        )
-                    )
-            }
-
-            Button {
-                Task {
-                    await service.toggle(
-                        trackID: trackID,
-                        artistName: artistName,
-                        albumTitle: albumTitle,
-                        trackTitle: trackTitle,
-                        trackDuration: duration,
-                        coverURL: coverURL,
-                        destination: destination,
-                        sourceTab: TabNavigationCoordinator.shared.selectedTab
-                    )
-                }
-            } label: {
-                ZStack {
-                    Circle()
-                        .fill(matchStatus == false ? appleMusicRed.opacity(0.35) : appleMusicRed)
-                        .frame(width: 20, height: 20)
-
-                    if isLoading {
-                        ProgressView()
-                            .scaleEffect(0.48)
-                            .tint(symbolColor)
-                    } else if isPlaying {
-                        Image(systemName: "pause.fill")
-                            .font(.system(size: 8, weight: .bold))
-                            .blendMode(.destinationOut)
-                    } else {
-                        Image(systemName: "play.fill")
-                            .font(.system(size: 8, weight: .bold))
-                            .offset(x: 0.6)
-                            .blendMode(.destinationOut)
-                    }
-                }
-                .compositingGroup()
-                .frame(width: 26, height: 26)
-                .contentShape(Circle())
-            }
-        }
-        .animation(.spring(response: 0.36, dampingFraction: 0.78), value: isPlaying)
-        .buttonStyle(.plain)
-        .disabled(matchStatus == false)
-        .task(id: trackID) {
-            await service.prefetchMatch(trackID: trackID, artistName: artistName, albumTitle: albumTitle, trackTitle: trackTitle, trackDuration: duration)
-        }
-        .accessibilityLabel(isPlaying ? Text("Mettre en pause \(trackTitle)") : Text("Lire \(trackTitle) sur Apple Music"))
-    }
-}
-
-struct CreditsSection: View {
-    let credits: [ReleaseArtist]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            SectionEyebrow(title: "Crédits", icon: "person.2.fill")
-            VStack(spacing: 0) {
-                ForEach(Array(credits.enumerated()), id: \.element.id) { index, credit in
-                    HStack(alignment: .center, spacing: 12) {
-                        // 1. Libellé (Rôle) d'abord, standard .subheadline (noir/régulier) identique à Fabrication
-                        Text(credit.role?.isEmpty == false ? credit.role! : String(localized: "Crédit"))
-                            .font(.subheadline)
-                            .frame(minWidth: 80, alignment: .leading)
-
-                        Spacer(minLength: 8)
-
-                        // 2. Valeur (Nom de l'artiste) ensuite, avec navigation
-                        NavigationLink(value: SearchDestination.artist(credit.id)) {
-                            HStack(spacing: 4) {
-                                Text(credit.displayName)
-                                    .font(.subheadline)
-                                    .foregroundStyle(Color.appSecondaryText)
-                                    .multilineTextAlignment(.trailing)
-
-                                Image(systemName: "chevron.right")
-                                    .font(.caption2.weight(.bold))
-                                    .foregroundStyle(Color.appTertiaryText)
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-
-                    if index < credits.count - 1 {
-                        Divider().opacity(0.15).padding(.leading, 14)
-                    }
-                }
-            }
-            .padding(.vertical, 4)
-            .appleMusicGroupedCard()
-        }
-    }
-}
-
-struct NotesSection: View {
-    let notes: String
-    @State private var isExpanded = false
-
-    private var isLongNote: Bool {
-        notes.count > 180 || notes.components(separatedBy: .newlines).count > 5
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            SectionEyebrow(title: "Notes", icon: "note.text", style: .subsection)
-
-            VStack(alignment: .leading, spacing: 10) {
-                Text(notes)
-                    .font(.subheadline)
-                    .foregroundStyle(.primary)
-                    .lineLimit(isExpanded ? nil : 5)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                if isLongNote {
-                    Button {
-                        withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
-                            isExpanded.toggle()
-                        }
-                    } label: {
-                        HStack(spacing: 4) {
-                            Text(isExpanded ? "Afficher moins" : "Afficher plus")
-                                .font(.caption.weight(.semibold))
-                            Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                                .font(.caption2.weight(.bold))
-                        }
-                        .foregroundStyle(Color.spinlogPink)
-                        .padding(.top, 2)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-            .appleMusicGroupedCard()
-            .contentShape(Rectangle())
-            .onTapGesture {
-                if isLongNote {
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
-                        isExpanded.toggle()
-                    }
-                }
-            }
-        }
-    }
 }
 
 #Preview {

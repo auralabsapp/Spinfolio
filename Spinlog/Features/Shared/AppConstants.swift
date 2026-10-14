@@ -20,7 +20,7 @@ nonisolated enum DiscogsConstants {
     static let maxPageSize = 100
     static let websiteURL = URL(string: "https://www.discogs.com")!
     /// URL officielle de suppression définitive de compte Discogs (Guideline Apple 5.1.1(v))
-    static let accountDeletionURL = URL(string: "https://www.discogs.com/users/delete")!
+    static let accountDeletionURL = websiteURL.appendingPathComponent("users/delete")
 
     /// TTL de 6h partagé par tous les caches locaux (collection, wantlist, images...),
     /// conformément à la contrainte de fraîcheur des données de l'API Discogs.

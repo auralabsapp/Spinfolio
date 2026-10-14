@@ -1,6 +1,10 @@
 import SwiftUI
 
 struct CollectionRow: View {
+    /// Référencée par `SkeletonLibraryRow` (via `LibraryListView`) pour que son gabarit de
+    /// chargement reste de la même taille que la vraie pochette, sans retaper la valeur.
+    static let coverSize: CGFloat = 80
+
     let item: CollectionItem
     var copyBadge: String? = nil
     /// Mode sélection multiple actif pour toute la liste (contrôle l'apparition de la pastille).
@@ -21,8 +25,8 @@ struct CollectionRow: View {
                     .transition(.scale.combined(with: .opacity))
             }
 
-            AsyncCoverImage(url: coverURL, cornerRadius: 10, targetSize: 80)
-                .frame(width: 80, height: 80)
+            AsyncCoverImage(url: coverURL, cornerRadius: 10, targetSize: Self.coverSize)
+                .frame(width: Self.coverSize, height: Self.coverSize)
                 .overlay {
                     if isSelecting && isSelected {
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
@@ -31,7 +35,7 @@ struct CollectionRow: View {
                 }
                 .opacity(isSelecting ? (isSelected ? 1.0 : 0.45) : 1.0)
                 .shadow(color: .black.opacity(isSelecting ? (isSelected ? 0.22 : 0.08) : 0.16), radius: 5, x: 0, y: 2.5)
-                .animation(.spring(response: 0.28, dampingFraction: 0.85), value: isSelected)
+                .animation(.librarySelectionToggle, value: isSelected)
 
             VStack(alignment: .leading, spacing: 2) {
                 // Bloc 1 : Titre de l'album (mis en évidence) & Artiste

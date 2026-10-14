@@ -96,6 +96,7 @@ enum CollectionSortOption: String, CaseIterable, Identifiable, Codable {
 /// Wantlist de réutiliser exactement la même logique de tri/sections que la Collection.
 protocol SortableLibraryItem: Identifiable {
     nonisolated var id: Int { get }
+    nonisolated var releaseId: Int { get }
     nonisolated var basicInformation: BasicInformation { get }
     nonisolated var rating: Int { get }
     nonisolated var dateAddedDate: Date? { get }
@@ -128,22 +129,41 @@ extension SortableLibraryItem {
             return name.isEmpty ? "?" : name
         case .shelf:
             let prefs = MainActor.assumeIsolated {
-                (
-                    ShelfPreferencesStore.shared.ignoreArticles,
-                    ShelfPreferencesStore.shared.sortByLastName,
-                    ShelfPreferencesStore.shared.customArtistSortOverrides
+                let store = ShelfPreferencesStore.shared
+                var masterYear: Int? = nil
+                if store.sortStrategy.usesMasterYear, let masterId = basicInformation.masterId, masterId > 0 {
+                    masterYear = LocalDataStore.shared.getMasterYear(for: masterId)
+                }
+                return (
+                    store.sortStrategy,
+                    store.ignoreArticles,
+                    store.sortByLastName,
+                    store.customArtistSortOverrides,
+                    masterYear
                 )
             }
+            // Regroupement par année (et non par artiste) : la stratégie « Pur chronologique »
+            // trie l'ensemble de la collection par année, toutes lettres d'artiste mélangées —
+            // grouper par lettre créerait des sections non contiguës, dont certaines verraient
+            // leurs éléments absorbés silencieusement dans une section de même lettre apparue
+            // plus haut, faisant disparaître l'en-tête à l'endroit où ils s'affichent réellement.
+            if prefs.0 == .chronologicalOnly {
+                let year = (prefs.4.flatMap { $0 > 0 ? $0 : nil }) ?? basicInformation.year
+                guard let year, year > 0 else { return "?" }
+                return String(year)
+            }
+            // Une section par artiste (comme `.artist`), pas juste par lettre : regrouper par
+            // lettre fusionnait tous les artistes d'une même initiale (ex. AC/DC, Air, Alter
+            // Bridge) sous un seul en-tête (celui du premier), les autres n'affichant alors
+            // jamais le leur. La lettre reste utilisée uniquement pour le jeton de la barre
+            // d'index rapide (voir `libraryIndexToken`), pas pour délimiter les sections.
             let artist = basicInformation.artistNames.shelfArtistSortKey(
-                ignoreArticles: prefs.0,
-                sortByLastName: prefs.1,
-                overrides: prefs.2
+                ignoreArticles: prefs.1,
+                sortByLastName: prefs.2,
+                overrides: prefs.3
             )
             let trimmed = artist.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard let firstChar = trimmed.first else { return "#" }
-            let s = String(firstChar).uppercased()
-            guard let scalar = s.unicodeScalars.first, CharacterSet.letters.contains(scalar) else { return "#" }
-            return s.folding(options: .diacriticInsensitive, locale: .current)
+            return trimmed.isEmpty ? "#" : trimmed
         case .title:
             let title = basicInformation.title.trimmingCharacters(in: .whitespacesAndNewlines)
             return title.isEmpty ? "?" : title
@@ -356,6 +376,11 @@ extension SortableLibraryItem {
             guard let date = dateAddedDate else { return "?" }
             return date.formatted(.dateTime.month(.wide))
         case .shelf:
+            // En « Pur chronologique », la section regroupe par année (voir `sectionKey`) : pas
+            // de 2e ligne distincte à afficher, comme pour `.year`/`.added`.
+            if ShelfPreferencesStore.shared.sortStrategy == .chronologicalOnly {
+                return sectionKey(for: sort)
+            }
             return basicInformation.artistNames
         default:
             return sectionKey(for: sort)
@@ -368,7 +393,12 @@ extension SortableLibraryItem {
     /// lien vers leur fiche : seulement pour les tris dont l'en-tête affiche l'artiste.
     func sectionHeaderArtists(for sort: CollectionSortOption) -> [ReleaseArtist] {
         switch sort {
-        case .artist, .shelf:
+        case .artist:
+            return basicInformation.artists ?? []
+        case .shelf:
+            // En « Pur chronologique », la section regroupe des disques de plusieurs artistes par
+            // année : aucun artiste unique ne représente la section, donc pas de lien cliquable.
+            guard ShelfPreferencesStore.shared.sortStrategy != .chronologicalOnly else { return [] }
             return basicInformation.artists ?? []
         default:
             return []
@@ -391,6 +421,11 @@ func libraryIndexToken<Item: SortableLibraryItem>(for section: (key: String, ite
         guard let rating = section.items.first?.rating, rating > 0 else { return "–" }
         return String(rating)
     case .shelf:
+        // En « Pur chronologique », `section.key` est déjà une année (voir `sectionKey`).
+        if ShelfPreferencesStore.shared.sortStrategy == .chronologicalOnly {
+            guard section.key != "?" else { return "?" }
+            return String(section.key.suffix(2))
+        }
         let folded = section.key.folding(options: .diacriticInsensitive, locale: .current).trimmingCharacters(in: .whitespacesAndNewlines)
         guard let firstChar = folded.first else { return "#" }
         if firstChar.isLetter {

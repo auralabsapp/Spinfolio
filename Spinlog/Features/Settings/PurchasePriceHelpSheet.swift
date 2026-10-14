@@ -6,8 +6,8 @@ import SwiftUI
 struct PurchasePriceHelpSheet: View {
     @State private var showingSafari = false
 
-    private var discogsSettingsURL: URL? {
-        URL(string: "https://www.discogs.com/settings/collection")
+    private var discogsSettingsURL: URL {
+        DiscogsConstants.websiteURL.appendingPathComponent("settings/collection")
     }
 
     var body: some View {
@@ -35,20 +35,18 @@ struct PurchasePriceHelpSheet: View {
                     .font(.subheadline)
                     .foregroundStyle(Color.appSecondaryText)
 
-                    if let discogsSettingsURL {
-                        Button {
-                            showingSafari = true
-                        } label: {
-                            HStack(spacing: 6) {
-                                Text("Ouvrir les réglages de collection Discogs")
-                                Image(systemName: "arrow.up.right.square")
-                            }
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(Color.spinlogPink)
+                    Button {
+                        showingSafari = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Text("Ouvrir les réglages de collection Discogs")
+                            Image(systemName: "arrow.up.right.square")
                         }
-                        .fullScreenCover(isPresented: $showingSafari) {
-                            SafariView(url: discogsSettingsURL)
-                        }
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color.spinlogPink)
+                    }
+                    .fullScreenCover(isPresented: $showingSafari) {
+                        SafariView(url: discogsSettingsURL)
                     }
 
                     Text("Si tu as supprimé le champ « Media Condition » fourni par défaut, recrée-le de la même façon mais en type liste déroulante, avec ces valeurs : Mint (M), Near Mint (NM or M-), Very Good Plus (VG+), Very Good (VG), Good Plus (G+), Good (G), Fair (F), Poor (P).")

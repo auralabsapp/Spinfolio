@@ -69,10 +69,8 @@ struct MarketplaceSheet: View {
                 }
 
                 Section {
-                    if let url = URL(string: "https://www.discogs.com/sell/release/\(releaseId)") {
-                        Link(destination: url) {
-                            Label("Voir les annonces sur Discogs.com", systemImage: "arrow.up.right.square")
-                        }
+                    Link(destination: DiscogsConstants.websiteURL.appendingPathComponent("sell/release/\(releaseId)")) {
+                        Label("Voir les annonces sur Discogs.com", systemImage: "arrow.up.right.square")
                     }
                 }
             }

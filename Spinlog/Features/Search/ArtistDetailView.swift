@@ -48,6 +48,7 @@ struct ArtistDetailView: View {
 
     var body: some View {
         content
+            .animation(.easeInOut(duration: 0.3), value: viewModel.isLoading)
             .navigationBarBackButtonHidden(true)
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbarBackground(.hidden, for: .tabBar)
@@ -104,7 +105,8 @@ struct ArtistDetailView: View {
     @ViewBuilder
     private var content: some View {
         if viewModel.isLoading {
-            ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+            artistDetailSkeleton
+                .transition(.opacity)
         } else if let errorMessage = viewModel.errorMessage {
             ContentUnavailableView(
                 "Impossible de charger cet artiste",
@@ -187,7 +189,35 @@ struct ArtistDetailView: View {
                 scrollOffsetY = newValue
             }
             .ignoresSafeArea(edges: .all)
+            .transition(.opacity)
         }
+    }
+
+    /// Gabarit neutre affiché pendant le chargement, à la place d'une icône de chargement :
+    /// photo en plein bord (comme la vraie photo héro, pas de nom superposé tant qu'on ne l'a
+    /// pas), un paragraphe neutre (biographie) puis la section "Discographie Discogs" (toujours
+    /// présente), avec des blocs animés (voir `SkeletonBlock`).
+    private var artistDetailSkeleton: some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                SkeletonBlock(cornerRadius: 0)
+                    .aspectRatio(1, contentMode: .fit)
+                    .padding(.bottom, 24)
+
+                VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        SkeletonBlock(height: 14)
+                        SkeletonBlock(height: 14)
+                        SkeletonBlock(width: 200, height: 14)
+                    }
+
+                    SkeletonSection(titleWidth: 150, contentHeight: 220)
+                }
+                .padding()
+            }
+        }
+        .ignoresSafeArea(edges: .top)
+        .scrollDisabled(true)
     }
 
     /// Hauteur maximale de l'en-tête. Sans plafond, la photo carrée en pleine largeur dépassait

@@ -117,7 +117,7 @@ struct SpinlogPaywallView: View {
 
     /// Identifiant du groupe d'abonnement (voir `Spinlog.storekit` pour les tests locaux — doit
     /// correspondre au groupe réel créé dans App Store Connect pour fonctionner en sandbox/prod).
-    private let subscriptionGroupID = "21482819"
+    private let subscriptionGroupID = "22419469"
 
     private var isIPad: Bool {
         UIDevice.current.userInterfaceIdiom == .pad

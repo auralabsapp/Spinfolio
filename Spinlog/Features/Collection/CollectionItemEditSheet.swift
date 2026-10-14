@@ -36,6 +36,7 @@ struct CollectionItemEditSheet: View {
     @State private var purchasePriceEUR: Double?
     @State private var marketEstimateEUR: Double?
     @State private var isLoadingGain = false
+    @State private var showingMarketplaceSheet = false
 
     init(
         item: CollectionItem,
@@ -175,7 +176,7 @@ struct CollectionItemEditSheet: View {
                                 .font(.footnote)
                                 .foregroundStyle(Color.appSecondaryText)
 
-                            Link(destination: URL(string: "https://www.discogs.com/settings/collection")!) {
+                            Link(destination: DiscogsConstants.websiteURL.appendingPathComponent("settings/collection")) {
                                 Label("Gérer les champs sur discogs.com", systemImage: "arrow.up.right")
                                     .font(.footnote.weight(.medium))
                             }
@@ -214,17 +215,15 @@ struct CollectionItemEditSheet: View {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                     }
             )
-            .navigationTitle("Mon exemplaire")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                // Élément invisible de la même taille que le bouton de fermeture, côté opposé :
-                // sans lui, la barre ne centre le titre que dans l'espace restant après ce bouton
-                // (absent à gauche), ce qui le décale visiblement vers la gauche.
-                ToolbarItem(placement: .topBarLeading) {
-                    SheetCloseButton()
-                        .opacity(0)
-                        .disabled(true)
-                        .accessibilityHidden(true)
+                // Titre posé en `.principal` plutôt que via `.navigationTitle` : ce placement est
+                // toujours centré par le système, qu'il y ait ou non un élément à gauche — pas
+                // besoin d'un faux bouton côté opposé pour compenser (qui, même invisible, affichait
+                // quand même la pastille en verre que la barre d'outils applique à tout élément).
+                ToolbarItem(placement: .principal) {
+                    Text("Mon exemplaire")
+                        .font(.headline)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     SheetCloseButton()
@@ -273,6 +272,9 @@ struct CollectionItemEditSheet: View {
                 Button("Annuler", role: .cancel) {}
             } message: {
                 Text("Cet exemplaire sera définitivement retiré de ta collection Discogs.")
+            }
+            .sheet(isPresented: $showingMarketplaceSheet) {
+                MarketplaceSheet(releaseId: item.releaseId)
             }
             .task {
                 if fields.isEmpty, let username = DiscogsAuthManager.shared.username {
@@ -377,17 +379,28 @@ struct CollectionItemEditSheet: View {
 
                         Divider().opacity(0.15).padding(.leading, 14)
 
-                        HStack {
-                            Text("Cote actuelle")
-                                .font(.subheadline)
-                            Spacer()
-                            Text(marketEstimateEUR.formatted(.currency(code: "EUR")))
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(Color.spinlogPink)
-                                .monospacedDigit()
+                        Button {
+                            showingMarketplaceSheet = true
+                        } label: {
+                            HStack {
+                                Text("Cote actuelle")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                                Text(marketEstimateEUR.formatted(.currency(code: "EUR")))
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(Color.spinlogPink)
+                                    .monospacedDigit()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(Color.appTertiaryText)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
+                            .contentShape(Rectangle())
                         }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
+                        .buttonStyle(.plain)
+                        .accessibilityHint("Ouvre le Marketplace Discogs pour cette release")
 
                         Divider().opacity(0.15).padding(.leading, 14)
 
@@ -459,7 +472,7 @@ struct CollectionItemEditSheet: View {
     }
 
     private func saveField(_ field: CollectionField, value: String) async {
-        guard let (username, credentials) = DiscogsAuthManager.shared.session else {
+        guard DiscogsAuthManager.shared.session != nil else {
             errorMessage = String(localized: "Tu dois être connecté à Discogs pour enregistrer ces modifications.")
             showingErrorAlert = true
             return
@@ -481,14 +494,12 @@ struct CollectionItemEditSheet: View {
                     value: newValue
                 ))
             } else {
-                try await DiscogsAPIClient.shared.updateCollectionField(
-                    username: username,
+                try await actions.updateCollectionField(
                     folderId: item.folderId,
                     releaseId: item.releaseId,
                     instanceId: item.instanceId,
                     fieldId: field.id,
-                    value: newValue,
-                    credentials: credentials
+                    value: newValue
                 )
             }
 

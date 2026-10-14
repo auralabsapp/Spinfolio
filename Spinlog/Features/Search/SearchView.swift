@@ -23,6 +23,13 @@ struct SearchView: View {
             scopePicker
             content
         }
+        .background(
+            Color.clear
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    isSearchFieldFocused = false
+                }
+        )
         .navigationTitle("Recherche")
         .searchDestinations()
         .fullScreenCover(isPresented: $isScannerPresented) {
@@ -50,7 +57,7 @@ struct SearchView: View {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(Color.appSecondaryText)
 
-            TextField("Artiste, disque, label…", text: $viewModel.query)
+            TextField("Artiste, disque, label, code-barre…", text: $viewModel.query)
                 .textFieldStyle(.plain)
                 .submitLabel(.search)
                 .focused($isSearchFieldFocused)
@@ -140,6 +147,9 @@ struct SearchView: View {
         }
         .pickerStyle(.segmented)
         .padding(.horizontal)
+        .onChange(of: viewModel.scope) {
+            isSearchFieldFocused = false
+        }
     }
 
     private var scannerSheet: some View {
@@ -205,6 +215,17 @@ struct SearchView: View {
                     }
             }
             .listStyle(.plain)
+            .scrollDismissesKeyboard(.immediately)
+            // `.scrollDismissesKeyboard` ne réagit qu'au défilement, et le tap sur le fond de
+            // `VStack` ci-dessus n'est jamais atteint quand on touche directement une ligne (son
+            // propre geste de tap/navigation l'intercepte avant) : sans ce `.simultaneousGesture`
+            // (qui se déclenche EN PLUS du tap de la ligne, pas à sa place), toucher un résultat
+            // pendant que le clavier est ouvert laissait celui-ci affiché par-dessus la navigation.
+            .simultaneousGesture(
+                TapGesture().onEnded {
+                    isSearchFieldFocused = false
+                }
+            )
             .refreshable {
                 await viewModel.search()
             }

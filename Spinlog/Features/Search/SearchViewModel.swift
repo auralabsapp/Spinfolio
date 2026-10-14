@@ -71,7 +71,7 @@ final class SearchViewModel {
     /// Recherche dans la collection et la wantlist locales les albums dont le titre ou l'artiste
     /// correspondent aux termes de la requête. Permet d'afficher TOUS les disques de l'utilisateur,
     /// même si l'API Discogs ne les renvoie pas dans sa première page de recherche générale.
-    private func searchLocalLibrary(query: String) -> (collection: [SearchResult], wantlist: [SearchResult]) {
+    private func searchLocalLibrary(query: String) async -> (collection: [SearchResult], wantlist: [SearchResult]) {
         guard let username = DiscogsAuthManager.shared.username else { return ([], []) }
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return ([], []) }
@@ -79,7 +79,7 @@ final class SearchViewModel {
         let keywords = trimmed.lowercased().components(separatedBy: .whitespaces).filter { !$0.isEmpty }
         guard !keywords.isEmpty else { return ([], []) }
 
-        let collectionItems = LocalDataStore.shared.getAllCollectionItems(username: username)
+        let collectionItems = await LocalDataStore.shared.getAllCollectionItems(username: username)
         var matchingCollection: [SearchResult] = []
         var seenReleaseIds = Set<Int>()
 
@@ -95,7 +95,7 @@ final class SearchViewModel {
             }
         }
 
-        let wantlistItems = LocalDataStore.shared.getWantlistItems(username: username)
+        let wantlistItems = await LocalDataStore.shared.getWantlistItems(username: username)
         var matchingWantlist: [SearchResult] = []
         for item in wantlistItems {
             guard !seenReleaseIds.contains(item.id) else { continue }
@@ -136,7 +136,7 @@ final class SearchViewModel {
         currentPage = 1
 
         let shouldSearchLocal = (scope == .all || scope == .release)
-        let (localCollection, localWantlist) = shouldSearchLocal ? searchLocalLibrary(query: trimmed) : ([], [])
+        let (localCollection, localWantlist) = shouldSearchLocal ? await searchLocalLibrary(query: trimmed) : ([], [])
         var seenIds = Set<Int>(localCollection.map(\.id) + localWantlist.map(\.id))
 
         if !localCollection.isEmpty || !localWantlist.isEmpty {

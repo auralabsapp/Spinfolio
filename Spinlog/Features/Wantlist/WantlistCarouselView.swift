@@ -106,7 +106,7 @@ struct WantlistCarouselView: View {
                         currentToken: currentToken
                     ) { sectionKey in
                         if let firstItem = sections.first(where: { $0.key == sectionKey })?.items.first {
-                            withAnimation(.spring(response: 0.45, dampingFraction: 0.86)) {
+                            withAnimation(.scrollToItem) {
                                 proxy.scrollTo(firstItem.id, anchor: .center)
                             }
                         }
@@ -287,7 +287,7 @@ struct WantlistCarouselView: View {
             }
         }
         .frame(width: cardWidth)
-        .animation(.spring(response: 0.28, dampingFraction: 0.85), value: isSelected)
+        .animation(.librarySelectionToggle, value: isSelected)
     }
 
     // MARK: - Indicateur de position

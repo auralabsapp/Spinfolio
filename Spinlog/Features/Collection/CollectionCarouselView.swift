@@ -203,7 +203,7 @@ struct CollectionCarouselView: View {
         displayItemId = targetId
         let targetOffsetX = CGFloat(targetIndex) * (cardWidth + cardSpacing)
 
-        withAnimation(.spring(response: 0.58, dampingFraction: 0.86)) {
+        withAnimation(.scrollToItem) {
             scrollPosition.scrollTo(x: targetOffsetX)
         }
     }
@@ -385,7 +385,7 @@ struct CollectionCarouselView: View {
             }
         }
         .frame(width: cardWidth)
-        .animation(.spring(response: 0.28, dampingFraction: 0.85), value: isSelected)
+        .animation(.librarySelectionToggle, value: isSelected)
     }
 
     // MARK: - Indicateur de position

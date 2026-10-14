@@ -20,7 +20,7 @@ struct DeveloperOptionsView: View {
     @State private var tagStore = TagStore.shared
     @State private var cloudSyncEngine = CloudSyncEngine.shared
     @State private var themeManager = ThemeManager.shared
-    @AppStorage("app_theme") private var appThemeRawValue: String = AppTheme.system.rawValue
+    @State private var appearancePreferences = AppearancePreferencesStore.shared
 
     @State private var showingPaywall = false
     @State private var showingFeaturesSheet = false
@@ -490,7 +490,7 @@ struct DeveloperOptionsView: View {
             return
         }
 
-        let items = LocalDataStore.shared.getAllCollectionItems(username: username)
+        let items = await LocalDataStore.shared.getAllCollectionItems(username: username)
         let defaultCurrency = CollectionPreferencesStore.defaultCurrency(for: username)
 
         var updatedCount = 0
@@ -598,7 +598,7 @@ struct DeveloperOptionsView: View {
             tagsByInstance: tagStore.tagsByInstance,
             tagsByRelease: [:],
             standaloneTags: Array(tagStore.standaloneTags),
-            appTheme: appThemeRawValue,
+            appTheme: appearancePreferences.appearance.rawValue,
             appColorTheme: themeManager.currentTheme.rawValue,
             masterYears: masterYears.isEmpty ? nil : masterYears,
             listeningSessions: sessions.isEmpty ? nil : sessions,
@@ -660,8 +660,8 @@ struct DeveloperOptionsView: View {
             tagsByRelease: backup.tagsByRelease,
             standaloneTags: Set(backup.standaloneTags)
         )
-        if let theme = backup.appTheme, AppTheme.allCases.contains(where: { $0.rawValue == theme }) {
-            appThemeRawValue = theme
+        if let theme = backup.appTheme, let appTheme = AppTheme(rawValue: theme) {
+            appearancePreferences.appearance = appTheme
         }
         if let colorTheme = backup.appColorTheme, let theme = AppColorTheme(rawValue: colorTheme) {
             themeManager.selectTheme(theme, isPremium: premiumStore.isPremium)

@@ -36,12 +36,21 @@ final class WantlistAlertStore {
     /// vérification coûte une requête Discogs par alerte, et des allers-retours rapides entre
     /// apps épuiseraient sinon le quota partagé avec le reste de l'app.
     private let minimumAppOpenCheckInterval: TimeInterval = 15 * 60
+    /// Garantit que la migration depuis l'ancien stockage global (avant l'isolation par compte)
+    /// ne se produit qu'une seule fois, vers le premier compte activé après cette mise à jour —
+    /// même principe que `TagStore.legacyMigrationFlagKey`.
+    private static let legacyMigrationFlagKey = "com.spinlog.wantlistAlertStore.migratedToPerAccount"
     private(set) var alerts: [Int: WantlistAlertBox] = [:]
     private(set) var isChecking: Bool = false
 
-    private init() {
-        loadAlerts()
+    /// Compte Discogs actuellement actif, ou `nil` si personne n'est connecté. Piloté
+    /// exclusivement par `DiscogsAuthManager` via `setActiveUsername` — mêmes clés `UserDefaults`
+    /// que `TagStore`/`ListeningLogStore` : avant ce champ, les alertes de prix étaient stockées
+    /// sous une seule clé globale, donc visibles par n'importe quel compte connecté sur
+    /// l'appareil plutôt que cloisonnées par utilisateur.
+    private(set) var activeUsername: String?
 
+    private init() {
         // Reprend immédiatement (plutôt que d'attendre le prochain déclenchement naturel) si
         // l'utilisateur redevient premium après avoir laissé expirer son abonnement — voir les
         // garde-fous premium dans `checkAlerts()`/`scheduleBackgroundCheck()`.
@@ -56,6 +65,34 @@ final class WantlistAlertStore {
                 Task { await self.checkAlerts() }
             }
         }
+    }
+
+    /// Bascule ce store sur les données propres au compte Discogs indiqué, comme
+    /// `TagStore.setActiveUsername` : sauvegarde déjà à jour (chaque mutation persiste
+    /// immédiatement), donc il suffit de recharger l'état en mémoire depuis le stockage propre à
+    /// ce compte. Appelé par `DiscogsAuthManager` au lancement de l'app, à la connexion et à la
+    /// déconnexion.
+    func setActiveUsername(_ username: String?) {
+        let normalized = Self.normalize(username)
+        guard normalized != activeUsername else { return }
+        activeUsername = normalized
+        guard let normalized else {
+            // Déconnecté : on vide l'état en mémoire sans toucher au disque, pour ne pas laisser
+            // les alertes d'un compte visibles tant qu'aucun compte n'est actif.
+            alerts = [:]
+            return
+        }
+        loadAlerts(for: normalized)
+    }
+
+    private static func normalize(_ username: String?) -> String? {
+        guard let trimmed = username?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+              !trimmed.isEmpty else { return nil }
+        return trimmed
+    }
+
+    private func key(_ base: String, for username: String) -> String {
+        "\(base)_\(username)"
     }
 
     // MARK: - CRUD
@@ -137,22 +174,47 @@ final class WantlistAlertStore {
 
     // MARK: - Persistance
 
-    private func loadAlerts() {
-        guard let data = UserDefaults.standard.data(forKey: storageKey),
-              let decoded = try? JSONDecoder().decode([WantlistAlert].self, from: data) else {
-            return
+    private func loadAlerts(for username: String) {
+        if let data = UserDefaults.standard.data(forKey: key(storageKey, for: username)),
+           let decoded = try? JSONDecoder().decode([WantlistAlert].self, from: data) {
+            var dict: [Int: WantlistAlertBox] = [:]
+            for item in decoded {
+                dict[item.releaseId] = WantlistAlertBox(alert: item)
+            }
+            alerts = dict
+        } else {
+            alerts = [:]
         }
+        migrateLegacyAlertsIfNeeded()
+    }
+
+    /// Reprend, une seule fois au total, les alertes créées avant l'isolation par compte
+    /// (stockées sous la clé globale non préfixée) pour le premier compte activé — même
+    /// mécanisme que `TagStore.migrateLegacyDataIfNeeded`. Ne remplace jamais des alertes déjà
+    /// présentes pour ce compte (ne s'applique qu'au tout premier chargement après cette mise à
+    /// jour, avant que quoi que ce soit n'ait encore été écrit sous une clé par compte).
+    private func migrateLegacyAlertsIfNeeded() {
+        guard !UserDefaults.standard.bool(forKey: Self.legacyMigrationFlagKey) else { return }
+        UserDefaults.standard.set(true, forKey: Self.legacyMigrationFlagKey)
+
+        guard alerts.isEmpty,
+              let data = UserDefaults.standard.data(forKey: storageKey),
+              let decoded = try? JSONDecoder().decode([WantlistAlert].self, from: data),
+              !decoded.isEmpty else { return }
+
         var dict: [Int: WantlistAlertBox] = [:]
         for item in decoded {
             dict[item.releaseId] = WantlistAlertBox(alert: item)
         }
-        self.alerts = dict
+        alerts = dict
+        persistAlerts()
     }
 
     private func persistAlerts() {
+        guard let activeUsername else { return }
         let array = alerts.values.map(\.alert)
         if let data = try? JSONEncoder().encode(array) {
-            UserDefaults.standard.set(data, forKey: storageKey)
+            UserDefaults.standard.set(data, forKey: key(storageKey, for: activeUsername))
         }
     }
 
@@ -203,8 +265,8 @@ final class WantlistAlertStore {
             }
             await checkSingleAlert(box.alert)
         }
-        if completed {
-            UserDefaults.standard.set(Date(), forKey: lastFullCheckKey)
+        if completed, let activeUsername {
+            UserDefaults.standard.set(Date(), forKey: key(lastFullCheckKey, for: activeUsername))
         }
 
         scheduleBackgroundCheck()
@@ -215,7 +277,8 @@ final class WantlistAlertStore {
     /// qu'iOS ne réveille pas) ne voyait ses alertes vérifiées qu'à leur création. Ignorée si
     /// une vérification complète a eu lieu il y a moins de `minimumAppOpenCheckInterval`.
     func checkAlertsOnAppOpen() async {
-        if let lastCheck = UserDefaults.standard.object(forKey: lastFullCheckKey) as? Date,
+        if let activeUsername,
+           let lastCheck = UserDefaults.standard.object(forKey: key(lastFullCheckKey, for: activeUsername)) as? Date,
            Date().timeIntervalSince(lastCheck) < minimumAppOpenCheckInterval {
             return
         }

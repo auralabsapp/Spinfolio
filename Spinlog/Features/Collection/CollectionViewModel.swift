@@ -325,83 +325,34 @@ final class CollectionViewModel {
     /// rigoureusement déterministe (même en cache ou hors-ligne). Recalculé par
     /// `recomputeSections()` uniquement quand `items`/tri/filtres changent réellement.
     private(set) var sections: [(key: String, items: [CollectionItem])] = []
-    /// Incrémenté à chaque appel de `recomputeSections()` : permet au calcul détaché le plus
-    /// récent de détecter qu'un appel plus récent l'a entre-temps rendu obsolète, et de ne pas
-    /// écraser `sections` avec un résultat périmé.
-    private var sectionsComputeGeneration = 0
     /// Vrai pendant le calcul détaché des sections (voir `recomputeSections`) : `sections` est
     /// alors vide ou périmé sans que la recherche soit en cause. Au lancement, la vue affiche un
     /// indicateur de chargement plutôt que « Aucun résultat » le temps du premier tri.
     private(set) var isComputingSections = false
+    /// Stockées comme propriétés `@Observable` ci-dessus (pas déléguées au moteur) pour que
+    /// SwiftUI soit bien invalidé à chaque mise à jour — voir le commentaire sur
+    /// `LibrarySectionsEngine`.
+    private let sectionsEngine = LibrarySectionsEngine<CollectionItem>()
 
-    /// Tri + regroupement de la collection : coûteux (`localizedStandardCompare` répété sur
-    /// chaque paire comparée, sans mise en cache) et synchrone sur le thread principal. Pendant
-    /// la synchro de pages en arrière-plan juste après le lancement (`startBackgroundSync`), ce
-    /// recalcul se redéclenchait à chaque page reçue — ~une fois par seconde, au rythme du
-    /// débit imposé par l'API Discogs — pour un coût mesuré de 300-400ms à chaque fois,
-    /// provoquant des saccades si l'utilisateur faisait défiler la liste pendant cette fenêtre.
-    /// Le tri `.shelf` et le filtrage par tag restent synchrones (ils lisent respectivement
-    /// `ShelfPreferencesStore` et `TagStore`, isolés sur l'acteur principal) ; les autres cas
-    /// sont calculés sur une tâche détachée à partir d'un instantané des données, puis appliqués
-    /// d'un coup sur l'acteur principal.
+    /// Tri + regroupement de la collection, délégués à `LibrarySectionsEngine` (partagé avec
+    /// `WantlistViewModel`). Pendant la synchro de pages en arrière-plan juste après le lancement
+    /// (`startBackgroundSync`), ce recalcul se redéclenchait à chaque page reçue — ~une fois par
+    /// seconde, au rythme du débit imposé par l'API Discogs — pour un coût mesuré de 300-400ms à
+    /// chaque fois, provoquant des saccades si l'utilisateur faisait défiler la liste pendant
+    /// cette fenêtre ; d'où le calcul détaché du moteur. Le tri `.shelf` et le filtrage par tag
+    /// restent synchrones (ils lisent respectivement `ShelfPreferencesStore` et `TagStore`,
+    /// isolés sur l'acteur principal).
     private func recomputeSections() {
-        guard sortOption != .shelf, selectedTags.isEmpty else {
-            sections = Self.computeSections(
-                items: items, sortOption: sortOption, ascending: sortAscending,
-                tags: selectedTags, format: selectedFormat, searchText: searchText
-            )
-            // Annule l'éventuel calcul détaché en cours : son résultat serait périmé.
-            sectionsComputeGeneration += 1
-            isComputingSections = false
-            return
-        }
-
-        isComputingSections = true
-        sectionsComputeGeneration += 1
-        let generation = sectionsComputeGeneration
-        let itemsSnapshot = items
-        let currentSortOption = sortOption
-        let currentAscending = sortAscending
-        let currentTags = selectedTags
-        let currentFormat = selectedFormat
-        let currentSearchText = searchText
-
-        Task.detached(priority: .userInitiated) { [weak self] in
-            let result = Self.computeSections(
-                items: itemsSnapshot, sortOption: currentSortOption, ascending: currentAscending,
-                tags: currentTags, format: currentFormat, searchText: currentSearchText
-            )
-            guard let self else { return }
-            await self.applyComputedSections(result, generation: generation)
-        }
-    }
-
-    @MainActor
-    private func applyComputedSections(_ result: [(key: String, items: [CollectionItem])], generation: Int) {
-        guard generation == sectionsComputeGeneration else { return }
-        sections = result
-        isComputingSections = false
-    }
-
-    /// `nonisolated` : appelée depuis la tâche détachée de `recomputeSections()`, donc jamais sur
-    /// l'acteur principal pour les critères autres que `.shelf` (qui ne passe jamais par ici).
-    private nonisolated static func computeSections(
-        items: [CollectionItem], sortOption: CollectionSortOption, ascending: Bool,
-        tags: Set<String>, format: String?, searchText: String
-    ) -> [(key: String, items: [CollectionItem])] {
-        let filtered = items.filter { $0.matchesLibraryFilters(tags: tags, format: format, searchText: searchText) }
-        let sorted = filtered.sorted { $0.isOrderedBefore($1, for: sortOption, ascending: ascending) }
-        var order: [String] = []
-        var groups: [String: [CollectionItem]] = [:]
-        for item in sorted {
-            let key = item.sectionKey(for: sortOption)
-            if groups[key] == nil {
-                order.append(key)
-                groups[key] = []
+        sectionsEngine.recompute(
+            items: items, sortOption: sortOption, ascending: sortAscending,
+            tags: selectedTags, format: selectedFormat, searchText: searchText,
+            synchronous: sortOption == .shelf || !selectedTags.isEmpty,
+            willStartAsync: { [weak self] in self?.isComputingSections = true },
+            apply: { [weak self] result in
+                self?.sections = result
+                self?.isComputingSections = false
             }
-            groups[key]?.append(item)
-        }
-        return order.map { ($0, groups[$0] ?? []) }
+        )
     }
 
     /// Jetons pour la barre de navigation rapide sur le bord droit : lettres pour un tri
@@ -454,7 +405,7 @@ final class CollectionViewModel {
         selectedFolderId = preferredFolderId
 
         // Chargement immédiat depuis le cache SwiftData pour un affichage instantané et correctement classé
-        loadFromLocalStore(username: username, folderId: preferredFolderId)
+        await loadFromLocalStore(username: username, folderId: preferredFolderId)
 
         // Si l'appareil est hors ligne : on conserve l'affichage du cache local
         if !networkMonitor.isConnected {
@@ -500,7 +451,7 @@ final class CollectionViewModel {
             startBackgroundSync(username: username, folderId: validFolderId, credentials: credentials)
         } catch {
             // Repli gracieux sur le cache local
-            loadFromLocalStore(username: username, folderId: selectedFolderId ?? preferredFolderId)
+            await loadFromLocalStore(username: username, folderId: selectedFolderId ?? preferredFolderId)
             if items.isEmpty && !error.isCancellation {
                 errorMessage = error.localizedDescription
             }
@@ -508,7 +459,7 @@ final class CollectionViewModel {
         isLoading = false
     }
 
-    private func loadFromLocalStore(username: String, folderId: Int? = nil) {
+    private func loadFromLocalStore(username: String, folderId: Int? = nil) async {
         let cachedFolders = localStore.getFolders(username: username)
         if !cachedFolders.isEmpty {
             self.folders = cachedFolders
@@ -538,7 +489,7 @@ final class CollectionViewModel {
         }
 
         localStore.cleanupPhantomCollectionEntries(username: username)
-        let cachedItems = localStore.getCollectionItems(username: username, folderId: targetFolderId)
+        let cachedItems = await localStore.getCollectionItems(username: username, folderId: targetFolderId)
             .filter { $0.instanceId > 0 && $0.instanceId != $0.releaseId }
         self.items = cachedItems
         self.isOfflineAndStale = localStore.isCollectionStale(username: username, folderId: targetFolderId)
@@ -577,7 +528,7 @@ final class CollectionViewModel {
                 CollectionPreferencesStore.setLastConsultedFolderName(folderName, for: username)
             }
             // Charge immédiatement le cache local du nouveau dossier pour éviter toute incohérence d'affichage
-            loadFromLocalStore(username: username, folderId: folderId)
+            await loadFromLocalStore(username: username, folderId: folderId)
         }
         if networkMonitor.isConnected {
             await loadFirstPage(folderId: folderId)
@@ -601,7 +552,7 @@ final class CollectionViewModel {
             if networkMonitor.isConnected {
                 await loadFirstPage(folderId: folderId)
             } else {
-                loadFromLocalStore(username: username, folderId: folderId)
+                await loadFromLocalStore(username: username, folderId: folderId)
             }
         }
     }
@@ -627,7 +578,7 @@ final class CollectionViewModel {
         backgroundSyncTask = nil
 
         if !networkMonitor.isConnected {
-            loadFromLocalStore(username: username, folderId: folderId)
+            await loadFromLocalStore(username: username, folderId: folderId)
             return
         }
         guard let credentials = authManager.credentials else { return }
@@ -642,7 +593,7 @@ final class CollectionViewModel {
             isOfflineAndStale = false
             startBackgroundSync(username: username, folderId: folderId, credentials: credentials)
         } catch {
-            loadFromLocalStore(username: username, folderId: folderId)
+            await loadFromLocalStore(username: username, folderId: folderId)
             if items.isEmpty && !error.isCancellation {
                 errorMessage = error.localizedDescription
             }

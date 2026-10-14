@@ -130,7 +130,7 @@ final class ArtistDetailViewModel {
     /// Page de l'artiste sur discogs.com, pour la mention d'attribution exigée par les CGU de
     /// l'API Discogs sous la section qui affiche leurs données (voir `DiscogsAttributionLink`).
     var discogsArtistURL: URL? {
-        artistId.flatMap { URL(string: "https://www.discogs.com/artist/\($0)") }
+        artistId.map { DiscogsConstants.websiteURL.appendingPathComponent("artist/\($0)") }
     }
 
     private(set) var discogsDiscographyState: DiscogsDiscographyState = .loading

@@ -35,7 +35,7 @@ struct MasterRelease: Decodable, Identifiable, Sendable {
     }
 
     var discogsWebURL: URL? {
-        URL(string: "https://www.discogs.com/master/\(id)")
+        DiscogsConstants.websiteURL.appendingPathComponent("master/\(id)")
     }
 }
 

@@ -8,13 +8,22 @@ struct WantlistAlertSheet: View {
 
     @State private var showPermissionAlert = false
     @State private var showingSafari = false
+    @FocusState private var isTargetPriceFocused: Bool
 
     private var existingAlert: WantlistAlert? {
         viewModel.existingAlert(for: item)
     }
 
     private var marketplaceURL: URL? {
-        URL(string: "https://www.discogs.com/sell/release/\(item.id)")
+        DiscogsConstants.websiteURL.appendingPathComponent("sell/release/\(item.id)")
+    }
+
+    private func dismissKeyboard() {
+        UIApplication.shared.connectedScenes
+            .compactMap { ($0 as? UIWindowScene)?.windows }
+            .flatMap { $0 }
+            .first { $0.isKeyWindow }?
+            .endEditing(true)
     }
 
     var body: some View {
@@ -31,6 +40,27 @@ struct WantlistAlertSheet: View {
                     deleteSection
                 }
             }
+            .scrollDismissesKeyboard(.interactively)
+            // Geste de tap générique sur tout le `Form`, y compris la ligne du champ "Prix
+            // maximum" elle-même : contrairement à `isTargetPriceFocused = false` (qui libère le
+            // focus côté SwiftUI sans toujours redescendre jusqu'au clavier système dans un
+            // `Form`) ou à `sendAction(resignFirstResponder)` (dont le ciblage via la chaîne de
+            // répondeurs s'est montré peu fiable ici), `UIWindow.endEditing(true)` est l'API UIKit
+            // dédiée à "fermer le clavier actif quel qu'il soit". Sans danger sur la ligne du
+            // champ lui-même : tant qu'aucun champ n'est encore premier répondeur (1er tap pour y
+            // entrer), `endEditing` est un no-op et ne gêne donc jamais la prise de focus initiale
+            // — il n'intervient que lorsqu'un champ est DÉJÀ actif.
+            .simultaneousGesture(
+                TapGesture().onEnded { dismissKeyboard() }
+            )
+            // `.scrollDismissesKeyboard` ne se déclenche que si le `Form` défile réellement : sur
+            // cette feuille, si le contenu tient déjà dans l'écran (peu de suggestions, pas
+            // d'alerte existante…), aucun défilement n'a jamais lieu et ce modificateur ne fait
+            // donc jamais rien. Un `DragGesture` dédié détecte le glissé vertical lui-même, qu'il
+            // y ait ou non matière à défiler.
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 10).onChanged { _ in dismissKeyboard() }
+            )
             .navigationTitle("Alerte de prix")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -51,7 +81,7 @@ struct WantlistAlertSheet: View {
                         }
                     }
                     .bold()
-                    .disabled(viewModel.parsedTargetPrice == nil || viewModel.parsedTargetPrice! <= 0 || viewModel.isSaving)
+                    .disabled(viewModel.targetPrice == nil || viewModel.targetPrice! <= 0 || viewModel.isSaving)
                 }
             }
             .task {
@@ -103,39 +133,41 @@ struct WantlistAlertSheet: View {
 
     private var marketOverviewSection: some View {
         Section(header: Text("Offres actuelles en vente")) {
-            if viewModel.isLoading {
-                HStack {
-                    ProgressView()
-                        .padding(.trailing, 8)
-                    Text("Chargement du marché Discogs…")
-                        .font(.subheadline)
-                        .foregroundStyle(Color.appSecondaryText)
-                }
-                .padding(.vertical, 4)
-            } else if let stats = viewModel.currentStats {
-                HStack {
-                    Label("En vente actuellement", systemImage: "cart")
-                    Spacer()
-                    Text("\(stats.numForSale ?? 0) exemplaires")
-                        .foregroundStyle(Color.appSecondaryText)
-                }
-
-                HStack {
-                    Label("Prix le plus bas en ligne", systemImage: "tag")
-                    Spacer()
-                    if let lowest = viewModel.convertedLowestPrice {
-                        Text(lowest.formatted(.currency(code: viewModel.currency)))
-                            .bold()
-                            .foregroundStyle(Color.spinlogPink)
-                    } else {
-                        Text("Aucune offre")
+            Group {
+                if viewModel.isLoading {
+                    HStack {
+                        ProgressView()
+                            .padding(.trailing, 8)
+                        Text("Chargement du marché Discogs…")
+                            .font(.subheadline)
                             .foregroundStyle(Color.appSecondaryText)
                     }
+                    .padding(.vertical, 4)
+                } else if let stats = viewModel.currentStats {
+                    HStack {
+                        Label("En vente actuellement", systemImage: "cart")
+                        Spacer()
+                        Text("\(stats.numForSale ?? 0) exemplaires")
+                            .foregroundStyle(Color.appSecondaryText)
+                    }
+
+                    HStack {
+                        Label("Prix le plus bas en ligne", systemImage: "tag")
+                        Spacer()
+                        if let lowest = viewModel.convertedLowestPrice {
+                            Text(lowest.formatted(.currency(code: viewModel.currency)))
+                                .bold()
+                                .foregroundStyle(Color.spinlogPink)
+                        } else {
+                            Text("Aucune offre")
+                                .foregroundStyle(Color.appSecondaryText)
+                        }
+                    }
+                } else {
+                    Text("Données de marché non disponibles.")
+                        .font(.caption)
+                        .foregroundStyle(Color.appSecondaryText)
                 }
-            } else {
-                Text("Données de marché non disponibles.")
-                    .font(.caption)
-                    .foregroundStyle(Color.appSecondaryText)
             }
         }
     }
@@ -175,16 +207,26 @@ struct WantlistAlertSheet: View {
             HStack {
                 Text("Prix maximum")
                 Spacer()
-                TextField("Ex: 25.00", text: $viewModel.targetPriceString)
+                // `TextField(text:)` sur une `String` saisie brute, pas `TextField(value:format:
+                // .currency(...))` : ce dernier réinsère le symbole monétaire dans le texte édité
+                // à chaque frappe et perd la position du curseur — le 2e chiffre tapé atterrissait
+                // après le symbole ("2,00 €5" au lieu de "25,00 €"). Le symbole reste donc un
+                // élément à part, affiché en permanence (même champ vide) juste après le champ.
+                // La teinte et le poids de police ci-dessous renforcent qu'il s'agit bien d'une
+                // zone à saisir, pas d'une simple valeur affichée.
+                TextField("0,00", text: $viewModel.targetPriceString)
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.trailing)
-                    .frame(maxWidth: 120)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color.spinlogPink)
+                    .frame(maxWidth: 100)
+                    .focused($isTargetPriceFocused)
 
                 Text(viewModel.currencySymbol)
                     .foregroundStyle(Color.appSecondaryText)
             }
 
-            if let current = viewModel.parsedTargetPrice, current > 0 {
+            if let current = viewModel.targetPrice, current > 0 {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Raccourcis par rapport au prix saisi ci-dessus :")
                         .font(.caption)

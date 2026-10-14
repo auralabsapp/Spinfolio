@@ -1,12 +1,17 @@
 import SwiftUI
 
 struct LabelDetailView: View {
+    /// Partagée entre la vraie pochette et `labelDetailSkeleton`, pour que le squelette ne puisse
+    /// pas diverger silencieusement de la taille réelle.
+    private static let coverSize: CGFloat = 200
+
     let labelId: Int
 
     @State private var viewModel = LabelDetailViewModel()
 
     var body: some View {
         content
+            .animation(.easeInOut(duration: 0.3), value: viewModel.isLoading)
             .navigationTitle(viewModel.label?.name ?? "")
             .navigationBarTitleDisplayMode(.inline)
             .disablesContentPopGesture()
@@ -16,7 +21,8 @@ struct LabelDetailView: View {
     @ViewBuilder
     private var content: some View {
         if viewModel.isLoading {
-            ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+            labelDetailSkeleton
+                .transition(.opacity)
         } else if let errorMessage = viewModel.errorMessage {
             ContentUnavailableView(
                 "Impossible de charger ce label",
@@ -27,7 +33,7 @@ struct LabelDetailView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     AsyncCoverImage(url: label.primaryImageURL)
-                        .frame(width: 200, height: 200)
+                        .frame(width: Self.coverSize, height: Self.coverSize)
                         .frame(maxWidth: .infinity)
 
                     Text(label.name).font(.title2.bold())
@@ -43,6 +49,30 @@ struct LabelDetailView: View {
                 }
                 .padding()
             }
+            .transition(.opacity)
         }
+    }
+
+    /// Gabarit neutre affiché pendant le chargement, à la place d'une icône de chargement :
+    /// reproduit la structure réelle (pochette centrée, nom, paragraphe de profil) avec des
+    /// blocs animés (voir `SkeletonBlock`), pour que l'apparition du contenu réel ne fasse pas
+    /// sauter la page.
+    private var labelDetailSkeleton: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                SkeletonBlock(cornerRadius: 8, width: Self.coverSize, height: Self.coverSize)
+                    .frame(maxWidth: .infinity)
+
+                SkeletonBlock(width: 180, height: 22)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    SkeletonBlock(height: 14)
+                    SkeletonBlock(height: 14)
+                    SkeletonBlock(width: 220, height: 14)
+                }
+            }
+            .padding()
+        }
+        .scrollDisabled(true)
     }
 }

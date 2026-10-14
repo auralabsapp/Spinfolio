@@ -16,6 +16,6 @@ struct DiscogsLabel: Decodable, Identifiable, Sendable {
     var primaryImageURL: String? { images?.first?.uri }
 
     var discogsWebURL: URL? {
-        URL(string: "https://www.discogs.com/label/\(id)")
+        DiscogsConstants.websiteURL.appendingPathComponent("label/\(id)")
     }
 }

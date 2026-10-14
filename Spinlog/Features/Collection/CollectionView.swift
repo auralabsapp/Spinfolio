@@ -38,7 +38,6 @@ struct CollectionView: View {
             .navigationSubtitle(navigationSubtitle)
             .navigationBarTitleDisplayMode(.large)
                         .searchDestinations()
-            .searchable(text: $viewModel.searchText, prompt: "Rechercher dans ta collection")
             .scrollDismissesKeyboard(.immediately)
             .toolbar {
                 if isSelecting {
@@ -462,34 +461,6 @@ struct CollectionView: View {
         }
     }
 
-    /// `NavigationLink` toujours présent (même identité avant/pendant/après le mode sélection) :
-    /// c'est ce qui permet à la pastille de `CollectionRow` d'apparaître/disparaître de façon
-    /// animée façon app Fichiers, plutôt qu'un remplacement brut de toute la ligne. En mode
-    /// sélection, un calque transparent au-dessus intercepte le tap pour (dé)sélectionner au
-    /// lieu de naviguer.
-    @ViewBuilder
-    private func rowContent(for item: CollectionItem) -> some View {
-        ZStack {
-            NavigationLink(value: SearchDestination.release(item.releaseId, coverURL: item.basicInformation.coverImage ?? item.basicInformation.thumb)) {
-                CollectionRow(
-                    item: item,
-                    copyBadge: viewModel.copyBadge(for: item),
-                    isSelecting: isSelecting,
-                    isSelected: selectedItemIds.contains(item.id)
-                )
-            }
-            .buttonStyle(.plain)
-            .allowsHitTesting(!isSelecting)
-
-            if isSelecting {
-                Color.clear
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        toggleSelection(item)
-                    }
-            }
-        }
-    }
 
     private func toggleSelection(_ item: CollectionItem) {
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -576,126 +547,104 @@ struct CollectionView: View {
 
     @ViewBuilder
     private var collectionViewList: some View {
-        List {
-            // Intégrée comme en-tête de section plutôt qu'en sibling externe ou en
-            // `.safeAreaInset` : filtrer le contenu d'une `List` (ajouter/retirer des sections) est
-            // son usage normal et ne perturbe jamais `.searchable()`, contrairement à un élément
-            // externe qui change le cadre de la liste dans son parent. En en-tête (plutôt qu'une
-            // ligne normale), `.listStyle(.plain)` l'épingle nativement en haut pendant le
-            // défilement — comme la barre de filtres actifs de l'app Mail — au lieu de défiler
-            // avec le contenu.
-            if viewModel.hasActiveFilters {
-                Section {
-                    EmptyView()
-                } header: {
+        LibraryListView<CollectionItem>(
+            sections: viewModel.sections,
+            isLoading: isShowingSkeleton,
+            indexToken: { viewModel.indexToken(for: $0) },
+            displayTitle: { viewModel.displayTitle(for: $0) },
+            headerArtists: { viewModel.headerArtists(for: $0) },
+            hasActiveFilters: viewModel.hasActiveFilters,
+            activeFiltersBar: {
+                AnyView(
                     LibraryActiveFiltersBar(
                         selectedTags: $viewModel.selectedTags,
                         selectedFormat: $viewModel.selectedFormat,
                         onClearAll: viewModel.clearFilters
                     )
-                    .textCase(nil)
-                }
-            }
-            ForEach(viewModel.sections, id: \.key) { section in
-                Section(header: LibrarySectionHeader(
-                    token: viewModel.indexToken(for: section),
-                    title: viewModel.displayTitle(for: section),
-                    count: section.items.count,
-                    artists: viewModel.headerArtists(for: section)
                 )
-                    // Même fond que l'en-tête de section en mode Mosaïque.
-                    .background(.regularMaterial)
-                    // Pour la pastille de position de `SectionIndexBar` (voir `currentSectionKey`).
-                    .reportingSectionOffset(key: section.key, coordinateSpace: Self.sectionsCoordinateSpace)
-                ) {
-                    ForEach(section.items) { item in
-                        rowContent(for: item)
-                            .id(item.id)
-                            // Resserre les lignes : les marges verticales par défaut de `List`
-                            // (~11pt en haut et en bas) ajoutent plus de vide que le contenu de
-                            // la ligne lui-même (pochette 80pt + texte).
-                            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
-                            .listRowBackground(collectionRowHighlight(for: item))
-                            .task { await viewModel.loadMoreIfNeeded(current: item) }
-                            .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                                if !isSelecting {
-                                    if activityManager.isPlaying(releaseId: item.releaseId) {
-                                        Button {
-                                            stopListening(for: item)
-                                        } label: {
-                                            Label("Arrêter l'écoute", systemImage: "stop.fill")
-                                        }
-                                        .tint(Color(uiColor: .systemGray))
-                                    } else {
-                                        Button {
-                                            triggerListeningLog(for: item)
-                                        } label: {
-                                            Label("J'écoute", systemImage: "opticaldisc.fill")
-                                        }
-                                        .tint(Color.spinlogPink)
-                                    }
-
-                                    Button {
-                                        if !premiumStore.isPremium {
-                                            showingPremiumSheet = true
-                                        } else {
-                                            shelfTargetRelease = Release(from: item)
-                                        }
-                                    } label: {
-                                        Label("Ranger", systemImage: "books.vertical.fill")
-                                    }
-                                    .tint(.indigo)
-                                }
+            },
+            sectionsCoordinateSpace: Self.sectionsCoordinateSpace,
+            hasVerticalIndexBar: viewModel.indexEntries.count > 1,
+            isSelecting: isSelecting,
+            selectedItemIds: selectedItemIds,
+            onToggleSelection: { toggleSelection($0) },
+            rowLabel: { item in
+                AnyView(
+                    CollectionRow(
+                        item: item,
+                        copyBadge: viewModel.copyBadge(for: item),
+                        isSelecting: isSelecting,
+                        isSelected: selectedItemIds.contains(item.id)
+                    )
+                )
+            },
+            rowBackground: { item in
+                highlightedItemId == item.id ? AnyView(collectionRowHighlight(for: item)) : nil
+            },
+            leadingSwipeActions: { item in
+                AnyView(
+                    Group {
+                        if activityManager.isPlaying(releaseId: item.releaseId) {
+                            Button {
+                                stopListening(for: item)
+                            } label: {
+                                Label("Arrêter l'écoute", systemImage: "stop.fill")
                             }
-                            .swipeActions(edge: .trailing) {
-                                if !isSelecting && !viewModel.isOfflineAndStale {
-                                    Button(role: .destructive) {
-                                        itemPendingDeletion = item
-                                    } label: {
-                                        Label("Supprimer", systemImage: "trash.fill")
-                                    }
-                                    .tint(.red)
-
-                                    Button {
-                                        editingItem = item
-                                    } label: {
-                                        Label("Modifier", systemImage: "pencil")
-                                    }
-                                    .tint(.orange)
-                                }
+                            .tint(Color(uiColor: .systemGray))
+                        } else {
+                            Button {
+                                triggerListeningLog(for: item)
+                            } label: {
+                                Label("J'écoute", systemImage: "opticaldisc.fill")
                             }
+                            .tint(Color.spinlogPink)
+                        }
+
+                        Button {
+                            if !premiumStore.isPremium {
+                                showingPremiumSheet = true
+                            } else {
+                                shelfTargetRelease = Release(from: item)
+                            }
+                        } label: {
+                            Label("Ranger", systemImage: "books.vertical.fill")
+                        }
+                        .tint(.indigo)
                     }
-                }
-                .id(section.key)
-            }
-        }
-        .coordinateSpace(name: Self.sectionsCoordinateSpace)
-        .listStyle(.plain)
-        .listSectionSpacing(.compact)
-        .environment(\.defaultMinListHeaderHeight, 0)
-        // Sans ça, une liste filtrée courte (qui tient entièrement à l'écran) garde le rebond
-        // élastique habituel et peut être tirée vers le bas sur une distance excessive, bien
-        // au-delà de son contenu réel.
-        .scrollBounceBehavior(.basedOnSize)
-        // Le défileur système partage le même liseré que `SectionIndexBar` sur le
-        // bord droit : sans ça, sa barre grise native (proportionnelle à la hauteur du contenu,
-        // donc parfois très longue) s'affiche en permanence superposée aux jetons de notre propre
-        // barre de navigation rapide — visible comme une longue barre verticale "bizarre".
-        .scrollIndicators(.hidden)
-        .refreshable {
-            await viewModel.refresh()
-        }
-        .safeAreaInset(edge: .trailing) {
-            if viewModel.indexEntries.count > 1 {
-                Color.clear.frame(width: 28)
-            }
-        }
-        .animation(.spring(response: 0.3, dampingFraction: 0.85), value: isSelecting)
-        .animation(.spring(response: 0.3, dampingFraction: 0.85), value: selectedItemIds)
+                )
+            },
+            trailingSwipeActions: { item in
+                guard !viewModel.isOfflineAndStale else { return AnyView(EmptyView()) }
+                return AnyView(
+                    Group {
+                        Button(role: .destructive) {
+                            itemPendingDeletion = item
+                        } label: {
+                            Label("Supprimer", systemImage: "trash.fill")
+                        }
+                        .tint(.red)
+
+                        Button {
+                            editingItem = item
+                        } label: {
+                            Label("Modifier", systemImage: "pencil")
+                        }
+                        .tint(.orange)
+                    }
+                )
+            },
+            onLoadMore: { await viewModel.loadMoreIfNeeded(current: $0) },
+            onRefresh: { await viewModel.refresh() }
+        )
     }
 
     private var navigationSubtitle: String {
-        guard let currentFolder else { return "" }
+        // Un sous-titre vide pendant le chargement (dossiers pas encore connus), puis non vide une
+        // fois les données arrivées, fait basculer la barre de navigation d'une à deux lignes et
+        // déplace le grand titre au moment précis où le squelette laisse place au contenu réel.
+        // Un texte de substitution dès le squelette réserve la place pour que le titre ne bouge
+        // plus ensuite.
+        guard let currentFolder else { return isShowingSkeleton ? currentFolderName : "" }
         if viewModel.hasActiveFilters {
             let filteredCount = viewModel.sections.flatMap(\.items).count
             return String(localized: "\(currentFolder.name) · \(filteredCount)/\(currentFolder.count) éléments")
@@ -708,8 +657,6 @@ struct CollectionView: View {
 
         if !authManager.isAuthenticated {
             LoginPromptView(message: String(localized: "Connecte-toi à Discogs pour voir et gérer ta collection."))
-        } else if viewModel.isLoading && viewModel.items.isEmpty {
-            ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if let error = viewModel.errorMessage, viewModel.items.isEmpty {
             ScrollView {
                 ContentUnavailableView("Erreur", systemImage: "exclamationmark.triangle", description: Text(error))
@@ -718,7 +665,7 @@ struct CollectionView: View {
             .refreshable {
                 await viewModel.refresh()
             }
-        } else if viewModel.items.isEmpty {
+        } else if viewModel.items.isEmpty && !viewModel.isLoading {
             ScrollView {
                 ContentUnavailableView(
                     "Collection vide",
@@ -730,13 +677,7 @@ struct CollectionView: View {
             .refreshable {
                 await viewModel.refresh()
             }
-        } else if viewModel.sections.isEmpty && viewModel.isComputingSections
-                    && viewModel.searchText.isEmpty && !viewModel.hasActiveFilters {
-            // Premier tri encore en cours (calculé hors du fil principal) : sans ce cas, la
-            // collection affichait « Aucun résultat » une ou deux secondes au lancement. Pas
-            // pendant une recherche ou un filtrage, où l'indicateur clignoterait à chaque frappe.
-            ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else if viewModel.sections.isEmpty {
+        } else if viewModel.sections.isEmpty && !isShowingSkeleton {
             VStack(spacing: 0) {
                 if viewModel.isOfflineAndStale {
                     OfflineBannerView(
@@ -766,7 +707,7 @@ struct CollectionView: View {
                     switch displayMode {
                     case .carousel:
                         // Contrairement au mode Liste (`List` défile nativement) et au mode
-                        // Mosaïque (`CollectionMosaicView` a son propre `ScrollView` vertical),
+                        // Mosaïque (`LibraryMosaicView` a son propre `ScrollView` vertical),
                         // `CollectionCarouselView` n'a qu'un `ScrollView` horizontal en interne.
                         // Sans aucune vue de défilement verticale dans la hiérarchie, le grand
                         // titre de navigation ne s'affiche pas correctement — il faut ce
@@ -778,40 +719,128 @@ struct CollectionView: View {
                         // infinie à son enfant, le rendant démesurément grand.
                         GeometryReader { geo in
                             ScrollView(.vertical, showsIndicators: false) {
-                                collectionViewCarousel
-                                    .frame(minHeight: geo.size.height)
+                                Group {
+                                    if isShowingSkeleton {
+                                        collectionCarouselSkeletonContent(containerWidth: geo.size.width)
+                                    } else {
+                                        collectionViewCarousel
+                                    }
+                                }
+                                .frame(minHeight: geo.size.height)
                             }
                         }
                     case .grid:
-                        CollectionMosaicView(
+                        LibraryMosaicView<CollectionItem>(
                             sections: viewModel.sections,
+                            isLoading: isShowingSkeleton,
                             indexToken: { viewModel.indexToken(for: $0) },
                             displayTitle: { viewModel.displayTitle(for: $0) },
                             headerArtists: { viewModel.headerArtists(for: $0) },
-                            copyBadge: { viewModel.copyBadge(for: $0) },
-                            isPlaying: { activityManager.isPlaying(releaseId: $0) },
-                            highlightedItemId: highlightedItemId,
                             hasVerticalIndexBar: viewModel.indexEntries.count > 1,
                             sectionsCoordinateSpace: Self.sectionsCoordinateSpace,
                             isSelecting: isSelecting,
                             selectedItemIds: selectedItemIds,
                             onToggleSelection: { toggleSelection($0) },
-                            onTriggerListening: { triggerListeningLog(for: $0) },
-                            onStopListening: { stopListening(for: $0) },
-                            onShelfPlacement: { item in
-                                if !premiumStore.isPremium {
-                                    showingPremiumSheet = true
+                            onLoadMore: { await viewModel.loadMoreIfNeeded(current: $0) },
+                            borderOverlay: { item in
+                                if highlightedItemId == item.id {
+                                    AnyView(
+                                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                            .strokeBorder(Color.spinlogPink, lineWidth: 3)
+                                            .shadow(color: Color.spinlogPink.opacity(0.6), radius: 6)
+                                    )
                                 } else {
-                                    shelfTargetRelease = Release(from: item)
+                                    AnyView(EmptyView())
                                 }
                             },
-                            onEditItem: { item in
-                                editingItem = item
+                            cornerBadges: { item in
+                                AnyView(
+                                    Color.clear
+                                        .overlay(alignment: .topTrailing) {
+                                            if let badge = viewModel.copyBadge(for: item) {
+                                                Text(badge)
+                                                    .font(.system(size: 9, weight: .black, design: .rounded))
+                                                    .foregroundStyle(.white)
+                                                    .padding(.horizontal, 4)
+                                                    .padding(.vertical, 2)
+                                                    .background(Color.black.opacity(0.7), in: Capsule())
+                                                    .overlay(Capsule().strokeBorder(Color.white.opacity(0.3), lineWidth: 0.5))
+                                                    .padding(4)
+                                            }
+                                        }
+                                        .overlay(alignment: .bottomLeading) {
+                                            if activityManager.isPlaying(releaseId: item.releaseId) {
+                                                HStack(spacing: 3) {
+                                                    Image(systemName: "waveform")
+                                                        .font(.system(size: 8, weight: .bold))
+                                                        .symbolEffect(.variableColor.iterative.reversing)
+                                                }
+                                                .foregroundStyle(Color.spinlogPink)
+                                                .padding(.horizontal, 5)
+                                                .padding(.vertical, 3)
+                                                .background(.ultraThinMaterial, in: Capsule())
+                                                .padding(4)
+                                            }
+                                        }
+                                        .overlay(alignment: .bottomTrailing) {
+                                            if item.rating > 0 {
+                                                HStack(spacing: 1.5) {
+                                                    Image(systemName: "star.fill")
+                                                        .font(.system(size: 7))
+                                                        .foregroundStyle(Color.orange)
+                                                    Text("\(item.rating)")
+                                                        .font(.system(size: 8, weight: .bold))
+                                                        .foregroundStyle(.white)
+                                                }
+                                                .padding(.horizontal, 4)
+                                                .padding(.vertical, 2)
+                                                .background(Color.black.opacity(0.65), in: Capsule())
+                                                .padding(4)
+                                            }
+                                        }
+                                )
                             },
-                            onDeleteItem: { item in
-                                itemPendingDeletion = item
-                            },
-                            onLoadMore: { await viewModel.loadMoreIfNeeded(current: $0) }
+                            contextMenuContent: { item in
+                                AnyView(
+                                    Group {
+                                        if activityManager.isPlaying(releaseId: item.releaseId) {
+                                            Button {
+                                                stopListening(for: item)
+                                            } label: {
+                                                Label("Arrêter l'écoute", systemImage: "stop.fill")
+                                            }
+                                        } else {
+                                            Button {
+                                                triggerListeningLog(for: item)
+                                            } label: {
+                                                Label("J'écoute ce disque sur la platine", systemImage: "opticaldisc.fill")
+                                            }
+                                        }
+
+                                        Button {
+                                            if !premiumStore.isPremium {
+                                                showingPremiumSheet = true
+                                            } else {
+                                                shelfTargetRelease = Release(from: item)
+                                            }
+                                        } label: {
+                                            Label("Où ranger", systemImage: "books.vertical.fill")
+                                        }
+
+                                        Button {
+                                            editingItem = item
+                                        } label: {
+                                            Label("Modifier la note / notes", systemImage: "pencil")
+                                        }
+
+                                        Button(role: .destructive) {
+                                            itemPendingDeletion = item
+                                        } label: {
+                                            Label("Supprimer de la collection", systemImage: "trash")
+                                        }
+                                    }
+                                )
+                            }
                         )
                         // Attachée directement à la vue qui défile (ici, en grille), ancrée en
                         // bas : voir `SectionIndexBar.measuredHeight` pour la raison (la zone
@@ -861,7 +890,7 @@ struct CollectionView: View {
                 }
                 .onChange(of: randomScrollTrigger) { _, newTrigger in
                     guard let newTrigger, displayMode == .list || displayMode == .grid else { return }
-                    withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
+                    withAnimation(.scrollToItem) {
                         proxy.scrollTo(newTrigger.id, anchor: .center)
                     }
                 }
@@ -869,4 +898,52 @@ struct CollectionView: View {
         }
     }
 
+    /// Vrai pendant le chargement initial (aucune donnée du tout) ou le premier tri (données déjà
+    /// là, sections pas encore prêtes) : pilote l'affichage du squelette neutre à la place d'une
+    /// icône de chargement, à l'intérieur même de la hiérarchie de défilement réelle (`List` en
+    /// mode Liste, `LibraryMosaicView` en mode Mosaïque, ce `ScrollView` vertical en mode
+    /// Carrousel) plutôt que dans une branche à part : reconstruire cette hiérarchie séparément
+    /// pour le squelette puis pour le contenu réel la détruisait et la recréait à la bascule, ce
+    /// qui faisait disparaître puis réapparaître le grand titre de navigation.
+    private var isShowingSkeleton: Bool {
+        (viewModel.isLoading && viewModel.items.isEmpty)
+            || (viewModel.sections.isEmpty && viewModel.isComputingSections
+                && viewModel.searchText.isEmpty && !viewModel.hasActiveFilters)
+    }
+
+    /// Même formule que `CollectionCarouselView.cardSize` (cas iPhone) pour que la pochette du
+    /// squelette ait la même taille que la vraie carte centrale, pas une valeur devinée plus
+    /// petite — et les mêmes lignes en dessous (titre, artiste, pastille année/format, 3 actions
+    /// rondes), pour que rien ne manque ni ne saute de taille au chargement du vrai contenu.
+    private func collectionCarouselSkeletonContent(containerWidth: CGFloat) -> some View {
+        let coverSize: CGFloat = containerWidth > 0 ? min(max(containerWidth * 0.72, 230), 290) : 260
+        let sideSize = coverSize * 0.39
+
+        return VStack(spacing: 20) {
+            Spacer(minLength: 0)
+
+            HStack(spacing: 16) {
+                SkeletonBlock(cornerRadius: 10, width: sideSize, height: sideSize)
+                SkeletonBlock(cornerRadius: 14, width: coverSize, height: coverSize)
+                SkeletonBlock(cornerRadius: 10, width: sideSize, height: sideSize)
+            }
+
+            VStack(spacing: 6) {
+                SkeletonBlock(width: coverSize * 0.7, height: 22)
+                SkeletonBlock(width: coverSize * 0.5, height: 20)
+                SkeletonBlock(cornerRadius: 10, width: coverSize * 0.4, height: 22)
+                    .padding(.top, 2)
+            }
+
+            HStack(spacing: 12) {
+                ForEach(0..<3, id: \.self) { _ in
+                    SkeletonBlock(cornerRadius: 19, width: 38, height: 38)
+                }
+            }
+            .padding(.top, 4)
+
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
 }

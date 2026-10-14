@@ -7,18 +7,30 @@ import Observation
 final class WantlistViewModel {
     static let shared = WantlistViewModel()
 
-    private(set) var items: [WantlistItem] = []
+    /// Le tri/regroupement est coûteux à refaire à chaque lecture : voir le commentaire sur
+    /// `CollectionViewModel.items` — même mécanisme ici, `sections` est recalculé une seule fois
+    /// par changement réel via `recomputeSections()`, pas à chaque accès (lu à chaque frappe de
+    /// recherche par la vue).
+    private(set) var items: [WantlistItem] = [] {
+        didSet { recomputeSections() }
+    }
     private(set) var isLoading = false
     private(set) var errorMessage: String?
     private(set) var isOfflineAndStale: Bool = false
 
-    var searchText = ""
+    var searchText = "" {
+        didSet {
+            guard oldValue != searchText else { return }
+            recomputeSections()
+        }
+    }
     /// Même construction que l'onglet Collection : tri, filtre par support, sections
     /// avec en-têtes et barre de navigation rapide.
     var sortOption: CollectionSortOption = .added {
         didSet {
             guard oldValue != sortOption else { return }
             sortAscending = sortOption.defaultAscending
+            recomputeSections()
             Task { await loadFirstPage() }
         }
     }
@@ -26,13 +38,24 @@ final class WantlistViewModel {
     var sortAscending: Bool = CollectionSortOption.added.defaultAscending {
         didSet {
             guard oldValue != sortAscending else { return }
+            recomputeSections()
             Task { await loadFirstPage() }
         }
     }
 
     /// Sémantique ET : un élément n'est affiché que s'il porte tous les tags sélectionnés.
-    var selectedTags: Set<String> = []
-    var selectedFormat: String? = nil
+    var selectedTags: Set<String> = [] {
+        didSet {
+            guard oldValue != selectedTags else { return }
+            recomputeSections()
+        }
+    }
+    var selectedFormat: String? = nil {
+        didSet {
+            guard oldValue != selectedFormat else { return }
+            recomputeSections()
+        }
+    }
 
     var hasActiveFilters: Bool {
         !selectedTags.isEmpty || (selectedFormat != nil && !selectedFormat!.isEmpty)
@@ -84,41 +107,30 @@ final class WantlistViewModel {
         return set.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
     }
 
-    private var filteredItems: [WantlistItem] {
-        var list = items
-
-        if let selectedFormat, !selectedFormat.isEmpty {
-            list = list.filter { item in
-                item.basicInformation.formats?.contains(where: {
-                    $0.name.localizedCaseInsensitiveCompare(selectedFormat) == .orderedSame
-                    || ($0.descriptions ?? []).contains(where: { $0.localizedCaseInsensitiveCompare(selectedFormat) == .orderedSame })
-                }) ?? false
-            }
-        }
-
-        let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return list }
-        return list.filter {
-            $0.basicInformation.title.localizedCaseInsensitiveContains(trimmed)
-                || $0.basicInformation.artistNames.localizedCaseInsensitiveContains(trimmed)
-        }
-    }
-
     /// Éléments filtrés et regroupés par section, dans un ordre déterministe — identique au
-    /// mécanisme de `CollectionViewModel.sections`.
-    var sections: [(key: String, items: [WantlistItem])] {
-        let sorted = filteredItems.sorted { $0.isOrderedBefore($1, for: sortOption, ascending: sortAscending) }
-        var order: [String] = []
-        var groups: [String: [WantlistItem]] = [:]
-        for item in sorted {
-            let key = item.sectionKey(for: sortOption)
-            if groups[key] == nil {
-                order.append(key)
-                groups[key] = []
+    /// mécanisme de `CollectionViewModel.sections`. Recalculé par `recomputeSections()`
+    /// uniquement quand `items`/tri/filtres changent réellement (voir son commentaire).
+    private(set) var sections: [(key: String, items: [WantlistItem])] = []
+    /// Vrai pendant le calcul détaché des sections : voir `CollectionViewModel.isComputingSections`.
+    private(set) var isComputingSections = false
+    private let sectionsEngine = LibrarySectionsEngine<WantlistItem>()
+
+    /// Tri + regroupement de la wantlist, délégués à `LibrarySectionsEngine` (partagé avec
+    /// `CollectionViewModel`, voir son commentaire détaillé). Le tri `.shelf` est exclu du
+    /// sélecteur Wantlist (voir `WantlistView`), donc seul le filtre par tag impose de rester
+    /// synchrone : `libraryItemTags` lit `TagStore.shared` via `MainActor.assumeIsolated`, qui
+    /// plante si jamais exécuté hors de l'acteur principal.
+    private func recomputeSections() {
+        sectionsEngine.recompute(
+            items: items, sortOption: sortOption, ascending: sortAscending,
+            tags: selectedTags, format: selectedFormat, searchText: searchText,
+            synchronous: sortOption == .shelf || !selectedTags.isEmpty,
+            willStartAsync: { [weak self] in self?.isComputingSections = true },
+            apply: { [weak self] result in
+                self?.sections = result
+                self?.isComputingSections = false
             }
-            groups[key]?.append(item)
-        }
-        return order.map { ($0, groups[$0] ?? []) }
+        )
     }
 
     var indexEntries: [(token: String, sectionKey: String)] {
@@ -203,7 +215,7 @@ final class WantlistViewModel {
 
         // Si hors ligne : lecture immédiate du cache SwiftData
         if !networkMonitor.isConnected {
-            loadFromLocalStore(username: username)
+            await loadFromLocalStore(username: username)
             return
         }
 
@@ -226,7 +238,7 @@ final class WantlistViewModel {
             persistToCache(username: username)
         } catch {
             // Repli sur le cache local
-            loadFromLocalStore(username: username)
+            await loadFromLocalStore(username: username)
             if items.isEmpty && !error.isCancellation {
                 errorMessage = error.localizedDescription
             }
@@ -238,7 +250,7 @@ final class WantlistViewModel {
     private func loadFirstPage() async {
         guard let username = authManager.username else { return }
         guard networkMonitor.isConnected, let credentials = authManager.credentials else {
-            loadFromLocalStore(username: username)
+            await loadFromLocalStore(username: username)
             return
         }
         if items.isEmpty {
@@ -262,8 +274,8 @@ final class WantlistViewModel {
         isLoading = false
     }
 
-    private func loadFromLocalStore(username: String) {
-        let cachedItems = localStore.getWantlistItems(username: username)
+    private func loadFromLocalStore(username: String) async {
+        let cachedItems = await localStore.getWantlistItems(username: username)
         self.items = cachedItems
         self.isOfflineAndStale = localStore.isWantlistStale(username: username)
         self.isLoading = false
