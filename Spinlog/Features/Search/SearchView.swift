@@ -225,8 +225,13 @@ struct SearchView: View {
             // propre geste de tap/navigation l'intercepte avant) : sans ce `.simultaneousGesture`
             // (qui se déclenche EN PLUS du tap de la ligne, pas à sa place), toucher un résultat
             // pendant que le clavier est ouvert laissait celui-ci affiché par-dessus la navigation.
+            // `DragGesture(minimumDistance: 0)` plutôt que `TapGesture()` : un `TapGesture`
+            // simultané sur toute la `List` entrait en concurrence avec la reconnaissance du tap
+            // du `NavigationLink` de chaque ligne et finissait par l'absorber par endroits (les
+            // résultats devenaient non cliquables) — une détection de toucher par `DragGesture`
+            // à distance nulle n'a pas ce conflit avec les gestes de `NavigationLink`/`List`.
             .simultaneousGesture(
-                TapGesture().onEnded {
+                DragGesture(minimumDistance: 0).onEnded { _ in
                     isSearchFieldFocused = false
                 }
             )
