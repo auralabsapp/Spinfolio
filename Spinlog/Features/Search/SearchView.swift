@@ -32,6 +32,7 @@ struct SearchView: View {
         )
         .background(Color.appBackground.ignoresSafeArea())
         .navigationTitle("Recherche")
+        .serifNavigationTitle()
         .searchDestinations()
         .fullScreenCover(isPresented: $isScannerPresented) {
             scannerSheet

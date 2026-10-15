@@ -147,6 +147,7 @@ struct SettingsView: View {
             .background(Color.appBackground)
             .listRowSeparatorTint(Color.appSeparator)
             .navigationTitle("Réglages")
+            .serifNavigationTitle()
             .onChange(of: premiumStore.isPremium) { _, isPremium in
                 themeManager.revertToDefaultIfNeeded(isPremium: isPremium)
             }
@@ -251,7 +252,7 @@ struct SettingsView: View {
                 }
             }
         } header: {
-            Text("Compte Discogs")
+            SectionEyebrow(title: "Compte Discogs", icon: "person.crop.circle.fill")
         } footer: {
             if authManager.isAuthenticated {
                 Text("Gère ton profil Discogs.")
@@ -383,7 +384,7 @@ struct SettingsView: View {
                 }
             }
         } header: {
-            Text("Collection & Rangement")
+            SectionEyebrow(title: "Collection & Rangement", icon: "books.vertical.fill")
         } footer: {
             Text("Personnalise tes tags, le dossier d'enregistrement par défaut et les règles de tri appliquées à ton meuble physique et ta collection.")
         }
@@ -417,7 +418,7 @@ struct SettingsView: View {
             .pickerStyle(.menu)
             .tint(Color.spinlogPink)
         } header: {
-            Text("Écoute sur platine & Live Activity")
+            SectionEyebrow(title: "Écoute sur platine & Live Activity", icon: "opticaldisc.fill")
         } footer: {
             Text("L'écoute sur platine s'arrête automatiquement après cette durée. En lancer une nouvelle interrompt immédiatement l'album en cours.")
         }
@@ -450,7 +451,7 @@ struct SettingsView: View {
                     .foregroundStyle(Color.appSecondaryText)
             }
         } header: {
-            Text("Apple Music")
+            SectionEyebrow(title: "Apple Music", icon: "music.note")
         } footer: {
             Text("Permet de lire les titres en entier depuis une fiche album avec un abonnement Apple Music actif. Sans connexion, un extrait de 30 s reste disponible. Ces lectures ne comptent pas comme des écoutes sur platine.")
         }
@@ -547,7 +548,7 @@ struct SettingsView: View {
                 }
             }
         } header: {
-            Text("Suivi de cote")
+            SectionEyebrow(title: "Suivi de cote", icon: "chart.line.uptrend.xyaxis")
         } footer: {
             if premiumStore.isPremium && authManager.isAuthenticated {
                 Text("Associe les champs personnalisés Discogs correspondants à ton prix d'achat et à l'état de conservation pour alimenter le suivi de valeur.")
@@ -589,7 +590,7 @@ struct SettingsView: View {
                 }
             }
         } header: {
-            Text("Données hors ligne")
+            SectionEyebrow(title: "Données hors ligne", icon: "arrow.down.circle.fill")
         } footer: {
             Text("Télécharge l'ensemble de ta collection et les pochettes d'albums sur ton appareil pour les consulter partout sans connexion Internet.")
         }
@@ -653,7 +654,7 @@ struct SettingsView: View {
                 }
             }
         } header: {
-            Text("Apparence")
+            SectionEyebrow(title: "Apparence", icon: "paintbrush.fill")
         }
     }
 
@@ -720,7 +721,7 @@ struct SettingsView: View {
                 .disabled(!authManager.isAuthenticated || exportViewModel.isExportingPDF)
             }
         } header: {
-            Text("Export")
+            SectionEyebrow(title: "Export", icon: "square.and.arrow.up.fill")
         } footer: {
             Text("L'export CSV regroupe tous tes albums (tous dossiers confondus) avec leurs métadonnées, tags et notes pour tes tableurs (Excel, Numbers). La déclaration PDF liste la collection avec état et prix d'achat, à présenter par exemple à un assureur.")
         }
@@ -796,7 +797,7 @@ struct SettingsView: View {
                     .foregroundStyle(Color.appSecondaryText)
             }
         } header: {
-            Text("À propos")
+            SectionEyebrow(title: "À propos", icon: "info.circle.fill")
         } footer: {
             Text("\(AppInfo.name) utilise l'API publique Discogs mais n'est ni affilié à ni approuvé par Discogs.")
         }

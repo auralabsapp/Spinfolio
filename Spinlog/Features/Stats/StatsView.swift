@@ -129,6 +129,7 @@ struct StatsView: View {
         content
             .background(Color.appBackground.ignoresSafeArea())
             .navigationTitle("Statistiques")
+            .serifNavigationTitle()
             .searchDestinations()
             .task(id: authManager.isAuthenticated) {
                 if authManager.isAuthenticated {

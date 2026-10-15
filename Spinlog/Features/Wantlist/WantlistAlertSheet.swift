@@ -54,8 +54,13 @@ struct WantlistAlertSheet: View {
             // champ lui-même : tant qu'aucun champ n'est encore premier répondeur (1er tap pour y
             // entrer), `endEditing` est un no-op et ne gêne donc jamais la prise de focus initiale
             // — il n'intervient que lorsqu'un champ est DÉJÀ actif.
+            // `DragGesture(minimumDistance: 0)` plutôt que `TapGesture()` : un `TapGesture`
+            // simultané sur tout le `Form` entre en concurrence avec la reconnaissance du tap des
+            // `NavigationLink`/`Button` du formulaire (ex: le lien vers la fiche release de
+            // `albumHeaderSection`) et peut l'absorber par endroits — même cause que le bug des
+            // résultats de recherche non cliquables, voir `SearchView.swift`.
             .simultaneousGesture(
-                TapGesture().onEnded { dismissKeyboard() }
+                DragGesture(minimumDistance: 0).onEnded { _ in dismissKeyboard() }
             )
             // `.scrollDismissesKeyboard` ne se déclenche que si le `Form` défile réellement : sur
             // cette feuille, si le contenu tient déjà dans l'écran (peu de suggestions, pas
@@ -65,6 +70,7 @@ struct WantlistAlertSheet: View {
             .simultaneousGesture(
                 DragGesture(minimumDistance: 10).onChanged { _ in dismissKeyboard() }
             )
+            .searchDestinations()
             .navigationTitle("Alerte de prix")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -117,33 +123,37 @@ struct WantlistAlertSheet: View {
 
     private var albumHeaderSection: some View {
         Section {
-            HStack(spacing: 14) {
-                AsyncCoverImage(url: item.basicInformation.thumb ?? item.basicInformation.coverImage, cornerRadius: 8)
-                    .frame(width: 60, height: 60)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
-                    )
-                    .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)
-                    .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 10)
+            NavigationLink(
+                value: SearchDestination.release(item.id, coverURL: item.basicInformation.coverImage ?? item.basicInformation.thumb)
+            ) {
+                HStack(spacing: 14) {
+                    AsyncCoverImage(url: item.basicInformation.thumb ?? item.basicInformation.coverImage, cornerRadius: 8)
+                        .frame(width: 60, height: 60)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
+                        )
+                        .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)
+                        .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 10)
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(item.basicInformation.title)
-                        .font(.headline)
-                        .lineLimit(2)
-                    Text(item.basicInformation.artistNames)
-                        .font(.subheadline)
-                        .foregroundStyle(Color.appSecondaryText)
-                        .lineLimit(1)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(item.basicInformation.title)
+                            .font(.headline)
+                            .lineLimit(2)
+                        Text(item.basicInformation.artistNames)
+                            .font(.subheadline)
+                            .foregroundStyle(Color.appSecondaryText)
+                            .lineLimit(1)
+                    }
                 }
+                .padding(.vertical, 4)
             }
-            .padding(.vertical, 4)
             .listRowBackground(Color.clear)
         }
     }
 
     private var marketOverviewSection: some View {
-        Section(header: Text("Offres actuelles en vente")) {
+        Section(header: SectionEyebrow(title: "Offres actuelles en vente", icon: "cart.fill")) {
             Group {
                 if viewModel.isLoading {
                     HStack {
@@ -186,7 +196,7 @@ struct WantlistAlertSheet: View {
 
     private var priceSuggestionsSection: some View {
         Section(
-            header: Text("Cote moyenne récente par état (Discogs)"),
+            header: SectionEyebrow(title: "Cote moyenne récente par état (Discogs)", icon: "chart.bar.fill"),
             footer: Text("Touche un état pour appliquer automatiquement sa cote comme prix cible.")
         ) {
             ForEach(viewModel.suggestions, id: \.condition) { suggestion in
@@ -214,7 +224,7 @@ struct WantlistAlertSheet: View {
 
     private var alertSettingsSection: some View {
         Section(
-            header: Text("Mon seuil d'alerte"),
+            header: SectionEyebrow(title: "Mon seuil d'alerte", icon: "eurosign.circle.fill"),
             footer: Text("L'alerte se déclenche dès qu'un exemplaire à ce prix ou moins est détecté, lors d'une vérification (à l'ouverture de l'app ou occasionnellement en arrière-plan) — pas nécessairement en temps réel. L'état exact du disque et les frais de port seront à vérifier sur l'annonce Discogs.")
         ) {
             HStack {

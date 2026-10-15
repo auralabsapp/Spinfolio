@@ -42,10 +42,9 @@ final class UserProfileViewModel {
     // MARK: - 1. Identité & Contact
 
     func identityItems(for profile: DiscogsUserProfile) -> [UserProfileInfoItem] {
-        var items: [UserProfileInfoItem] = [
-            UserProfileInfoItem(icon: "person.text.rectangle", title: "Nom d'utilisateur", value: "@\(profile.username)"),
-            UserProfileInfoItem(icon: "number", title: "Identifiant", value: "\(profile.id)")
-        ]
+        // Nom d'utilisateur et identifiant déjà affichés sous le pseudo dans l'en-tête
+        // (voir `UserProfileSheet.header(for:)`) : inutile de les répéter ici.
+        var items: [UserProfileInfoItem] = []
 
         if let realName = profile.name, !realName.isEmpty {
             items.append(UserProfileInfoItem(icon: "person", title: "Nom réel", value: realName))

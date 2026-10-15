@@ -5730,6 +5730,7 @@
       }
     },
     "Identifiant" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -6812,6 +6813,7 @@
       }
     },
     "Nom d'utilisateur" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
