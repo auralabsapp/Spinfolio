@@ -33,8 +33,13 @@ struct TagFilterSheet: View {
                         }
                         .contentShape(Rectangle())
                     }
+                    .listRowBackground(Color.clear)
                 }
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(Color.appBackground)
+            .listRowSeparatorTint(Color.appSeparator)
             .navigationTitle("Filtrer par tag")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

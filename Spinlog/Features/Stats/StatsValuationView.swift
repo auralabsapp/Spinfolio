@@ -15,9 +15,9 @@ extension StatsView {
             } else if let value = viewModel.collectionValue {
                 VStack(spacing: 0) {
                     valuationRow(title: "Minimum", value: value.minimum)
-                    Divider().opacity(0.15).padding(.leading, 14)
+                    Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 14)
                     valuationRow(title: "Médiane", value: value.median)
-                    Divider().opacity(0.15).padding(.leading, 14)
+                    Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 14)
                     valuationRow(title: "Maximum", value: value.maximum)
                 }
                 .padding(.vertical, 4)
@@ -92,7 +92,7 @@ extension StatsView {
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
 
-                    Divider().opacity(0.15).padding(.leading, 14)
+                    Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 14)
 
                     HStack {
                         Text("Cote actuelle")
@@ -106,7 +106,7 @@ extension StatsView {
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
 
-                    Divider().opacity(0.15).padding(.leading, 14)
+                    Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 14)
 
                     let gain = median.amount - invested
                     let percent = invested > 0 ? (gain / invested) : 0

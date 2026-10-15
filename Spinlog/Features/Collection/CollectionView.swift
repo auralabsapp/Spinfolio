@@ -32,11 +32,20 @@ struct CollectionView: View {
     /// Mosaïque, mutuellement exclusifs (`displayMode`).
     private static let sectionsCoordinateSpace = "collectionSections"
 
+    /// Même formule que `LibraryCarouselView.isRegularDisplay`, nécessaire ici pour que les
+    /// closures `secondaryBadge`/`quickActions` passées à `LibraryCarouselView` reproduisent les
+    /// mêmes tailles de police/espacements selon le gabarit.
+    private var isRegularDisplay: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad || horizontalSizeClass == .regular
+    }
+
     var body: some View {
         content
+            .background(Color.appBackground.ignoresSafeArea())
             .navigationTitle("Collection")
             .navigationSubtitle(navigationSubtitle)
             .navigationBarTitleDisplayMode(.large)
+            .serifNavigationTitle()
                         .searchDestinations()
             .scrollDismissesKeyboard(.immediately)
             .toolbar {
@@ -255,7 +264,7 @@ struct CollectionView: View {
                 } label: {
                     Label("Effacer les filtres", systemImage: "xmark.circle")
                 }
-                Divider()
+                Divider().overlay(Color.appSeparator)
             }
 
             if !tagStore.allTags.isEmpty {
@@ -342,7 +351,7 @@ struct CollectionView: View {
                 Label(isSelecting ? "Terminé" : "Sélectionner", systemImage: isSelecting ? "checkmark.circle.fill" : "checkmark.circle")
             }
 
-            Divider()
+            Divider().overlay(Color.appSeparator)
 
             foldersMenu
             sortMenu
@@ -425,26 +434,95 @@ struct CollectionView: View {
 
     @ViewBuilder
     private var collectionViewCarousel: some View {
-        CollectionCarouselView(
+        LibraryCarouselView<CollectionItem>(
             sections: viewModel.sections,
             indexEntries: viewModel.indexEntries,
-            copyBadge: { viewModel.copyBadge(for: $0) },
-            isPlaying: { activityManager.isPlaying(releaseId: $0) },
+            indexToken: { viewModel.indexToken(for: $0) },
             isSelecting: isSelecting,
             selectedItemIds: selectedItemIds,
             onToggleSelection: { toggleSelection($0) },
-            onTriggerListening: { triggerListeningLog(for: $0) },
-            onStopListening: { stopListening(for: $0) },
-            onShelfPlacement: { item in
-                if !premiumStore.isPremium {
-                    showingPremiumSheet = true
-                } else {
-                    shelfTargetRelease = Release(from: item)
-                }
-            },
-            onEditItem: { editingItem = $0 },
             onLoadMore: { await viewModel.loadMoreIfNeeded(current: $0) },
-            scrollToTrigger: randomScrollTrigger
+            scrollToTrigger: randomScrollTrigger,
+            secondaryBadge: { item in
+                AnyView(
+                    HStack(spacing: 8) {
+                        if let badge = viewModel.copyBadge(for: item) {
+                            Text(badge)
+                                .font(isRegularDisplay ? .footnote.bold() : .caption2.bold())
+                                .padding(.horizontal, isRegularDisplay ? 9 : 7)
+                                .padding(.vertical, isRegularDisplay ? 3 : 2)
+                                .background(Color.primary.opacity(0.08), in: Capsule())
+                        }
+
+                        if item.rating > 0 {
+                            HStack(spacing: 3) {
+                                Image(systemName: "star.fill")
+                                    .font(.system(size: isRegularDisplay ? 11 : 9))
+                                    .foregroundStyle(Color.orange)
+                                Text("\(item.rating)")
+                                    .font(isRegularDisplay ? .footnote.bold() : .caption2.bold())
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    .padding(.top, 2)
+                )
+            },
+            quickActions: { item in
+                AnyView(
+                    HStack(spacing: isRegularDisplay ? 16 : 12) {
+                        // Écoute en direct (Start / Stop)
+                        Button {
+                            if activityManager.isPlaying(releaseId: item.releaseId) {
+                                stopListening(for: item)
+                            } else {
+                                triggerListeningLog(for: item)
+                            }
+                        } label: {
+                            Image(systemName: activityManager.isPlaying(releaseId: item.releaseId) ? "stop.fill" : "opticaldisc.fill")
+                                .font(.system(size: isRegularDisplay ? 17 : 14, weight: .bold))
+                                .foregroundStyle(activityManager.isPlaying(releaseId: item.releaseId) ? .white : Color.spinlogPink)
+                                .frame(width: isRegularDisplay ? 46 : 38, height: isRegularDisplay ? 46 : 38)
+                                .background(
+                                    activityManager.isPlaying(releaseId: item.releaseId) ? Color(uiColor: .systemGray) : Color.spinlogPinkBadge,
+                                    in: Circle()
+                                )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(activityManager.isPlaying(releaseId: item.releaseId) ? Text("Arrêter l'écoute") : Text("J'écoute ce disque sur la platine"))
+
+                        // Où ranger
+                        Button {
+                            if !premiumStore.isPremium {
+                                showingPremiumSheet = true
+                            } else {
+                                shelfTargetRelease = Release(from: item)
+                            }
+                        } label: {
+                            Image(systemName: "books.vertical.fill")
+                                .font(.system(size: isRegularDisplay ? 17 : 14, weight: .semibold))
+                                .foregroundStyle(.indigo)
+                                .frame(width: isRegularDisplay ? 46 : 38, height: isRegularDisplay ? 46 : 38)
+                                .background(Color.indigo.opacity(0.12), in: Circle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Où ranger ce disque")
+
+                        // Modifier notes/note
+                        Button {
+                            editingItem = item
+                        } label: {
+                            Image(systemName: "pencil")
+                                .font(.system(size: isRegularDisplay ? 17 : 14, weight: .semibold))
+                                .foregroundStyle(Color.appSecondaryText)
+                                .frame(width: isRegularDisplay ? 46 : 38, height: isRegularDisplay ? 46 : 38)
+                                .background(Color.primary.opacity(0.06), in: Circle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Modifier la note et les commentaires")
+                    }
+                )
+            }
         )
     }
 
@@ -579,7 +657,7 @@ struct CollectionView: View {
                 )
             },
             rowBackground: { item in
-                highlightedItemId == item.id ? AnyView(collectionRowHighlight(for: item)) : nil
+                highlightedItemId == item.id ? AnyView(collectionRowHighlight(for: item)) : AnyView(Color.clear)
             },
             leadingSwipeActions: { item in
                 AnyView(
@@ -708,20 +786,20 @@ struct CollectionView: View {
                     case .carousel:
                         // Contrairement au mode Liste (`List` défile nativement) et au mode
                         // Mosaïque (`LibraryMosaicView` a son propre `ScrollView` vertical),
-                        // `CollectionCarouselView` n'a qu'un `ScrollView` horizontal en interne.
+                        // `LibraryCarouselView` n'a qu'un `ScrollView` horizontal en interne.
                         // Sans aucune vue de défilement verticale dans la hiérarchie, le grand
                         // titre de navigation ne s'affiche pas correctement — il faut ce
                         // `ScrollView` vertical même si son contenu ne défile pas lui-même.
                         // La hauteur disponible est mesurée ICI, avant d'entrer dans le
                         // `ScrollView` : lui donner un `.frame(maxHeight: .infinity)` par
-                        // l'intérieur (comme c'était fait dans `CollectionCarouselView`)
+                        // l'intérieur (comme c'était fait dans `LibraryCarouselView`)
                         // pousserait le `ScrollView` à proposer une hauteur de contenu quasi
                         // infinie à son enfant, le rendant démesurément grand.
                         GeometryReader { geo in
                             ScrollView(.vertical, showsIndicators: false) {
                                 Group {
                                     if isShowingSkeleton {
-                                        collectionCarouselSkeletonContent(containerWidth: geo.size.width)
+                                        LibraryCarouselSkeletonContent(containerSize: geo.size, actionButtonCount: 3)
                                     } else {
                                         collectionViewCarousel
                                     }
@@ -911,39 +989,4 @@ struct CollectionView: View {
                 && viewModel.searchText.isEmpty && !viewModel.hasActiveFilters)
     }
 
-    /// Même formule que `CollectionCarouselView.cardSize` (cas iPhone) pour que la pochette du
-    /// squelette ait la même taille que la vraie carte centrale, pas une valeur devinée plus
-    /// petite — et les mêmes lignes en dessous (titre, artiste, pastille année/format, 3 actions
-    /// rondes), pour que rien ne manque ni ne saute de taille au chargement du vrai contenu.
-    private func collectionCarouselSkeletonContent(containerWidth: CGFloat) -> some View {
-        let coverSize: CGFloat = containerWidth > 0 ? min(max(containerWidth * 0.72, 230), 290) : 260
-        let sideSize = coverSize * 0.39
-
-        return VStack(spacing: 20) {
-            Spacer(minLength: 0)
-
-            HStack(spacing: 16) {
-                SkeletonBlock(cornerRadius: 10, width: sideSize, height: sideSize)
-                SkeletonBlock(cornerRadius: 14, width: coverSize, height: coverSize)
-                SkeletonBlock(cornerRadius: 10, width: sideSize, height: sideSize)
-            }
-
-            VStack(spacing: 6) {
-                SkeletonBlock(width: coverSize * 0.7, height: 22)
-                SkeletonBlock(width: coverSize * 0.5, height: 20)
-                SkeletonBlock(cornerRadius: 10, width: coverSize * 0.4, height: 22)
-                    .padding(.top, 2)
-            }
-
-            HStack(spacing: 12) {
-                ForEach(0..<3, id: \.self) { _ in
-                    SkeletonBlock(cornerRadius: 19, width: 38, height: 38)
-                }
-            }
-            .padding(.top, 4)
-
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
 }

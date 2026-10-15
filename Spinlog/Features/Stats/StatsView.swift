@@ -127,6 +127,7 @@ struct StatsView: View {
 
     var body: some View {
         content
+            .background(Color.appBackground.ignoresSafeArea())
             .navigationTitle("Statistiques")
             .searchDestinations()
             .task(id: authManager.isAuthenticated) {
@@ -370,6 +371,17 @@ struct StatsView: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     AsyncCoverImage(url: item.basicInformation.coverImage ?? item.basicInformation.thumb, cornerRadius: 8, targetSize: Self.recentAdditionCoverSize)
                                         .frame(width: Self.recentAdditionCoverSize, height: Self.recentAdditionCoverSize)
+                                        // Micro-bordure pour l'épaisseur carton, comme les pochettes
+                                        // de la Collection et de la Wantlist.
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                                .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
+                                        )
+                                        // Ombre de contact (très proche) puis ombre d'ambiance
+                                        // flottante (large et douce), même recette que les autres
+                                        // pochettes de l'app.
+                                        .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)
+                                        .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 10)
                                     Text(item.basicInformation.title)
                                         .font(.caption.weight(.semibold))
                                         .lineLimit(1)

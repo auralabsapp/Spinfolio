@@ -26,11 +26,15 @@ struct GenreReleasesSheetView: View {
                             )) {
                                 CollectionRow(item: item)
                             }
+                            .listRowBackground(Color.clear)
                         }
                     }
                     .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .listRowSeparatorTint(Color.appSeparator)
                 }
             }
+            .background(Color.appBackground.ignoresSafeArea())
             .navigationTitle("\(data.genre) · \(data.items.count) albums")
             .navigationBarTitleDisplayMode(.inline)
             .searchDestinations()
@@ -65,11 +69,15 @@ struct MediaFormatReleasesSheetView: View {
                             )) {
                                 CollectionRow(item: item)
                             }
+                            .listRowBackground(Color.clear)
                         }
                     }
                     .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .listRowSeparatorTint(Color.appSeparator)
                 }
             }
+            .background(Color.appBackground.ignoresSafeArea())
             .navigationTitle("\(data.title) · \(data.items.count) albums")
             .navigationBarTitleDisplayMode(.inline)
             .searchDestinations()
@@ -104,11 +112,15 @@ struct ArtistReleasesSheetView: View {
                             )) {
                                 CollectionRow(item: item)
                             }
+                            .listRowBackground(Color.clear)
                         }
                     }
                     .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .listRowSeparatorTint(Color.appSeparator)
                 }
             }
+            .background(Color.appBackground.ignoresSafeArea())
             .navigationTitle("\(data.artist) · \(data.items.count) albums")
             .navigationBarTitleDisplayMode(.inline)
             .searchDestinations()
@@ -159,11 +171,15 @@ struct YearReleasesSheetView: View {
                             )) {
                                 CollectionRow(item: item)
                             }
+                            .listRowBackground(Color.clear)
                         }
                     }
                     .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .listRowSeparatorTint(Color.appSeparator)
                 }
             }
+            .background(Color.appBackground.ignoresSafeArea())
             .navigationTitle(Text("\(data.title) · \(data.items.count) éléments"))
             .navigationBarTitleDisplayMode(.inline)
             .searchDestinations()

@@ -91,6 +91,35 @@ enum CollectionSortOption: String, CaseIterable, Identifiable, Codable {
     }
 }
 
+/// Instantané immuable des réglages de rangement nécessaires au tri `.shelf`, capturé UNE SEULE
+/// FOIS sur l'acteur principal avant un tri/groupement (voir `LibrarySectionsEngine.recompute`)
+/// plutôt que relu à chaque comparaison individuelle : `compareShelf`/`sectionKey` lisaient
+/// auparavant `ShelfPreferencesStore`/`LocalDataStore` via `MainActor.assumeIsolated` à chaque
+/// appel (jusqu'à O(n log n) fois pendant le tri), ce qui forçait tout le calcul à rester
+/// synchrone sur le thread principal et provoquait un gel mesuré de 700-900ms au lancement sur
+/// une grande collection. `Sendable` : capturé sur l'acteur principal, puis transmis tel quel à
+/// la tâche détachée qui effectue le tri/groupement réel.
+struct ShelfSortContext: Sendable {
+    let strategy: ShelfSortStrategy
+    let ignoreArticles: Bool
+    let sortByLastName: Bool
+    let customOverrides: [String: String]
+    let masterYears: [Int: Int]?
+}
+
+extension ShelfPreferencesStore {
+    /// Voir `ShelfSortContext`.
+    var shelfSortContext: ShelfSortContext {
+        ShelfSortContext(
+            strategy: sortStrategy,
+            ignoreArticles: ignoreArticles,
+            sortByLastName: sortByLastName,
+            customOverrides: customArtistSortOverrides,
+            masterYears: sortStrategy.usesMasterYear ? LocalDataStore.shared.getAllMasterYears() : nil
+        )
+    }
+}
+
 /// Ce que le tri/regroupement partagé entre Collection et Wantlist a besoin de lire sur un
 /// élément — `CollectionItem` et `WantlistItem` s'y conforment, ce qui permet à l'onglet
 /// Wantlist de réutiliser exactement la même logique de tri/sections que la Collection.
@@ -119,36 +148,27 @@ extension CollectionItem: SortableLibraryItem {
 extension SortableLibraryItem {
     /// Clé de regroupement : une section par valeur distincte (pas juste par lettre), pour
     /// que la ligne 2 de l'en-tête puisse afficher la valeur complète.
-    /// `nonisolated` : voir le commentaire sur `libraryItemTags` — le cas `.shelf` qui touche
-    /// `ShelfPreferencesStore` (isolé sur l'acteur principal) n'est jamais atteint depuis la
-    /// tâche détachée de `CollectionViewModel.computeSections()`, qui exclut ce tri.
-    nonisolated func sectionKey(for sort: CollectionSortOption) -> String {
+    /// `nonisolated` : voir le commentaire sur `libraryItemTags`. Le cas `.shelf` accepte un
+    /// `ShelfSortContext` déjà capturé (voir `LibrarySectionsEngine.recompute`) ; à `nil`, revient
+    /// à l'ancienne lecture directe de `ShelfPreferencesStore` sur l'acteur principal.
+    nonisolated func sectionKey(for sort: CollectionSortOption, shelfContext: ShelfSortContext? = nil) -> String {
         switch sort {
         case .artist:
             let name = basicInformation.artistNames.trimmingCharacters(in: .whitespacesAndNewlines)
             return name.isEmpty ? "?" : name
         case .shelf:
-            let prefs = MainActor.assumeIsolated {
-                let store = ShelfPreferencesStore.shared
-                var masterYear: Int? = nil
-                if store.sortStrategy.usesMasterYear, let masterId = basicInformation.masterId, masterId > 0 {
-                    masterYear = LocalDataStore.shared.getMasterYear(for: masterId)
-                }
-                return (
-                    store.sortStrategy,
-                    store.ignoreArticles,
-                    store.sortByLastName,
-                    store.customArtistSortOverrides,
-                    masterYear
-                )
-            }
+            let prefs = shelfContext ?? MainActor.assumeIsolated { ShelfPreferencesStore.shared.shelfSortContext }
             // Regroupement par année (et non par artiste) : la stratégie « Pur chronologique »
             // trie l'ensemble de la collection par année, toutes lettres d'artiste mélangées —
             // grouper par lettre créerait des sections non contiguës, dont certaines verraient
             // leurs éléments absorbés silencieusement dans une section de même lettre apparue
             // plus haut, faisant disparaître l'en-tête à l'endroit où ils s'affichent réellement.
-            if prefs.0 == .chronologicalOnly {
-                let year = (prefs.4.flatMap { $0 > 0 ? $0 : nil }) ?? basicInformation.year
+            if prefs.strategy == .chronologicalOnly {
+                var masterYear: Int? = nil
+                if let masterId = basicInformation.masterId, masterId > 0 {
+                    masterYear = prefs.masterYears?[masterId].flatMap { $0 > 0 ? $0 : nil }
+                }
+                let year = masterYear ?? basicInformation.year
                 guard let year, year > 0 else { return "?" }
                 return String(year)
             }
@@ -158,9 +178,9 @@ extension SortableLibraryItem {
             // jamais le leur. La lettre reste utilisée uniquement pour le jeton de la barre
             // d'index rapide (voir `libraryIndexToken`), pas pour délimiter les sections.
             let artist = basicInformation.artistNames.shelfArtistSortKey(
-                ignoreArticles: prefs.1,
-                sortByLastName: prefs.2,
-                overrides: prefs.3
+                ignoreArticles: prefs.ignoreArticles,
+                sortByLastName: prefs.sortByLastName,
+                overrides: prefs.customOverrides
             )
             let trimmed = artist.trimmingCharacters(in: .whitespacesAndNewlines)
             return trimmed.isEmpty ? "#" : trimmed
@@ -197,13 +217,13 @@ extension SortableLibraryItem {
     }
 
     /// `nonisolated` : voir le commentaire sur `sectionKey` — même garantie pour `.shelf`.
-    nonisolated func isOrderedBefore(_ other: Self, for sort: CollectionSortOption, ascending: Bool) -> Bool {
+    nonisolated func isOrderedBefore(_ other: Self, for sort: CollectionSortOption, ascending: Bool, shelfContext: ShelfSortContext? = nil) -> Bool {
         switch sort {
         case .shelf:
             if ascending {
-                return compareShelf(to: other)
+                return compareShelf(to: other, context: shelfContext)
             } else {
-                return other.compareShelf(to: self)
+                return other.compareShelf(to: self, context: shelfContext)
             }
 
         case .artist:
@@ -324,18 +344,13 @@ extension SortableLibraryItem {
         }
     }
 
-    /// `nonisolated` : voir le commentaire sur `sectionKey` — même garantie pour `.shelf`.
-    private nonisolated func compareShelf(to other: Self) -> Bool {
-        let (strategy, ignoreArticles, sortByLastName, customOverrides, masterYears) = MainActor.assumeIsolated {
-            let strategy = ShelfPreferencesStore.shared.sortStrategy
-            return (
-                strategy,
-                ShelfPreferencesStore.shared.ignoreArticles,
-                ShelfPreferencesStore.shared.sortByLastName,
-                ShelfPreferencesStore.shared.customArtistSortOverrides,
-                strategy.usesMasterYear ? LocalDataStore.shared.getAllMasterYears() : nil
-            )
-        }
+    /// `nonisolated` : voir le commentaire sur `sectionKey` — même garantie pour `.shelf`. Accepte
+    /// un `ShelfSortContext` déjà capturé (voir `LibrarySectionsEngine.recompute`) plutôt que de le
+    /// relire via `MainActor.assumeIsolated` à chaque comparaison — c'était le cas auparavant,
+    /// jusqu'à O(n log n) fois pendant un seul tri, forçant tout le calcul à rester synchrone sur
+    /// le thread principal (gel mesuré de 700-900ms sur une grande collection).
+    private nonisolated func compareShelf(to other: Self, context: ShelfSortContext?) -> Bool {
+        let ctx = context ?? MainActor.assumeIsolated { ShelfPreferencesStore.shared.shelfSortContext }
 
         // Même résolution que `Release.effectiveShelfYear`, utilisée par le guide de rangement
         // physique : comparer directement `basicInformation.year` (l'année du PRESSAGE) donnait
@@ -344,8 +359,8 @@ extension SortableLibraryItem {
         // par titre faute de départager sur cette année identique, au lieu de respecter la
         // chronologie réelle des masters).
         func resolvedYear(_ info: BasicInformation) -> Int? {
-            if strategy.usesMasterYear, let masterId = info.masterId, masterId > 0,
-               let masterYear = masterYears?[masterId], masterYear > 0 {
+            if ctx.strategy.usesMasterYear, let masterId = info.masterId, masterId > 0,
+               let masterYear = ctx.masterYears?[masterId], masterYear > 0 {
                 return masterYear
             }
             let year = info.year
@@ -361,10 +376,10 @@ extension SortableLibraryItem {
             titleB: other.basicInformation.title,
             yearB: resolvedYear(other.basicInformation),
             idB: other.id,
-            strategy: strategy,
-            ignoreArticles: ignoreArticles,
-            sortByLastName: sortByLastName,
-            customOverrides: customOverrides
+            strategy: ctx.strategy,
+            ignoreArticles: ctx.ignoreArticles,
+            sortByLastName: ctx.sortByLastName,
+            customOverrides: ctx.customOverrides
         )
     }
 

@@ -70,7 +70,7 @@ extension StatsView {
                     VStack(spacing: 0) {
                         ForEach(visibleAlbums, id: \.element.id) { index, entry in
                             if index > 0 {
-                                Divider().opacity(0.15).padding(.leading, 14)
+                                Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 14)
                             }
                             topAlbumRow(rank: index + 1, entry: entry)
                         }
@@ -97,7 +97,7 @@ extension StatsView {
                     VStack(spacing: 0) {
                         ForEach(visibleArtists, id: \.element.id) { index, entry in
                             if index > 0 {
-                                Divider().opacity(0.15).padding(.leading, 14)
+                                Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 14)
                             }
                             topArtistRow(rank: index + 1, entry: entry)
                         }
@@ -167,7 +167,12 @@ extension StatsView {
                 VStack(spacing: 6) {
                     AsyncCoverImage(url: entry.item.basicInformation.coverImage ?? entry.item.basicInformation.thumb, cornerRadius: 8, targetSize: podiumCoverSize(for: rank))
                         .frame(width: podiumCoverSize(for: rank), height: podiumCoverSize(for: rank))
-                        .shadow(color: .black.opacity(0.2), radius: 5, y: 3)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
+                        )
+                        .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)
+                        .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 10)
 
                     Text(entry.item.basicInformation.title)
                         .font(.caption2.weight(.semibold))
@@ -241,6 +246,12 @@ extension StatsView {
 
                 AsyncCoverImage(url: entry.item.basicInformation.coverImage ?? entry.item.basicInformation.thumb, cornerRadius: 8, targetSize: 44)
                     .frame(width: 44, height: 44)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
+                    )
+                    .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)
+                    .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 10)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(entry.item.basicInformation.title)
@@ -341,6 +352,12 @@ extension StatsView {
                         }
                 }
             }
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
+            )
+            .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)
+            .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 10)
             .task(id: artistName) {
                 artworkURL = await AppleMusicArtistArtworkService.shared.artworkURL(for: artistName)
             }

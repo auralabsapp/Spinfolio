@@ -21,6 +21,7 @@ struct UserProfileSheet: View {
 
     var body: some View {
         content
+            .background(Color.appBackground.ignoresSafeArea())
             .navigationTitle("Profil Discogs")
             .navigationBarTitleDisplayMode(.inline)
             .task { await viewModel.load(username: username) }
@@ -207,7 +208,7 @@ struct UserProfileSheet: View {
             ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                 infoRow(item)
                 if index < items.count - 1 {
-                    Divider().opacity(0.15).padding(.leading, 44)
+                    Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 44)
                 }
             }
         }

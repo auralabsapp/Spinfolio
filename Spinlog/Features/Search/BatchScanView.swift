@@ -28,6 +28,7 @@ struct BatchScanView: View {
                     reviewView
                 }
             }
+            .background(Color.appBackground.ignoresSafeArea())
             .navigationTitle(phase == .scanning ? "Scan par lot" : "Revue du scan")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
@@ -146,9 +147,12 @@ struct BatchScanView: View {
                                 Label("Retirer", systemImage: "trash")
                             }
                         }
+                        .listRowBackground(Color.clear)
                     }
                 }
                 .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .listRowSeparatorTint(Color.appSeparator)
 
                 bulkActionsBar
             }
@@ -254,6 +258,12 @@ private struct BatchScanRow: View {
                 .accessibilityLabel(item.isSelected ? "Désélectionner ce disque" : "Sélectionner ce disque")
                 AsyncCoverImage(url: result.thumb ?? result.coverImage, cornerRadius: 6, targetSize: 44)
                     .frame(width: 44, height: 44)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
+                    )
+                    .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)
+                    .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 10)
             case .notFound:
                 Image(systemName: "questionmark.circle.fill")
                     .font(.title3)
@@ -363,6 +373,12 @@ private struct PressingChoiceSheet: View {
                         HStack(alignment: .top, spacing: 14) {
                             AsyncCoverImage(url: alternative.coverImage ?? alternative.thumb, cornerRadius: 8, targetSize: 88)
                                 .frame(width: 88, height: 88)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
+                                )
+                                .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)
+                                .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 10)
 
                             VStack(alignment: .leading, spacing: 5) {
                                 Text(alternative.title)
@@ -421,8 +437,12 @@ private struct PressingChoiceSheet: View {
                     .accessibilityLabel("Voir la fiche de cette release")
                 }
                 .padding(.vertical, 8)
+                .listRowBackground(Color.clear)
             }
             .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(Color.appBackground)
+            .listRowSeparatorTint(Color.appSeparator)
             .navigationTitle("Choisir le pressage")
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(item: $previewTarget) { target in

@@ -54,6 +54,7 @@ struct PurchasePriceEditSheet: View {
                 }
                 .padding()
             }
+            .background(Color.appBackground.ignoresSafeArea())
             .navigationTitle("Prix d'achat")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -136,7 +136,7 @@ struct SpinlogPaywallView: View {
         .subscriptionStorePolicyDestination(url: termsURL, for: .termsOfService)
         .subscriptionStorePolicyDestination(url: privacyURL, for: .privacyPolicy)
         .tint(goldWarm)
-        .background(Color(uiColor: .systemGroupedBackground))
+        .background(Color.appBackground)
         .onInAppPurchaseCompletion { _, result in
             switch result {
             case .success(.success):
@@ -195,7 +195,7 @@ struct SpinlogPaywallView: View {
                     ForEach(Array(visibleFeatures.enumerated()), id: \.element.id) { index, feature in
                         featureRow(feature)
                         if index < visibleFeatures.count - 1 {
-                            Divider().opacity(0.15).padding(.leading, 58)
+                            Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 58)
                         }
                     }
                 }
@@ -284,7 +284,7 @@ private struct PaywallHeaderGraphicView: View {
             VStack {
                 Spacer()
                 LinearGradient(
-                    colors: [Color.clear, Color(uiColor: .systemGroupedBackground)],
+                    colors: [Color.clear, Color.appBackground],
                     startPoint: .top,
                     endPoint: .bottom
                 )

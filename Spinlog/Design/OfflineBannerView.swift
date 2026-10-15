@@ -115,7 +115,7 @@ struct OfflineBannerView: View {
 
                 Spacer()
             }
-            .background(Color(uiColor: .systemGroupedBackground))
+            .background(Color.appBackground)
             .navigationTitle("À propos du hors ligne")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

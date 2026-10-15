@@ -143,6 +143,9 @@ struct SettingsView: View {
                 }
             }
             .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(Color.appBackground)
+            .listRowSeparatorTint(Color.appSeparator)
             .navigationTitle("Réglages")
             .onChange(of: premiumStore.isPremium) { _, isPremium in
                 themeManager.revertToDefaultIfNeeded(isPremium: isPremium)

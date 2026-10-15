@@ -36,7 +36,7 @@ struct CreditsSection: View {
                     .padding(.vertical, 8)
 
                     if index < credits.count - 1 {
-                        Divider().opacity(0.15).padding(.leading, 14)
+                        Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 14)
                     }
                 }
             }

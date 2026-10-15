@@ -378,6 +378,9 @@ struct DeveloperOptionsView: View {
                 Text("Recalcule et pousse sur Discogs le champ « Prix d'achat net » pour chaque exemplaire possédant au moins un prix d'achat ou une réduction renseigné(e) — une valeur manquante compte pour 0. Nécessite que les champs « Prix d'achat » (choisi dans Réglages), « Réduction » et « Prix d'achat net » existent déjà sur discogs.com.")
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(Color.appBackground)
+        .listRowSeparatorTint(Color.appSeparator)
         .navigationTitle("Options développeur")
         .navigationBarTitleDisplayMode(.inline)
         .fullScreenCover(isPresented: $showingPaywall) {

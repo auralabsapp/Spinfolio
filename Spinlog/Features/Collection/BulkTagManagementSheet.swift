@@ -193,7 +193,7 @@ struct BulkTagManagementSheet: View {
                                 ForEach(Array(filteredTags.enumerated()), id: \.element) { index, tag in
                                     tagRow(tag)
                                     if index < filteredTags.count - 1 {
-                                        Divider().opacity(0.15).padding(.leading, 14)
+                                        Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 14)
                                     }
                                 }
                             }
@@ -209,6 +209,7 @@ struct BulkTagManagementSheet: View {
                 .padding()
             }
             .swipeActionsContainer()
+            .background(Color.appBackground.ignoresSafeArea())
             .navigationTitle("Tags de la sélection")
             .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Rechercher ou créer un tag")
@@ -385,7 +386,7 @@ struct BulkTagManagementSheet: View {
                 }
             }
 
-            Divider()
+            Divider().overlay(Color.appSeparator)
 
             Button {
                 renameItem = TagRenameItem(tag: tag)

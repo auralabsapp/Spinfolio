@@ -38,7 +38,7 @@ enum AppTheme: String, CaseIterable, Identifiable {
 /// Thèmes de couleurs d'accentuation pour l'application.
 ///
 /// Le thème `.signature` (Rose néon / Magenta) est gratuit pour tous les utilisateurs.
-/// Les 8 thèmes alternatifs sont réservés aux comptes Premium et couvrent tous les goûts et univers musicaux.
+/// Les 9 thèmes alternatifs sont réservés aux comptes Premium et couvrent tous les goûts et univers musicaux.
 enum AppColorTheme: String, CaseIterable, Identifiable, Codable, Sendable {
     case signature = "signature" // Spinlog Rose Néon (défaut)
     case cobalt = "cobalt"       // Bleu Électrique
@@ -49,6 +49,7 @@ enum AppColorTheme: String, CaseIterable, Identifiable, Codable, Sendable {
     case gold = "gold"           // Cuivre & Or Hifi
     case pacific = "pacific"     // Turquoise Pacifique
     case slate = "slate"         // Ardoise Titane
+    case espresso = "espresso"   // Marron Espresso / Beige Vinyle Vintage
 
     var id: String { rawValue }
 
@@ -63,6 +64,7 @@ enum AppColorTheme: String, CaseIterable, Identifiable, Codable, Sendable {
         case .gold: return String(localized: "Cuivre & Or Hifi")
         case .pacific: return String(localized: "Turquoise Pacifique")
         case .slate: return String(localized: "Ardoise Titane")
+        case .espresso: return String(localized: "Marron Espresso")
         }
     }
 
@@ -77,6 +79,7 @@ enum AppColorTheme: String, CaseIterable, Identifiable, Codable, Sendable {
         case .gold: return String(localized: "Ambre doré & esprit audiophile")
         case .pacific: return String(localized: "Lagon aéré, frais & estival")
         case .slate: return String(localized: "Monochrome chic & intemporel")
+        case .espresso: return String(localized: "Beige vinyle & pochette vintage")
         }
     }
 
@@ -91,6 +94,7 @@ enum AppColorTheme: String, CaseIterable, Identifiable, Codable, Sendable {
         case .gold: return "crown.fill"
         case .pacific: return "water.waves"
         case .slate: return "circle.lefthalf.striped.horizontal"
+        case .espresso: return "cup.and.saucer.fill"
         }
     }
 
@@ -117,133 +121,165 @@ enum AppColorTheme: String, CaseIterable, Identifiable, Codable, Sendable {
     var primaryUIColor: UIColor {
         UIColor { trait in
             let isDark = trait.userInterfaceStyle == .dark
+            let base: UIColor
             switch self {
             case .signature:
-                return isDark
+                base = isDark
                     ? UIColor(red: 0.79, green: 0.42, blue: 0.97, alpha: 1.0)
                     : UIColor(red: 0.62, green: 0.24, blue: 0.81, alpha: 1.0)
             case .cobalt:
-                return isDark
+                base = isDark
                     ? UIColor(red: 0.24, green: 0.58, blue: 1.0, alpha: 1.0)
                     : UIColor(red: 0.04, green: 0.36, blue: 0.82, alpha: 1.0)
             case .emerald:
-                return isDark
+                base = isDark
                     ? UIColor(red: 0.28, green: 0.82, blue: 0.54, alpha: 1.0)
                     : UIColor(red: 0.06, green: 0.46, blue: 0.28, alpha: 1.0)
             case .amber:
-                return isDark
+                base = isDark
                     ? UIColor(red: 1.0, green: 0.56, blue: 0.20, alpha: 1.0)
                     : UIColor(red: 0.72, green: 0.32, blue: 0.02, alpha: 1.0)
             case .ruby:
-                return isDark
+                base = isDark
                     ? UIColor(red: 0.95, green: 0.32, blue: 0.40, alpha: 1.0)
                     : UIColor(red: 0.84, green: 0.16, blue: 0.24, alpha: 1.0)
             case .velvet:
-                return isDark
+                base = isDark
                     ? UIColor(red: 0.64, green: 0.48, blue: 1.0, alpha: 1.0)
                     : UIColor(red: 0.48, green: 0.30, blue: 0.90, alpha: 1.0)
             case .gold:
-                return isDark
+                base = isDark
                     ? UIColor(red: 0.95, green: 0.74, blue: 0.32, alpha: 1.0)
                     : UIColor(red: 0.58, green: 0.40, blue: 0.04, alpha: 1.0)
             case .pacific:
-                return isDark
+                base = isDark
                     ? UIColor(red: 0.22, green: 0.78, blue: 0.86, alpha: 1.0)
                     : UIColor(red: 0.02, green: 0.42, blue: 0.50, alpha: 1.0)
             case .slate:
-                return isDark
+                base = isDark
                     ? UIColor(red: 0.76, green: 0.80, blue: 0.86, alpha: 1.0)
                     : UIColor(red: 0.35, green: 0.40, blue: 0.48, alpha: 1.0)
+            case .espresso:
+                base = isDark
+                    ? UIColor(red: 0.78, green: 0.60, blue: 0.42, alpha: 1.0)
+                    : UIColor(red: 0.45, green: 0.30, blue: 0.18, alpha: 1.0)
             }
+            // Les thèmes Premium (hors Signature) adoptent une patine légère — désaturée et
+            // assombrie — pour un rendu "pochette vinyle vintage" plutôt qu'une couleur vive
+            // sortie d'usine.
+            return base.aged()
         }
     }
 
     var lightUIColor: UIColor {
         UIColor { trait in
             let isDark = trait.userInterfaceStyle == .dark
+            let base: UIColor
             switch self {
             case .signature:
-                return isDark
+                base = isDark
                     ? UIColor(red: 0.86, green: 0.54, blue: 0.99, alpha: 1.0)
                     : UIColor(red: 0.82, green: 0.48, blue: 0.96, alpha: 1.0)
             case .cobalt:
-                return isDark
+                base = isDark
                     ? UIColor(red: 0.42, green: 0.70, blue: 1.0, alpha: 1.0)
                     : UIColor(red: 0.28, green: 0.56, blue: 0.96, alpha: 1.0)
             case .emerald:
-                return isDark
+                base = isDark
                     ? UIColor(red: 0.40, green: 0.88, blue: 0.64, alpha: 1.0)
                     : UIColor(red: 0.22, green: 0.70, blue: 0.48, alpha: 1.0)
             case .amber:
-                return isDark
+                base = isDark
                     ? UIColor(red: 1.0, green: 0.68, blue: 0.36, alpha: 1.0)
                     : UIColor(red: 0.96, green: 0.54, blue: 0.18, alpha: 1.0)
             case .ruby:
-                return isDark
+                base = isDark
                     ? UIColor(red: 1.0, green: 0.46, blue: 0.52, alpha: 1.0)
                     : UIColor(red: 0.90, green: 0.28, blue: 0.36, alpha: 1.0)
             case .velvet:
-                return isDark
+                base = isDark
                     ? UIColor(red: 0.74, green: 0.62, blue: 1.0, alpha: 1.0)
                     : UIColor(red: 0.60, green: 0.44, blue: 0.95, alpha: 1.0)
             case .gold:
-                return isDark
+                base = isDark
                     ? UIColor(red: 1.0, green: 0.82, blue: 0.45, alpha: 1.0)
                     : UIColor(red: 0.88, green: 0.65, blue: 0.20, alpha: 1.0)
             case .pacific:
-                return isDark
+                base = isDark
                     ? UIColor(red: 0.38, green: 0.86, blue: 0.92, alpha: 1.0)
                     : UIColor(red: 0.18, green: 0.66, blue: 0.74, alpha: 1.0)
             case .slate:
-                return isDark
+                base = isDark
                     ? UIColor(red: 0.86, green: 0.89, blue: 0.94, alpha: 1.0)
                     : UIColor(red: 0.46, green: 0.52, blue: 0.60, alpha: 1.0)
+            case .espresso:
+                base = isDark
+                    ? UIColor(red: 0.88, green: 0.74, blue: 0.56, alpha: 1.0)
+                    : UIColor(red: 0.72, green: 0.56, blue: 0.38, alpha: 1.0)
             }
+            return base.aged()
         }
     }
 
     var deepUIColor: UIColor {
         UIColor { trait in
             let isDark = trait.userInterfaceStyle == .dark
+            let base: UIColor
             switch self {
             case .signature:
-                return isDark
+                base = isDark
                     ? UIColor(red: 0.74, green: 0.36, blue: 0.92, alpha: 1.0)
                     : UIColor(red: 0.68, green: 0.30, blue: 0.86, alpha: 1.0)
             case .cobalt:
-                return isDark
+                base = isDark
                     ? UIColor(red: 0.16, green: 0.48, blue: 0.92, alpha: 1.0)
                     : UIColor(red: 0.04, green: 0.36, blue: 0.82, alpha: 1.0)
             case .emerald:
-                return isDark
+                base = isDark
                     ? UIColor(red: 0.20, green: 0.72, blue: 0.46, alpha: 1.0)
                     : UIColor(red: 0.08, green: 0.50, blue: 0.30, alpha: 1.0)
             case .amber:
-                return isDark
+                base = isDark
                     ? UIColor(red: 0.90, green: 0.46, blue: 0.12, alpha: 1.0)
                     : UIColor(red: 0.80, green: 0.34, blue: 0.02, alpha: 1.0)
             case .ruby:
-                return isDark
+                base = isDark
                     ? UIColor(red: 0.84, green: 0.22, blue: 0.30, alpha: 1.0)
                     : UIColor(red: 0.72, green: 0.10, blue: 0.18, alpha: 1.0)
             case .velvet:
-                return isDark
+                base = isDark
                     ? UIColor(red: 0.54, green: 0.38, blue: 0.90, alpha: 1.0)
                     : UIColor(red: 0.40, green: 0.22, blue: 0.80, alpha: 1.0)
             case .gold:
-                return isDark
+                base = isDark
                     ? UIColor(red: 0.85, green: 0.64, blue: 0.22, alpha: 1.0)
                     : UIColor(red: 0.70, green: 0.46, blue: 0.05, alpha: 1.0)
             case .pacific:
-                return isDark
+                base = isDark
                     ? UIColor(red: 0.14, green: 0.66, blue: 0.74, alpha: 1.0)
                     : UIColor(red: 0.02, green: 0.46, blue: 0.55, alpha: 1.0)
             case .slate:
-                return isDark
+                base = isDark
                     ? UIColor(red: 0.66, green: 0.70, blue: 0.76, alpha: 1.0)
                     : UIColor(red: 0.26, green: 0.30, blue: 0.38, alpha: 1.0)
+            case .espresso:
+                base = isDark
+                    ? UIColor(red: 0.62, green: 0.44, blue: 0.26, alpha: 1.0)
+                    : UIColor(red: 0.32, green: 0.20, blue: 0.10, alpha: 1.0)
             }
+            return base.aged()
         }
+    }
+}
+
+extension UIColor {
+    /// Patine légère : désature et assombrit un peu la couleur, pour un rendu "pochette vinyle
+    /// vintage" plutôt qu'une teinte vive sortie d'usine — utilisée par tous les thèmes de
+    /// couleur Premium, à l'exception du Signature (rose néon) qui garde son éclat d'origine.
+    func aged() -> UIColor {
+        var hue: CGFloat = 0, saturation: CGFloat = 0, brightness: CGFloat = 0, alpha: CGFloat = 0
+        guard getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha) else { return self }
+        return UIColor(hue: hue, saturation: saturation * 0.72, brightness: brightness * 0.90, alpha: alpha)
     }
 }
 
@@ -435,6 +471,53 @@ extension Color {
     static let appTertiaryText = Color(uiColor: UIColor { trait in
         trait.userInterfaceStyle == .dark ? UIColor.tertiaryLabel : UIColor(white: 0.45, alpha: 1.0)
     })
+
+    /// Fond uni de l'app en thème clair (remplace le blanc système, jugé trop froid) ; le thème
+    /// sombre garde le fond système par défaut, inchangé. Volontairement PAS utilisée là où le
+    /// fond est calculé à partir de la couleur moyenne de la pochette (`UIColor.infoBackgroundColor`,
+    /// fiches artiste/master/release) : ces écrans gardent leur propre teinte dynamique.
+    static let appBackground = Color(uiColor: UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor.systemBackground
+            : UIColor(red: 247.0 / 255.0, green: 245.0 / 255.0, blue: 240.0 / 255.0, alpha: 1.0)
+    })
+
+    /// Trame de fond unie des en-têtes de section épinglés (Liste/Mosaïque de la Collection et de
+    /// la Wantlist) en thème clair, à la place du flou `.regularMaterial` précédent. Dérivée de la
+    /// teinte du thème de couleur actif (variante claire, `lightColor`) plutôt que figée en rose,
+    /// pour suivre les thèmes Premium alternatifs (bleu, émeraude, etc.) — légèrement désaturée
+    /// pour rester discrète derrière le texte plutôt qu'une teinte trop vive.
+    static var appHeaderBackground: Color {
+        let resolvedLight = ThemeManager.shared.currentTheme.lightUIColor
+            .resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+        return Color(uiColor: resolvedLight.desaturated(by: 0.7)).opacity(0.25)
+    }
+
+    /// Séparateurs (`Divider()`, traits de `List`) en thème clair ; le thème sombre garde le gris
+    /// système par défaut, inchangé.
+    static let appSeparator = Color(uiColor: UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor.separator
+            : UIColor(red: 239.0 / 255.0, green: 236.0 / 255.0, blue: 228.0 / 255.0, alpha: 1.0)
+    })
+}
+
+private extension UIColor {
+    /// Réduit la saturation de la couleur de `amount` (0 = inchangée, 1 = niveaux de gris).
+    func desaturated(by amount: CGFloat) -> UIColor {
+        var hue: CGFloat = 0, saturation: CGFloat = 0, brightness: CGFloat = 0, alpha: CGFloat = 0
+        guard getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha) else { return self }
+        return UIColor(hue: hue, saturation: saturation * (1 - amount), brightness: brightness, alpha: alpha)
+    }
+}
+
+extension ShapeStyle where Self == AnyShapeStyle {
+    /// Trame de fond des en-têtes de section épinglés (Liste/Mosaïque) : teinte unie
+    /// (`Color.appHeaderBackground`) en thème clair, flou `.regularMaterial` system inchangé en
+    /// thème sombre — `AnyShapeStyle` efface la différence de type entre les deux styles.
+    static func libraryHeaderBackground(for colorScheme: ColorScheme) -> AnyShapeStyle {
+        colorScheme == .dark ? AnyShapeStyle(.regularMaterial) : AnyShapeStyle(Color.appHeaderBackground)
+    }
 }
 
 extension View {

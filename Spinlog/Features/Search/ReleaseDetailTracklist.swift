@@ -57,12 +57,12 @@ struct TracklistSection: View {
                     .padding(.vertical, 8)
 
                     if index < tracklist.count - 1 {
-                        Divider().opacity(0.15).padding(.leading, 14)
+                        Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 14)
                     }
                 }
 
                 if let totalDuration {
-                    Divider().opacity(0.15)
+                    Divider().overlay(Color.appSeparator).opacity(0.15)
                     HStack {
                         Text("Durée totale").font(.subheadline.bold())
                         Spacer()
@@ -125,7 +125,7 @@ private struct TrackPlayButton: View {
 
     /// Couleur de secours pour l'indicateur de chargement alignée sur l'arrière-plan.
     private var symbolColor: Color {
-        Color(uiColor: .systemBackground)
+        Color.appBackground
     }
 
     var body: some View {

@@ -4,6 +4,7 @@ import SwiftUI
 /// en-têtes et barre de navigation rapide) — sans notion de dossier ni de tag, qui n'existent pas
 /// côté wantlist Discogs.
 struct WantlistView: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var viewModel = WantlistViewModel.shared
     @State private var authManager = DiscogsAuthManager.shared
     @State private var tabCoordinator = TabNavigationCoordinator.shared
@@ -28,6 +29,12 @@ struct WantlistView: View {
     /// position (voir `reportingSectionOffset`) : un seul nom suffit pour le mode Liste et le mode
     /// Mosaïque, mutuellement exclusifs (`displayMode`).
     private static let sectionsCoordinateSpace = "wantlistSections"
+
+    /// Même formule que `LibraryCarouselView.isRegularDisplay`, voir le commentaire sur
+    /// `CollectionView.isRegularDisplay`.
+    private var isRegularDisplay: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad || horizontalSizeClass == .regular
+    }
 
     private func requestAlertSheet(for item: WantlistItem) {
         if premiumStore.isPremium {
@@ -73,7 +80,7 @@ struct WantlistView: View {
                     } label: {
                         Label("Effacer les filtres", systemImage: "xmark.circle")
                     }
-                    Divider()
+                    Divider().overlay(Color.appSeparator)
                 }
 
                 Button("Tous les formats") {
@@ -126,7 +133,7 @@ struct WantlistView: View {
             } label: {
                 Label("Sélectionner", systemImage: "checkmark.circle")
             }
-            Divider()
+            Divider().overlay(Color.appSeparator)
 
             sortMenu
             filterMenu
@@ -139,9 +146,11 @@ struct WantlistView: View {
     @ViewBuilder
     private var mainView: some View {
         content
+            .background(Color.appBackground.ignoresSafeArea())
             .navigationTitle("Wantlist")
             .navigationSubtitle(navigationSubtitle)
             .navigationBarTitleDisplayMode(.large)
+            .serifNavigationTitle()
                         .searchDestinations()
             .scrollDismissesKeyboard(.immediately)
     }
@@ -282,25 +291,56 @@ struct WantlistView: View {
 
     @ViewBuilder
     private var wantlistViewCarousel: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            if isShowingSkeleton {
-                wantlistCarouselSkeletonContent
-                    .padding(.top, 24)
-                    .padding(.bottom, 16)
-            } else {
-                WantlistCarouselView(
-                    sections: viewModel.sections,
-                    indexEntries: viewModel.indexEntries,
-                    isSelecting: isSelecting,
-                    selectedItemIds: selectedItemIds,
-                    onToggleSelection: { toggleSelection($0) },
-                    onAlertTap: { requestAlertSheet(for: $0) },
-                    onLoadMore: { await viewModel.loadMoreIfNeeded(current: $0) }
+        LibraryCarouselView<WantlistItem>(
+            sections: viewModel.sections,
+            indexEntries: viewModel.indexEntries,
+            indexToken: { viewModel.indexToken(for: $0) },
+            isSelecting: isSelecting,
+            selectedItemIds: selectedItemIds,
+            onToggleSelection: { toggleSelection($0) },
+            onLoadMore: { await viewModel.loadMoreIfNeeded(current: $0) },
+            secondaryBadge: { item in
+                guard !isSelecting, let alert = alertStore.alert(for: item.id) else { return AnyView(EmptyView()) }
+                return AnyView(
+                    HStack(spacing: 4) {
+                        Image(systemName: alert.isTriggered ? "bell.badge.fill" : "bell.fill")
+                            .font(.system(size: isRegularDisplay ? 12 : 10))
+                        Text("≤ \(alert.targetPrice.formatted(.currency(code: alert.currency)))")
+                            .font(isRegularDisplay ? .footnote.bold() : .caption2.bold())
+                    }
+                    .foregroundStyle(alert.isTriggered ? .green : Color.spinlogPink)
+                    .padding(.horizontal, isRegularDisplay ? 10 : 8)
+                    .padding(.vertical, isRegularDisplay ? 4 : 3)
+                    .background(
+                        alert.isTriggered ? Color.green.opacity(0.12) : Color.spinlogPinkBadge,
+                        in: Capsule()
+                    )
+                    .padding(.top, 2)
                 )
-                .padding(.top, 24)
-                .padding(.bottom, 16)
+            },
+            quickActions: { item in
+                let alert = alertStore.alert(for: item.id)
+                return AnyView(
+                    Button {
+                        requestAlertSheet(for: item)
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: alert != nil ? (alert?.isTriggered == true ? "bell.badge.fill" : "bell.fill") : "bell")
+                            Text(alert != nil ? "Alerte active" : "Définir alerte prix")
+                        }
+                        .font(isRegularDisplay ? .subheadline.weight(.semibold) : .footnote.weight(.semibold))
+                        .foregroundStyle(alert != nil ? (alert?.isTriggered == true ? .green : Color.spinlogPink) : Color.primary)
+                        .padding(.horizontal, isRegularDisplay ? 18 : 14)
+                        .padding(.vertical, isRegularDisplay ? 10 : 8)
+                        .background(
+                            alert != nil ? (alert?.isTriggered == true ? Color.green.opacity(0.12) : Color.spinlogPinkBadge) : Color.primary.opacity(0.06),
+                            in: Capsule()
+                        )
+                    }
+                    .buttonStyle(.plain)
+                )
             }
-        }
+        )
     }
 
     @ViewBuilder
@@ -495,7 +535,21 @@ struct WantlistView: View {
 
                     switch displayMode {
                     case .carousel:
-                        wantlistViewCarousel
+                        // Voir le commentaire dans `CollectionView` sur le même habillage
+                        // `GeometryReader` + `ScrollView` vertical, nécessaire même si
+                        // `LibraryCarouselView` ne défile lui-même qu'à l'horizontale.
+                        GeometryReader { geo in
+                            ScrollView(.vertical, showsIndicators: false) {
+                                Group {
+                                    if isShowingSkeleton {
+                                        LibraryCarouselSkeletonContent(containerSize: geo.size, actionButtonCount: 1)
+                                    } else {
+                                        wantlistViewCarousel
+                                    }
+                                }
+                                .frame(minHeight: geo.size.height)
+                            }
+                        }
                     case .grid:
                         wantlistViewGrid
                             // Voir `SectionIndexBar.measuredHeight` et le commentaire dans
@@ -552,25 +606,6 @@ struct WantlistView: View {
                 && viewModel.searchText.isEmpty && !viewModel.hasActiveFilters)
     }
 
-    private var wantlistCarouselSkeletonContent: some View {
-        VStack(spacing: 20) {
-            Spacer(minLength: 0)
-
-            HStack(spacing: 16) {
-                SkeletonBlock(cornerRadius: 10, width: 90, height: 230)
-                SkeletonBlock(cornerRadius: 12, width: 230, height: 230)
-                SkeletonBlock(cornerRadius: 10, width: 90, height: 230)
-            }
-
-            VStack(spacing: 6) {
-                SkeletonBlock(width: 160, height: 18)
-                SkeletonBlock(width: 110, height: 14)
-            }
-
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
 }
 
 private extension View {

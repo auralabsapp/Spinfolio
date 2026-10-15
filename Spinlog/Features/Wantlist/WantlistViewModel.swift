@@ -124,7 +124,7 @@ final class WantlistViewModel {
         sectionsEngine.recompute(
             items: items, sortOption: sortOption, ascending: sortAscending,
             tags: selectedTags, format: selectedFormat, searchText: searchText,
-            synchronous: sortOption == .shelf || !selectedTags.isEmpty,
+            synchronous: !selectedTags.isEmpty,
             willStartAsync: { [weak self] in self?.isComputingSections = true },
             apply: { [weak self] result in
                 self?.sections = result

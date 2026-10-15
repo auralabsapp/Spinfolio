@@ -40,6 +40,10 @@ struct WantlistAlertSheet: View {
                     deleteSection
                 }
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(Color.appBackground)
+            .listRowSeparatorTint(Color.appSeparator)
             .scrollDismissesKeyboard(.interactively)
             // Geste de tap générique sur tout le `Form`, y compris la ligne du champ "Prix
             // maximum" elle-même : contrairement à `isTargetPriceFocused = false` (qui libère le
@@ -116,6 +120,12 @@ struct WantlistAlertSheet: View {
             HStack(spacing: 14) {
                 AsyncCoverImage(url: item.basicInformation.thumb ?? item.basicInformation.coverImage, cornerRadius: 8)
                     .frame(width: 60, height: 60)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
+                    )
+                    .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)
+                    .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 10)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item.basicInformation.title)
@@ -128,6 +138,7 @@ struct WantlistAlertSheet: View {
                 }
             }
             .padding(.vertical, 4)
+            .listRowBackground(Color.clear)
         }
     }
 
@@ -169,6 +180,7 @@ struct WantlistAlertSheet: View {
                         .foregroundStyle(Color.appSecondaryText)
                 }
             }
+            .listRowBackground(Color.clear)
         }
     }
 
@@ -195,6 +207,7 @@ struct WantlistAlertSheet: View {
                     }
                 }
                 .buttonStyle(.plain)
+                .listRowBackground(Color.clear)
             }
         }
     }
@@ -225,6 +238,7 @@ struct WantlistAlertSheet: View {
                 Text(viewModel.currencySymbol)
                     .foregroundStyle(Color.appSecondaryText)
             }
+            .listRowBackground(Color.clear)
 
             if let current = viewModel.targetPrice, current > 0 {
                 VStack(alignment: .leading, spacing: 8) {
@@ -239,6 +253,7 @@ struct WantlistAlertSheet: View {
                     }
                 }
                 .padding(.vertical, 4)
+                .listRowBackground(Color.clear)
             }
         }
     }
@@ -255,6 +270,7 @@ struct WantlistAlertSheet: View {
                     Spacer()
                 }
             }
+            .listRowBackground(Color.clear)
         }
     }
 
@@ -270,6 +286,7 @@ struct WantlistAlertSheet: View {
                     Spacer()
                 }
             }
+            .listRowBackground(Color.clear)
         }
     }
 

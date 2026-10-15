@@ -236,7 +236,7 @@ struct ReleaseTagSheet: View {
                                 ForEach(Array(filteredTags.enumerated()), id: \.element) { index, tag in
                                     tagRow(tag)
                                     if index < filteredTags.count - 1 {
-                                        Divider().opacity(0.15).padding(.leading, 14)
+                                        Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 14)
                                     }
                                 }
                             }

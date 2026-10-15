@@ -61,11 +61,16 @@ final class OfflineDownloadManager {
         set { userDefaults.set(newValue, forKey: offlineItemCountKey) }
     }
 
-    /// Réglage utilisateur (désactivé par défaut) : si activé, `autoSyncIfNeeded` relance la
-    /// synchro complète silencieusement dès qu'une connexion non facturée au volume (Wi-Fi) est
-    /// disponible, sans attendre que l'utilisateur appuie sur le bouton.
+    /// Réglage utilisateur (activé par défaut pour un nouvel utilisateur) : si activé,
+    /// `autoSyncIfNeeded` relance la synchro complète silencieusement dès qu'une connexion non
+    /// facturée au volume (Wi-Fi) est disponible, sans attendre que l'utilisateur appuie sur le
+    /// bouton. `object(forKey:) == nil` (plutôt que `bool(forKey:)`, qui renverrait `false` en
+    /// l'absence de clé) distingue "jamais réglé" de "explicitement désactivé par l'utilisateur".
     var isAutoSyncOverWifiEnabled: Bool {
-        get { userDefaults.bool(forKey: autoSyncOverWifiKey) }
+        get {
+            guard userDefaults.object(forKey: autoSyncOverWifiKey) != nil else { return true }
+            return userDefaults.bool(forKey: autoSyncOverWifiKey)
+        }
         set { userDefaults.set(newValue, forKey: autoSyncOverWifiKey) }
     }
 

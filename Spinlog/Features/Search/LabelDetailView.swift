@@ -11,6 +11,7 @@ struct LabelDetailView: View {
 
     var body: some View {
         content
+            .background(Color.appBackground.ignoresSafeArea())
             .animation(.easeInOut(duration: 0.3), value: viewModel.isLoading)
             .navigationTitle(viewModel.label?.name ?? "")
             .navigationBarTitleDisplayMode(.inline)
@@ -34,6 +35,12 @@ struct LabelDetailView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     AsyncCoverImage(url: label.primaryImageURL)
                         .frame(width: Self.coverSize, height: Self.coverSize)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
+                        )
+                        .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)
+                        .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 10)
                         .frame(maxWidth: .infinity)
 
                     Text(label.name).font(.title2.bold())

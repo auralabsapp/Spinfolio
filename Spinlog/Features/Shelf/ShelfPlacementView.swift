@@ -89,7 +89,7 @@ struct ShelfPlacementView: View {
                     .padding(.vertical, 16)
                 }
             }
-            .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
+            .background(Color.appBackground.ignoresSafeArea())
             .navigationTitle("Guide de rangement")
             .navigationBarTitleDisplayMode(.inline)
             .searchDestinations()
@@ -321,7 +321,12 @@ struct ShelfPlacementView: View {
                 // Pochette
                 AsyncCoverImage(url: release.primaryImageURL, cornerRadius: 8, targetSize: 76)
                     .frame(width: 76, height: 76)
-                    .shadow(color: Color.black.opacity(0.12), radius: 4, y: 2)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
+                    )
+                    .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)
+                    .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 10)
 
                 // Métadonnées
                 VStack(spacing: 2) {

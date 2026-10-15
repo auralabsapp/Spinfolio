@@ -1,22 +1,111 @@
 import SwiftUI
-import Kingfisher
 
-/// Vue Carrousel pour la Collection : défilement horizontal fluide de grandes pochettes vinyle
-/// avec disque sortant, effet de transition 3D cover flow, informations de base et actions rapides.
-struct CollectionCarouselView: View {
-    let sections: [(key: String, items: [CollectionItem])]
+/// Formules de dimensionnement du Carrousel (Collection/Wantlist), partagées avec
+/// `LibraryCarouselSkeletonContent` pour que la pochette du squelette ait exactement la même
+/// taille que la vraie carte centrale, y compris sur iPad — avant cette extraction, le squelette
+/// de chaque écran ne reprenait que la formule iPhone (ou carrément des valeurs figées côté
+/// Wantlist), donnant une pochette visiblement plus petite que la vraie au chargement sur iPad.
+enum LibraryCarouselMetrics {
+    static func cardSize(containerSize: CGSize, isRegularDisplay: Bool) -> CGFloat {
+        if isRegularDisplay {
+            let availableWidth = containerSize.width
+            let availableHeight = containerSize.height > 0 ? containerSize.height : 800
+            // Réserve ~260pt pour les métadonnées, boutons, scrubber et marges
+            let heightCap = max(availableHeight - 260, 340)
+            let widthCap = availableWidth * 0.70
+            return min(widthCap, heightCap, 540)
+        } else {
+            return min(max(containerSize.width * 0.72, 230), 290)
+        }
+    }
+}
+
+/// Gabarit neutre affiché pendant le chargement du Carrousel (Collection/Wantlist), à la place
+/// d'une icône de chargement : reproduit la structure réelle (pochette centrée avec ses voisines
+/// qui dépassent, titre/artiste/année-format, puis des boutons d'action ronds) avec des blocs
+/// animés (voir `SkeletonBlock`), pour que l'apparition du contenu réel ne fasse pas sauter la
+/// page. `actionButtonCount` est le seul paramètre qui diffère réellement entre les deux écrans
+/// (3 actions pour la Collection, 1 pour la Wantlist) — tout le reste est partagé à l'identique.
+struct LibraryCarouselSkeletonContent: View {
+    let containerSize: CGSize
+    var actionButtonCount: Int
+
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    private var isRegularDisplay: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad || horizontalSizeClass == .regular
+    }
+
+    var body: some View {
+        let coverSize = LibraryCarouselMetrics.cardSize(containerSize: containerSize, isRegularDisplay: isRegularDisplay)
+        let sideSize = coverSize * 0.39
+
+        VStack(spacing: 20) {
+            Spacer(minLength: 0)
+
+            // Cette rangée (voisine + pochette + voisine) est volontairement plus large que
+            // l'écran — elle imite les voisines qui dépassent dans le vrai carrousel. Sans ce
+            // `.frame(width:)` explicite, un `HStack` plus large que son contenant, placé dans un
+            // `ScrollView` vertical (qui ne peut pas défiler horizontalement pour le recentrer),
+            // s'ancre au bord de tête plutôt que d'être centré : tout le squelette (y compris le
+            // texte en dessous, pourtant moins large que l'écran) se retrouvait alors décalé vers
+            // la droite au lieu d'être centré.
+            HStack(spacing: 16) {
+                SkeletonBlock(cornerRadius: 10, width: sideSize, height: sideSize)
+                SkeletonBlock(cornerRadius: 14, width: coverSize, height: coverSize)
+                SkeletonBlock(cornerRadius: 10, width: sideSize, height: sideSize)
+            }
+            .frame(width: containerSize.width > 0 ? containerSize.width : nil)
+
+            VStack(spacing: 6) {
+                SkeletonBlock(width: coverSize * 0.7, height: 22)
+                SkeletonBlock(width: coverSize * 0.5, height: 20)
+                SkeletonBlock(cornerRadius: 10, width: coverSize * 0.4, height: 22)
+                    .padding(.top, 2)
+            }
+
+            HStack(spacing: 12) {
+                ForEach(0..<actionButtonCount, id: \.self) { _ in
+                    SkeletonBlock(cornerRadius: 19, width: 38, height: 38)
+                }
+            }
+            .padding(.top, 4)
+
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+/// Vue Carrousel générique, partagée par la Collection et la Wantlist (via `SortableLibraryItem`) :
+/// défilement horizontal fluide de grandes pochettes vinyle avec disque sortant, effet de
+/// transition 3D cover flow, informations de base et navigation rapide. Les deux écrans
+/// partageaient ~300 lignes identiques (dimensionnement, défilement, mise en page de la carte) ;
+/// seuls le badge secondaire (exemplaires/note pour la Collection, alerte de prix pour la
+/// Wantlist) et les actions rapides diffèrent réellement — d'où les closures `secondaryBadge`/
+/// `quickActions`, qui renvoient `AnyView` (même choix que `LibraryMosaicView`/`LibraryListView`).
+struct LibraryCarouselView<Item: SortableLibraryItem>: View {
+    let sections: [(key: String, items: [Item])]
     let indexEntries: [(token: String, sectionKey: String)]
-    let copyBadge: (CollectionItem) -> String?
-    let isPlaying: (Int) -> Bool
+    /// Jeton d'une section donnée — même closure que `LibraryListView`/`LibraryMosaicView`.
+    /// Nécessaire pour `currentToken` : `indexEntries` ne garde qu'UNE section représentative par
+    /// jeton (la première rencontrée, ex: un seul artiste par lettre) — y chercher la section
+    /// courante par sa clé échoue dès qu'on navigue vers une autre section partageant ce même
+    /// jeton, faisant disparaître le curseur de la barre de navigation horizontale.
+    let indexToken: ((key: String, items: [Item])) -> String
     var isSelecting: Bool = false
     var selectedItemIds: Set<Int> = []
-    var onToggleSelection: ((CollectionItem) -> Void)? = nil
-    let onTriggerListening: (CollectionItem) -> Void
-    let onStopListening: (CollectionItem) -> Void
-    let onShelfPlacement: (CollectionItem) -> Void
-    let onEditItem: (CollectionItem) -> Void
-    let onLoadMore: (CollectionItem) async -> Void
+    var onToggleSelection: ((Item) -> Void)? = nil
+    let onLoadMore: (Item) async -> Void
+    /// Déclenche un saut animé vers un élément précis (ex: "Disque au hasard" en Collection) —
+    /// `nil` tant qu'aucun appelant n'a ce besoin (la Wantlist n'en a pas aujourd'hui).
     var scrollToTrigger: ScrollTargetTrigger? = nil
+    /// Ligne de badge sous la pastille année/format, responsable de son propre espacement
+    /// (`.padding(.top, 2)`) puisqu'elle peut être vide (ex: aucune alerte wantlist définie).
+    var secondaryBadge: (Item) -> AnyView = { _ in AnyView(EmptyView()) }
+    /// Contenu des actions rapides sous les infos (masquées en mode sélection, transition et
+    /// espacement gérés ici, communs aux deux écrans).
+    var quickActions: (Item) -> AnyView = { _ in AnyView(EmptyView()) }
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     // `ScrollPosition` (et non `scrollPosition(id:)`) : en plus de suivre l'identité de la carte
@@ -42,16 +131,7 @@ struct CollectionCarouselView: View {
     }
 
     private var cardSize: CGFloat {
-        if isRegularDisplay {
-            let availableWidth = containerSize.width
-            let availableHeight = containerSize.height > 0 ? containerSize.height : 800
-            // Réserve ~260pt pour les métadonnées, boutons, scrubber et marges
-            let heightCap = max(availableHeight - 260, 340)
-            let widthCap = availableWidth * 0.70
-            return min(widthCap, heightCap, 540)
-        } else {
-            return min(max(containerSize.width * 0.72, 230), 290)
-        }
+        LibraryCarouselMetrics.cardSize(containerSize: containerSize, isRegularDisplay: isRegularDisplay)
     }
 
     private var cardWidth: CGFloat {
@@ -72,7 +152,7 @@ struct CollectionCarouselView: View {
         }
     }
 
-    private var items: [CollectionItem] {
+    private var items: [Item] {
         sections.flatMap { $0.items }
     }
 
@@ -84,8 +164,9 @@ struct CollectionCarouselView: View {
     }
 
     private var currentToken: String? {
-        guard let currentSectionKey else { return nil }
-        return indexEntries.first(where: { $0.sectionKey == currentSectionKey })?.token
+        guard let currentSectionKey,
+              let section = sections.first(where: { $0.key == currentSectionKey }) else { return nil }
+        return indexToken(section)
     }
 
     var body: some View {
@@ -137,18 +218,19 @@ struct CollectionCarouselView: View {
                 positionIndicator
             }
         }
-        // La hauteur n'est plus forcée à `.infinity` ici : le parent (`CollectionView`) place
-        // déjà ce contenu dans un `ScrollView` vertical avec un `.frame(minHeight:)` mesuré par un
-        // `GeometryReader` externe, pour fournir une hauteur disponible réaliste au calcul de
-        // `cardSize` sur iPad sans pousser le `ScrollView` à proposer une hauteur infinie.
+        // La hauteur n'est plus forcée à `.infinity` ici : le parent (`CollectionView`/
+        // `WantlistView`) place déjà ce contenu dans un `ScrollView` vertical avec un
+        // `.frame(minHeight:)` mesuré par un `GeometryReader` externe, pour fournir une hauteur
+        // disponible réaliste au calcul de `cardSize` sur iPad sans pousser le `ScrollView` à
+        // proposer une hauteur infinie.
         .frame(maxWidth: .infinity)
         .background(
             GeometryReader { geo in
                 Color.clear
-                    .preference(key: CarouselContainerSizeKey.self, value: geo.size)
+                    .preference(key: LibraryCarouselContainerSizeKey.self, value: geo.size)
             }
         )
-        .onPreferenceChange(CarouselContainerSizeKey.self) { newSize in
+        .onPreferenceChange(LibraryCarouselContainerSizeKey.self) { newSize in
             if newSize.width > 0 && newSize != containerSize {
                 containerSize = newSize
             }
@@ -210,7 +292,7 @@ struct CollectionCarouselView: View {
 
     // MARK: - Carte Carrousel
 
-    private func carouselCard(for item: CollectionItem, size: CGFloat, cardWidth: CGFloat) -> some View {
+    private func carouselCard(for item: Item, size: CGFloat, cardWidth: CGFloat) -> some View {
         let info = item.basicInformation
         let coverURL = info.coverImage ?? info.thumb
         let isSelected = selectedItemIds.contains(item.id)
@@ -222,7 +304,11 @@ struct CollectionCarouselView: View {
                     AsyncCoverImage(url: coverURL, cornerRadius: isRegularDisplay ? 18 : 14, targetSize: size)
                         .frame(width: size, height: size)
                         .opacity(isSelecting ? (isSelected ? 1.0 : 0.45) : 1.0)
-                        .shadow(color: .black.opacity(isSelected ? 0.45 : 0.28), radius: isRegularDisplay ? 20 : 14, x: 0, y: isRegularDisplay ? 10 : 8)
+                        // Ombre de contact (très proche) puis ombre d'ambiance flottante (large et
+                        // douce) ; toutes deux atténuées pendant la sélection multiple, comme
+                        // l'opacité de la pochette.
+                        .shadow(color: .black.opacity(isSelecting ? (isSelected ? 0.30 : 0.12) : 0.22), radius: isRegularDisplay ? 7 : 5, x: 0, y: isRegularDisplay ? 4 : 3)
+                        .shadow(color: .black.opacity(isSelecting ? (isSelected ? 0.45 : 0.18) : 0.35), radius: isRegularDisplay ? 26 : 18, x: 0, y: isRegularDisplay ? 14 : 11)
                         .overlay(
                             RoundedRectangle(cornerRadius: isRegularDisplay ? 18 : 14, style: .continuous)
                                 .strokeBorder(
@@ -300,28 +386,7 @@ struct CollectionCarouselView: View {
                 .background(Color.primary.opacity(0.05), in: Capsule())
                 .padding(.top, 2)
 
-                // Badge d'exemplaire et note
-                HStack(spacing: 8) {
-                    if let badge = copyBadge(item) {
-                        Text(badge)
-                            .font(isRegularDisplay ? .footnote.bold() : .caption2.bold())
-                            .padding(.horizontal, isRegularDisplay ? 9 : 7)
-                            .padding(.vertical, isRegularDisplay ? 3 : 2)
-                            .background(Color.primary.opacity(0.08), in: Capsule())
-                    }
-
-                    if item.rating > 0 {
-                        HStack(spacing: 3) {
-                            Image(systemName: "star.fill")
-                                .font(.system(size: isRegularDisplay ? 11 : 9))
-                                .foregroundStyle(Color.orange)
-                            Text("\(item.rating)")
-                                .font(isRegularDisplay ? .footnote.bold() : .caption2.bold())
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                .padding(.top, 2)
+                secondaryBadge(item)
             }
             .padding(.top, isRegularDisplay ? 8 : 6)
             .contentShape(Rectangle())
@@ -331,57 +396,11 @@ struct CollectionCarouselView: View {
                 }
             }
 
-            // Boutons d'action rapide (masqués en mode sélection)
+            // Actions rapides (masquées en mode sélection)
             if !isSelecting {
-                HStack(spacing: isRegularDisplay ? 16 : 12) {
-                    // Écoute en direct (Start / Stop)
-                    Button {
-                        if isPlaying(item.releaseId) {
-                            onStopListening(item)
-                        } else {
-                            onTriggerListening(item)
-                        }
-                    } label: {
-                        Image(systemName: isPlaying(item.releaseId) ? "stop.fill" : "opticaldisc.fill")
-                            .font(.system(size: isRegularDisplay ? 17 : 14, weight: .bold))
-                            .foregroundStyle(isPlaying(item.releaseId) ? .white : Color.spinlogPink)
-                            .frame(width: isRegularDisplay ? 46 : 38, height: isRegularDisplay ? 46 : 38)
-                            .background(
-                                isPlaying(item.releaseId) ? Color(uiColor: .systemGray) : Color.spinlogPinkBadge,
-                                in: Circle()
-                            )
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(isPlaying(item.releaseId) ? Text("Arrêter l'écoute") : Text("J'écoute ce disque sur la platine"))
-
-                    // Où ranger
-                    Button {
-                        onShelfPlacement(item)
-                    } label: {
-                        Image(systemName: "books.vertical.fill")
-                            .font(.system(size: isRegularDisplay ? 17 : 14, weight: .semibold))
-                            .foregroundStyle(.indigo)
-                            .frame(width: isRegularDisplay ? 46 : 38, height: isRegularDisplay ? 46 : 38)
-                            .background(Color.indigo.opacity(0.12), in: Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Où ranger ce disque")
-
-                    // Modifier notes/note
-                    Button {
-                        onEditItem(item)
-                    } label: {
-                        Image(systemName: "pencil")
-                            .font(.system(size: isRegularDisplay ? 17 : 14, weight: .semibold))
-                            .foregroundStyle(Color.appSecondaryText)
-                            .frame(width: isRegularDisplay ? 46 : 38, height: isRegularDisplay ? 46 : 38)
-                            .background(Color.primary.opacity(0.06), in: Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Modifier la note et les commentaires")
-                }
-                .padding(.top, isRegularDisplay ? 8 : 4)
-                .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                quickActions(item)
+                    .padding(.top, isRegularDisplay ? 8 : 4)
+                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
             }
         }
         .frame(width: cardWidth)
@@ -406,7 +425,8 @@ struct CollectionCarouselView: View {
     }
 }
 
-private struct CarouselContainerSizeKey: PreferenceKey {
+
+private struct LibraryCarouselContainerSizeKey: PreferenceKey {
     static var defaultValue: CGSize = .zero
     static func reduce(value: inout CGSize, nextValue: () -> CGSize) {
         let next = nextValue()

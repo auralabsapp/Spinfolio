@@ -110,6 +110,12 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         if let username = DiscogsAuthManager.shared.username {
             CollectionPreferencesStore.clearFilterPreferences(for: username)
         }
+
+        #if DEBUG
+        // Journalise dans la console tout à-coup de défilement (voir `ScrollHitchMonitor`),
+        // pour diagnostiquer les lags perçus en Liste/Mosaïque sans brancher Instruments.
+        ScrollHitchMonitor.shared.start()
+        #endif
     }
 
     var body: some Scene {

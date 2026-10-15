@@ -54,6 +54,11 @@ struct MasterDetailView: View {
                         }
                     )
                     .frame(width: Self.coverSize, height: Self.coverSize)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
+                    )
+                    .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)
                     .frame(maxWidth: .infinity)
                     .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.40 : 0.16), radius: 16, y: 8)
 
@@ -91,6 +96,12 @@ struct MasterDetailView: View {
                                         HStack(spacing: 12) {
                                             AsyncCoverImage(url: version.thumb, cornerRadius: 6, targetSize: 44)
                                                 .frame(width: 44, height: 44)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                                        .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
+                                                )
+                                                .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)
+                                                .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 10)
                                             VStack(alignment: .leading, spacing: 2) {
                                                 Text([version.format, version.label].compactMap { $0 }.joined(separator: " · "))
                                                     .font(.subheadline)

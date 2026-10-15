@@ -86,6 +86,7 @@ struct ArtistSortCustomizationView: View {
                         .foregroundStyle(Color.appSecondaryText)
                 }
                 .padding(.vertical, 4)
+                .listRowBackground(Color.clear)
             }
 
             Section {
@@ -99,6 +100,7 @@ struct ArtistSortCustomizationView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+                .listRowBackground(Color.clear)
             }
 
             if filteredArtists.isEmpty {
@@ -113,6 +115,7 @@ struct ArtistSortCustomizationView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 24)
+                    .listRowBackground(Color.clear)
                 }
             } else {
                 Section {
@@ -138,6 +141,7 @@ struct ArtistSortCustomizationView: View {
                                 }
                             }
                         }
+                        .listRowBackground(Color.clear)
                     }
                 }
             }
@@ -153,9 +157,14 @@ struct ArtistSortCustomizationView: View {
                             Spacer()
                         }
                     }
+                    .listRowBackground(Color.clear)
                 }
             }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Color.appBackground)
+        .listRowSeparatorTint(Color.appSeparator)
         .navigationTitle("Tri des artistes")
         .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $searchText, prompt: "Rechercher un artiste...")
@@ -282,7 +291,7 @@ private struct ArtistSortEditSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(uiColor: .systemGroupedBackground)
+                Color.appBackground
                     .ignoresSafeArea()
 
                 scrollContent
@@ -417,7 +426,7 @@ private struct ArtistSortEditSheet: View {
 
                             // Option 2 : Article à la fin
                             if hasArticle && articleKey != naturalKey {
-                                Divider()
+                                Divider().overlay(Color.appSeparator)
                                     .padding(.leading, 14)
 
                                 suggestionRow(
@@ -433,7 +442,7 @@ private struct ArtistSortEditSheet: View {
 
                             // Option 3 : Inversé (Nom, Prénom)
                             if !hasArticle && invertedKey != naturalKey {
-                                Divider()
+                                Divider().overlay(Color.appSeparator)
                                     .padding(.leading, 14)
 
                                 suggestionRow(

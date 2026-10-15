@@ -95,7 +95,7 @@ struct PremiumFeaturesSheet: View {
                         ForEach(Array(premiumFeatures.enumerated()), id: \.element.id) { index, feature in
                             featureRow(feature)
                             if index < premiumFeatures.count - 1 {
-                                Divider().opacity(0.15).padding(.leading, 58)
+                                Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 58)
                             }
                         }
                     }
@@ -104,6 +104,7 @@ struct PremiumFeaturesSheet: View {
                 }
                 .padding()
             }
+            .background(Color.appBackground.ignoresSafeArea())
             .navigationTitle("Fonctionnalités premium")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

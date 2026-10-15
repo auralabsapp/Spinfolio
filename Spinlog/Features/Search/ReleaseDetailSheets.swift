@@ -24,6 +24,7 @@ struct ReleaseOtherInfoSheet: View {
                 }
                 .padding()
             }
+            .background(Color.appBackground.ignoresSafeArea())
             .navigationTitle("Autres informations")
             .navigationBarTitleDisplayMode(.inline)
             .searchDestinations()
@@ -66,6 +67,7 @@ struct ReleaseMediaSheet: View {
                 }
                 .padding()
             }
+            .background(Color.appBackground.ignoresSafeArea())
             .navigationTitle("Photos et vidéos")
             .navigationBarTitleDisplayMode(.inline)
             .searchDestinations()

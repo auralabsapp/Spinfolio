@@ -163,7 +163,7 @@ struct CollectionItemEditSheet: View {
                                         }
                                     )
                                     if index < fields.count - 1 {
-                                        Divider().opacity(0.15).padding(.leading, 14)
+                                        Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 14)
                                     }
                                 }
                             }
@@ -215,6 +215,7 @@ struct CollectionItemEditSheet: View {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                     }
             )
+            .background(Color.appBackground)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 // Titre posé en `.principal` plutôt que via `.navigationTitle` : ce placement est
@@ -377,7 +378,7 @@ struct CollectionItemEditSheet: View {
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
 
-                        Divider().opacity(0.15).padding(.leading, 14)
+                        Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 14)
 
                         Button {
                             showingMarketplaceSheet = true
@@ -402,7 +403,7 @@ struct CollectionItemEditSheet: View {
                         .buttonStyle(.plain)
                         .accessibilityHint("Ouvre le Marketplace Discogs pour cette release")
 
-                        Divider().opacity(0.15).padding(.leading, 14)
+                        Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 14)
 
                         let gain = marketEstimateEUR - purchasePriceEUR
                         let percent = purchasePriceEUR > 0 ? gain / purchasePriceEUR : 0
@@ -453,6 +454,12 @@ struct CollectionItemEditSheet: View {
         HStack(spacing: 12) {
             AsyncCoverImage(url: item.basicInformation.thumb ?? item.basicInformation.coverImage, cornerRadius: 8)
                 .frame(width: 54, height: 54)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
+                )
+                .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)
+                .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 10)
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.basicInformation.title)
                     .font(.subheadline.bold())

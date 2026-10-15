@@ -22,6 +22,7 @@ struct ColorThemeSelectionView: View {
             Section {
                 ForEach(AppColorTheme.allCases) { theme in
                     themeRow(theme)
+                        .listRowBackground(Color.clear)
                 }
             } header: {
                 Text("Palettes disponibles")
@@ -33,6 +34,10 @@ struct ColorThemeSelectionView: View {
                 }
             }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Color.appBackground)
+        .listRowSeparatorTint(Color.appSeparator)
         .navigationTitle("Couleur du thème")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingPremiumSheet) {
@@ -78,7 +83,7 @@ struct ColorThemeSelectionView: View {
                 }
             }
 
-            Divider().opacity(0.2)
+            Divider().overlay(Color.appSeparator).opacity(0.2)
 
             // Démonstrateurs d'éléments d'interface
             VStack(alignment: .leading, spacing: 10) {

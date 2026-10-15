@@ -30,6 +30,7 @@ struct SearchView: View {
                     isSearchFieldFocused = false
                 }
         )
+        .background(Color.appBackground.ignoresSafeArea())
         .navigationTitle("Recherche")
         .searchDestinations()
         .fullScreenCover(isPresented: $isScannerPresented) {
@@ -73,7 +74,7 @@ struct SearchView: View {
                 .accessibilityLabel("Effacer la recherche")
             }
 
-            Divider().frame(height: 18)
+            Divider().overlay(Color.appSeparator).frame(height: 18)
 
             Button {
                 isSearchFieldFocused = false
@@ -213,8 +214,11 @@ struct SearchView: View {
                     .swipeActions(edge: .leading, allowsFullSwipe: true) {
                         leadingSwipeActions(for: result)
                     }
+                    .listRowBackground(Color.clear)
             }
             .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .listRowSeparatorTint(Color.appSeparator)
             .scrollDismissesKeyboard(.immediately)
             // `.scrollDismissesKeyboard` ne réagit qu'au défilement, et le tap sur le fond de
             // `VStack` ci-dessus n'est jamais atteint quand on touche directement une ligne (son

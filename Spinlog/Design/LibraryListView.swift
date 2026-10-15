@@ -33,11 +33,15 @@ struct LibraryListView<Item: SortableLibraryItem>: View {
     /// `NavigationLink` et le calque d'interception du tap en mode sélection restent gérés ici,
     /// communs aux deux écrans.
     let rowLabel: (Item) -> AnyView
-    var rowBackground: (Item) -> AnyView? = { _ in nil }
+    /// `Color.clear` par défaut (pas `nil`, qui restaurerait le fond blanc système par défaut de
+    /// la ligne) : laisse le fond crème de la `List` apparaître à travers chaque ligne.
+    var rowBackground: (Item) -> AnyView? = { _ in AnyView(Color.clear) }
     var leadingSwipeActions: (Item) -> AnyView = { _ in AnyView(EmptyView()) }
     var trailingSwipeActions: (Item) -> AnyView = { _ in AnyView(EmptyView()) }
     let onLoadMore: (Item) async -> Void
     let onRefresh: () async -> Void
+
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         List {
@@ -55,6 +59,7 @@ struct LibraryListView<Item: SortableLibraryItem>: View {
                         ForEach(0..<4, id: \.self) { _ in
                             SkeletonLibraryRow(lineCount: skeletonLineCount, coverSize: skeletonCoverSize)
                                 .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                                .listRowBackground(Color.clear)
                         }
                     } header: {
                         SkeletonSectionHeaderRow()
@@ -68,8 +73,17 @@ struct LibraryListView<Item: SortableLibraryItem>: View {
                     count: section.items.count,
                     artists: headerArtists(section)
                 )
-                    // Même fond que l'en-tête de section en mode Mosaïque.
-                    .background(.regularMaterial)
+                    // Même trame que l'en-tête de section en mode Mosaïque (voir
+                    // `LibraryMosaicView`), reprise à l'identique. Pas de `.padding(.vertical)`
+                    // ici : contrairement à la Mosaïque, le total 2+2 (padding interne de
+                    // `LibrarySectionHeader` + ses `.listRowInsets`) est déjà atteint sans
+                    // padding vertical supplémentaire à ce niveau.
+                    .padding(.horizontal, 2)
+                    .background {
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(.libraryHeaderBackground(for: colorScheme))
+                            .padding(.horizontal, -8)
+                    }
                     // Pour la pastille de position de `SectionIndexBar` (voir `currentSectionKey`
                     // côté appelant).
                     .reportingSectionOffset(key: section.key, coordinateSpace: sectionsCoordinateSpace)
@@ -101,6 +115,9 @@ struct LibraryListView<Item: SortableLibraryItem>: View {
         }
         .coordinateSpace(name: sectionsCoordinateSpace)
         .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Color.appBackground)
+        .listRowSeparatorTint(Color.appSeparator)
         .listSectionSpacing(.compact)
         .environment(\.defaultMinListHeaderHeight, 0)
         // Sans ça, une liste filtrée courte (qui tient entièrement à l'écran) garde le rebond

@@ -61,7 +61,6 @@ struct AsyncCoverImage: View {
                     }
                 }
             }
-            .fade(duration: 0.2)
         if let targetSize {
             let pixelSize = targetSize * displayScale
             image = image.downsampling(size: CGSize(width: pixelSize, height: pixelSize))

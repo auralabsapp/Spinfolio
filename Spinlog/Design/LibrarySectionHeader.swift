@@ -20,7 +20,7 @@ struct LibrarySectionHeader: View {
 
                 if displayToken != title && !title.isEmpty {
                     ArtistNameLinks(artists: artists, fallback: title)
-                        .font(.subheadline.weight(.semibold))
+                        .font(.system(.subheadline, design: .serif).weight(.semibold))
                         .foregroundStyle(.primary)
                         .lineLimit(1)
                         .truncationMode(.tail)

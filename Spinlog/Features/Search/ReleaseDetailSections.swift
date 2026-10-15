@@ -433,7 +433,7 @@ struct CommunityStatsBar: View {
                 }
                 .frame(maxWidth: .infinity)
 
-                Divider()
+                Divider().overlay(Color.appSeparator)
                     .opacity(0.15)
                     .frame(height: 24)
             }
@@ -448,7 +448,7 @@ struct CommunityStatsBar: View {
             }
             .frame(maxWidth: .infinity)
 
-            Divider()
+            Divider().overlay(Color.appSeparator)
                 .opacity(0.15)
                 .frame(height: 24)
 

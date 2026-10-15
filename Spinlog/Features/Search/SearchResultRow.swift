@@ -34,6 +34,12 @@ struct SearchResultRow: View {
             HStack(spacing: 12) {
                 AsyncCoverImage(url: result.thumb ?? result.coverImage, cornerRadius: 8, targetSize: 56)
                     .frame(width: 56, height: 56)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
+                    )
+                    .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)
+                    .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 10)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(result.title)

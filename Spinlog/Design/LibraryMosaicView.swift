@@ -42,6 +42,8 @@ struct LibraryMosaicView<Item: SortableLibraryItem>: View {
         GridItem(.flexible(), spacing: 6)
     ]
 
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
             LazyVGrid(columns: columns, spacing: 6, pinnedViews: [.sectionHeaders]) {
@@ -55,7 +57,14 @@ struct LibraryMosaicView<Item: SortableLibraryItem>: View {
                         SkeletonSectionHeaderRow()
                             .padding(.vertical, 2)
                             .padding(.horizontal, 2)
-                            .background(.regularMaterial)
+                            // Trame étendue au-delà des bords du contenu (plutôt qu'un remplissage
+                            // exactement ajusté) pour qu'il y ait une vraie marge visuelle avant le
+                            // bord de la grille, sans déplacer le texte lui-même.
+                            .background {
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .fill(.libraryHeaderBackground(for: colorScheme))
+                                    .padding(.horizontal, -8)
+                            }
                     }
                 } else {
                 ForEach(sections, id: \.key) { section in
@@ -77,7 +86,14 @@ struct LibraryMosaicView<Item: SortableLibraryItem>: View {
                         // le même total (2 + 2) plutôt que les 6pt précédents.
                         .padding(.vertical, 2)
                         .padding(.horizontal, 2)
-                        .background(.regularMaterial)
+                        // Trame étendue au-delà des bords du contenu (plutôt qu'un remplissage
+                        // exactement ajusté) pour qu'il y ait une vraie marge visuelle avant le
+                        // bord de la grille, sans déplacer le texte lui-même.
+                        .background {
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(.libraryHeaderBackground(for: colorScheme))
+                                .padding(.horizontal, -8)
+                        }
                         .reportingSectionOffset(key: section.key, coordinateSpace: sectionsCoordinateSpace)
                     }
                 }
@@ -103,11 +119,20 @@ struct LibraryMosaicView<Item: SortableLibraryItem>: View {
                 AsyncCoverImage(url: coverURL, cornerRadius: 6, showsBorder: true, targetSize: 100)
                     .aspectRatio(1, contentMode: .fit)
                     .opacity(isSelecting ? (isSelected ? 1.0 : 0.45) : 1.0)
+                    // Ombre de contact (très proche) puis ombre d'ambiance flottante (large et
+                    // douce) ; toutes deux atténuées pendant la sélection multiple, comme
+                    // l'opacité de la pochette.
+                    .shadow(color: .black.opacity(isSelecting ? (isSelected ? 0.30 : 0.12) : 0.22), radius: 5, x: 0, y: 3)
+                    .shadow(color: .black.opacity(isSelecting ? (isSelected ? 0.45 : 0.18) : 0.35), radius: 16, x: 0, y: 10)
+                    // Micro-bordure pour l'épaisseur carton, remplacée par la bordure de
+                    // sélection quand cet exemplaire est coché.
                     .overlay {
                         if isSelecting && isSelected {
                             RoundedRectangle(cornerRadius: 6, style: .continuous)
                                 .strokeBorder(Color.spinlogPink, lineWidth: 3)
                         } else {
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
                             borderOverlay(item)
                         }
                     }

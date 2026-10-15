@@ -56,6 +56,7 @@ struct OfflineSettingsDetailView: View {
                         }
                     }
                     .padding(.vertical, 4)
+                    .listRowBackground(Color.clear)
                 } else {
                     Button {
                         startSync()
@@ -75,6 +76,7 @@ struct OfflineSettingsDetailView: View {
                             Spacer()
                         }
                     }
+                    .listRowBackground(Color.clear)
                 }
             } header: {
                 Text("Synchronisation locale")
@@ -98,6 +100,7 @@ struct OfflineSettingsDetailView: View {
                     }
                 }
                 .tint(Color.spinlogPink)
+                .listRowBackground(Color.clear)
                 .onChange(of: autoSyncOverWifiEnabled) { _, newValue in
                     offlineManager.isAutoSyncOverWifiEnabled = newValue
                     // Le déclencheur normal (`autoSyncIfNeeded`) ne s'exécute qu'au lancement de
@@ -125,6 +128,7 @@ struct OfflineSettingsDetailView: View {
                     Text(imageCacheSize)
                         .foregroundStyle(Color.appSecondaryText)
                 }
+                .listRowBackground(Color.clear)
 
                 Button(role: .destructive) {
                     showingClearCacheConfirmation = true
@@ -134,6 +138,7 @@ struct OfflineSettingsDetailView: View {
                         Text("Vider le cache d'images")
                     }
                 }
+                .listRowBackground(Color.clear)
             } header: {
                 Text("Espace de stockage")
             } footer: {
@@ -159,10 +164,15 @@ struct OfflineSettingsDetailView: View {
                         .foregroundStyle(.secondary)
                 }
                 .padding(.vertical, 4)
+                .listRowBackground(Color.clear)
             } header: {
                 Text("À savoir")
             }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Color.appBackground)
+        .listRowSeparatorTint(Color.appSeparator)
         .navigationTitle("Mode Hors Ligne")
         .navigationBarTitleDisplayMode(.inline)
         .task {

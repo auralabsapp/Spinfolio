@@ -77,6 +77,8 @@ struct MiniPlayerBar: View {
                     targetSize: 30
                 )
                 .frame(width: 30, height: 30)
+                .shadow(color: .black.opacity(0.18), radius: 3, x: 0, y: 1.5)
+                .shadow(color: .black.opacity(0.28), radius: 8, x: 0, y: 4)
 
                 VStack(alignment: .leading, spacing: 0) {
                     AutoScrollingText(
@@ -130,6 +132,8 @@ struct MiniPlayerBar: View {
                     targetSize: 30
                 )
                 .frame(width: 30, height: 30)
+                .shadow(color: .black.opacity(0.18), radius: 3, x: 0, y: 1.5)
+                .shadow(color: .black.opacity(0.28), radius: 8, x: 0, y: 4)
 
                 VStack(alignment: .leading, spacing: 0) {
                     AutoScrollingText(
@@ -190,6 +194,7 @@ struct MiniPlayerBar: View {
                             )
                             .frame(width: 36, height: 36)
                             .shadow(color: .black.opacity(0.18), radius: 3, x: 0, y: 1.5)
+                            .shadow(color: .black.opacity(0.28), radius: 8, x: 0, y: 4)
 
                             // 2. Titre et Artiste l'un en dessous de l'autre (avec défilement auto si trop long)
                             VStack(alignment: .leading, spacing: 0.5) {
@@ -345,6 +350,7 @@ struct MiniPlayerBar: View {
                     )
                     .frame(width: 36, height: 36)
                     .shadow(color: .black.opacity(0.18), radius: 3, x: 0, y: 1.5)
+                    .shadow(color: .black.opacity(0.28), radius: 8, x: 0, y: 4)
 
                     // 2. Titre de l'album et sous-titre "Écoute sur platine"
                     VStack(alignment: .leading, spacing: 0.5) {

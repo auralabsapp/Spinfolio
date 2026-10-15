@@ -13,6 +13,7 @@ struct MarketplaceSheet: View {
     var body: some View {
         NavigationStack {
             content
+                .background(Color.appBackground.ignoresSafeArea())
                 .navigationTitle("Marketplace")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
@@ -39,15 +40,18 @@ struct MarketplaceSheet: View {
                         LabeledContent("En vente") {
                             Text("\(stats.numForSale ?? 0)")
                         }
+                        .listRowBackground(Color.clear)
                         if let lowestPrice = stats.lowestPrice {
                             LabeledContent("Prix le plus bas") {
                                 Text(lowestPrice.formatted)
                             }
+                            .listRowBackground(Color.clear)
                         }
                         if stats.blockedFromSale == true {
                             Text("Cette release ne peut pas être vendue actuellement.")
                                 .font(.caption)
                                 .foregroundStyle(Color.appSecondaryText)
+                                .listRowBackground(Color.clear)
                         }
                     }
                 }
@@ -58,6 +62,7 @@ struct MarketplaceSheet: View {
                             LabeledContent(condition) {
                                 Text(price.formatted)
                             }
+                            .listRowBackground(Color.clear)
                         }
                     }
                 } else if !DiscogsAuthManager.shared.isAuthenticated {
@@ -65,6 +70,7 @@ struct MarketplaceSheet: View {
                         Text("Connecte-toi à Discogs pour voir une estimation de prix par état.")
                             .font(.caption)
                             .foregroundStyle(Color.appSecondaryText)
+                            .listRowBackground(Color.clear)
                     }
                 }
 
@@ -72,8 +78,12 @@ struct MarketplaceSheet: View {
                     Link(destination: DiscogsConstants.websiteURL.appendingPathComponent("sell/release/\(releaseId)")) {
                         Label("Voir les annonces sur Discogs.com", systemImage: "arrow.up.right.square")
                     }
+                    .listRowBackground(Color.clear)
                 }
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .listRowSeparatorTint(Color.appSeparator)
         }
     }
 }

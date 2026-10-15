@@ -27,14 +27,22 @@ struct CollectionRow: View {
 
             AsyncCoverImage(url: coverURL, cornerRadius: 10, targetSize: Self.coverSize)
                 .frame(width: Self.coverSize, height: Self.coverSize)
+                // Micro-bordure pour l'épaisseur carton, remplacée par la bordure de sélection
+                // quand cet exemplaire est coché.
                 .overlay {
                     if isSelecting && isSelected {
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
                             .strokeBorder(Color.spinlogPink, lineWidth: 2.5)
+                    } else {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
                     }
                 }
                 .opacity(isSelecting ? (isSelected ? 1.0 : 0.45) : 1.0)
-                .shadow(color: .black.opacity(isSelecting ? (isSelected ? 0.22 : 0.08) : 0.16), radius: 5, x: 0, y: 2.5)
+                // Ombre de contact (très proche) puis ombre d'ambiance flottante (large et douce) ;
+                // toutes deux atténuées pendant la sélection multiple, comme l'opacité de la pochette.
+                .shadow(color: .black.opacity(isSelecting ? (isSelected ? 0.30 : 0.12) : 0.22), radius: 5, x: 0, y: 3)
+                .shadow(color: .black.opacity(isSelecting ? (isSelected ? 0.45 : 0.18) : 0.35), radius: 16, x: 0, y: 10)
                 .animation(.librarySelectionToggle, value: isSelected)
 
             VStack(alignment: .leading, spacing: 2) {
@@ -143,9 +151,14 @@ struct CollectionRow: View {
         String(localized: "\(tags.count) tags")
     }
 
+    /// Réutilisée plutôt que reconstruite à chaque évaluation de `yearAndDateLine` (appelée à
+    /// chaque ligne visible pendant le défilement) : `Date.FormatStyle` résout calendrier/locale
+    /// à la construction, un coût non négligeable répété pour chaque ligne à chaque frame.
+    private static let dateFormatStyle = Date.FormatStyle(date: .numeric, time: .omitted)
+
     private var yearAndDateLine: String? {
         let year = info.year != nil && info.year! > 0 ? "\(info.year!)" : nil
-        let date = item.dateAddedDate?.formatted(Date.FormatStyle(date: .numeric, time: .omitted))
+        let date = item.dateAddedDate?.formatted(Self.dateFormatStyle)
         switch (year, date) {
         case let (.some(y), .some(d)):
             return String(localized: "\(y) · Ajouté le \(d)")

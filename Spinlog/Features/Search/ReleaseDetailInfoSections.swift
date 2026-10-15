@@ -14,7 +14,7 @@ struct ReleaseInfoCard: View {
             ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
                 ReleaseInfoRow(systemImage: row.icon, text: row.text, destination: row.destination)
                 if index < rows.count - 1 {
-                    Divider().opacity(0.15).padding(.leading, 44)
+                    Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 44)
                 }
             }
         }
@@ -164,7 +164,7 @@ struct ReleaseIdentifiersSection: View {
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
                     if index < identifiers.count - 1 {
-                        Divider().opacity(0.15).padding(.leading, 44)
+                        Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 44)
                     }
                 }
             }
@@ -201,7 +201,7 @@ struct ReleaseCompaniesSection: View {
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
                     if index < companies.count - 1 {
-                        Divider().opacity(0.15).padding(.leading, 44)
+                        Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 44)
                     }
                 }
             }
@@ -303,7 +303,12 @@ struct ReleaseImagesGallery: View {
                         } label: {
                             AsyncCoverImage(url: images[index].uri, cornerRadius: 10)
                                 .frame(width: 140, height: 140)
-                                .shadow(color: .black.opacity(0.12), radius: 5, x: 0, y: 2)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
+                                )
+                                .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)
+                                .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 10)
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel(images[index].type == "primary" ? Text("Pochette de l'album") : Text("Photo \(index + 1) de la release"))
@@ -333,7 +338,7 @@ struct ListeningToastBanner: View {
     private var bannerBackground: Color {
         colorScheme == .dark
             ? Color(white: 0.23)
-            : Color(uiColor: .systemBackground)
+            : Color.appBackground
     }
 
     private var bannerBorder: Color {

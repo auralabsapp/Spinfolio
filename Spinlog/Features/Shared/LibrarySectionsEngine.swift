@@ -29,10 +29,15 @@ final class LibrarySectionsEngine<Item: SortableLibraryItem & Sendable> {
         generation += 1
         let currentGeneration = generation
 
+        // Capturé une seule fois ici, sur l'acteur principal, plutôt que relu à chaque comparaison
+        // pendant le tri (voir `ShelfSortContext`) — permet au tri `.shelf` de ne plus jamais avoir
+        // besoin d'être `synchronous` pour cette seule raison.
+        let shelfContext: ShelfSortContext? = sortOption == .shelf ? ShelfPreferencesStore.shared.shelfSortContext : nil
+
         guard !synchronous else {
             apply(Self.computeSections(
                 items: items, sortOption: sortOption, ascending: ascending,
-                tags: tags, format: format, searchText: searchText
+                tags: tags, format: format, searchText: searchText, shelfContext: shelfContext
             ))
             return
         }
@@ -41,7 +46,7 @@ final class LibrarySectionsEngine<Item: SortableLibraryItem & Sendable> {
         Task.detached(priority: .userInitiated) { [weak self] in
             let result = Self.computeSections(
                 items: items, sortOption: sortOption, ascending: ascending,
-                tags: tags, format: format, searchText: searchText
+                tags: tags, format: format, searchText: searchText, shelfContext: shelfContext
             )
             guard let self else { return }
             await self.deliverIfCurrent(result, generation: currentGeneration, apply: apply)
@@ -60,14 +65,15 @@ final class LibrarySectionsEngine<Item: SortableLibraryItem & Sendable> {
     /// `nonisolated` : appelée depuis la tâche détachée de `recompute`.
     private nonisolated static func computeSections(
         items: [Item], sortOption: CollectionSortOption, ascending: Bool,
-        tags: Set<String>, format: String?, searchText: String
+        tags: Set<String>, format: String?, searchText: String,
+        shelfContext: ShelfSortContext?
     ) -> [(key: String, items: [Item])] {
         let filtered = items.filter { $0.matchesLibraryFilters(tags: tags, format: format, searchText: searchText) }
-        let sorted = filtered.sorted { $0.isOrderedBefore($1, for: sortOption, ascending: ascending) }
+        let sorted = filtered.sorted { $0.isOrderedBefore($1, for: sortOption, ascending: ascending, shelfContext: shelfContext) }
         var order: [String] = []
         var groups: [String: [Item]] = [:]
         for item in sorted {
-            let key = item.sectionKey(for: sortOption)
+            let key = item.sectionKey(for: sortOption, shelfContext: shelfContext)
             if groups[key] == nil {
                 order.append(key)
                 groups[key] = []

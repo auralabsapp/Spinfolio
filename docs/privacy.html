@@ -27,6 +27,19 @@
     padding: 40px 32px;
     box-shadow: 0 4px 24px rgba(0,0,0,0.06);
   }
+  .back-link {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .back-link a {
+    color: var(--pink);
+    font-size: 13.5px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .back-link a:hover {
+    text-decoration: underline;
+  }
   .icon {
     width: 64px;
     height: 64px;
@@ -51,62 +64,91 @@
   h2 {
     font-size: 15px;
     font-weight: 700;
-    margin: 26px 0 8px;
+    margin: 24px 0 6px;
+    color: #1c1c1e;
   }
   p, li {
-    font-size: 14px;
-    line-height: 1.65;
+    font-size: 13.5px;
+    line-height: 1.6;
     color: #3a3a3c;
   }
-  ul { margin: 0; padding-left: 20px; }
-  a { color: var(--pink); text-decoration: none; font-weight: 600; }
+  ul {
+    padding-left: 20px;
+    margin: 8px 0;
+  }
+  li {
+    margin-bottom: 4px;
+  }
+  a {
+    color: var(--pink);
+  }
+  .divider {
+    height: 1px;
+    background: #e5e5ea;
+    margin: 36px 0;
+  }
   .lang-toggle {
     text-align: center;
     margin-bottom: 28px;
-    font-size: 13px;
   }
-  .lang-toggle a { margin: 0 6px; }
-  .lang-block.hidden { display: none; }
-  .divider {
-    border-top: 1px solid #e5e5ea;
-    margin: 36px 0 0;
-    padding-top: 20px;
+  .lang-toggle a {
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: #f2f2f7;
+    margin: 0 4px;
+  }
+  .lang-toggle a.active {
+    background: var(--pink);
+    color: #fff;
+    font-weight: 600;
   }
 </style>
 </head>
 <body>
   <div class="card">
-    <img class="icon" src="app-icon.png" alt="Spinfolio">
-    <h1>Spinfolio</h1>
-    <p class="updated">Politique de confidentialité — dernière mise à jour : 28 septembre 2026</p>
+    <div class="back-link">
+      <a href="index.html">← Retour au site Spinfolio</a>
+    </div>
+
+    <img class="icon" src="assets/app-icon.png" alt="Spinfolio">
+
+    <div class="lang-toggle">
+      <a href="#fr" class="active">Français</a>
+      <a href="#en">English</a>
+    </div>
 
     <div class="lang-block" id="fr">
+      <h1>Spinfolio</h1>
+      <p class="updated">Politique de confidentialité — dernière mise à jour : 28 septembre 2026</p>
       <p>Cette politique décrit les données traitées par l'application Spinfolio et la façon dont elles sont utilisées.</p>
 
       <h2>1. Compte Discogs</h2>
-      <p>Spinfolio se connecte à votre compte Discogs via OAuth pour accéder à votre collection, votre liste d'envies et votre profil public. Le jeton d'authentification est stocké de façon chiffrée dans le Trousseau iCloud (Keychain) de votre appareil. Spinfolio n'a jamais accès à votre mot de passe Discogs.</p>
+      <p>Spinfolio se connecte à votre compte Discogs via le protocole officiel OAuth pour accéder à votre collection, votre wantlist et votre profil public. Le jeton d'authentification est stocké de manière sécurisée et chiffrée dans le Trousseau d'accès iCloud (Keychain) de votre appareil. Spinfolio n'a jamais accès à votre mot de passe Discogs.</p>
 
       <h2>2. Données de collection</h2>
-      <p>Les données de votre collection (albums, notes, tags, prix d'achat renseignés) sont mises en cache localement sur votre appareil pour permettre la consultation hors ligne. Avec un compte Premium, certaines données (tags, journal d'écoute, préférences, personnalisations de tri) sont synchronisées entre vos appareils via iCloud (CloudKit d'Apple) — elles restent liées à votre identifiant Apple et ne sont jamais transmises à Spinfolio ni à des tiers.</p>
+      <p>Les données de votre collection (albums, notes, tags, prix d'achat que vous saisissez) sont mises en cache localement sur votre appareil pour permettre la consultation hors-ligne. Avec un compte Premium, certaines données (tags, journal d'écoutes, préférences, personnalisations de tri) sont synchronisées entre vos appareils via iCloud (CloudKit d'Apple) — elles restent liées à votre identifiant Apple et ne sont jamais transmises à Spinfolio ni à aucun tiers.</p>
 
       <h2>3. Achats et abonnements</h2>
-      <p>Les achats d'abonnement Premium sont entièrement traités par Apple via StoreKit. Spinfolio ne reçoit et ne stocke aucune information de paiement (numéro de carte, etc.) — nous recevons uniquement la confirmation qu'un abonnement est actif.</p>
+      <p>Les achats d'abonnements Premium sont gérés intégralement par Apple via StoreKit. Spinfolio ne reçoit ni ne stocke aucune coordonnée bancaire — nous recevons uniquement la confirmation qu'un abonnement est actif.</p>
 
       <h2>4. Notifications</h2>
-      <p>Si vous activez les alertes de prix sur votre liste d'envies, des notifications locales sont programmées directement sur votre appareil. Aucune donnée n'est envoyée à un serveur pour déclencher ces notifications.</p>
+      <p>Si vous activez les alertes de prix sur votre wantlist, des notifications locales sont programmées directement sur votre appareil. Aucune donnée n'est transmise à un serveur pour déclencher ces notifications.</p>
 
       <h2>5. Ce que nous ne faisons pas</h2>
       <ul>
-        <li>Aucun outil d'analyse ou de suivi publicitaire tiers (pas de Firebase, pas de SDK publicitaire)</li>
-        <li>Aucune revente ou partage de vos données à des tiers</li>
-        <li>Aucune collecte de données au-delà de ce qui est nécessaire au fonctionnement de l'app</li>
+        <li>Aucun outil d'analyse ou de pistage publicitaire tiers (pas de Firebase, pas de SDK publicitaire)</li>
+        <li>Aucune revente ni partage de vos données avec des tiers</li>
+        <li>Aucune collecte de données superflue</li>
       </ul>
 
       <h2>6. Suppression de vos données</h2>
-      <p>Vous pouvez déconnecter votre compte Discogs à tout moment depuis les réglages de l'app, ce qui supprime le jeton stocké localement. La suppression de l'app supprime l'ensemble des données mises en cache sur l'appareil. Pour toute question ou demande de suppression des données synchronisées via iCloud, contactez-nous à l'adresse ci-dessous.</p>
+      <p>Vous pouvez à tout moment déconnecter votre compte Discogs depuis les réglages de l'application, ce qui supprime le jeton stocké en local. La suppression de l'application entraîne l'effacement de l'ensemble des données en cache sur l'appareil. Pour toute question ou demande de suppression des données synchronisées via iCloud, contactez-nous à l'adresse ci-dessous.</p>
 
       <h2>7. Enfants</h2>
-      <p>Spinfolio ne s'adresse pas aux enfants de moins de 13 ans et ne collecte pas sciemment de données les concernant.</p>
+      <p>Spinfolio ne s'adresse pas aux enfants de moins de 13 ans et ne collecte sciemment aucune donnée les concernant.</p>
 
       <h2>8. Contact</h2>
       <p>Pour toute question relative à cette politique, contactez-nous à <a href="mailto:auralabs.apps@gmail.com">auralabs.apps@gmail.com</a>.</p>

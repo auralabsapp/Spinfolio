@@ -120,6 +120,7 @@ struct TagRenameSheet: View {
                     .tint(Color.spinlogPink)
                 }
             }
+            .background(Color.appBackground)
             .confirmationDialog(
                 "Confirmer la fusion des tags",
                 isPresented: $showingMergeConfirmation,
@@ -262,7 +263,7 @@ struct TagManagementView: View {
                             ForEach(Array(filteredTags.enumerated()), id: \.element) { index, tag in
                                 tagRow(tag)
                                 if index < filteredTags.count - 1 {
-                                    Divider().opacity(0.15).padding(.leading, 14)
+                                    Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 14)
                                 }
                             }
                         }
@@ -278,6 +279,7 @@ struct TagManagementView: View {
             .padding()
         }
         .swipeActionsContainer()
+        .background(Color.appBackground.ignoresSafeArea())
         .navigationTitle("Gestion des tags")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

@@ -339,14 +339,15 @@ final class CollectionViewModel {
     /// (`startBackgroundSync`), ce recalcul se redéclenchait à chaque page reçue — ~une fois par
     /// seconde, au rythme du débit imposé par l'API Discogs — pour un coût mesuré de 300-400ms à
     /// chaque fois, provoquant des saccades si l'utilisateur faisait défiler la liste pendant
-    /// cette fenêtre ; d'où le calcul détaché du moteur. Le tri `.shelf` et le filtrage par tag
-    /// restent synchrones (ils lisent respectivement `ShelfPreferencesStore` et `TagStore`,
-    /// isolés sur l'acteur principal).
+    /// cette fenêtre ; d'où le calcul détaché du moteur. Le tri `.shelf` capture son
+    /// `ShelfSortContext` une seule fois en amont (voir `LibrarySectionsEngine.recompute`) et peut
+    /// donc lui aussi être détaché ; seul le filtrage par tag reste synchrone (lit `TagStore`,
+    /// isolé sur l'acteur principal, mais en O(n) donc déjà bon marché).
     private func recomputeSections() {
         sectionsEngine.recompute(
             items: items, sortOption: sortOption, ascending: sortAscending,
             tags: selectedTags, format: selectedFormat, searchText: searchText,
-            synchronous: sortOption == .shelf || !selectedTags.isEmpty,
+            synchronous: !selectedTags.isEmpty,
             willStartAsync: { [weak self] in self?.isComputingSections = true },
             apply: { [weak self] result in
                 self?.sections = result

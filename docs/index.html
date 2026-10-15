@@ -1,110 +1,809 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Spinfolio — Assistance</title>
-<style>
-  :root {
-    --pink: #BB5CE8;
-    --pink-dark: #8f3fc0;
-    --text-secondary: #6b6b70;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
-    color: #1c1c1e;
-    background: #F5F3F8;
-    display: flex;
-    justify-content: center;
-    padding: 48px 20px;
-  }
-  .card {
-    background: #ffffff;
-    border-radius: 20px;
-    max-width: 480px;
-    width: 100%;
-    padding: 40px 32px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
-  }
-  .icon {
-    width: 72px;
-    height: 72px;
-    border-radius: 16px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-    display: block;
-    margin: 0 auto 20px;
-  }
-  h1 {
-    text-align: center;
-    font-size: 24px;
-    font-weight: 800;
-    margin: 0 0 6px;
-    letter-spacing: -0.3px;
-  }
-  .subtitle {
-    text-align: center;
-    color: var(--text-secondary);
-    font-size: 14px;
-    margin: 0 0 32px;
-  }
-  h2 {
-    font-size: 16px;
-    font-weight: 700;
-    margin: 0 0 8px;
-  }
-  p {
-    font-size: 14px;
-    line-height: 1.6;
-    color: #3a3a3c;
-    margin: 0 0 24px;
-  }
-  a.contact {
-    display: block;
-    text-align: center;
-    background: var(--pink);
-    color: #fff;
-    text-decoration: none;
-    font-weight: 700;
-    font-size: 15px;
-    padding: 14px;
-    border-radius: 12px;
-    margin-bottom: 28px;
-  }
-  a.contact:hover { background: var(--pink-dark); }
-  .lang-block + .lang-block {
-    margin-top: 36px;
-    padding-top: 28px;
-    border-top: 1px solid #e5e5ea;
-  }
-  .disclaimer {
-    font-size: 11.5px;
-    color: var(--text-secondary);
-    text-align: center;
-    margin-top: 8px;
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spinfolio — Votre collection Discogs, sublimée sur iOS</title>
+  <meta name="description" content="Spinfolio sublime votre collection de vinyles Discogs : Carrousel 3D, rangement physique dans vos étagères, Live Activity sur platine, suivi de cote et mode hors-ligne.">
+  <link rel="icon" type="image/png" href="assets/app-icon.png">
+  <style>
+    :root {
+      --primary: #BB5CE8;
+      --primary-glow: rgba(187, 92, 232, 0.4);
+      --primary-subtle: rgba(187, 92, 232, 0.12);
+      --gold: #F2AD2E;
+      --gold-glow: rgba(242, 173, 46, 0.35);
+      --gold-subtle: rgba(242, 173, 46, 0.12);
+      --bg: #09080E;
+      --surface: #15131C;
+      --surface-elevated: #1E1B28;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(187, 92, 232, 0.4);
+      --text: #F5F5F7;
+      --text-muted: #8E8D9A;
+      --text-secondary: #B4B3C2;
+      --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font);
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    a { color: var(--primary); text-decoration: none; transition: 0.2s; }
+    a:hover { opacity: 0.85; }
+    .container { max-width: 1140px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+    /* Nav */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(9, 8, 14, 0.82);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 68px; }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 19px; color: #fff; }
+    .brand img { width: 38px; height: 38px; border-radius: 9px; box-shadow: 0 4px 12px var(--primary-glow); }
+    .nav-links { display: flex; align-items: center; gap: 24px; list-style: none; }
+    .nav-links a { color: var(--text-muted); font-size: 14px; font-weight: 500; }
+    .nav-links a:hover { color: #fff; }
+    .nav-cta {
+      display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px;
+      background: linear-gradient(135deg, var(--primary) 0%, #8F3FC0 100%);
+      color: #fff !important; border-radius: 999px; font-size: 13.5px; font-weight: 600;
+      box-shadow: 0 4px 16px var(--primary-glow);
+    }
+
+    /* Hero */
+    .hero { padding: 80px 0 70px; text-align: center; position: relative; }
+    .hero-glow {
+      position: absolute; top: -10%; left: 50%; transform: translateX(-50%);
+      width: 700px; height: 450px;
+      background: radial-gradient(circle, rgba(187, 92, 232, 0.22) 0%, rgba(242, 173, 46, 0.08) 50%, transparent 70%);
+      filter: blur(90px); pointer-events: none; z-index: 0;
+    }
+    .badge-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--surface-elevated); border: 1px solid var(--border);
+      padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 600;
+      color: var(--primary); margin-bottom: 22px;
+    }
+    h1.hero-title {
+      font-size: 54px; line-height: 1.1; font-weight: 800; letter-spacing: -1.2px; margin-bottom: 20px;
+      background: linear-gradient(180deg, #FFFFFF 30%, #CEC7DC 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    p.hero-lead {
+      font-size: 19px; line-height: 1.5; color: var(--text-secondary); max-width: 680px; margin: 0 auto 36px;
+    }
+    .appstore-btn {
+      display: inline-flex; align-items: center; gap: 12px; background: #000;
+      border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; padding: 10px 22px;
+      color: #fff !important; transition: 0.2s;
+    }
+    .appstore-btn:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.4); }
+
+    /* iPhone Frame Retina */
+    .iphone-wrap {
+      position: relative; max-width: 295px; margin: 40px auto 0;
+      perspective: 1000px;
+    }
+    .iphone-frame {
+      width: 100%;
+      background: linear-gradient(155deg, #5A5A5E 0%, #1c1c1f 15%, #0B0B0D 50%, #1c1c1f 85%, #5A5A5E 100%);
+      border-radius: 52px; padding: 10px;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.12);
+      transition: transform 0.4s ease-out;
+    }
+    .iphone-screen {
+      border-radius: 42px; overflow: hidden; position: relative; background: #000;
+      aspect-ratio: 1206 / 2622;
+    }
+    .iphone-screen img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .iphone-screen::after {
+      content: ""; position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+      width: 92px; height: 25px; background: #000; border-radius: 999px;
+      box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.1); z-index: 10;
+    }
+
+    /* Parallax Floating Cards */
+    .floating-card {
+      position: absolute; background: rgba(21, 19, 28, 0.88);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border); border-radius: 16px; padding: 12px 16px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6); z-index: 20;
+      display: flex; align-items: center; gap: 12px; font-size: 13px; font-weight: 600;
+      transition: transform 0.1s ease-out;
+    }
+    .floating-left { left: -85px; top: 32%; }
+    .floating-right { right: -85px; top: 58%; }
+
+    /* Trust Grid */
+    .trust-bar {
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      background: rgba(21, 19, 28, 0.4); padding: 30px 0; margin-bottom: 80px;
+    }
+    .trust-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 30px; }
+    .trust-item { display: flex; align-items: center; gap: 14px; }
+    .trust-icon {
+      width: 42px; height: 42px; border-radius: 12px; background: var(--surface-elevated);
+      border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0; color: var(--primary);
+    }
+    .trust-title { font-size: 14.5px; font-weight: 700; color: #fff; }
+    .trust-desc { font-size: 12.5px; color: var(--text-muted); }
+
+    /* Sections */
+    .section-eyebrow {
+      text-transform: uppercase; font-size: 12px; font-weight: 700; letter-spacing: 1.5px;
+      color: var(--primary); margin-bottom: 8px;
+    }
+    .section-eyebrow.gold { color: var(--gold); }
+    .section-title { font-size: 36px; line-height: 1.2; font-weight: 800; letter-spacing: -0.7px; margin-bottom: 14px; color: #fff; }
+    .section-desc { font-size: 16.5px; color: var(--text-secondary); max-width: 600px; line-height: 1.55; }
+
+    .feature-block {
+      padding: 60px 0; display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 60px;
+    }
+    .feature-block.reversed .feature-visual { order: 1; }
+    .feature-block.reversed .feature-info { order: 2; }
+    .feature-visual { display: flex; justify-content: center; position: relative; }
+
+    .pills-list { display: flex; flex-direction: column; gap: 14px; margin-top: 26px; }
+    .pill-card {
+      display: flex; align-items: flex-start; gap: 14px; padding: 14px 18px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .pill-card:hover { border-color: var(--border-focus); transform: translateX(3px); }
+    .pill-icon { font-size: 18px; color: var(--primary); line-height: 1.3; }
+    .pill-text strong { display: block; color: #fff; font-size: 14.5px; margin-bottom: 2px; }
+    .pill-text span { font-size: 13px; color: var(--text-muted); line-height: 1.45; }
+
+    /* 9 Premium Cards Grid */
+    .premium-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin-top: 40px;
+    }
+    .p-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+      padding: 26px; position: relative; overflow: hidden; transition: transform 0.2s, border-color 0.2s;
+    }
+    .p-card:hover { transform: translateY(-4px); border-color: rgba(242, 173, 46, 0.4); }
+    .p-badge {
+      display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px;
+      background: var(--gold-subtle); color: var(--gold); font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px;
+    }
+    .p-card h3 { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+    .p-card p { font-size: 13.5px; color: var(--text-secondary); line-height: 1.5; }
+
+    /* Mini Manuel Tabs */
+    .manual-section {
+      padding: 70px 0; background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      margin: 60px 0;
+    }
+    .tabs-header { display: flex; justify-content: center; gap: 12px; margin: 30px 0 40px; flex-wrap: wrap; }
+    .tab-btn {
+      background: var(--surface-elevated); border: 1px solid var(--border); color: var(--text-secondary);
+      padding: 10px 22px; border-radius: 999px; font-size: 14px; font-weight: 600; cursor: pointer;
+      font-family: inherit; transition: 0.2s;
+    }
+    .tab-btn.active {
+      background: var(--primary); color: #fff; border-color: var(--primary);
+      box-shadow: 0 4px 16px var(--primary-glow);
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+    .step-card {
+      background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 16px; padding: 22px;
+    }
+    .step-num {
+      width: 28px; height: 28px; border-radius: 8px; background: var(--primary-subtle);
+      color: var(--primary); font-size: 14px; font-weight: 800; display: flex; align-items: center;
+      justify-content: center; margin-bottom: 12px;
+    }
+    .step-card h4 { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+    .step-card p { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+    /* Video Container */
+    .video-card {
+      background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 24px;
+      padding: 36px 24px; text-align: center; margin: 40px 0;
+    }
+    .video-viewport {
+      aspect-ratio: 16 / 9; max-width: 680px; margin: 20px auto 0; background: #000;
+      border-radius: 16px; border: 1px solid var(--border); overflow: hidden; position: relative;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .video-viewport video { width: 100%; height: 100%; object-fit: cover; }
+    .play-glow-btn {
+      width: 60px; height: 60px; border-radius: 50%; background: var(--primary);
+      color: #fff; font-size: 22px; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 30px var(--primary-glow); cursor: pointer;
+    }
+
+    /* Comparison Table */
+    .pricing-table-wrap { max-width: 820px; margin: 40px auto 0; }
+    .p-table {
+      width: 100%; border-collapse: separate; border-spacing: 0; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 20px; overflow: hidden;
+    }
+    .p-table th, .p-table td { padding: 16px 20px; font-size: 14px; border-bottom: 1px solid var(--border); }
+    .p-table th { background: var(--surface-elevated); color: #fff; font-weight: 700; text-align: left; }
+    .p-table th.premium-col, .p-table td.premium-col {
+      background: rgba(242, 173, 46, 0.04); text-align: center; color: var(--gold); font-weight: 600;
+    }
+    .p-table td.free-col { text-align: center; color: var(--text-muted); }
+    .p-table tr:last-child td { border-bottom: none; }
+
+    /* FAQ */
+    .faq-item {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      margin-bottom: 14px; overflow: hidden;
+    }
+    .faq-q {
+      width: 100%; text-align: left; background: none; border: none; padding: 18px 22px;
+      font-size: 15.5px; font-weight: 700; color: #fff; cursor: pointer; display: flex;
+      justify-content: space-between; align-items: center; font-family: inherit;
+    }
+    .faq-q:hover { color: var(--primary); }
+    .faq-toggle { font-size: 18px; color: var(--text-muted); transition: transform 0.25s; }
+    .faq-item.open .faq-toggle { transform: rotate(45deg); color: var(--primary); }
+    .faq-a { display: none; padding: 0 22px 20px; font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+    .faq-item.open .faq-a { display: block; }
+
+    /* Footer */
+    footer { border-top: 1px solid var(--border); background: #060509; padding: 50px 0 30px; font-size: 12.5px; color: var(--text-muted); }
+    .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 40px; margin-bottom: 36px; }
+
+    @media (max-width: 900px) {
+      h1.hero-title { font-size: 38px; }
+      .feature-block, .feature-block.reversed { grid-template-columns: 1fr; gap: 36px; text-align: center; }
+      .feature-block.reversed .feature-visual { order: 2; }
+      .feature-block.reversed .feature-info { order: 1; }
+      .pills-list { text-align: left; }
+      .floating-card { display: none; }
+      .footer-grid { grid-template-columns: 1fr; gap: 24px; }
+      .nav-links { display: none; }
+    }
+  </style>
 </head>
 <body>
-  <div class="card">
-    <img class="icon" src="app-icon.png" alt="Spinfolio">
-    <h1>Spinfolio</h1>
-    <p class="subtitle">Assistance &amp; support</p>
 
-    <div class="lang-block">
-      <h2>Besoin d'aide ?</h2>
-      <p>Pour toute question, signalement de bug ou demande concernant l'application Spinfolio (collection, wantlist, abonnement Premium...), contactez-nous par e-mail — nous répondons habituellement dans les 48 heures.</p>
-      <a class="contact" href="mailto:auralabs.apps@gmail.com?subject=Assistance%20Spinfolio">Contacter l'assistance</a>
-      <p class="disclaimer">Spinfolio utilise l'API publique Discogs mais n'est ni affilié à ni approuvé par Discogs.</p>
+  <!-- Navigation -->
+  <nav>
+    <div class="container nav-inner">
+      <a href="#" class="brand">
+        <img src="assets/app-icon.png" alt="Spinfolio">
+        <span>Spinfolio</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#collection">Collection</a></li>
+        <li><a href="#platine">Mode Platine</a></li>
+        <li><a href="#etagere">Où Ranger</a></li>
+        <li><a href="#premium">Fonctions Premium</a></li>
+        <li><a href="#manuel">Mini Manuel</a></li>
+        <li><a href="#faq">FAQ</a></li>
+      </ul>
+      <a href="#telecharger" class="nav-cta">
+        <span>Obtenir l'application</span>
+      </a>
     </div>
+  </nav>
 
-    <div class="lang-block">
-      <h2>Need help?</h2>
-      <p>For any question, bug report, or request regarding the Spinfolio app (collection, wantlist, Premium subscription...), reach out by email — we typically reply within 48 hours.</p>
-      <a class="contact" href="mailto:auralabs.apps@gmail.com?subject=Spinfolio%20Support">Contact support</a>
-      <p class="disclaimer">Spinfolio uses the public Discogs API but is not affiliated with or endorsed by Discogs.</p>
+  <!-- Hero Section avec Parallaxe -->
+  <section class="hero" id="telecharger">
+    <div class="hero-glow"></div>
+    <div class="container">
+      <div class="badge-pill">
+        <span>✨ Conçu pour iOS 17 & 18 • iPhone 16 / 17</span>
+      </div>
+      <h1 class="hero-title">Votre collection Discogs,<br>sublimée sur iPhone.</h1>
+      <p class="hero-lead">
+        Carrousel 3D interactif, repérage physique dans vos étagères, écoutes en direct sur l'écran verrouillé et mode hors-ligne complet.
+      </p>
+
+      <div style="margin-bottom: 14px;">
+        <a href="https://apps.apple.com" class="appstore-btn" target="_blank" rel="noopener">
+          <svg style="width:26px;height:26px;fill:#fff;" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.66-.81 1.11-1.94.99-3.07-.96.04-2.11.64-2.8 1.44-.61.71-1.15 1.86-1.01 2.97 1.07.08 2.16-.54 2.82-1.34z"/></svg>
+          <div style="text-align:left; line-height: 1.1;">
+            <div style="font-size: 10px; text-transform: uppercase; opacity: 0.8;">Télécharger dans l'</div>
+            <div style="font-size: 16px; font-weight: 700;">App Store</div>
+          </div>
+        </a>
+      </div>
+      <div style="font-size: 13px; color: var(--text-muted);">Essai gratuit de 7 jours sur l'abonnement annuel</div>
+
+      <!-- iPhone Frame Parallaxe -->
+      <div class="iphone-wrap" id="heroPhoneWrap">
+        <!-- Floating Badges Parallax -->
+        <div class="floating-card floating-left" id="pCardLeft">
+          <div style="font-size: 20px;">💿</div>
+          <div>
+            <div style="color: #fff;">Sur la platine</div>
+            <div style="font-size: 11px; color: var(--text-muted);">Dynamic Island active</div>
+          </div>
+        </div>
+
+        <div class="floating-card floating-right" id="pCardRight">
+          <div style="font-size: 20px;">📈</div>
+          <div>
+            <div style="color: #fff;">Cote Discogs</div>
+            <div style="font-size: 11px; color: #34C759;">+16 € (+107 %)</div>
+          </div>
+        </div>
+
+        <div class="iphone-frame" id="heroPhone">
+          <div class="iphone-screen">
+            <img src="assets/shot_carousel.png" alt="Spinfolio Carrousel 3D">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trust Bar -->
+  <div class="trust-bar">
+    <div class="container trust-grid">
+      <div class="trust-item">
+        <div class="trust-icon">⚡️</div>
+        <div>
+          <div class="trust-title">Synchro Officielle Discogs</div>
+          <div class="trust-desc">Accès instantané à vos 289+ vinyles, dossiers et wantlist.</div>
+        </div>
+      </div>
+      <div class="trust-item">
+        <div class="trust-icon">🔒</div>
+        <div>
+          <div class="trust-title">100 % Privé & Sans Publicité</div>
+          <div class="trust-desc">Vos données restent chiffrées sur votre compte personnel iCloud.</div>
+        </div>
+      </div>
+      <div class="trust-item">
+        <div class="trust-icon">📦</div>
+        <div>
+          <div class="trust-title">Mode Hors-Ligne Intégral</div>
+          <div class="trust-desc">Consultez vos pressages et pochettes sans réseau en brocante.</div>
+        </div>
+      </div>
     </div>
   </div>
+
+  <!-- Showcase Vidéo Interactif -->
+  <section class="container">
+    <div class="video-card">
+      <div class="section-eyebrow">Démonstration en direct</div>
+      <h2 class="section-title">Le plaisir tactile du vinyle, à l'écran.</h2>
+      <p class="section-desc" style="margin: 0 auto;">Découvrez la fluidité du carrousel 3D et le lancement instantané d'une session d'écoute.</p>
+      
+      <div class="video-viewport">
+        <!-- Conteneur vidéo interactif (fallback visuel animé) -->
+        <video autoplay muted loop playsinline poster="assets/shot_carousel.png">
+          <source src="assets/demo_spinfolio.mp4" type="video/mp4">
+        </video>
+        <div class="play-glow-btn" onclick="alert('Vidéo de démonstration en boucle')">▶</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 1 : La Collection -->
+  <section class="container feature-block" id="collection">
+    <div class="feature-info">
+      <div class="section-eyebrow">3 Vues Complémentaires</div>
+      <h2 class="section-title">Feuilletez votre bac comme chez le disquaire.</h2>
+      <p class="section-desc">
+        Passez en un éclair du Carrousel 3D immersif à la Mosaïque haute densité ou à la Liste détaillée avec cotes de marché et tags.
+      </p>
+
+      <div class="pills-list">
+        <div class="pill-card">
+          <div class="pill-icon">🎴</div>
+          <div class="pill-text">
+            <strong>Carrousel Cover-Flow</strong>
+            <span>Admirez vos pochettes en grand format avec gestes tactiles naturels.</span>
+          </div>
+        </div>
+        <div class="pill-card">
+          <div class="pill-icon">▦</div>
+          <div class="pill-text">
+            <strong>Mosaïque 4 colonnes</strong>
+            <span>Survolez des centaines d'albums d'un seul coup d'œil.</span>
+          </div>
+        </div>
+        <div class="pill-card">
+          <div class="pill-icon">🎲</div>
+          <div class="pill-text">
+            <strong>Disque au Hasard (Shuffle)</strong>
+            <span>Secouez l'iPhone ou touchez l'icône aléatoire pour vous laisser surprendre.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-visual">
+      <div class="iphone-wrap">
+        <div class="iphone-frame">
+          <div class="iphone-screen">
+            <img src="assets/shot_mosaic.png" alt="Mosaïque de vinyles">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2 : Mode Platine -->
+  <section class="container feature-block reversed" id="platine">
+    <div class="feature-visual">
+      <div class="iphone-wrap">
+        <div class="iphone-frame">
+          <div class="iphone-screen">
+            <img src="assets/shot_album_detail.png" alt="Mode Platine">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-info">
+      <div class="section-eyebrow">Expérience Sonore Unique</div>
+      <h2 class="section-title">« J'écoute ce disque sur la platine ».</h2>
+      <p class="section-desc">
+        Posez le diamant sur le microsillon et déclenchez l'écoute. Spinfolio gère votre chronomètre de face et anime votre écran en continu.
+      </p>
+
+      <div class="pills-list">
+        <div class="pill-card">
+          <div class="pill-icon">🏝️</div>
+          <div class="pill-text">
+            <strong>Live Activity & Dynamic Island</strong>
+            <span>Suivi du temps restant par face, pochette tournante et accès direct.</span>
+          </div>
+        </div>
+        <div class="pill-card">
+          <div class="pill-icon">🎧</div>
+          <div class="pill-text">
+            <strong>Intégration Apple Music & YouTube</strong>
+            <span>Pré-écoutez un titre en streaming ou regardez le clip sans changer d'app.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Les 9 Fonctions Premium en détail -->
+  <section class="container" style="padding: 70px 0;" id="premium">
+    <div style="text-align: center;">
+      <div class="section-eyebrow gold">Exclusivités Audiophiles</div>
+      <h2 class="section-title">9 Fonctionnalités Premium indispensables</h2>
+      <p class="section-desc" style="margin: 0 auto;">Développées spécialement pour les collectionneurs exigeants.</p>
+    </div>
+
+    <div class="premium-grid">
+      <!-- 1. Où ranger l'album -->
+      <div class="p-card">
+        <div class="p-badge">1. Où ranger l'album ?</div>
+        <h3>Guide de Rangement Physique</h3>
+        <p>Ne cherchez plus où classer un disque dans vos étagères (Kallax ou bacs). L'app vous indique la place exacte entre ses deux voisins (ex : entre Highway To Hell et Ballbreaker).</p>
+      </div>
+
+      <!-- 2. Suivi de cote -->
+      <div class="p-card">
+        <div class="p-badge">2. Suivi de Cote & Plus-value</div>
+        <h3>Valorisation en Temps Réel</h3>
+        <p>Saisissez votre prix d'achat : Spinfolio calcule automatiquement votre gain net en euros et en pourcentage (+107 %) grâce aux cours du marché Discogs.</p>
+      </div>
+
+      <!-- 3. Palmarès d'écoute -->
+      <div class="p-card">
+        <div class="p-badge">3. Palmarès sur Platine</div>
+        <h3>Podiums Mensuels & Annuels</h3>
+        <p>Découvrez vos disques et artistes les plus écoutés. Un véritable podium visuel façon estrade pour célébrer vos véritables coups de cœur.</p>
+      </div>
+
+      <!-- 4. Mode hors-ligne -->
+      <div class="p-card">
+        <div class="p-badge">4. Mode Hors-Ligne Total</div>
+        <h3>Pochettes & Pressages en Cache</h3>
+        <p>Téléchargez l'intégralité de votre collection et de vos pochettes HD pour fouiner en brocante ou salon du disque sans aucun réseau Internet.</p>
+      </div>
+
+      <!-- 5. Scan par lot -->
+      <div class="p-card">
+        <div class="p-badge">5. Scan par Lot Ultra-Rapide</div>
+        <h3>Inventaire en Rafale</h3>
+        <p>Scannez des dizaines de codes-barres à la suite avec confirmation haptique sans jamais devoir quitter l'appareil photo.</p>
+      </div>
+
+      <!-- 6. Déclaration de collection PDF -->
+      <div class="p-card">
+        <div class="p-badge">6. Déclaration de Collection</div>
+        <h3>Export PDF pour Assurances</h3>
+        <p>Générez un catalogue officiel imprimable au format A4 avec pochettes, états, cotes et valeur totale certifiée de votre discothèque.</p>
+      </div>
+
+      <!-- 7. Export CSV exhaustif -->
+      <div class="p-card">
+        <div class="p-badge">7. Export CSV Complet</div>
+        <h3>Vos données en Tableur</h3>
+        <p>Exportez tous vos disques vers Excel ou Numbers avec les identifiants Discogs, dates, prix d'achat et tags personnalisés.</p>
+      </div>
+
+      <!-- 8. Thèmes de couleur -->
+      <div class="p-card">
+        <div class="p-badge">8. Thèmes de Couleur</div>
+        <h3>Personnalisation Visuelle</h3>
+        <p>Choisissez parmi 8 nuances d'accentuation exclusives : Rose Signature, Cuivre & Or Hi-Fi, Cobalt Électrique, Vert Émeraude, Améthyste...</p>
+      </div>
+
+      <!-- 9. Synchro iCloud -->
+      <div class="p-card">
+        <div class="p-badge">9. Synchro iCloud CloudKit</div>
+        <h3>Multi-appareils Transparent</h3>
+        <p>Vos tags locaux, réglages d'étagères et historiques d'écoute se synchronisent automatiquement et en toute confidentialité entre votre iPhone et iPad.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mini Manuel Utilisateur Interactif -->
+  <section class="manual-section" id="manuel">
+    <div class="container">
+      <div style="text-align: center;">
+        <div class="section-eyebrow">Mini Manuel Utilisateur</div>
+        <h2 class="section-title">Guide pratique en 3 scénarios</h2>
+        <p class="section-desc" style="margin: 0 auto;">Maîtrisez Spinfolio en quelques secondes selon votre situation.</p>
+      </div>
+
+      <div class="tabs-header">
+        <button class="tab-btn active" onclick="openTab('disquaire', this)">🛍️ Chez le Disquaire</button>
+        <button class="tab-btn" onclick="openTab('platine-tab', this)">💿 Devant la Platine</button>
+        <button class="tab-btn" onclick="openTab('meuble-tab', this)">📐 Devant le Meuble</button>
+      </div>
+
+      <!-- Tab 1 : Disquaire -->
+      <div id="disquaire" class="tab-content active">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <h4>Consultez la Wantlist</h4>
+          <p>Ouvrez l'onglet Wantlist pour vérifier les pressages précis que vous convoitez et éviter les doublons accidentels.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <h4>Scannez le Code-barres</h4>
+          <p>Utilisez le scanner ou le scan par lot dans l'onglet Recherche pour identifier la release Discogs exacte et son estimation de prix.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <h4>Ajoutez avec Prix d'Achat</h4>
+          <p>Appuyez sur « En collection » et notez le prix payé pour suivre immédiatement votre plus-value potentielle.</p>
+        </div>
+      </div>
+
+      <!-- Tab 2 : Platine -->
+      <div id="platine-tab" class="tab-content">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <h4>Sélectionnez l'Album</h4>
+          <p>Touchez l'album sur le carrousel ou dans votre collection pour afficher sa fiche détaillée.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <h4>Lancez l'Écoute</h4>
+          <p>Touchez l'icône platine. Le chronomètre démarre et s'affiche dans la Dynamic Island et sur votre écran verrouillé.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <h4>Nourrissez vos Stats</h4>
+          <p>Chaque face écoutée est enregistrée dans votre historique privé et fait grimper l'album vers votre podium annuel.</p>
+        </div>
+      </div>
+
+      <!-- Tab 3 : Meuble -->
+      <div id="meuble-tab" class="tab-content">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <h4>Ouvrez la Fiche</h4>
+          <p>Sur n'importe quel vinyle, touchez « Emplacement de cet album » sous la rubrique Rangement Physique.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <h4>Repérez les Deux Voisins</h4>
+          <p>L'écran vous indique le disque immédiatement à gauche et celui à droite selon votre règle de tri (alphabétique, chronologique).</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <h4>Glissez le Disque</h4>
+          <p>Glissez votre vinyle à sa place exacte sans hésitation ni décalage dans vos bacs de rangement.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Grille Comparative Gratuit vs Premium -->
+  <section class="container" style="padding: 70px 0;">
+    <div style="text-align: center;">
+      <div class="section-eyebrow gold">Comparatif Transparent</div>
+      <h2 class="section-title">Choisissez votre formule</h2>
+      <p class="section-desc" style="margin: 0 auto;">Spinfolio est utilisable gratuitement, et sublime votre passion avec Premium.</p>
+    </div>
+
+    <div class="pricing-table-wrap">
+      <table class="p-table">
+        <thead>
+          <tr>
+            <th>Fonctionnalité</th>
+            <th class="free-col">Gratuit</th>
+            <th class="premium-col">Premium (24,99 € / an)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Synchro Collection & Wantlist Discogs</td>
+            <td class="free-col">✓ Inclus</td>
+            <td class="premium-col">✓ Inclus</td>
+          </tr>
+          <tr>
+            <td>Carrousel 3D, Mosaïque & Liste</td>
+            <td class="free-col">✓ Inclus</td>
+            <td class="premium-col">✓ Inclus</td>
+          </tr>
+          <tr>
+            <td>Recherche Discogs & Scanner code-barres</td>
+            <td class="free-col">✓ Inclus</td>
+            <td class="premium-col">✓ Inclus</td>
+          </tr>
+          <tr>
+            <td>Guide de Rangement d'Étagères (Shelf Placement)</td>
+            <td class="free-col">Aperçu limité</td>
+            <td class="premium-col">★ Illimité</td>
+          </tr>
+          <tr>
+            <td>Mode Hors-Ligne (Pochettes HD en cache)</td>
+            <td class="free-col">—</td>
+            <td class="premium-col">★ Illimité</td>
+          </tr>
+          <tr>
+            <td>Suivi de cote & Plus-value d'achat</td>
+            <td class="free-col">—</td>
+            <td class="premium-col">★ Illimité</td>
+          </tr>
+          <tr>
+            <td>Scan par lot ultra-rapide</td>
+            <td class="free-col">—</td>
+            <td class="premium-col">★ Illimité</td>
+          </tr>
+          <tr>
+            <td>Déclaration PDF officielle & Export CSV</td>
+            <td class="free-col">—</td>
+            <td class="premium-col">★ Illimité</td>
+          </tr>
+          <tr>
+            <td>Podiums d'écoute sur platine & Thèmes</td>
+            <td class="free-col">—</td>
+            <td class="premium-col">★ 8 Thèmes exclusifs</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- FAQ Accordion -->
+  <section class="container" style="padding: 40px 0 80px;" id="faq">
+    <div style="text-align: center;">
+      <div class="section-eyebrow">Réponses à vos questions</div>
+      <h2 class="section-title">Foire Aux Questions</h2>
+    </div>
+
+    <div style="max-width: 800px; margin: 36px auto 0;">
+      <div class="faq-item">
+        <button class="faq-q">
+          <span>Mes données restent-elles synchronisées avec Discogs ?</span>
+          <span class="faq-toggle">+</span>
+        </button>
+        <div class="faq-a">
+          Oui, Spinfolio dialogue directement avec l'API officielle Discogs®. Tout ajout ou retrait d'album est reflété sur votre compte. Vos informations privées (tags personnalisés, prix d'achat, sessions d'écoute sur platine) sont en revanche chiffrées sur votre compte iCloud personnel pour ne jamais polluer votre profil public.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q">
+          <span>Puis-je tester gratuitement les fonctions Premium ?</span>
+          <span class="faq-toggle">+</span>
+        </button>
+        <div class="faq-a">
+          Absolument. L'abonnement annuel inclut <strong>7 jours d'essai gratuit</strong>. Vous pouvez tester toutes les fonctionnalités sans engagement et annuler à tout moment depuis les réglages de votre compte Apple avant la fin des 7 jours sans être facturé.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q">
+          <span>Comment exporter ma collection pour mon assurance ?</span>
+          <span class="faq-icon faq-toggle">+</span>
+        </button>
+        <div class="faq-a">
+          Dans les Réglages &gt; Déclaration de collection, appuyez sur Générer le PDF. L'application produit un document A4 prêt à imprimer avec la valorisation globale, les cotes de marché actualisées et la vignette de chaque disque.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer Légal & Support -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom: 12px;">
+            <img src="assets/app-icon.png" alt="Spinfolio" style="width:30px;height:30px;border-radius:8px;">
+            <strong style="color:#fff; font-size:16px;">Spinfolio</strong>
+          </div>
+          <p>L'application compagnon ultime pour les collectionneurs de vinyles connectés à Discogs.</p>
+          <p style="margin-top: 8px;">Conçu par <strong>Aura Labs</strong>.</p>
+        </div>
+
+        <div>
+          <h4 style="color:#fff; margin-bottom:12px;">Liens Rapides</h4>
+          <ul style="list-style:none; display:flex; flex-direction:column; gap:8px;">
+            <li><a href="#collection" style="color:var(--text-muted);">Collection</a></li>
+            <li><a href="#platine" style="color:var(--text-muted);">Mode Platine</a></li>
+            <li><a href="#etagere" style="color:var(--text-muted);">Où Ranger</a></li>
+            <li><a href="#premium" style="color:var(--text-muted);">Fonctions Premium</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 style="color:#fff; margin-bottom:12px;">Support & Légal</h4>
+          <ul style="list-style:none; display:flex; flex-direction:column; gap:8px;">
+            <li><a href="mailto:auralabs.apps@gmail.com" style="color:var(--text-muted);">Assistance par e-mail</a></li>
+            <li><a href="privacy.html" style="color:var(--text-muted);">Politique de Confidentialité</a></li>
+            <li><a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener" style="color:var(--text-muted);">Conditions d'utilisation (EULA)</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; font-size: 11.5px; color: #555;">
+        Discogs® est une marque déposée de Zink Media, LLC. Cette application utilise l'API publique de Discogs mais n'est ni affiliée, ni sponsorisée, ni approuvée par Discogs.
+        <br>© 2026 Aura Labs. Tous droits réservés.
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts : Parallaxe au Scroll & Tabs Interactifs -->
+  <script>
+    // Effet Parallaxe au scroll sur le téléphone Hero et ses badges
+    window.addEventListener('scroll', () => {
+      const scrolled = window.scrollY;
+      const phone = document.getElementById('heroPhone');
+      const cardL = document.getElementById('pCardLeft');
+      const cardR = document.getElementById('pCardRight');
+
+      if (phone && scrolled < 800) {
+        phone.style.transform = `translateY(${scrolled * 0.12}px) rotate(${scrolled * 0.008}deg)`;
+      }
+      if (cardL && scrolled < 800) {
+        cardL.style.transform = `translateY(${-scrolled * 0.18}px)`;
+      }
+      if (cardR && scrolled < 800) {
+        cardR.style.transform = `translateY(${-scrolled * 0.24}px)`;
+      }
+    }, { passive: true });
+
+    // Onglets du Mini-Manuel
+    function openTab(tabId, btn) {
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      const target = document.getElementById(tabId);
+      if (target) target.classList.add('active');
+      if (btn) btn.classList.add('active');
+    }
+
+    // Accordéon FAQ
+    document.querySelectorAll('.faq-q').forEach(b => {
+      b.addEventListener('click', () => {
+        b.parentElement.classList.toggle('open');
+      });
+    });
+  </script>
 </body>
 </html>

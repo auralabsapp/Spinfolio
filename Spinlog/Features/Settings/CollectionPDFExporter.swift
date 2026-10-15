@@ -181,7 +181,7 @@ private struct PDFCoverPageView: View {
                 .font(.system(size: 14, weight: .medium))
                 .foregroundStyle(.gray)
 
-            Divider().padding(.vertical, 8)
+            Divider().overlay(Color.appSeparator).padding(.vertical, 8)
 
             infoRow("Compte Discogs", username)
             infoRow("Date d'export", exportDate.formatted(date: .long, time: .shortened))
@@ -234,11 +234,11 @@ private struct PDFInventoryPageView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             headerRow
-            Divider()
+            Divider().overlay(Color.appSeparator)
 
             ForEach(items) { item in
                 row(for: item)
-                Divider().opacity(0.3)
+                Divider().overlay(Color.appSeparator).opacity(0.3)
             }
 
             Spacer(minLength: 0)

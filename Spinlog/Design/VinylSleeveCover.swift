@@ -17,7 +17,10 @@ struct VinylSleeveCover: View {
             // Pochette d'album carrée
             AsyncCoverImage(url: coverURL, cornerRadius: 10, targetSize: size)
                 .frame(width: size, height: size)
-                .shadow(color: .black.opacity(0.30), radius: 12, x: -2, y: 6)
+                // Ombre de contact (très proche) puis ombre d'ambiance flottante (large et
+                // douce), même recette que les autres pochettes de l'app.
+                .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)
+                .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 10)
                 .overlay(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.8)
@@ -67,7 +70,7 @@ struct VinylSleeveCover: View {
 
             // Trou central
             Circle()
-                .fill(Color(uiColor: .systemGroupedBackground))
+                .fill(Color.appBackground)
                 .frame(width: size * 0.07, height: size * 0.07)
                 .shadow(color: .black.opacity(0.5), radius: 1, x: 0, y: 1)
         }

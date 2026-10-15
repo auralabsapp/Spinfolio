@@ -101,7 +101,7 @@ struct MyItemCard: View {
                             onShelfPlacement: { onShelfPlacement(item) }
                         )
 
-                        Divider().opacity(0.15).padding(.leading, 14)
+                        Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 14)
                     }
 
                     // Bouton pour ajouter un exemplaire supplémentaire
@@ -424,6 +424,16 @@ private struct SwipeableInstanceRow: View {
         return HStack(spacing: 12) {
             AsyncCoverImage(url: coverURL, cornerRadius: 6)
                 .frame(width: 38, height: 38)
+                // Micro-bordure pour l'épaisseur carton, comme les pochettes de la Collection et
+                // de la Wantlist.
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
+                )
+                // Ombre de contact (très proche) puis ombre d'ambiance flottante (large et
+                // douce), même recette que les autres pochettes de l'app.
+                .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)
+                .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 10)
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
