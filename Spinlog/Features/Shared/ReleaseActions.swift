@@ -129,7 +129,7 @@ final class ReleaseActions {
             collectionInstances = fetched
             isInCollection = !fetched.isEmpty
             if !fetched.isEmpty {
-                localStore.saveCollectionItems(fetched, username: username, folderId: DiscogsConstants.allFolderId)
+                await localStore.saveCollectionItems(fetched, username: username, folderId: DiscogsConstants.allFolderId)
                 if collectionFields.isEmpty {
                     collectionFields = await Self.fetchCollectionFields(username: username, credentials: credentials)
                 }
@@ -183,7 +183,7 @@ final class ReleaseActions {
     /// La note (rating) est partagée par Discogs entre tous les exemplaires d'une même
     /// release : on la répercute donc sur tous les exemplaires locaux, alors que les champs
     /// personnalisés restent propres à l'exemplaire édité.
-    func applyEditedValues(rating: Int, notes: [CollectionFieldValue], instanceId: Int? = nil) {
+    func applyEditedValues(rating: Int, notes: [CollectionFieldValue], instanceId: Int? = nil) async {
         guard let username = authManager.username else { return }
         guard !collectionInstances.isEmpty else { return }
 
@@ -197,8 +197,8 @@ final class ReleaseActions {
         }
 
         for instance in collectionInstances {
-            localStore.saveCollectionItems([instance], username: username, folderId: instance.folderId)
-            localStore.saveCollectionItems([instance], username: username, folderId: DiscogsConstants.allFolderId)
+            await localStore.saveCollectionItems([instance], username: username, folderId: instance.folderId)
+            await localStore.saveCollectionItems([instance], username: username, folderId: DiscogsConstants.allFolderId)
         }
     }
 
@@ -225,8 +225,8 @@ final class ReleaseActions {
                 credentials: credentials
             )
             for instance in collectionInstances {
-                localStore.saveCollectionItems([instance], username: username, folderId: instance.folderId)
-                localStore.saveCollectionItems([instance], username: username, folderId: DiscogsConstants.allFolderId)
+                await localStore.saveCollectionItems([instance], username: username, folderId: instance.folderId)
+                await localStore.saveCollectionItems([instance], username: username, folderId: DiscogsConstants.allFolderId)
             }
         } catch {
             collectionInstances = previousInstances
@@ -255,8 +255,8 @@ final class ReleaseActions {
             updatedNotes.append(CollectionFieldValue(fieldId: fieldId, value: canonicalValue))
         }
         collectionInstances[index].notes = updatedNotes
-        localStore.saveCollectionItems([collectionInstances[index]], username: username, folderId: instance.folderId)
-        localStore.saveCollectionItems([collectionInstances[index]], username: username, folderId: DiscogsConstants.allFolderId)
+        await localStore.saveCollectionItems([collectionInstances[index]], username: username, folderId: instance.folderId)
+        await localStore.saveCollectionItems([collectionInstances[index]], username: username, folderId: DiscogsConstants.allFolderId)
 
         do {
             try await DiscogsAPIClient.shared.updateCollectionField(
@@ -270,8 +270,8 @@ final class ReleaseActions {
             )
         } catch {
             collectionInstances[index].notes = previousNotes
-            localStore.saveCollectionItems([collectionInstances[index]], username: username, folderId: instance.folderId)
-            localStore.saveCollectionItems([collectionInstances[index]], username: username, folderId: DiscogsConstants.allFolderId)
+            await localStore.saveCollectionItems([collectionInstances[index]], username: username, folderId: instance.folderId)
+            await localStore.saveCollectionItems([collectionInstances[index]], username: username, folderId: DiscogsConstants.allFolderId)
             message = String(localized: "Impossible d'enregistrer le prix d'achat sur Discogs.")
         }
     }
@@ -433,8 +433,8 @@ final class ReleaseActions {
                 if let idx = collectionInstances.firstIndex(where: { $0.instanceId == tempInstanceId }) {
                     collectionInstances[idx] = realItem
                 }
-                localStore.saveCollectionItems([realItem], username: username, folderId: folderId)
-                localStore.saveCollectionItems([realItem], username: username, folderId: DiscogsConstants.allFolderId)
+                await localStore.saveCollectionItems([realItem], username: username, folderId: folderId)
+                await localStore.saveCollectionItems([realItem], username: username, folderId: DiscogsConstants.allFolderId)
                 LibraryMembershipStore.shared.notifyCollectionInstanceReplaced(oldInstanceId: tempInstanceId, newInstance: realItem)
             }
             // Rafraîchir les informations des exemplaires en arrière-plan
@@ -511,7 +511,7 @@ final class ReleaseActions {
         }
 
         if !networkMonitor.isConnected && localStore.isCollectionStale(username: username, folderId: DiscogsConstants.allFolderId) {
-            restoreRemovedInstances([instance], previousInstances: previousInstances, username: username)
+            await restoreRemovedInstances([instance], previousInstances: previousInstances, username: username)
             message = AppMessages.offlineStaleRemovalBlocked
             return
         }
@@ -550,7 +550,7 @@ final class ReleaseActions {
         } catch {
             // Refus définitif : la file l'aurait retenté trois fois en vain avant d'afficher un
             // échec, pendant que l'UI montrait le disque comme retiré. On le restaure tout de suite.
-            restoreRemovedInstances([instance], previousInstances: previousInstances, username: username)
+            await restoreRemovedInstances([instance], previousInstances: previousInstances, username: username)
             message = AppMessages.removalFailed
         }
     }
@@ -559,14 +559,14 @@ final class ReleaseActions {
     /// dossier ET dans "Tous") et prévient les autres écrans. Auparavant, le blocage hors ligne
     /// ne restaurait que ce view model : la liste de la collection, déjà prévenue du retrait,
     /// continuait d'afficher le disque comme retiré.
-    private func restoreRemovedInstances(_ removed: [CollectionItem], previousInstances: [CollectionItem], username: String) {
+    private func restoreRemovedInstances(_ removed: [CollectionItem], previousInstances: [CollectionItem], username: String) async {
         withAnimation(.easeInOut(duration: 0.2)) {
             collectionInstances = previousInstances
             isInCollection = !previousInstances.isEmpty
         }
         for instance in removed {
-            localStore.saveCollectionItems([instance], username: username, folderId: instance.folderId)
-            localStore.saveCollectionItems([instance], username: username, folderId: DiscogsConstants.allFolderId)
+            await localStore.saveCollectionItems([instance], username: username, folderId: instance.folderId)
+            await localStore.saveCollectionItems([instance], username: username, folderId: DiscogsConstants.allFolderId)
             LibraryMembershipStore.shared.notifyCollectionItemAdded(instance)
         }
     }
@@ -598,8 +598,8 @@ final class ReleaseActions {
         }
 
         localStore.removeCollectionItem(username: username, folderId: originFolderId, instanceId: instanceId)
-        localStore.saveCollectionItems([movedItem], username: username, folderId: toFolderId)
-        localStore.saveCollectionItems([movedItem], username: username, folderId: DiscogsConstants.allFolderId)
+        await localStore.saveCollectionItems([movedItem], username: username, folderId: toFolderId)
+        await localStore.saveCollectionItems([movedItem], username: username, folderId: DiscogsConstants.allFolderId)
         LibraryMembershipStore.shared.notifyCollectionInstanceReplaced(oldInstanceId: instanceId, newInstance: movedItem)
 
         // Exemplaire ajouté hors ligne et pas encore envoyé : on change simplement le dossier de
@@ -649,8 +649,8 @@ final class ReleaseActions {
                 }
             }
             localStore.removeCollectionItem(username: username, folderId: toFolderId, instanceId: instanceId)
-            localStore.saveCollectionItems([instance], username: username, folderId: originFolderId)
-            localStore.saveCollectionItems([instance], username: username, folderId: DiscogsConstants.allFolderId)
+            await localStore.saveCollectionItems([instance], username: username, folderId: originFolderId)
+            await localStore.saveCollectionItems([instance], username: username, folderId: DiscogsConstants.allFolderId)
             LibraryMembershipStore.shared.notifyCollectionInstanceReplaced(oldInstanceId: instanceId, newInstance: instance)
             message = AppMessages.moveFailed
         }
@@ -673,7 +673,7 @@ final class ReleaseActions {
         LibraryMembershipStore.shared.notifyCollectionItemRemoved(releaseId: releaseId)
 
         if !networkMonitor.isConnected && localStore.isCollectionStale(username: username, folderId: DiscogsConstants.allFolderId) {
-            restoreRemovedInstances(savedInstances, previousInstances: savedInstances, username: username)
+            await restoreRemovedInstances(savedInstances, previousInstances: savedInstances, username: username)
             if savedInstances.isEmpty {
                 LibraryMembershipStore.shared.markInCollection(releaseId)
             }
@@ -759,7 +759,7 @@ final class ReleaseActions {
                     }
                     message = AppMessages.discogsUnavailableQueued
                 } else {
-                    restoreRemovedInstances(remaining, previousInstances: remaining, username: username)
+                    await restoreRemovedInstances(remaining, previousInstances: remaining, username: username)
                     message = AppMessages.removalFailed
                 }
                 return
@@ -797,7 +797,7 @@ final class ReleaseActions {
                 dateAdded: ISO8601DateFormatter().string(from: Date()),
                 basicInformation: release.basicInformation
             )
-            localStore.saveWantlistItems([item], username: username)
+            await localStore.saveWantlistItems([item], username: username)
             LibraryMembershipStore.shared.notifyWantlistItemAdded(item)
         } else {
             LibraryMembershipStore.shared.markInWantlist(releaseId)
@@ -878,7 +878,7 @@ final class ReleaseActions {
                 isInWantlist = true
             }
             if let previousItem {
-                localStore.saveWantlistItems([previousItem], username: username)
+                await localStore.saveWantlistItems([previousItem], username: username)
                 LibraryMembershipStore.shared.notifyWantlistItemAdded(previousItem)
             } else {
                 LibraryMembershipStore.shared.markInWantlist(releaseId)

@@ -235,7 +235,7 @@ final class WantlistViewModel {
             isOfflineAndStale = false
 
             // Mise en cache dans SwiftData avec horodatage
-            persistToCache(username: username)
+            await persistToCache(username: username)
         } catch {
             // Repli sur le cache local
             await loadFromLocalStore(username: username)
@@ -265,7 +265,7 @@ final class WantlistViewModel {
             currentPage = 1
             totalPages = response.pagination.pages
             isOfflineAndStale = false
-            persistToCache(username: username)
+            await persistToCache(username: username)
         } catch {
             if items.isEmpty && !error.isCancellation {
                 errorMessage = error.localizedDescription
@@ -305,7 +305,7 @@ final class WantlistViewModel {
             currentPage += 1
             totalPages = response.pagination.pages
 
-            persistToCache(username: username)
+            await persistToCache(username: username)
         } catch {
             // On garde les éléments déjà affichés
         }
@@ -315,11 +315,11 @@ final class WantlistViewModel {
     /// Enregistre `items` dans le cache local. Une fois toutes les pages chargées (`items` part
     /// toujours de la page 1 renvoyée par Discogs, jamais du cache), la liste est complète : le
     /// cache est alors remplacé, ce qui en retire les disques sortis de la wantlist ailleurs.
-    private func persistToCache(username: String) {
+    private func persistToCache(username: String) async {
         if currentPage >= totalPages {
-            localStore.replaceWantlistItems(items, username: username)
+            await localStore.replaceWantlistItems(items, username: username)
         } else {
-            localStore.saveWantlistItems(items, username: username)
+            await localStore.saveWantlistItems(items, username: username)
         }
     }
 
@@ -413,7 +413,7 @@ final class WantlistViewModel {
                     instanceId: response.instanceId,
                     notes: []
                 )
-                localStore.saveCollectionItems([newItem], username: username, folderId: folderId)
+                await localStore.saveCollectionItems([newItem], username: username, folderId: folderId)
                 LibraryMembershipStore.shared.markInCollection(item.id)
                 NotificationCenter.default.post(
                     name: .collectionItemAdded,

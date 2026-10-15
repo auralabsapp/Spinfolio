@@ -26,11 +26,13 @@ final class DiscogsAuthManager: NSObject {
     private let callbackURL = URL(string: "spinlog://oauth-callback")!
     private var webAuthSession: ASWebAuthenticationSession?
 
-    var credentials: DiscogsCredentials? {
-        guard let token = keychain.get(Keys.accessToken),
-              let secret = keychain.get(Keys.accessTokenSecret) else { return nil }
-        return DiscogsCredentials(token: token, tokenSecret: secret)
-    }
+    /// Mis en cache en mémoire plutôt que relu au Keychain à chaque accès (voir `init`/`login`/
+    /// `logout`) : `SecItemCopyMatching` fait un aller-retour XPC synchrone vers `securityd`
+    /// (~15-30ms), et cette propriété est lue à 40+ endroits dans l'app — dont `loadMoreIfNeeded`,
+    /// appelée à chaque page chargée pendant le défilement de la Collection/Wantlist, ce qui
+    /// bloquait le thread principal (`DiscogsAuthManager` est `@MainActor`) et provoquait les
+    /// saccades observées dans Instruments.
+    private(set) var credentials: DiscogsCredentials?
 
     /// Regroupe `username`/`credentials` en une seule valeur optionnelle, pour remplacer le
     /// `guard let username = ..., let credentials = ...` répété à l'identique dans une douzaine
@@ -50,9 +52,13 @@ final class DiscogsAuthManager: NSObject {
     private override init() {
         let keychain = KeychainStore()
         keychain.migrateAccessibilityIfNeeded()
-        self.isAuthenticated = keychain.get(Keys.accessToken) != nil
+        let token = keychain.get(Keys.accessToken)
+        self.isAuthenticated = token != nil
         self.username = keychain.get(Keys.username)
         self.avatarURL = keychain.get(Keys.avatarURL)
+        if let token, let secret = keychain.get(Keys.accessTokenSecret) {
+            self.credentials = DiscogsCredentials(token: token, tokenSecret: secret)
+        }
         super.init()
         // Propage le compte déjà connu (relance de l'app) aux stores isolés par compte, pour
         // qu'ils chargent tout de suite les bonnes données plutôt que de démarrer à vide.
@@ -93,6 +99,7 @@ final class DiscogsAuthManager: NSObject {
             keychain.set(accessToken.secret, forKey: Keys.accessTokenSecret)
             keychain.set(identity.username, forKey: Keys.username)
             username = identity.username
+            credentials = DiscogsCredentials(token: accessToken.token, tokenSecret: accessToken.secret)
             isAuthenticated = true
             // Bascule les stores isolés par compte (tags, journal d'écoute) sur ce compte : s'il
             // a déjà été utilisé sur cet appareil, ses données sont restaurées immédiatement.
@@ -117,6 +124,7 @@ final class DiscogsAuthManager: NSObject {
         isAuthenticated = false
         username = nil
         avatarURL = nil
+        credentials = nil
         // Vide l'état en mémoire des stores isolés par compte (les données restent sur le
         // disque, prêtes à être restaurées si ce compte se reconnecte plus tard).
         TagStore.shared.setActiveUsername(nil)

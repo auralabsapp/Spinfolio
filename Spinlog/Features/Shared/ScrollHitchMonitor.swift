@@ -14,6 +14,18 @@ final class ScrollHitchMonitor {
     private var displayLink: CADisplayLink?
     private var lastTimestamp: CFTimeInterval?
 
+    /// `os_log` a lui-même un coût CPU non négligeable (file d'attente `firehose`, IPC vers le
+    /// daemon de log) : journaliser CHAQUE hitch pendant une rafale (ex: plusieurs dizaines de
+    /// hitchs de 20-40ms par seconde pendant un défilement chargé) ajoutait du travail sur le
+    /// thread principal qu'on cherche justement à désengorger, et polluait les traces Instruments
+    /// prises en parallèle. Au plus une ligne par seconde ; les hitchs suppriimés dans l'intervalle
+    /// sont comptés et leur pire valeur resurfacée dans la ligne suivante, pour ne pas perdre le
+    /// signal d'une rafale silencieuse.
+    private static let minLogInterval: CFTimeInterval = 1.0
+    private var lastLogTimestamp: CFTimeInterval = 0
+    private var suppressedCount = 0
+    private var worstSuppressedMs: Double = 0
+
     private init() {}
 
     func start() {
@@ -27,6 +39,9 @@ final class ScrollHitchMonitor {
         displayLink?.invalidate()
         displayLink = nil
         lastTimestamp = nil
+        lastLogTimestamp = 0
+        suppressedCount = 0
+        worstSuppressedMs = 0
     }
 
     @objc private func tick(_ link: CADisplayLink) {
@@ -42,7 +57,19 @@ final class ScrollHitchMonitor {
         let threshold = expectedMs * 1.5
         guard elapsedMs > threshold else { return }
 
-        Self.logger.warning("🐢 Hitch: \(String(format: "%.1f", elapsedMs), privacy: .public) ms (attendu ~\(String(format: "%.1f", expectedMs), privacy: .public) ms)")
+        guard link.timestamp - lastLogTimestamp >= Self.minLogInterval else {
+            suppressedCount += 1
+            worstSuppressedMs = max(worstSuppressedMs, elapsedMs)
+            return
+        }
+
+        let suffix = suppressedCount > 0
+            ? " (+\(suppressedCount) autre(s) dans la dernière seconde, pire : \(String(format: "%.1f", worstSuppressedMs)) ms)"
+            : ""
+        Self.logger.warning("🐢 Hitch: \(String(format: "%.1f", elapsedMs), privacy: .public) ms (attendu ~\(String(format: "%.1f", expectedMs), privacy: .public) ms)\(suffix, privacy: .public)")
+        lastLogTimestamp = link.timestamp
+        suppressedCount = 0
+        worstSuppressedMs = 0
     }
 }
 #endif

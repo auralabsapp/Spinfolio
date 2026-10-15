@@ -301,11 +301,27 @@ final class LocalDataStore {
 
     // MARK: - Collection
 
-    func saveCollectionItems(_ items: [CollectionItem], username: String, folderId: Int) {
+    /// Nombre d'éléments par lot dans les grosses boucles d'écriture ci-dessous.
+    private static let writeBatchSize = 25
+
+    /// Point de reprise coopératif entre deux lots d'écriture : sauvegarde le lot courant puis
+    /// rend la main au run loop. `LocalDataStore` reste sur l'acteur principal (SwiftData et les
+    /// 20+ sites d'appel synchrones de ce store l'exigent) — ce point de reprise ne déplace donc
+    /// pas le travail hors du thread principal, il le fragmente en tranches au lieu d'un seul bloc
+    /// ininterrompu. Sans lui, `syncCollectionFolder` en fin de synchro de fond ré-encodait toute la
+    /// collection (JSON + SwiftData) d'un coup, provoquant les gels de plusieurs secondes mesurés
+    /// dans Instruments juste après le lancement/connexion.
+    private func saveAndYieldIfNeeded(_ index: Int) async {
+        guard index > 0, index % Self.writeBatchSize == 0 else { return }
+        try? context.save()
+        await Task.yield()
+    }
+
+    func saveCollectionItems(_ items: [CollectionItem], username: String, folderId: Int) async {
         let now = Date()
         let encoder = JSONEncoder()
 
-        for item in items {
+        for (index, item) in items.enumerated() {
             guard let data = try? encoder.encode(item) else { continue }
             let entry = CachedCollectionEntry(
                 username: username,
@@ -316,6 +332,7 @@ final class LocalDataStore {
                 lastFetchedAt: now
             )
             context.insert(entry)
+            await saveAndYieldIfNeeded(index)
         }
 
         // Met à jour l'horodatage global pour ce dossier
@@ -366,7 +383,7 @@ final class LocalDataStore {
         return Set(entries.map(\.releaseId)).count
     }
 
-    func syncCollectionFolder(username: String, folderId: Int, fullItems: [CollectionItem]) {
+    func syncCollectionFolder(username: String, folderId: Int, fullItems: [CollectionItem]) async {
         let now = Date()
         let encoder = JSONEncoder()
 
@@ -376,12 +393,13 @@ final class LocalDataStore {
             }
         )
         if let oldEntries = try? context.fetch(deleteDescriptor) {
-            for entry in oldEntries {
+            for (index, entry) in oldEntries.enumerated() {
                 context.delete(entry)
+                await saveAndYieldIfNeeded(index)
             }
         }
 
-        for item in fullItems {
+        for (index, item) in fullItems.enumerated() {
             guard item.instanceId > 0 && item.instanceId != item.releaseId else { continue }
             guard let data = try? encoder.encode(item) else { continue }
             let entry = CachedCollectionEntry(
@@ -393,6 +411,7 @@ final class LocalDataStore {
                 lastFetchedAt: now
             )
             context.insert(entry)
+            await saveAndYieldIfNeeded(index)
         }
 
         let metaId = "\(username)_collection_\(folderId)"
@@ -678,11 +697,11 @@ final class LocalDataStore {
         try? context.save()
     }
 
-    func saveWantlistItems(_ items: [WantlistItem], username: String) {
+    func saveWantlistItems(_ items: [WantlistItem], username: String) async {
         let now = Date()
         let encoder = JSONEncoder()
 
-        for item in items {
+        for (index, item) in items.enumerated() {
             guard let data = try? encoder.encode(item) else { continue }
             let entry = CachedWantlistEntry(
                 username: username,
@@ -691,6 +710,7 @@ final class LocalDataStore {
                 lastFetchedAt: now
             )
             context.insert(entry)
+            await saveAndYieldIfNeeded(index)
         }
 
         let metaId = "\(username)_wantlist"
@@ -704,17 +724,18 @@ final class LocalDataStore {
     /// complète : contrairement à `saveWantlistItems` (qui ne fait qu'ajouter/mettre à jour),
     /// supprime aussi les entrées absentes — ex: retirées de la wantlist depuis discogs.com, qui
     /// sinon réapparaissaient hors ligne.
-    func replaceWantlistItems(_ items: [WantlistItem], username: String) {
+    func replaceWantlistItems(_ items: [WantlistItem], username: String) async {
         let keptReleaseIds = Set(items.map(\.id))
         let descriptor = FetchDescriptor<CachedWantlistEntry>(
             predicate: #Predicate<CachedWantlistEntry> { $0.username == username }
         )
         if let entries = try? context.fetch(descriptor) {
-            for entry in entries where !keptReleaseIds.contains(entry.releaseId) {
+            for (index, entry) in entries.enumerated() where !keptReleaseIds.contains(entry.releaseId) {
                 context.delete(entry)
+                await saveAndYieldIfNeeded(index)
             }
         }
-        saveWantlistItems(items, username: username)
+        await saveWantlistItems(items, username: username)
     }
 
     /// Identifiants de release présents dans le cache de la collection ("Tous"), sans décoder

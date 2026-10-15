@@ -565,8 +565,8 @@ struct WantlistView: View {
                 // Section actuellement épinglée en haut, pour la pastille de position de
                 // `SectionIndexBar` : ne déclenche un nouveau rendu que lorsqu'elle change
                 // réellement, pas à chaque image du défilement (voir `currentSectionKey`).
-                .onPreferenceChange(SectionHeaderOffsetKey.self) { offsets in
-                    let topKey = SectionScrollTracking.topSectionKey(from: offsets)
+                .onPreferenceChange(SectionHeaderOffsetKey.self) { candidate in
+                    let topKey = candidate?.key
                     if topKey != currentSectionKey { currentSectionKey = topKey }
                 }
                 .safeAreaInset(edge: .top) {

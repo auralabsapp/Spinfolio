@@ -115,7 +115,7 @@ struct ReleaseDetailView: View {
                     fields: actions.collectionFields,
                     folders: actions.folders,
                     onSaved: { rating, notes in
-                        actions.applyEditedValues(rating: rating, notes: notes, instanceId: item.instanceId)
+                        Task { await actions.applyEditedValues(rating: rating, notes: notes, instanceId: item.instanceId) }
                     },
                     onFolderChanged: { item, newFolderId in
                         Task { await actions.moveInstance(item, toFolderId: newFolderId) }

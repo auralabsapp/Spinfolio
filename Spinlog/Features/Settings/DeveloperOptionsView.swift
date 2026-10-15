@@ -527,8 +527,8 @@ struct DeveloperOptionsView: View {
                 } else {
                     updatedItem.notes.append(CollectionFieldValue(fieldId: netField.id, value: canonical))
                 }
-                LocalDataStore.shared.saveCollectionItems([updatedItem], username: username, folderId: item.folderId)
-                LocalDataStore.shared.saveCollectionItems([updatedItem], username: username, folderId: DiscogsConstants.allFolderId)
+                await LocalDataStore.shared.saveCollectionItems([updatedItem], username: username, folderId: item.folderId)
+                await LocalDataStore.shared.saveCollectionItems([updatedItem], username: username, folderId: DiscogsConstants.allFolderId)
                 updatedCount += 1
             } catch {
                 failureCount += 1

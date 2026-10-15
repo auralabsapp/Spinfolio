@@ -45,7 +45,7 @@ final class WidgetSnapshotSyncService {
                 username: username, folderId: DiscogsConstants.allFolderId, credentials: credentials
             )
             widgetSyncLogger.log("Sync widget : \(items.count) exemplaire(s) récupéré(s) depuis Discogs.")
-            LocalDataStore.shared.syncCollectionFolder(username: username, folderId: DiscogsConstants.allFolderId, fullItems: items)
+            await LocalDataStore.shared.syncCollectionFolder(username: username, folderId: DiscogsConstants.allFolderId, fullItems: items)
             widgetSyncLogger.log("Sync widget : instantané écrit, \(WidgetSnapshotStore.loadCollection().count) disque(s) désormais visibles par le widget.")
         } catch {
             widgetSyncLogger.error("Sync widget : échec de récupération de la collection — \(error.localizedDescription)")

@@ -43,7 +43,7 @@ final class CollectionExportViewModel {
                     folderId: DiscogsConstants.allFolderId,
                     credentials: credentials
                 )
-                localStore.syncCollectionFolder(username: username, folderId: DiscogsConstants.allFolderId, fullItems: items)
+                await localStore.syncCollectionFolder(username: username, folderId: DiscogsConstants.allFolderId, fullItems: items)
             } catch {
                 items = await localStore.getAllCollectionItems(username: username)
             }

@@ -320,7 +320,7 @@ final class StatsViewModel {
                 )
                 guard !Task.isCancelled else { return }
                 self.totalCollectionCount = allItems.count
-                self.localStore.syncCollectionFolder(username: username, folderId: DiscogsConstants.allFolderId, fullItems: allItems)
+                await self.localStore.syncCollectionFolder(username: username, folderId: DiscogsConstants.allFolderId, fullItems: allItems)
                 self.applyCollectionItems(allItems)
                 // Le total investi dépend de la collection : le recalculer sur la version fraîche
                 // (il avait été calculé sur le cache, éventuellement périmé).

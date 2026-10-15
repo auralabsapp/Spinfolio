@@ -96,7 +96,7 @@ struct CollectionView: View {
             .premiumFeaturesSheet(isPresented: $showingPremiumSheet)
             .sheet(item: $editingItem) { item in
                 CollectionItemEditSheet(item: item, fields: viewModel.fields, folders: viewModel.folders) { rating, notes in
-                    viewModel.applyEditedValues(for: item, rating: rating, notes: notes)
+                    Task { await viewModel.applyEditedValues(for: item, rating: rating, notes: notes) }
                 } onFolderChanged: { item, newFolderId in
                     Task { await viewModel.moveInstance(item, toFolderId: newFolderId) }
                 } onDelete: {
@@ -434,6 +434,9 @@ struct CollectionView: View {
 
     @ViewBuilder
     private var collectionViewCarousel: some View {
+        // Calculé une seule fois pour tout ce passage de rendu plutôt qu'un appel par ligne
+        // visible — voir `CollectionViewModel.copyBadges(for:)`.
+        let copyBadges = viewModel.copyBadges(for: viewModel.items)
         LibraryCarouselView<CollectionItem>(
             sections: viewModel.sections,
             indexEntries: viewModel.indexEntries,
@@ -446,7 +449,7 @@ struct CollectionView: View {
             secondaryBadge: { item in
                 AnyView(
                     HStack(spacing: 8) {
-                        if let badge = viewModel.copyBadge(for: item) {
+                        if let badge = copyBadges[item.id] {
                             Text(badge)
                                 .font(isRegularDisplay ? .footnote.bold() : .caption2.bold())
                                 .padding(.horizontal, isRegularDisplay ? 9 : 7)
@@ -625,6 +628,9 @@ struct CollectionView: View {
 
     @ViewBuilder
     private var collectionViewList: some View {
+        // Calculé une seule fois pour tout ce passage de rendu plutôt qu'un appel par ligne
+        // visible — voir `CollectionViewModel.copyBadges(for:)`.
+        let copyBadges = viewModel.copyBadges(for: viewModel.items)
         LibraryListView<CollectionItem>(
             sections: viewModel.sections,
             isLoading: isShowingSkeleton,
@@ -650,7 +656,7 @@ struct CollectionView: View {
                 AnyView(
                     CollectionRow(
                         item: item,
-                        copyBadge: viewModel.copyBadge(for: item),
+                        copyBadge: copyBadges[item.id],
                         isSelecting: isSelecting,
                         isSelected: selectedItemIds.contains(item.id)
                     )
@@ -808,6 +814,9 @@ struct CollectionView: View {
                             }
                         }
                     case .grid:
+                        // Calculé une seule fois pour tout ce passage de rendu plutôt qu'un appel
+                        // par ligne visible — voir `CollectionViewModel.copyBadges(for:)`.
+                        let copyBadges = viewModel.copyBadges(for: viewModel.items)
                         LibraryMosaicView<CollectionItem>(
                             sections: viewModel.sections,
                             isLoading: isShowingSkeleton,
@@ -835,7 +844,7 @@ struct CollectionView: View {
                                 AnyView(
                                     Color.clear
                                         .overlay(alignment: .topTrailing) {
-                                            if let badge = viewModel.copyBadge(for: item) {
+                                            if let badge = copyBadges[item.id] {
                                                 Text(badge)
                                                     .font(.system(size: 9, weight: .black, design: .rounded))
                                                     .foregroundStyle(.white)
@@ -934,8 +943,8 @@ struct CollectionView: View {
                 // Section actuellement épinglée en haut, pour la pastille de position de
                 // `SectionIndexBar` : ne déclenche un nouveau rendu que lorsqu'elle change
                 // réellement, pas à chaque image du défilement (voir `currentSectionKey`).
-                .onPreferenceChange(SectionHeaderOffsetKey.self) { offsets in
-                    let topKey = SectionScrollTracking.topSectionKey(from: offsets)
+                .onPreferenceChange(SectionHeaderOffsetKey.self) { candidate in
+                    let topKey = candidate?.key
                     if topKey != currentSectionKey { currentSectionKey = topKey }
                 }
                 .safeAreaInset(edge: .top) {

@@ -306,6 +306,26 @@ final class CollectionViewModel {
         return "Ex. \(index)/\(copies.count)"
     }
 
+    /// Même résultat que `copyBadge(for:)` appelé item par item, mais en une seule lecture de
+    /// `copiesByReleaseId` : `copiesByReleaseId` est un dictionnaire, donc une lecture de l'un de
+    /// ses éléments crée une dépendance Observation sur sa valeur ENTIÈRE. Appeler `copyBadge(for:)`
+    /// depuis la closure de chaque ligne visible (comme avant) en faisait donc un observateur
+    /// indépendant de tout le dictionnaire — à chaque page reçue pendant la synchro de fond
+    /// (qui réassigne `copiesByReleaseId` via `recomputeCopiesIndex()`), SwiftUI réinvalidait
+    /// chaque ligne séparément au lieu d'une seule fois pour toute la vue-liste. À appeler une
+    /// fois par passage de rendu (voir `CollectionView.collectionViewList`/`collectionViewCarousel`),
+    /// puis indexer le dictionnaire résultat (une valeur captée, pas une lecture Observation) dans
+    /// chaque ligne.
+    func copyBadges(for items: [CollectionItem]) -> [Int: String] {
+        var result: [Int: String] = [:]
+        for item in items {
+            if let badge = copyBadge(for: item) {
+                result[item.id] = badge
+            }
+        }
+        return result
+    }
+
     /// Pagination paresseuse : la 1re page s'affiche tout de suite (jamais toute la collection
     /// d'un coup), puis `backgroundSyncTask` continue de charger les pages suivantes en tâche
     /// de fond — c'est la seconde option explicitement permise par l'API Discogs pour les
@@ -634,7 +654,7 @@ final class CollectionViewModel {
                         self.items.removeAll { !serverIds.contains($0.instanceId) }
                     }
                 }
-                self.localStore.syncCollectionFolder(username: username, folderId: folderId, fullItems: self.items)
+                await self.localStore.syncCollectionFolder(username: username, folderId: folderId, fullItems: self.items)
             }
         }
     }
@@ -687,7 +707,7 @@ final class CollectionViewModel {
         // cette page (le reste de `newItems` y est déjà). Réencoder et réinsérer toute la liste
         // cumulée à chaque page rendait la synchro d'une grosse collection quadratique. Le cache
         // complet du dossier est réécrit une fois, en fin de synchro (`syncCollectionFolder`).
-        localStore.saveCollectionItems(validReleases, username: username, folderId: folderId)
+        await localStore.saveCollectionItems(validReleases, username: username, folderId: folderId)
     }
 
     /// Déplace plusieurs exemplaires vers un même dossier (édition en lot). Discogs n'expose
@@ -765,8 +785,8 @@ final class CollectionViewModel {
                         items.append(item)
                     }
                 }
-                localStore.saveCollectionItems([item], username: username, folderId: item.folderId)
-                localStore.saveCollectionItems([item], username: username, folderId: DiscogsConstants.allFolderId)
+                await localStore.saveCollectionItems([item], username: username, folderId: item.folderId)
+                await localStore.saveCollectionItems([item], username: username, folderId: DiscogsConstants.allFolderId)
                 LibraryMembershipStore.shared.markInCollection(item.releaseId)
                 actionMessage = AppMessages.removalFailed
             }
@@ -826,8 +846,8 @@ final class CollectionViewModel {
         }
 
         localStore.removeCollectionItem(username: username, folderId: originFolderId, instanceId: item.instanceId)
-        localStore.saveCollectionItems([movedItem], username: username, folderId: toFolderId)
-        localStore.saveCollectionItems([movedItem], username: username, folderId: DiscogsConstants.allFolderId)
+        await localStore.saveCollectionItems([movedItem], username: username, folderId: toFolderId)
+        await localStore.saveCollectionItems([movedItem], username: username, folderId: DiscogsConstants.allFolderId)
         LibraryMembershipStore.shared.notifyCollectionInstanceReplaced(oldInstanceId: item.instanceId, newInstance: movedItem)
 
         // Exemplaire ajouté hors ligne et pas encore envoyé : seul le dossier de son ajout en
@@ -859,7 +879,7 @@ final class CollectionViewModel {
             } catch {
                 // Refus définitif : on annule le déplacement optimiste (exemplaire, compteurs des
                 // dossiers, cache) au lieu de laisser la file échouer trois fois.
-                revertMove(original: item, moved: movedItem, username: username)
+                await revertMove(original: item, moved: movedItem, username: username)
                 actionMessage = AppMessages.moveFailed
             }
         } else {
@@ -874,7 +894,7 @@ final class CollectionViewModel {
     }
 
     /// Inverse exact de la mise à jour optimiste faite par `moveInstance`.
-    private func revertMove(original: CollectionItem, moved: CollectionItem, username: String) {
+    private func revertMove(original: CollectionItem, moved: CollectionItem, username: String) async {
         let originFolderId = original.folderId
         let toFolderId = moved.folderId
         withAnimation(.easeInOut(duration: 0.2)) {
@@ -899,20 +919,20 @@ final class CollectionViewModel {
             }
         }
         localStore.removeCollectionItem(username: username, folderId: toFolderId, instanceId: original.instanceId)
-        localStore.saveCollectionItems([original], username: username, folderId: originFolderId)
-        localStore.saveCollectionItems([original], username: username, folderId: DiscogsConstants.allFolderId)
+        await localStore.saveCollectionItems([original], username: username, folderId: originFolderId)
+        await localStore.saveCollectionItems([original], username: username, folderId: DiscogsConstants.allFolderId)
         LibraryMembershipStore.shared.notifyCollectionInstanceReplaced(oldInstanceId: original.instanceId, newInstance: original)
     }
 
     /// Reflète localement une note/des champs personnalisés déjà enregistrés par
     /// `CollectionItemEditSheet` (qui gère lui-même les appels réseau).
-    func applyEditedValues(for item: CollectionItem, rating: Int, notes: [CollectionFieldValue]) {
+    func applyEditedValues(for item: CollectionItem, rating: Int, notes: [CollectionFieldValue]) async {
         guard let index = items.firstIndex(where: { $0.id == item.id }) else { return }
         items[index].rating = rating
         items[index].notes = notes
         guard let username = authManager.username else { return }
         let updated = items[index]
-        LocalDataStore.shared.saveCollectionItems([updated], username: username, folderId: updated.folderId)
-        LocalDataStore.shared.saveCollectionItems([updated], username: username, folderId: DiscogsConstants.allFolderId)
+        await LocalDataStore.shared.saveCollectionItems([updated], username: username, folderId: updated.folderId)
+        await LocalDataStore.shared.saveCollectionItems([updated], username: username, folderId: DiscogsConstants.allFolderId)
     }
 }

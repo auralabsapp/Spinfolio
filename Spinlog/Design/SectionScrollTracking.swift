@@ -1,13 +1,37 @@
 import SwiftUI
 
-/// Position de chaque en-tête de section actuellement visible (Collection/Wantlist, listes et
-/// grilles), mesurée depuis le haut de sa zone de défilement — sert à savoir laquelle est
-/// épinglée en haut en ce moment (voir `SectionScrollTracking.topSectionKey` et la pastille de
-/// `SectionIndexBar`). Clé : la même « section key » que `LibrarySectionHeader`.
+/// Position de l'en-tête de section le plus proche du haut de sa zone de défilement (Collection/
+/// Wantlist, listes et grilles) — sert à savoir laquelle est épinglée en haut en ce moment, pour
+/// la pastille de position de `SectionIndexBar`. Clé : la même « section key » que
+/// `LibrarySectionHeader`.
+///
+/// Ne porte qu'un seul candidat (celui au `minY` le plus petit), pas un dictionnaire de toutes
+/// les sections visibles : avec 150-200 sections (ex. tri par Artiste sur une grosse collection),
+/// l'ancienne version (`[String: CGFloat]` fusionné via `value.merge(...)`) allouait et fusionnait
+/// un dictionnaire à chaque frame de défilement, pour chaque en-tête visible. Comparer deux
+/// `Candidate` (valeur scalaire) coûte une comparaison, pas une allocation — le `GeometryReader`
+/// par en-tête reste nécessaire (SwiftUI doit mesurer sa position), mais ce qu'on en fait pour
+/// déterminer « lequel est en haut » ne coûte plus rien de notable.
 struct SectionHeaderOffsetKey: PreferenceKey {
-    static var defaultValue: [String: CGFloat] = [:]
-    static func reduce(value: inout [String: CGFloat], nextValue: () -> [String: CGFloat]) {
-        value.merge(nextValue(), uniquingKeysWith: { _, new in new })
+    struct Candidate: Equatable {
+        let key: String
+        let minY: CGFloat
+    }
+
+    static var defaultValue: Candidate? = nil
+
+    /// Avec des en-têtes de section collants (`.listStyle(.plain)`, `pinnedViews:
+    /// [.sectionHeaders]`), celui de la section active est accroché à 0 tandis que les suivants,
+    /// pas encore atteints, restent à un décalage positif — c'est donc le minimum qui l'identifie.
+    static func reduce(value: inout Candidate?, nextValue: () -> Candidate?) {
+        guard let next = nextValue() else { return }
+        guard let current = value else {
+            value = next
+            return
+        }
+        if next.minY < current.minY {
+            value = next
+        }
     }
 }
 
@@ -20,19 +44,12 @@ extension View {
             GeometryReader { geometry in
                 Color.clear.preference(
                     key: SectionHeaderOffsetKey.self,
-                    value: [key: geometry.frame(in: .named(coordinateSpace)).minY]
+                    value: SectionHeaderOffsetKey.Candidate(
+                        key: key,
+                        minY: geometry.frame(in: .named(coordinateSpace)).minY
+                    )
                 )
             }
         )
-    }
-}
-
-enum SectionScrollTracking {
-    /// Section actuellement épinglée en haut, parmi les en-têtes actuellement visibles (ou tout
-    /// près) : avec des en-têtes de section collants (`.listStyle(.plain)`, `pinnedViews:
-    /// [.sectionHeaders]`), celui de la section active est accroché à 0 tandis que les suivants,
-    /// pas encore atteints, restent à un décalage positif — c'est donc le minimum.
-    static func topSectionKey(from offsets: [String: CGFloat]) -> String? {
-        offsets.min(by: { $0.value < $1.value })?.key
     }
 }

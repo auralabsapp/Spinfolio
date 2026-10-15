@@ -134,7 +134,7 @@ final class OfflineDownloadManager {
                 }
 
                 guard !Task.isCancelled else { return }
-                LocalDataStore.shared.syncCollectionFolder(
+                await LocalDataStore.shared.syncCollectionFolder(
                     username: username,
                     folderId: DiscogsConstants.allFolderId,
                     fullItems: allCollectionItems
@@ -164,7 +164,7 @@ final class OfflineDownloadManager {
                 guard !Task.isCancelled else { return }
                 // Liste complète : remplace le cache (au lieu d'y ajouter), pour en retirer aussi
                 // les disques sortis de la wantlist ailleurs depuis la dernière synchro.
-                LocalDataStore.shared.replaceWantlistItems(allWantlistItems, username: username)
+                await LocalDataStore.shared.replaceWantlistItems(allWantlistItems, username: username)
 
                 // 4. Pré-téléchargement des pochettes Kingfisher
                 let collectionUrls = allCollectionItems.compactMap {
