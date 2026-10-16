@@ -539,24 +539,45 @@ extension Color {
             : UIColor(red: 239.0 / 255.0, green: 236.0 / 255.0, blue: 228.0 / 255.0, alpha: 1.0)
     })
 
+    /// Les 3 états (repos / sélection active+cochée / sélection active+décochée) de l'ombre de
+    /// contact, précalculés une seule fois (`static let`, comme `appSecondaryText` ci-dessus) :
+    /// `coverContactShadow` reconstruisait un `UIColor { trait in ... }` neuf à chaque appel, soit
+    /// à chaque ligne/cellule visible et à chaque frame pendant le défilement de la Collection —
+    /// une allocation répétée inutile puisque seuls ces 3 cas existent réellement.
+    private static let coverContactShadowResting = Color(uiColor: UIColor { trait in
+        UIColor.black.withAlphaComponent(trait.userInterfaceStyle == .dark ? 0.45 : 0.22)
+    })
+    private static let coverContactShadowSelected = Color(uiColor: UIColor { trait in
+        let base: CGFloat = trait.userInterfaceStyle == .dark ? 0.45 : 0.22
+        return UIColor.black.withAlphaComponent(min(base * 1.35, 1.0))
+    })
+    private static let coverContactShadowDeselected = Color(uiColor: UIColor { trait in
+        let base: CGFloat = trait.userInterfaceStyle == .dark ? 0.45 : 0.22
+        return UIColor.black.withAlphaComponent(base * 0.55)
+    })
+
     /// Ombre de contact pour les pochettes de vinyle (proche et dense), adaptée dynamiquement en clair et sombre.
     static func coverContactShadow(isSelecting: Bool = false, isSelected: Bool = false) -> Color {
-        Color(uiColor: UIColor { trait in
-            let isDark = trait.userInterfaceStyle == .dark
-            let base: CGFloat = isDark ? 0.45 : 0.22
-            let alpha = isSelecting ? (isSelected ? base * 1.35 : base * 0.55) : base
-            return UIColor.black.withAlphaComponent(min(alpha, 1.0))
-        })
+        guard isSelecting else { return coverContactShadowResting }
+        return isSelected ? coverContactShadowSelected : coverContactShadowDeselected
     }
+
+    private static let coverAmbientShadowResting = Color(uiColor: UIColor { trait in
+        UIColor.black.withAlphaComponent(trait.userInterfaceStyle == .dark ? 0.65 : 0.35)
+    })
+    private static let coverAmbientShadowSelected = Color(uiColor: UIColor { trait in
+        let base: CGFloat = trait.userInterfaceStyle == .dark ? 0.65 : 0.35
+        return UIColor.black.withAlphaComponent(min(base * 1.3, 1.0))
+    })
+    private static let coverAmbientShadowDeselected = Color(uiColor: UIColor { trait in
+        let base: CGFloat = trait.userInterfaceStyle == .dark ? 0.65 : 0.35
+        return UIColor.black.withAlphaComponent(base * 0.5)
+    })
 
     /// Ombre d'ambiance flottante pour les pochettes de vinyle (large et diffuse), adaptée dynamiquement en clair et sombre.
     static func coverAmbientShadow(isSelecting: Bool = false, isSelected: Bool = false) -> Color {
-        Color(uiColor: UIColor { trait in
-            let isDark = trait.userInterfaceStyle == .dark
-            let base: CGFloat = isDark ? 0.65 : 0.35
-            let alpha = isSelecting ? (isSelected ? base * 1.3 : base * 0.5) : base
-            return UIColor.black.withAlphaComponent(min(alpha, 1.0))
-        })
+        guard isSelecting else { return coverAmbientShadowResting }
+        return isSelected ? coverAmbientShadowSelected : coverAmbientShadowDeselected
     }
 }
 

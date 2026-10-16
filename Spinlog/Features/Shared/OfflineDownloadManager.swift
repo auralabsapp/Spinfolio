@@ -94,7 +94,13 @@ final class OfflineDownloadManager {
         if let lastSyncDate, Date().timeIntervalSince(lastSyncDate) < DiscogsConstants.sixHoursTTL {
             return
         }
-        startDownload(username: username, credentials: credentials)
+        // Déclenché automatiquement (lancement/retour au premier plan), jamais par le bouton
+        // "Synchroniser maintenant" (qui appelle `startDownload` directement et doit rester en
+        // priorité normale) — `Task` hérite des valeurs `@TaskLocal` de son contexte de création,
+        // donc cette liaison couvre tout le téléchargement lancé par `startDownload` ci-dessous.
+        DiscogsRateLimiter.$priority.withValue(.background) {
+            startDownload(username: username, credentials: credentials)
+        }
     }
 
     /// Lance le téléchargement complet de la collection, de la wantlist et des pochettes,

@@ -57,7 +57,12 @@ actor MasterResolutionService {
     private func startWorkerIfNeeded() {
         guard worker == nil else { return }
         worker = Task {
-            await runQueue()
+            // Sans ce `@TaskLocal`, ces requêtes de fond consommaient le quota Discogs à la même
+            // priorité qu'une ouverture de fiche release par l'utilisateur (voir le même
+            // correctif sur `CollectionViewModel.startBackgroundSync`).
+            await DiscogsRateLimiter.$priority.withValue(.background) {
+                await runQueue()
+            }
         }
     }
 

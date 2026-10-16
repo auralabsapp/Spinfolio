@@ -282,7 +282,12 @@ final class WantlistAlertStore {
            Date().timeIntervalSince(lastCheck) < minimumAppOpenCheckInterval {
             return
         }
-        await checkAlerts()
+        // Déclenché automatiquement au lancement/retour au premier plan, jamais par un geste
+        // explicite (contrairement au pull-to-refresh de `WantlistView`, qui appelle `checkAlerts()`
+        // directement et doit donc rester en priorité normale).
+        await DiscogsRateLimiter.$priority.withValue(.background) {
+            await checkAlerts()
+        }
     }
 
     /// Vérifie une alerte précise et envoie une notification si le prix est inférieur au seuil

@@ -19,6 +19,15 @@ import WebKit
 /// propre à Spinlog (jamais partagé avec Safari) — voir `DiscogsAuthManager.logout()`, qui la vide
 /// systématiquement pour qu'elle ne puisse jamais afficher un compte différent de celui actif dans
 /// l'app.
+/// Enveloppe `Identifiable` pour présenter une `SafariView` via `.sheet(item:)`/`.fullScreenCover(item:)`
+/// — préférer `item:` à un `Bool` associé à une propriété séparée, source d'une course d'état déjà
+/// rencontrée dans ce projet (voir `UserProfileSheet`). Tout lien vers discogs.com doit passer par
+/// `SafariView` (jamais `Link`/`openURL`, qui ouvriraient Safari externe et sa session partagée).
+struct SafariViewRequest: Identifiable {
+    let url: URL
+    var id: String { url.absoluteString }
+}
+
 struct SafariView: View {
     /// Vide la session web persistante (cookies, stockage local...) utilisée par toutes les
     /// `SafariView` de l'app. À appeler impérativement à chaque déconnexion Discogs

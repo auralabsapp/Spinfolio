@@ -629,8 +629,9 @@ struct CollectionView: View {
     @ViewBuilder
     private var collectionViewList: some View {
         // Calculé une seule fois pour tout ce passage de rendu plutôt qu'un appel par ligne
-        // visible — voir `CollectionViewModel.copyBadges(for:)`.
+        // visible — voir `CollectionViewModel.copyBadges(for:)`/`tagsByInstance(for:)`.
         let copyBadges = viewModel.copyBadges(for: viewModel.items)
+        let allTags = viewModel.tagsByInstance(for: viewModel.items)
         LibraryListView<CollectionItem>(
             sections: viewModel.sections,
             isLoading: isShowingSkeleton,
@@ -657,6 +658,7 @@ struct CollectionView: View {
                     CollectionRow(
                         item: item,
                         copyBadge: copyBadges[item.id],
+                        tags: allTags[item.id] ?? [],
                         isSelecting: isSelecting,
                         isSelected: selectedItemIds.contains(item.id)
                     )

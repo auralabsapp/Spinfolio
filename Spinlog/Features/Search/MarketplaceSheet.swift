@@ -9,6 +9,7 @@ struct MarketplaceSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var viewModel = MarketplaceSheetViewModel()
+    @State private var safariRequest: SafariViewRequest?
 
     var body: some View {
         NavigationStack {
@@ -22,6 +23,9 @@ struct MarketplaceSheet: View {
                     }
                 }
                 .task { await viewModel.load(releaseId: releaseId) }
+                .sheet(item: $safariRequest) { request in
+                    SafariView(url: request.url)
+                }
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
@@ -75,7 +79,9 @@ struct MarketplaceSheet: View {
                 }
 
                 Section {
-                    Link(destination: DiscogsConstants.websiteURL.appendingPathComponent("sell/release/\(releaseId)")) {
+                    Button {
+                        safariRequest = SafariViewRequest(url: DiscogsConstants.websiteURL.appendingPathComponent("sell/release/\(releaseId)"))
+                    } label: {
                         Label("Voir les annonces sur Discogs.com", systemImage: "arrow.up.right.square")
                     }
                     .listRowBackground(Color.clear)

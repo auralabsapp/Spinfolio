@@ -7,12 +7,15 @@ struct CollectionRow: View {
 
     let item: CollectionItem
     var copyBadge: String? = nil
+    /// Calculés par l'appelant (voir `CollectionViewModel.tagsByInstance(for:)`) plutôt que lus
+    /// ici depuis `TagStore.shared` : une lecture directe du store établirait une dépendance
+    /// `@Observable` sur tout son dictionnaire interne, et modifier le tag d'UN disque
+    /// invaliderait alors TOUTES les lignes visibles plutôt que la seule concernée.
+    var tags: [String] = []
     /// Mode sélection multiple actif pour toute la liste (contrôle l'apparition de la pastille).
     var isSelecting: Bool = false
     /// État coché/décoché de cet exemplaire, pertinent seulement si `isSelecting` est vrai.
     var isSelected: Bool = false
-
-    @State private var tagStore = TagStore.shared
 
     private var info: BasicInformation { item.basicInformation }
 
@@ -129,10 +132,6 @@ struct CollectionRow: View {
             return thumb
         }
         return nil
-    }
-
-    private var tags: [String] {
-        tagStore.tags(for: item.instanceId, releaseId: item.releaseId)
     }
 
     /// Nombre de champs personnalisés Discogs renseignés par l'utilisateur

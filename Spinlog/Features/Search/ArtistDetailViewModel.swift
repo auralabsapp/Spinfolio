@@ -285,15 +285,20 @@ final class ArtistDetailViewModel {
         var done = 0
         discogsClassificationProgress = ClassificationProgress(done: 0, total: pending.count)
         let workIdsByMaster = Dictionary(pending.map { ($0.work.discogsId, $0.work.id) }, uniquingKeysWith: { first, _ in first })
-        await DiscogsWorkClassifier.classify(
-            pending.map { DiscogsWorkClassifier.PendingMaster(masterId: $0.work.discogsId, mainRelease: $0.mainRelease) },
-            artistName: artistName
-        ) { masterId, category in
-            guard let workId = workIdsByMaster[masterId] else { return }
-            discogsCategories[workId] = category
-            done += 1
-            discogsClassificationProgress = ClassificationProgress(done: done, total: pending.count)
-            leavePendingFilterIfEmpty()
+        // Classement progressif en tâche de fond pendant que l'utilisateur consulte déjà la
+        // discographie — même appel que `DiscogsCategoryBackfillService`, qui le priorise déjà en
+        // `.background` ; ce point d'appel-ci ne le faisait pas, incohérence corrigée ici.
+        await DiscogsRateLimiter.$priority.withValue(.background) {
+            await DiscogsWorkClassifier.classify(
+                pending.map { DiscogsWorkClassifier.PendingMaster(masterId: $0.work.discogsId, mainRelease: $0.mainRelease) },
+                artistName: artistName
+            ) { masterId, category in
+                guard let workId = workIdsByMaster[masterId] else { return }
+                discogsCategories[workId] = category
+                done += 1
+                discogsClassificationProgress = ClassificationProgress(done: done, total: pending.count)
+                leavePendingFilterIfEmpty()
+            }
         }
     }
 

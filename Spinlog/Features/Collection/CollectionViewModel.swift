@@ -326,6 +326,23 @@ final class CollectionViewModel {
         return result
     }
 
+    /// Même principe que `copyBadges(for:)` : calculé une seule fois pour tout le passage de
+    /// rendu et renvoyé comme dictionnaire simple, plutôt que chaque `CollectionRow` ne lise
+    /// `TagStore.shared` elle-même. `TagStore.tags(for:releaseId:)` lit en interne un dictionnaire
+    /// entier stocké comme propriété `@Observable` — y accéder depuis le corps de CHAQUE ligne
+    /// établissait une dépendance sur ce dictionnaire complet, donc modifier le tag d'UN seul
+    /// disque invalidait et refaisait le rendu de TOUTES les lignes visibles.
+    func tagsByInstance(for items: [CollectionItem]) -> [Int: [String]] {
+        var result: [Int: [String]] = [:]
+        for item in items {
+            let tags = TagStore.shared.tags(for: item.instanceId, releaseId: item.releaseId)
+            if !tags.isEmpty {
+                result[item.instanceId] = tags
+            }
+        }
+        return result
+    }
+
     /// Pagination paresseuse : la 1re page s'affiche tout de suite (jamais toute la collection
     /// d'un coup), puis `backgroundSyncTask` continue de charger les pages suivantes en tâche
     /// de fond — c'est la seconde option explicitement permise par l'API Discogs pour les
@@ -625,36 +642,45 @@ final class CollectionViewModel {
     /// Continue de charger les pages suivantes une par une derrière l'écran (chaque appel
     /// passe par le throttle Discogs), jusqu'à couvrir tout le dossier ou jusqu'à ce qu'un
     /// changement de dossier/tri annule cette tâche pour la remplacer par une nouvelle.
+    ///
+    /// `Task(priority: .utility)` ne règle que l'ordonnancement CPU : le throttle Discogs lit un
+    /// `@TaskLocal` différent (`DiscogsRateLimiter.priority`), qui restait à `.normal` faute
+    /// d'être jamais lié à `.background` — la synchro de fond consommait donc le quota exactement
+    /// comme une requête utilisateur (ex: ouverture d'une fiche release), au lieu de lui céder la
+    /// place via `waitForBackgroundSlot()` (déjà écrit, mais jamais déclenché). `withValue`
+    /// propage la valeur à tous les `await` de cette tâche, y compris dans `fetchPage`.
     private func startBackgroundSync(username: String, folderId: Int, credentials: DiscogsCredentials) {
         backgroundSyncTask?.cancel()
         backgroundSyncTask = Task(priority: .utility) { [weak self] in
-            guard let self else { return }
-            var reachedLastPage = false
-            while !Task.isCancelled {
-                guard self.selectedFolderId == folderId else { break }
-                let page = self.currentPage
-                let total = self.totalPages
-                guard page < total else {
-                    reachedLastPage = true
-                    break
-                }
-                do {
-                    try await self.fetchPage(page + 1, username: username, folderId: folderId, credentials: credentials, append: true)
-                } catch {
-                    break
-                }
-            }
-            if !Task.isCancelled {
-                self.backgroundSyncTask = nil
-                // Élagage seulement après un parcours complet et réussi : après une erreur ou un
-                // changement de dossier, la liste des exemplaires renvoyés serait incomplète.
-                if reachedLastPage, self.selectedFolderId == folderId {
-                    let serverIds = self.serverInstanceIdsInCurrentPass
-                    if self.items.contains(where: { !serverIds.contains($0.instanceId) }) {
-                        self.items.removeAll { !serverIds.contains($0.instanceId) }
+            await DiscogsRateLimiter.$priority.withValue(.background) {
+                guard let self else { return }
+                var reachedLastPage = false
+                while !Task.isCancelled {
+                    guard self.selectedFolderId == folderId else { break }
+                    let page = self.currentPage
+                    let total = self.totalPages
+                    guard page < total else {
+                        reachedLastPage = true
+                        break
+                    }
+                    do {
+                        try await self.fetchPage(page + 1, username: username, folderId: folderId, credentials: credentials, append: true)
+                    } catch {
+                        break
                     }
                 }
-                await self.localStore.syncCollectionFolder(username: username, folderId: folderId, fullItems: self.items)
+                if !Task.isCancelled {
+                    self.backgroundSyncTask = nil
+                    // Élagage seulement après un parcours complet et réussi : après une erreur ou un
+                    // changement de dossier, la liste des exemplaires renvoyés serait incomplète.
+                    if reachedLastPage, self.selectedFolderId == folderId {
+                        let serverIds = self.serverInstanceIdsInCurrentPass
+                        if self.items.contains(where: { !serverIds.contains($0.instanceId) }) {
+                            self.items.removeAll { !serverIds.contains($0.instanceId) }
+                        }
+                    }
+                    await self.localStore.syncCollectionFolder(username: username, folderId: folderId, fullItems: self.items)
+                }
             }
         }
     }

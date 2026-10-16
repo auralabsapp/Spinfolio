@@ -22,7 +22,11 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
             }
             let work = Task { @MainActor in
                 WantlistAlertStore.shared.scheduleBackgroundCheck()
-                await WantlistAlertStore.shared.checkAlerts()
+                // Vraie tâche de fond iOS (l'utilisateur ne regarde pas l'app) : priorité basse
+                // pour le quota Discogs, par cohérence avec les autres synchros de fond.
+                await DiscogsRateLimiter.$priority.withValue(.background) {
+                    await WantlistAlertStore.shared.checkAlerts()
+                }
                 appRefreshTask.setTaskCompleted(success: !Task.isCancelled)
             }
             // Sans ce handler, une vérification trop longue (nombreuses alertes, quota Discogs)

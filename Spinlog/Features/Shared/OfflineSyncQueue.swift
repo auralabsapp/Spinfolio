@@ -145,6 +145,10 @@ final class OfflineSyncQueue {
         guard let (username, credentials) = DiscogsAuthManager.shared.session else { return }
 
         isProcessing = true
+        // Rejoué silencieusement (retour réseau ou après un ajout hors ligne), jamais en réponse
+        // directe à une action que l'utilisateur regarde activement — voir le même correctif sur
+        // `CollectionViewModel.startBackgroundSync`.
+        await DiscogsRateLimiter.$priority.withValue(.background) {
         defer { isProcessing = false }
 
         // Les actions d'un autre compte restent en file, intactes, jusqu'à ce que ce compte se
@@ -207,6 +211,7 @@ final class OfflineSyncQueue {
                     try? await Task.sleep(for: .seconds(2))
                 }
             }
+        }
         }
     }
 

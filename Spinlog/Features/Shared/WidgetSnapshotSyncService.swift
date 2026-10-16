@@ -40,20 +40,25 @@ final class WidgetSnapshotSyncService {
             return
         }
         widgetSyncLogger.log("Sync widget : récupération de la collection complète (isStale=\(isStale), snapshotIsEmpty=\(snapshotIsEmpty))...")
-        do {
-            let items = try await DiscogsAPIClient.shared.fetchAllCollectionItems(
-                username: username, folderId: DiscogsConstants.allFolderId, credentials: credentials
-            )
-            widgetSyncLogger.log("Sync widget : \(items.count) exemplaire(s) récupéré(s) depuis Discogs.")
-            await LocalDataStore.shared.syncCollectionFolder(username: username, folderId: DiscogsConstants.allFolderId, fullItems: items)
-            widgetSyncLogger.log("Sync widget : instantané écrit, \(WidgetSnapshotStore.loadCollection().count) disque(s) désormais visibles par le widget.")
-        } catch {
-            widgetSyncLogger.error("Sync widget : échec de récupération de la collection — \(error.localizedDescription)")
-            // En cas d'erreur réseau, si le widget n'a toujours rien, repli gracieux sur le cache local
-            if WidgetSnapshotStore.loadCollection().isEmpty {
-                let cached = await LocalDataStore.shared.getAllCollectionItems(username: username)
-                if !cached.isEmpty {
-                    LocalDataStore.shared.updateWidgetSnapshot(cached)
+        // Déclenché au lancement/retour au premier plan, jamais en réponse à une action visible
+        // de l'utilisateur — priorité basse pour le quota Discogs (voir le même correctif sur
+        // `CollectionViewModel.startBackgroundSync`).
+        await DiscogsRateLimiter.$priority.withValue(.background) {
+            do {
+                let items = try await DiscogsAPIClient.shared.fetchAllCollectionItems(
+                    username: username, folderId: DiscogsConstants.allFolderId, credentials: credentials
+                )
+                widgetSyncLogger.log("Sync widget : \(items.count) exemplaire(s) récupéré(s) depuis Discogs.")
+                await LocalDataStore.shared.syncCollectionFolder(username: username, folderId: DiscogsConstants.allFolderId, fullItems: items)
+                widgetSyncLogger.log("Sync widget : instantané écrit, \(WidgetSnapshotStore.loadCollection().count) disque(s) désormais visibles par le widget.")
+            } catch {
+                widgetSyncLogger.error("Sync widget : échec de récupération de la collection — \(error.localizedDescription)")
+                // En cas d'erreur réseau, si le widget n'a toujours rien, repli gracieux sur le cache local
+                if WidgetSnapshotStore.loadCollection().isEmpty {
+                    let cached = await LocalDataStore.shared.getAllCollectionItems(username: username)
+                    if !cached.isEmpty {
+                        LocalDataStore.shared.updateWidgetSnapshot(cached)
+                    }
                 }
             }
         }

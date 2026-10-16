@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 
 /// Fait respecter le quota Discogs (60 requêtes/minute pour une IP authentifiée) en amont de
 /// chaque appel, et garde trace des headers `X-Discogs-Ratelimit*` renvoyés par l'API pour
@@ -9,6 +10,13 @@ import Foundation
 /// de sa propre isolation pour sérialiser les décisions de throttle sans course de données.
 actor DiscogsRateLimiter {
     static let shared = DiscogsRateLimiter()
+
+    /// Visible dans Instruments (onglet "Points of Interest" / "os_signpost"), filtrable sur le
+    /// sous-système/catégorie ci-dessous : un intervalle par requête, englobant l'attente
+    /// éventuelle, avec la priorité en message — permet de vérifier visuellement que les requêtes
+    /// `.background` attendent bien plus longtemps/souvent que les `.normal`, sans avoir à
+    /// déduire quoi que ce soit du seul timing brut des requêtes réseau.
+    private let signposter = OSSignposter(subsystem: "com.aurelienscarpa.Spinlog", category: "DiscogsRateLimiter")
 
     /// Priorité des requêtes émises par la tâche en cours (voir `DiscogsRequestPriority`).
     /// `TaskLocal` : la tâche de fond l'active une fois pour tout son travail, sans passer de
@@ -25,6 +33,13 @@ actor DiscogsRateLimiter {
     /// toute requête concurrente ou dérive d'horloge.
     private let maxRequestsPerMinute = 50
     private let rollingWindowSeconds: TimeInterval = 60
+    /// Plafond dur sur l'attente, quelle que soit la cause (fenêtre glissante saturée, solde
+    /// Discogs bas) : la réservation est anticipée (voir `waitForSlot`), donc une rafale de
+    /// requêtes (plusieurs fiches release ouvertes coup sur coup, 3 requêtes chacune) peut faire
+    /// composer les créneaux réservés sur plusieurs minutes. Mieux vaut risquer un 429 ponctuel
+    /// (déjà géré par le retry sur `Retry-After` dans `DiscogsAPIClient`) que de laisser l'UI
+    /// paraître bloquée indéfiniment.
+    private let maxQueueWaitSeconds: TimeInterval = 20
 
     /// Dernière requête de priorité normale (action de l'utilisateur, synchro de la collection,
     /// résolution des années…) : les requêtes de fond leur laissent la place.
@@ -41,6 +56,17 @@ actor DiscogsRateLimiter {
 
     /// Point d'entrée du client : attend un créneau selon la priorité de la tâche courante.
     func waitForSlot(priority: DiscogsRequestPriority) async throws {
+        let priorityLabel: String
+        switch priority {
+        case .normal: priorityLabel = "normal"
+        case .background: priorityLabel = "background"
+        }
+        let signpostID = signposter.makeSignpostID()
+        let state = signposter.beginInterval(
+            "Discogs rate limit wait", id: signpostID, "priority: \(priorityLabel, privacy: .public)"
+        )
+        defer { signposter.endInterval("Discogs rate limit wait", state) }
+
         switch priority {
         case .normal:
             lastNormalRequestDate = Date()
@@ -74,7 +100,11 @@ actor DiscogsRateLimiter {
             }
             let delay = readyAt.timeIntervalSince(now)
             if delay <= 0 { break }
-            try await Task.sleep(for: .seconds(delay))
+            // Plafonné : on redescend boucler plutôt que de dormir d'une traite sur un délai
+            // potentiellement très long (voir `maxQueueWaitSeconds`) — une requête normale
+            // arrivée entre-temps doit pouvoir faire réévaluer `lastNormalRequestDate` à la
+            // prochaine itération plutôt que rester figée dans un unique `Task.sleep`.
+            try await Task.sleep(for: .seconds(min(delay, maxQueueWaitSeconds)))
         }
         lastBackgroundSlot = Date()
         try await waitForSlot()
@@ -110,6 +140,10 @@ actor DiscogsRateLimiter {
             // Décompte local en attendant la réponse, qui fera foi (`recordResponse`).
             self.remaining = remaining - 1
         }
+
+        // Voir `maxQueueWaitSeconds` : évite qu'une rafale de requêtes ne fasse composer les
+        // créneaux réservés sur plusieurs minutes.
+        slot = min(slot, now.addingTimeInterval(maxQueueWaitSeconds))
 
         reserve(slot)
         let delay = slot.timeIntervalSince(now)

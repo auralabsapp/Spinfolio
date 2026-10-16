@@ -236,7 +236,12 @@ struct ListeningLogCard: View {
 
     private var listeningControls: some View {
         HStack(spacing: 12) {
-            Button(action: onLogListening) {
+            Button(action: {
+                // Sans ce garde-fou, retaper sur une écoute déjà en cours incrémentait le
+                // compteur à chaque appui au lieu de ne rien faire.
+                guard !isPlayingThisRelease else { return }
+                onLogListening()
+            }) {
                 Image(systemName: "opticaldisc.fill")
                     .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(isPlayingThisRelease ? Color.white : Color.spinlogPink)

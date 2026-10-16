@@ -301,8 +301,13 @@ final class LocalDataStore {
 
     // MARK: - Collection
 
-    /// Nombre d'éléments par lot dans les grosses boucles d'écriture ci-dessous.
-    private static let writeBatchSize = 25
+    /// Nombre d'éléments par lot dans les grosses boucles d'écriture ci-dessous. Réduit de 25 à 10
+    /// (mesuré à l'Instruments : tranches de ~94ms pendant la synchro de fond au lancement de
+    /// l'app, période où elle traite plusieurs pages de 100 éléments coup sur coup pendant que
+    /// l'utilisateur consulte déjà la Collection) — des lots plus petits cèdent la main plus
+    /// souvent, donc des à-coups plus courts, au prix de `context.save()` un peu plus fréquents
+    /// (incrémental, donc bon marché par rapport à l'encodage JSON de chaque lot).
+    private static let writeBatchSize = 10
 
     /// Point de reprise coopératif entre deux lots d'écriture : sauvegarde le lot courant puis
     /// rend la main au run loop. `LocalDataStore` reste sur l'acteur principal (SwiftData et les

@@ -27,6 +27,7 @@ struct CollectionItemEditSheet: View {
     @State private var errorMessage: String?
     @State private var showingErrorAlert = false
     @State private var showingDeleteConfirmation = false
+    @State private var safariRequest: SafariViewRequest?
 
     // MARK: - Plus-value de l'exemplaire
     /// Instance dédiée à la seule lecture de la cote marketplace (`refreshMarketEstimateIfNeeded`),
@@ -176,7 +177,9 @@ struct CollectionItemEditSheet: View {
                                 .font(.footnote)
                                 .foregroundStyle(Color.appSecondaryText)
 
-                            Link(destination: DiscogsConstants.websiteURL.appendingPathComponent("settings/collection")) {
+                            Button {
+                                safariRequest = SafariViewRequest(url: DiscogsConstants.websiteURL.appendingPathComponent("settings/collection"))
+                            } label: {
                                 Label("Gérer les champs sur discogs.com", systemImage: "arrow.up.right")
                                     .font(.footnote.weight(.medium))
                             }
@@ -276,6 +279,9 @@ struct CollectionItemEditSheet: View {
             }
             .sheet(isPresented: $showingMarketplaceSheet) {
                 MarketplaceSheet(releaseId: item.releaseId)
+            }
+            .sheet(item: $safariRequest) { request in
+                SafariView(url: request.url)
             }
             .task {
                 if fields.isEmpty, let username = DiscogsAuthManager.shared.username {
