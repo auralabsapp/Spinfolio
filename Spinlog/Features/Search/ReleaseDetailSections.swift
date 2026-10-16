@@ -99,7 +99,7 @@ struct ReleaseQuickActionsBar: View {
                 if actions.isInCollection {
                     Capsule()
                         .fill(Color.spinlogPinkButtonGradient)
-                        .shadow(color: Color.buttonPinkBottom.opacity(0.22), radius: 4, y: 1.5)
+                        .shadow(color: Color.buttonPinkShadow, radius: 4, y: 1.5)
                 } else {
                     Capsule()
                         .fill(Color.primary.opacity(0.06))
@@ -283,7 +283,7 @@ struct ReleaseQuickActionsBar: View {
                         if actions.isInWantlist {
                             Capsule()
                                 .fill(Color.spinlogPinkButtonGradient)
-                                .shadow(color: Color.buttonPinkBottom.opacity(0.22), radius: 4, y: 1.5)
+                                .shadow(color: Color.buttonPinkShadow, radius: 4, y: 1.5)
                         } else {
                             Capsule()
                                 .fill(Color.primary.opacity(0.06))

@@ -49,10 +49,8 @@ struct WantlistRow: View {
                     }
                 }
                 .opacity(isSelecting ? (isSelected ? 1.0 : 0.45) : 1.0)
-                // Ombre de contact (très proche) puis ombre d'ambiance flottante (large et douce) ;
-                // toutes deux atténuées pendant la sélection multiple, comme l'opacité de la pochette.
-                .shadow(color: .black.opacity(isSelecting ? (isSelected ? 0.30 : 0.12) : 0.22), radius: 5, x: 0, y: 3)
-                .shadow(color: .black.opacity(isSelecting ? (isSelected ? 0.45 : 0.18) : 0.35), radius: 16, x: 0, y: 10)
+                // Ombres physiques adaptées automatiquement aux modes clair et sombre
+                .vinylCoverShadow(isSelecting: isSelecting, isSelected: isSelected)
                 .animation(.librarySelectionToggle, value: isSelected)
 
             VStack(alignment: .leading, spacing: 3) {

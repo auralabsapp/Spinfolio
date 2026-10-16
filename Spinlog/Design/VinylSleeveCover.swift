@@ -17,10 +17,8 @@ struct VinylSleeveCover: View {
             // Pochette d'album carrée
             AsyncCoverImage(url: coverURL, cornerRadius: 10, targetSize: size)
                 .frame(width: size, height: size)
-                // Ombre de contact (très proche) puis ombre d'ambiance flottante (large et
-                // douce), même recette que les autres pochettes de l'app.
-                .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)
-                .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 10)
+                // Ombres physiques adaptées automatiquement aux modes clair et sombre
+                .vinylCoverShadow()
                 .overlay(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.8)

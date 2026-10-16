@@ -164,10 +164,9 @@ enum AppColorTheme: String, CaseIterable, Identifiable, Codable, Sendable {
                     ? UIColor(red: 0.78, green: 0.60, blue: 0.42, alpha: 1.0)
                     : UIColor(red: 0.45, green: 0.30, blue: 0.18, alpha: 1.0)
             }
-            // Les thèmes Premium (hors Signature) adoptent une patine légère — désaturée et
-            // assombrie — pour un rendu "pochette vinyle vintage" plutôt qu'une couleur vive
-            // sortie d'usine.
-            return base.aged()
+            // Patine vinyle vintage : appliquée en mode clair comme en mode sombre,
+            // avec un effet adouci en mode sombre pour préserver l'éclat des couleurs.
+            return base.aged(isDark: isDark)
         }
     }
 
@@ -217,7 +216,7 @@ enum AppColorTheme: String, CaseIterable, Identifiable, Codable, Sendable {
                     ? UIColor(red: 0.88, green: 0.74, blue: 0.56, alpha: 1.0)
                     : UIColor(red: 0.72, green: 0.56, blue: 0.38, alpha: 1.0)
             }
-            return base.aged()
+            return base.aged(isDark: isDark)
         }
     }
 
@@ -228,58 +227,63 @@ enum AppColorTheme: String, CaseIterable, Identifiable, Codable, Sendable {
             switch self {
             case .signature:
                 base = isDark
-                    ? UIColor(red: 0.74, green: 0.36, blue: 0.92, alpha: 1.0)
+                    ? UIColor(red: 0.52, green: 0.18, blue: 0.72, alpha: 1.0)
                     : UIColor(red: 0.68, green: 0.30, blue: 0.86, alpha: 1.0)
             case .cobalt:
                 base = isDark
-                    ? UIColor(red: 0.16, green: 0.48, blue: 0.92, alpha: 1.0)
+                    ? UIColor(red: 0.08, green: 0.34, blue: 0.78, alpha: 1.0)
                     : UIColor(red: 0.04, green: 0.36, blue: 0.82, alpha: 1.0)
             case .emerald:
                 base = isDark
-                    ? UIColor(red: 0.20, green: 0.72, blue: 0.46, alpha: 1.0)
+                    ? UIColor(red: 0.10, green: 0.52, blue: 0.32, alpha: 1.0)
                     : UIColor(red: 0.08, green: 0.50, blue: 0.30, alpha: 1.0)
             case .amber:
                 base = isDark
-                    ? UIColor(red: 0.90, green: 0.46, blue: 0.12, alpha: 1.0)
+                    ? UIColor(red: 0.75, green: 0.32, blue: 0.06, alpha: 1.0)
                     : UIColor(red: 0.80, green: 0.34, blue: 0.02, alpha: 1.0)
             case .ruby:
                 base = isDark
-                    ? UIColor(red: 0.84, green: 0.22, blue: 0.30, alpha: 1.0)
+                    ? UIColor(red: 0.68, green: 0.14, blue: 0.22, alpha: 1.0)
                     : UIColor(red: 0.72, green: 0.10, blue: 0.18, alpha: 1.0)
             case .velvet:
                 base = isDark
-                    ? UIColor(red: 0.54, green: 0.38, blue: 0.90, alpha: 1.0)
+                    ? UIColor(red: 0.38, green: 0.22, blue: 0.72, alpha: 1.0)
                     : UIColor(red: 0.40, green: 0.22, blue: 0.80, alpha: 1.0)
             case .gold:
                 base = isDark
-                    ? UIColor(red: 0.85, green: 0.64, blue: 0.22, alpha: 1.0)
+                    ? UIColor(red: 0.65, green: 0.42, blue: 0.06, alpha: 1.0)
                     : UIColor(red: 0.70, green: 0.46, blue: 0.05, alpha: 1.0)
             case .pacific:
                 base = isDark
-                    ? UIColor(red: 0.14, green: 0.66, blue: 0.74, alpha: 1.0)
+                    ? UIColor(red: 0.04, green: 0.46, blue: 0.54, alpha: 1.0)
                     : UIColor(red: 0.02, green: 0.46, blue: 0.55, alpha: 1.0)
             case .slate:
                 base = isDark
-                    ? UIColor(red: 0.66, green: 0.70, blue: 0.76, alpha: 1.0)
+                    ? UIColor(red: 0.32, green: 0.36, blue: 0.44, alpha: 1.0)
                     : UIColor(red: 0.26, green: 0.30, blue: 0.38, alpha: 1.0)
             case .espresso:
                 base = isDark
-                    ? UIColor(red: 0.62, green: 0.44, blue: 0.26, alpha: 1.0)
+                    ? UIColor(red: 0.38, green: 0.22, blue: 0.12, alpha: 1.0)
                     : UIColor(red: 0.32, green: 0.20, blue: 0.10, alpha: 1.0)
             }
-            return base.aged()
+            return base.aged(isDark: isDark)
         }
     }
 }
 
 extension UIColor {
-    /// Patine légère : désature et assombrit un peu la couleur, pour un rendu "pochette vinyle
-    /// vintage" plutôt qu'une teinte vive sortie d'usine — utilisée par tous les thèmes de
-    /// couleur Premium, à l'exception du Signature (rose néon) qui garde son éclat d'origine.
-    func aged() -> UIColor {
+    /// Patine vinyle vintage :
+    /// - En thème clair : désature (-28%) et assombrit (-10%) pour un rendu "pochette vinyle d'époque" avec bon contraste sur fond crème/beige.
+    /// - En thème sombre : effet fortement diminué (légère désaturation de -8% seulement, luminosité préservée à 98%)
+    ///   pour éviter tout aspect terne, délavé ou fade sur le fond anthracite chaud (#141316).
+    func aged(isDark: Bool = false) -> UIColor {
         var hue: CGFloat = 0, saturation: CGFloat = 0, brightness: CGFloat = 0, alpha: CGFloat = 0
         guard getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha) else { return self }
-        return UIColor(hue: hue, saturation: saturation * 0.72, brightness: brightness * 0.90, alpha: alpha)
+        if isDark {
+            return UIColor(hue: hue, saturation: saturation * 0.92, brightness: min(brightness * 0.98, 1.0), alpha: alpha)
+        } else {
+            return UIColor(hue: hue, saturation: saturation * 0.72, brightness: brightness * 0.90, alpha: alpha)
+        }
     }
 }
 
@@ -387,9 +391,20 @@ extension Color {
     /// Base des barres de graphique avec fondu plus marqué.
     static var chartPinkSoftBottom: Color { spinlogPink.opacity(0.20) }
 
-    /// Teintes pour les boutons et pastilles avec texte blanc.
+    /// Teinte haute (sommet) pour les boutons d'action et pastilles à dégradé.
     static var buttonPinkTop: Color { spinlogPinkLight }
-    static var buttonPinkBottom: Color { spinlogPink }
+
+    /// Teinte basse (base) pour les boutons d'action et pastilles à dégradé :
+    /// - En clair : teinte primaire (déjà soutenue).
+    /// - En sombre : teinte profonde `deepColor` pour garantir un dégradé lumineux, tactile
+    ///   et richement contrasté, évitant tout aspect plat ou uniforme.
+    static var buttonPinkBottom: Color {
+        Color(uiColor: UIColor { trait in
+            trait.userInterfaceStyle == .dark
+                ? ThemeManager.shared.currentTheme.deepUIColor.resolvedColor(with: trait)
+                : ThemeManager.shared.currentTheme.primaryUIColor.resolvedColor(with: trait)
+        })
+    }
 
     /// Dégradé pour les boutons d'action sélectionnés (Collection, Wantlist).
     static var spinlogPinkButtonGradient: LinearGradient {
@@ -398,6 +413,18 @@ extension Color {
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
+    }
+
+    /// Ombre portée / halo de relief pour les boutons actifs à dégradé :
+    /// - En clair : ombre portée teintée douce sous le bouton (22% d'opacité).
+    /// - En sombre : halo d'ambiance coloré (38% d'opacité) qui détache la capsule du fond sombre.
+    static var buttonPinkShadow: Color {
+        Color(uiColor: UIColor { trait in
+            let theme = ThemeManager.shared.currentTheme
+            return trait.userInterfaceStyle == .dark
+                ? theme.primaryUIColor.resolvedColor(with: trait).withAlphaComponent(0.38)
+                : theme.primaryUIColor.resolvedColor(with: trait).withAlphaComponent(0.22)
+        })
     }
 
     /// Dégradé accentué pour l'histogramme (sommet lumineux et base douce en fondu).
@@ -460,46 +487,77 @@ extension Color {
     /// Arrière-plan subtil vert sauge pour les pastilles de tags.
     static let tagBackground = Color.tagForeground.opacity(0.14)
 
+    /// Luminosité (0 = noir, 1 = blanc) des gris de texte en thème clair, centralisée ici : seule
+    /// valeur à modifier pour assombrir/éclaircir `appSecondaryText`/`appTertiaryText` en un point
+    /// unique plutôt que de rechercher des `UIColor(white:)` éparpillés dans le fichier.
+    private static let lightSecondaryTextBrightness: CGFloat = 0.18
+    private static let lightTertiaryTextBrightness: CGFloat = 0.28
+
     /// Gris "secondaire" plus soutenu dans toute l'app : le `.secondary` système est jugé trop
     /// pâle en thème clair. Le thème sombre garde exactement le gris système par défaut, inchangé.
     static let appSecondaryText = Color(uiColor: UIColor { trait in
-        trait.userInterfaceStyle == .dark ? UIColor.secondaryLabel : UIColor(white: 0.32, alpha: 1.0)
+        trait.userInterfaceStyle == .dark ? UIColor.secondaryLabel : UIColor(white: lightSecondaryTextBrightness, alpha: 1.0)
     })
 
     /// Idem pour le niveau "tertiaire" (chevrons de navigation, libellés très discrets) :
     /// le `.tertiary` système (~30% de noir) devient quasi illisible en thème clair.
     static let appTertiaryText = Color(uiColor: UIColor { trait in
-        trait.userInterfaceStyle == .dark ? UIColor.tertiaryLabel : UIColor(white: 0.45, alpha: 1.0)
+        trait.userInterfaceStyle == .dark ? UIColor.tertiaryLabel : UIColor(white: lightTertiaryTextBrightness, alpha: 1.0)
     })
 
-    /// Fond uni de l'app en thème clair (remplace le blanc système, jugé trop froid) ; le thème
-    /// sombre garde le fond système par défaut, inchangé. Volontairement PAS utilisée là où le
-    /// fond est calculé à partir de la couleur moyenne de la pochette (`UIColor.infoBackgroundColor`,
-    /// fiches artiste/master/release) : ces écrans gardent leur propre teinte dynamique.
+    /// Fond uni de l'app :
+    /// - Thème clair : beige vinyle / crème papier (#F7F5F0) chaleureux au lieu du blanc froid.
+    /// - Thème sombre : anthracite chaud salon Hi-Fi (#141316, 20/19/22) au lieu du noir froid,
+    ///   permettant aux ombres portées des pochettes de conserver tout leur relief et leur profondeur physique.
     static let appBackground = Color(uiColor: UIColor { trait in
         trait.userInterfaceStyle == .dark
-            ? UIColor.systemBackground
+            ? UIColor(red: 20.0 / 255.0, green: 19.0 / 255.0, blue: 22.0 / 255.0, alpha: 1.0)
             : UIColor(red: 247.0 / 255.0, green: 245.0 / 255.0, blue: 240.0 / 255.0, alpha: 1.0)
     })
 
-    /// Trame de fond unie des en-têtes de section épinglés (Liste/Mosaïque de la Collection et de
-    /// la Wantlist) en thème clair, à la place du flou `.regularMaterial` précédent. Dérivée de la
-    /// teinte du thème de couleur actif (variante claire, `lightColor`) plutôt que figée en rose,
-    /// pour suivre les thèmes Premium alternatifs (bleu, émeraude, etc.) — légèrement désaturée
-    /// pour rester discrète derrière le texte plutôt qu'une teinte trop vive.
+    /// Trame de fond des en-têtes de section épinglés (Liste/Mosaïque de la Collection et de la Wantlist) :
+    /// - En thème clair : dérivée de la teinte du thème de couleur actif (variante claire), légèrement désaturée.
+    /// - En thème sombre : capsule feutrée sombre (#201E24) offrant un détachement net et doux sur l'anthracite.
     static var appHeaderBackground: Color {
-        let resolvedLight = ThemeManager.shared.currentTheme.lightUIColor
-            .resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
-        return Color(uiColor: resolvedLight.desaturated(by: 0.7)).opacity(0.25)
+        Color(uiColor: UIColor { trait in
+            if trait.userInterfaceStyle == .dark {
+                return UIColor(red: 32.0 / 255.0, green: 30.0 / 255.0, blue: 36.0 / 255.0, alpha: 0.92)
+            } else {
+                let resolvedLight = ThemeManager.shared.currentTheme.lightUIColor
+                    .resolvedColor(with: trait)
+                return resolvedLight.desaturated(by: 0.7).withAlphaComponent(0.25)
+            }
+        })
     }
 
-    /// Séparateurs (`Divider()`, traits de `List`) en thème clair ; le thème sombre garde le gris
-    /// système par défaut, inchangé.
+    /// Séparateurs (`Divider()`, traits de `List`) :
+    /// - Thème clair : beige doux (#EFECE4).
+    /// - Thème sombre : ardoise douce (#26242B, 38/36/43) pour une séparation fine et élégante.
     static let appSeparator = Color(uiColor: UIColor { trait in
         trait.userInterfaceStyle == .dark
-            ? UIColor.separator
+            ? UIColor(red: 38.0 / 255.0, green: 36.0 / 255.0, blue: 43.0 / 255.0, alpha: 1.0)
             : UIColor(red: 239.0 / 255.0, green: 236.0 / 255.0, blue: 228.0 / 255.0, alpha: 1.0)
     })
+
+    /// Ombre de contact pour les pochettes de vinyle (proche et dense), adaptée dynamiquement en clair et sombre.
+    static func coverContactShadow(isSelecting: Bool = false, isSelected: Bool = false) -> Color {
+        Color(uiColor: UIColor { trait in
+            let isDark = trait.userInterfaceStyle == .dark
+            let base: CGFloat = isDark ? 0.45 : 0.22
+            let alpha = isSelecting ? (isSelected ? base * 1.35 : base * 0.55) : base
+            return UIColor.black.withAlphaComponent(min(alpha, 1.0))
+        })
+    }
+
+    /// Ombre d'ambiance flottante pour les pochettes de vinyle (large et diffuse), adaptée dynamiquement en clair et sombre.
+    static func coverAmbientShadow(isSelecting: Bool = false, isSelected: Bool = false) -> Color {
+        Color(uiColor: UIColor { trait in
+            let isDark = trait.userInterfaceStyle == .dark
+            let base: CGFloat = isDark ? 0.65 : 0.35
+            let alpha = isSelecting ? (isSelected ? base * 1.3 : base * 0.5) : base
+            return UIColor.black.withAlphaComponent(min(alpha, 1.0))
+        })
+    }
 }
 
 private extension UIColor {
@@ -512,15 +570,22 @@ private extension UIColor {
 }
 
 extension ShapeStyle where Self == AnyShapeStyle {
-    /// Trame de fond des en-têtes de section épinglés (Liste/Mosaïque) : teinte unie
-    /// (`Color.appHeaderBackground`) en thème clair, flou `.regularMaterial` system inchangé en
-    /// thème sombre — `AnyShapeStyle` efface la différence de type entre les deux styles.
+    /// Trame de fond des en-têtes de section épinglés (Liste/Mosaïque) :
+    /// Applique `Color.appHeaderBackground` de manière cohérente en thèmes clair et sombre.
     static func libraryHeaderBackground(for colorScheme: ColorScheme) -> AnyShapeStyle {
-        colorScheme == .dark ? AnyShapeStyle(.regularMaterial) : AnyShapeStyle(Color.appHeaderBackground)
+        AnyShapeStyle(Color.appHeaderBackground)
     }
 }
 
 extension View {
+    /// Applique les deux ombres de pochette vinyle (contact + ambiance) adaptées dynamiquement
+    /// aux thèmes clair et sombre pour préserver le relief physique de l'objet vinyle.
+    func vinylCoverShadow(isSelecting: Bool = false, isSelected: Bool = false) -> some View {
+        self
+            .shadow(color: .coverContactShadow(isSelecting: isSelecting, isSelected: isSelected), radius: 5, x: 0, y: 3)
+            .shadow(color: .coverAmbientShadow(isSelecting: isSelecting, isSelected: isSelected), radius: 16, x: 0, y: 10)
+    }
+
     /// Rendu discret et moderne style Apple Music pour les sections groupées
     /// (fond translucide très subtil sans bordure agressive, fondant naturellement dans la couleur d'ambiance)
     func appleMusicGroupedCard(cornerRadius: CGFloat = 14) -> some View {

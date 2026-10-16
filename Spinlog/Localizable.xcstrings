@@ -5307,7 +5307,11 @@
         }
       }
     },
+    "Export CSV & PDF" : {
+
+    },
     "Export CSV complet" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5327,7 +5331,11 @@
         }
       }
     },
+    "Exporte toute ta discothèque au format tableur (Excel, Numbers, Sheets) avec métadonnées, notes et tags, ou en PDF avec état et prix d'achat." : {
+
+    },
     "Exporte toute ta discothèque au format tableur (Excel, Numbers, Sheets) avec métadonnées, notes et tags." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5569,6 +5577,7 @@
       }
     },
     "Génère un document PDF listant ta collection avec état et prix d'achat, à présenter par exemple à un assureur." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

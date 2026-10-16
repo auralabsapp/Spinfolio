@@ -442,7 +442,7 @@ private struct SwipeableInstanceRow: View {
                         .foregroundStyle(.primary)
 
                     Text("• \(folderName)")
-                        .font(.caption)
+                        .font(.footnote)
                         .foregroundStyle(Color.appSecondaryText)
                         .lineLimit(1)
                 }
@@ -451,7 +451,7 @@ private struct SwipeableInstanceRow: View {
                     let filledNotes = item.notes.filter { !$0.value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
                     if !filledNotes.isEmpty {
                         Text("\(filledNotes.count) infos perso")
-                            .font(.caption2.weight(.medium))
+                            .font(.footnote.weight(.medium))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(Color.accentColor.opacity(0.10), in: Capsule())
@@ -460,7 +460,7 @@ private struct SwipeableInstanceRow: View {
 
                     if let date = item.dateAddedDate {
                         Text(date.formatted(Date.FormatStyle(date: .numeric, time: .omitted)))
-                            .font(.caption2)
+                            .font(.footnote)
                             .foregroundStyle(Color.appSecondaryText)
                     }
 
@@ -474,7 +474,7 @@ private struct SwipeableInstanceRow: View {
                     FlowLayout(spacing: 4) {
                         ForEach(itemTags, id: \.self) { tag in
                             Text(tag)
-                                .font(.caption2.weight(.medium))
+                                .font(.footnote.weight(.medium))
                                 .lineLimit(1)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
@@ -515,7 +515,7 @@ private struct SwipeableInstanceRow: View {
                             .font(.system(size: 8, weight: .bold))
                         Text("Prix d'achat")
                     }
-                    .font(.caption2.weight(.medium))
+                    .font(.footnote.weight(.medium))
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
                     .foregroundStyle(Color.appSecondaryText)
@@ -536,7 +536,7 @@ private struct SwipeableInstanceRow: View {
                         .font(.system(size: 8, weight: .bold))
                     Text("? € (+ ?%)")
                 }
-                .font(.caption2.weight(.semibold))
+                .font(.footnote.weight(.semibold))
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
                 .foregroundStyle(Color(red: 0.88, green: 0.52, blue: 0.12))
@@ -571,7 +571,7 @@ private struct InstanceGainBadge: View {
                         .font(.system(size: 8, weight: .bold))
                     Text("\(isPositive ? "+" : "")\(gain.formatted(.currency(code: marketCurrency).precision(.fractionLength(0))))")
                 }
-                .font(.caption2.weight(.medium))
+                .font(.footnote.weight(.medium))
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
                 .background((isPositive ? Color.gainPositive : Color.gainNegative).opacity(0.14), in: Capsule())

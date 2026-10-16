@@ -94,10 +94,10 @@ private let paywallFeatures: [PaywallFeatureInfo] = [
         description: "Personnalise l'ambiance visuelle de l'app selon tes goûts avec 8 palettes exclusives (Bleu Cobalt, Vert Émeraude, Orange Crépuscule, Rouge Rubis, Violet Améthyste, Cuivre & Or...)."
     ),
     PaywallFeatureInfo(
-        icon: "tablecells.fill",
+        icon: "square.and.arrow.up.fill",
         color: .mint,
-        title: "Export CSV complet",
-        description: "Exporte toute ta discothèque au format tableur (Excel, Numbers, Sheets) avec métadonnées, notes et tags."
+        title: "Export CSV & PDF",
+        description: "Exporte toute ta discothèque au format tableur (Excel, Numbers, Sheets) avec métadonnées, notes et tags, ou en PDF avec état et prix d'achat."
     )
 ]
 

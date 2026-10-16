@@ -64,16 +64,10 @@ private let premiumFeatures: [PremiumFeatureInfo] = [
         description: "Personnalise l'ambiance visuelle de l'app selon tes goûts avec 8 palettes exclusives (Bleu Cobalt, Vert Émeraude, Orange Crépuscule, Rouge Rubis, Violet Améthyste, Cuivre & Or...)."
     ),
     PremiumFeatureInfo(
-        icon: "tablecells.fill",
+        icon: "square.and.arrow.up.fill",
         color: .mint,
-        title: "Export CSV complet",
-        description: "Exporte toute ta discothèque au format tableur (Excel, Numbers, Sheets) avec métadonnées, notes et tags."
-    ),
-    PremiumFeatureInfo(
-        icon: "doc.richtext",
-        color: .indigo,
-        title: "Déclaration de collection (PDF)",
-        description: "Génère un document PDF listant ta collection avec état et prix d'achat, à présenter par exemple à un assureur."
+        title: "Export CSV & PDF",
+        description: "Exporte toute ta discothèque au format tableur (Excel, Numbers, Sheets) avec métadonnées, notes et tags, ou en PDF avec état et prix d'achat."
     )
 ]
 

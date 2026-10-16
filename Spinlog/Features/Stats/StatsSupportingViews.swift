@@ -218,9 +218,13 @@ struct StatCounterCard: View {
     private var cardContent: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
+                // Cadre fixe : les symboles SF ont des boîtes englobantes de hauteurs différentes
+                // à taille de police égale (ex. "square.stack.fill" plus haut que "heart.fill"),
+                // ce qui décalait verticalement la valeur/le sous-titre d'une carte à l'autre.
                 Image(systemName: systemImage)
                     .font(.title3)
                     .foregroundStyle(tint)
+                    .frame(width: 24, height: 24)
                 Spacer()
                 if action != nil {
                     Image(systemName: "chevron.right")
@@ -233,12 +237,16 @@ struct StatCounterCard: View {
                 .font(.title.bold())
                 .monospacedDigit()
 
-            if let subtitle {
-                Text(subtitle)
-                    .font(.caption)
-                    .foregroundStyle(Color.appSecondaryText)
-                    .lineLimit(1)
-            }
+            // Toujours rendu (même vide) plutôt qu'un `if let` conditionnel : tant que le
+            // compteur d'une carte n'est pas encore chargé (ex: Collection, souvent plus lente
+            // que Wantlist/Artistes à cause de la synchro de fond paginée), son contenu n'aurait
+            // que 2 lignes au lieu de 3 — décalant la valeur vers le haut par rapport à ses
+            // voisines déjà chargées, le temps que ce chargement rattrape.
+            Text(subtitle ?? " ")
+                .font(.caption)
+                .foregroundStyle(Color.appSecondaryText)
+                .lineLimit(1)
+                .opacity(subtitle == nil ? 0 : 1)
         }
         // `maxHeight: .infinity` : sans ça, une carte dont le `subtitle` n'est pas encore connu
         // (ex: compteur encore en cours de chargement) est plus courte que ses voisines et se
