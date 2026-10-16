@@ -142,6 +142,14 @@ struct SpinlogPaywallView: View {
             case .success(.success):
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
                 dismiss()
+            case .success(.pending):
+                // Achat ni abouti ni annulé (ex: "Demander à acheter" du partage familial, ou
+                // validation différée) : sans ce cas, l'écran restait figé sans aucun retour,
+                // laissant penser à un blocage plutôt qu'à un achat en attente d'approbation.
+                purchaseErrorMessage = "Ton achat est en attente de validation (par exemple si \"Demander à acheter\" est activé sur ce compte). Tu seras averti dès qu'il sera approuvé."
+                showingPurchaseErrorAlert = true
+            case .success(.userCancelled):
+                break
             case .success:
                 break
             case .failure(let error):
