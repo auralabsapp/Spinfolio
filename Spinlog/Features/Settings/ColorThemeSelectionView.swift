@@ -69,7 +69,7 @@ struct ColorThemeSelectionView: View {
 
                         if themeManager.currentTheme.isPremiumOnly {
                             Text("PREMIUM")
-                                .font(.system(size: 9, weight: .bold))
+                                .font(.emphasisLabel)
                                 .foregroundStyle(themeManager.currentTheme.primaryColor)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
@@ -182,7 +182,7 @@ struct ColorThemeSelectionView: View {
 
                         if theme.isPremiumOnly {
                             Image(systemName: isLocked ? "lock.fill" : "crown.fill")
-                                .font(.system(size: 11))
+                                .font(.inlineIcon)
                                 .foregroundStyle(isLocked ? Color.appTertiaryText : Color.orange)
                         }
                     }

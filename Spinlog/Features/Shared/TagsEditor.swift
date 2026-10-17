@@ -419,7 +419,7 @@ struct TagPill: View {
             if let onRemove {
                 Button(action: onRemove) {
                     Image(systemName: "xmark")
-                        .font(.system(size: 8, weight: .bold))
+                        .font(.inlineIcon)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Retirer le tag \(tag)")

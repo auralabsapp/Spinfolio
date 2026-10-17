@@ -139,7 +139,7 @@ private struct TrackPlayButton: View {
             // Petite forme d'onde animée façon Apple Music visible uniquement pendant la lecture
             if isPlaying {
                 Image(systemName: "waveform")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.inlineIcon)
                     .foregroundStyle(appleMusicRed)
                     .symbolEffect(.variableColor.iterative.reversing, options: .repeating)
                     .transition(
@@ -175,11 +175,11 @@ private struct TrackPlayButton: View {
                             .tint(symbolColor)
                     } else if isPlaying {
                         Image(systemName: "pause.fill")
-                            .font(.system(size: 8, weight: .bold))
+                            .font(.coverCornerBadge)
                             .blendMode(.destinationOut)
                     } else {
                         Image(systemName: "play.fill")
-                            .font(.system(size: 8, weight: .bold))
+                            .font(.coverCornerBadge)
                             .offset(x: 0.6)
                             .blendMode(.destinationOut)
                     }

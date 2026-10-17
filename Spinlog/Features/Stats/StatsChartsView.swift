@@ -144,7 +144,7 @@ extension StatsView {
                                     .minimumScaleFactor(0.75)
 
                                 Text((selected.percentage / 100).formatted(.percent.precision(.fractionLength(0))))
-                                    .font(.system(size: 32, weight: .heavy, design: .rounded))
+                                    .font(.statHeadlineNumber)
                                     .foregroundStyle(color)
 
                                 Text("\(selected.count) albums")
@@ -160,7 +160,7 @@ extension StatsView {
                                         Text("Voir")
                                             .font(.caption2.weight(.semibold))
                                         Image(systemName: "chevron.right")
-                                            .font(.system(size: 9, weight: .bold))
+                                            .font(.inlineIcon)
                                     }
                                     .foregroundStyle(color)
                                     .padding(.horizontal, 9)
@@ -386,7 +386,7 @@ extension StatsView {
                                     .minimumScaleFactor(0.75)
 
                                 Text((selected.percentage / 100).formatted(.percent.precision(.fractionLength(0))))
-                                    .font(.system(size: 32, weight: .heavy, design: .rounded))
+                                    .font(.statHeadlineNumber)
                                     .foregroundStyle(color)
 
                                 Text("\(selected.count) exemplaires")
@@ -402,7 +402,7 @@ extension StatsView {
                                         Text("Voir")
                                             .font(.caption2.weight(.semibold))
                                         Image(systemName: "chevron.right")
-                                            .font(.system(size: 9, weight: .bold))
+                                            .font(.inlineIcon)
                                     }
                                     .foregroundStyle(color)
                                     .padding(.horizontal, 9)
@@ -621,7 +621,7 @@ extension StatsView {
                                     .minimumScaleFactor(0.75)
 
                                 Text((selected.percentage / 100).formatted(.percent.precision(.fractionLength(0))))
-                                    .font(.system(size: 32, weight: .heavy, design: .rounded))
+                                    .font(.statHeadlineNumber)
                                     .foregroundStyle(color)
 
                                 Text("\(selected.count) albums")
@@ -637,7 +637,7 @@ extension StatsView {
                                         Text("Voir")
                                             .font(.caption2.weight(.semibold))
                                         Image(systemName: "chevron.right")
-                                            .font(.system(size: 9, weight: .bold))
+                                            .font(.inlineIcon)
                                     }
                                     .foregroundStyle(color)
                                     .padding(.horizontal, 9)

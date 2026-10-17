@@ -468,9 +468,9 @@ struct CollectionItemEditSheet: View {
                 .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 10)
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.basicInformation.title)
-                    .font(.subheadline.bold())
+                    .font(.body.bold())
                 Text(item.basicInformation.artistNames)
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(Color.appSecondaryText)
             }
             Spacer(minLength: 0)

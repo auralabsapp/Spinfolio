@@ -517,7 +517,7 @@ private struct SwipeableInstanceRow: View {
                 Button(action: onEditPurchasePrice) {
                     HStack(spacing: 3) {
                         Image(systemName: "plus")
-                            .font(.system(size: 8, weight: .bold))
+                            .font(.inlineIcon)
                         Text("Prix d'achat")
                     }
                     .font(.footnote.weight(.medium))
@@ -538,7 +538,7 @@ private struct SwipeableInstanceRow: View {
             } label: {
                 HStack(spacing: 3) {
                     Image(systemName: "arrow.right")
-                        .font(.system(size: 8, weight: .bold))
+                        .font(.inlineIcon)
                     Text("? € (+ ?%)")
                 }
                 .font(.footnote.weight(.semibold))
@@ -573,7 +573,7 @@ private struct InstanceGainBadge: View {
                 let isPositive = gain >= 0
                 HStack(spacing: 3) {
                     Image(systemName: isPositive ? "arrow.up.right" : "arrow.down.right")
-                        .font(.system(size: 8, weight: .bold))
+                        .font(.inlineIcon)
                     Text("\(isPositive ? "+" : "")\(gain.formatted(.currency(code: marketCurrency).precision(.fractionLength(0))))")
                 }
                 .font(.footnote.weight(.medium))

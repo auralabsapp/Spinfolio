@@ -34,7 +34,12 @@ struct HorizontalSectionIndexBar: View {
                     // d'indicateur : la bulle de position au repos ne s'affiche pas en même temps.
                     let isCurrent = !isDragging && currentToken == entry.token
                     Text(railLabel(for: entry.token))
-                        .font(.system(size: entries.count > 18 ? 9 : 11, weight: isSelected ? .black : .semibold, design: .rounded))
+                        // Taille fixe à 11pt (plancher de lisibilité) : `.minimumScaleFactor(0.5)`
+                        // juste en dessous gère déjà la compression en cas de dépassement réel,
+                        // rendant inutile — et contre-productif pour la lisibilité — un palier
+                        // supplémentaire qui retombait à 9pt dès que la liste avait beaucoup de
+                        // lettres, c'est-à-dire précisément quand ce repère compte le plus.
+                        .font(.system(size: 11, weight: isSelected ? .black : .semibold, design: .rounded))
                         .lineLimit(1)
                         .minimumScaleFactor(0.5)
                         .foregroundStyle(isCurrent ? .white : (isSelected ? Color.spinlogPink : Color.secondary))

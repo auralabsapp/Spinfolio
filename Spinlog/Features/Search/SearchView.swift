@@ -130,8 +130,10 @@ struct SearchView: View {
                                 )
                                 .frame(width: 12, height: 12)
 
+                            // Taille isolée (pas de token partagé) : ce badge fait 12×12 fixe,
+                            // plus petit que tous les autres contextes d'icône de l'app.
                             Image(systemName: "lock.fill")
-                                .font(.system(size: 6.5, weight: .bold))
+                                .font(.system(size: 8, weight: .bold))
                                 .foregroundStyle(.white)
                         }
                         .offset(x: 5, y: -5)

@@ -238,7 +238,7 @@ struct MiniPlayerBar: View {
                                     .frame(width: 25, height: 25)
 
                                 Image(systemName: "stop.fill")
-                                    .font(.system(size: 8.5, weight: .bold))
+                                    .font(.coverCornerBadge)
                                     .foregroundStyle(Color.white)
                             }
                             .frame(width: 36, height: 36)
@@ -385,7 +385,7 @@ struct MiniPlayerBar: View {
                             .frame(width: 25, height: 25)
 
                         Image(systemName: "stop.fill")
-                            .font(.system(size: 8.5, weight: .bold))
+                            .font(.coverCornerBadge)
                             .foregroundStyle(Color.white)
                     }
                     .frame(width: 36, height: 36)

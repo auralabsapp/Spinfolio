@@ -460,7 +460,7 @@ struct CollectionView: View {
                         if item.rating > 0 {
                             HStack(spacing: 3) {
                                 Image(systemName: "star.fill")
-                                    .font(.system(size: isRegularDisplay ? 11 : 9))
+                                    .font(.inlineIcon)
                                     .foregroundStyle(Color.orange)
                                 Text("\(item.rating)")
                                     .font(isRegularDisplay ? .footnote.bold() : .caption2.bold())
@@ -852,7 +852,7 @@ struct CollectionView: View {
                                         .overlay(alignment: .topTrailing) {
                                             if let badge = copyBadges[item.id] {
                                                 Text(badge)
-                                                    .font(.system(size: 9, weight: .black, design: .rounded))
+                                                    .font(.coverCornerBadge)
                                                     .foregroundStyle(.white)
                                                     .padding(.horizontal, 4)
                                                     .padding(.vertical, 2)
@@ -865,7 +865,7 @@ struct CollectionView: View {
                                             if activityManager.isPlaying(releaseId: item.releaseId) {
                                                 HStack(spacing: 3) {
                                                     Image(systemName: "waveform")
-                                                        .font(.system(size: 8, weight: .bold))
+                                                        .font(.coverCornerBadge)
                                                         .symbolEffect(.variableColor.iterative.reversing)
                                                 }
                                                 .foregroundStyle(Color.spinlogPink)
@@ -879,10 +879,10 @@ struct CollectionView: View {
                                             if item.rating > 0 {
                                                 HStack(spacing: 1.5) {
                                                     Image(systemName: "star.fill")
-                                                        .font(.system(size: 7))
+                                                        .font(.coverCornerBadge)
                                                         .foregroundStyle(Color.orange)
                                                     Text("\(item.rating)")
-                                                        .font(.system(size: 8, weight: .bold))
+                                                        .font(.coverCornerBadge)
                                                         .foregroundStyle(.white)
                                                 }
                                                 .padding(.horizontal, 4)

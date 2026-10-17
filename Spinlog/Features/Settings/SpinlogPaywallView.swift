@@ -183,9 +183,9 @@ struct SpinlogPaywallView: View {
 
                     HStack(spacing: 4) {
                         Image(systemName: "crown.fill")
-                            .font(.system(size: 9, weight: .bold))
+                            .font(.inlineIcon)
                         Text("PREMIUM")
-                            .font(.system(size: 10, weight: .heavy))
+                            .font(.emphasisLabel)
                     }
                     .foregroundStyle(.white)
                     .padding(.horizontal, 8)

@@ -304,7 +304,7 @@ struct WantlistView: View {
                 return AnyView(
                     HStack(spacing: 4) {
                         Image(systemName: alert.isTriggered ? "bell.badge.fill" : "bell.fill")
-                            .font(.system(size: isRegularDisplay ? 12 : 10))
+                            .font(.inlineIcon)
                         Text("≤ \(alert.targetPrice.formatted(.currency(code: alert.currency)))")
                             .font(isRegularDisplay ? .footnote.bold() : .caption2.bold())
                     }
@@ -364,7 +364,7 @@ struct WantlistView: View {
                         .overlay(alignment: .bottomTrailing) {
                             if let alert {
                                 Image(systemName: alert.isTriggered ? "bell.badge.fill" : "bell.fill")
-                                    .font(.system(size: 9))
+                                    .font(.coverCornerBadge)
                                     .foregroundStyle(alert.isTriggered ? .green : Color.spinlogPink)
                                     .padding(4)
                                     .background(.ultraThinMaterial, in: Circle())

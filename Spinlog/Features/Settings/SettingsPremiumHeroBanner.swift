@@ -66,7 +66,7 @@ struct SettingsPremiumHeroBanner: View {
                         .frame(width: 28, height: 28)
                         .overlay(
                             Image(systemName: "chevron.right")
-                                .font(.system(size: 11, weight: .bold))
+                                .font(.inlineIcon)
                                 .foregroundStyle(Self.goldWarm)
                         )
                 }

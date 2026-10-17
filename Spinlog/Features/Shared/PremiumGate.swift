@@ -84,9 +84,9 @@ struct PremiumLockedCard: View {
 
                     HStack(spacing: 2) {
                         Image(systemName: "sparkles")
-                            .font(.system(size: 7, weight: .black))
+                            .font(.inlineIcon)
                         Text("PREMIUM")
-                            .font(.system(size: 8, weight: .heavy))
+                            .font(.emphasisLabel)
                     }
                     .foregroundStyle(Self.goldWarm)
                     .lineLimit(1)
@@ -111,7 +111,7 @@ struct PremiumLockedCard: View {
                     .frame(width: 22, height: 22)
                     .overlay(
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 9, weight: .bold))
+                            .font(.inlineIcon)
                             .foregroundStyle(Self.goldWarm)
                     )
             }

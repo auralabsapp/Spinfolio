@@ -102,7 +102,7 @@ struct NowPlayingContentRow: View {
                     // Libellé localisé par l'extension elle-même : `ContentState.statusText`,
                     // fourni par l'app, s'affichait tel quel (toujours en français).
                     Text("Écoute en cours sur la platine")
-                        .font(.system(size: 9.5, weight: .bold))
+                        .font(.emphasisLabel)
                         .foregroundStyle(Color(red: 232/255, green: 76/255, blue: 139/255))
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
