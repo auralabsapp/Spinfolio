@@ -547,7 +547,8 @@ struct WantlistView: View {
                                         wantlistViewCarousel
                                     }
                                 }
-                                .frame(minHeight: geo.size.height)
+                                // `alignment: .top` : voir le même commentaire dans `CollectionView`.
+                                .frame(minHeight: geo.size.height, alignment: .top)
                             }
                         }
                     case .grid:

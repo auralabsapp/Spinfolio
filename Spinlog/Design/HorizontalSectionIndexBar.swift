@@ -92,14 +92,6 @@ struct HorizontalSectionIndexBar: View {
         }
         .frame(height: 28)
         .padding(.horizontal, 10)
-        .background(
-            Capsule()
-                .fill(.ultraThinMaterial)
-                .shadow(color: .black.opacity(0.10), radius: 6, x: 0, y: 2)
-        )
-        .overlay(
-            Capsule().strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.8)
-        )
     }
 
     private func railLabel(for token: String) -> String {

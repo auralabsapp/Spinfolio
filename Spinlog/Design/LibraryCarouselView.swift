@@ -170,7 +170,7 @@ struct LibraryCarouselView<Item: SortableLibraryItem>: View {
     }
 
     var body: some View {
-        VStack(spacing: isRegularDisplay ? 18 : 12) {
+        VStack(spacing: isRegularDisplay ? 6 : 2) {
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: cardSpacing) {
                     ForEach(items) { item in
@@ -190,7 +190,7 @@ struct LibraryCarouselView<Item: SortableLibraryItem>: View {
                 .scrollTargetLayout()
                 .padding(.horizontal, horizontalPadding)
                 .padding(.top, isRegularDisplay ? 16 : 10)
-                .padding(.bottom, 6)
+                .padding(.bottom, 2)
             }
             // `limitBehavior: .never` : par défaut, `.viewAligned` limite le nombre de pochettes
             // qu'un seul défilement peut traverser en largeur compacte (donc sur iPhone, voir la
@@ -211,11 +211,6 @@ struct LibraryCarouselView<Item: SortableLibraryItem>: View {
                     }
                 }
                 .padding(.horizontal, isRegularDisplay ? 40 : 20)
-            }
-
-            // Indicateur de position (ex : "14 sur 85")
-            if !items.isEmpty {
-                positionIndicator
             }
         }
         // La hauteur n'est plus forcée à `.infinity` ici : le parent (`CollectionView`/
@@ -401,6 +396,10 @@ struct LibraryCarouselView<Item: SortableLibraryItem>: View {
                 quickActions(item)
                     .padding(.top, isRegularDisplay ? 8 : 4)
                     .transition(.opacity.combined(with: .scale(scale: 0.95)))
+
+                // Indicateur de position (ex : "14 sur 85"), juste sous les icônes d'actions.
+                positionIndicator
+                    .padding(.top, isRegularDisplay ? 8 : 4)
             }
         }
         .frame(width: cardWidth)

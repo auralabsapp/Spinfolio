@@ -812,7 +812,11 @@ struct CollectionView: View {
                                         collectionViewCarousel
                                     }
                                 }
-                                .frame(minHeight: geo.size.height)
+                                // `alignment: .top` : sans ça, l'alignement par défaut (`.center`)
+                                // centre tout le bloc (carrousel + barre de navigation rapide)
+                                // dans la hauteur mesurée, créant un grand vide entre l'indicateur
+                                // de position et la barre plutôt qu'en dessous de celle-ci.
+                                .frame(minHeight: geo.size.height, alignment: .top)
                             }
                         }
                     case .grid:
