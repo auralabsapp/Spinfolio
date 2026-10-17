@@ -229,7 +229,8 @@ final class WantlistViewModel {
             let response = try await DiscogsAPIClient.shared.wantlist(
                 username: username, page: 1, sort: sortOption.apiSortValue, sortOrder: sortOption.apiSortOrder(ascending: sortAscending), credentials: credentials
             )
-            items = response.wants
+            // Fusionné plutôt que remplacé : voir `mergedWantlistItems`.
+            items = mergedWantlistItems(primary: items, secondary: response.wants)
             currentPage = 1
             totalPages = response.pagination.pages
             isOfflineAndStale = false
@@ -261,7 +262,8 @@ final class WantlistViewModel {
             let response = try await DiscogsAPIClient.shared.wantlist(
                 username: username, page: 1, sort: sortOption.apiSortValue, sortOrder: sortOption.apiSortOrder(ascending: sortAscending), credentials: credentials
             )
-            items = response.wants
+            // Fusionné (nouvel ordre de tri prioritaire) plutôt que remplacé : voir `mergedWantlistItems`.
+            items = mergedWantlistItems(primary: response.wants, secondary: items)
             currentPage = 1
             totalPages = response.pagination.pages
             isOfflineAndStale = false
@@ -272,6 +274,21 @@ final class WantlistViewModel {
             }
         }
         isLoading = false
+    }
+
+    /// Fusionne une page fraîchement récupérée avec les éléments déjà affichés plutôt que de les
+    /// écraser (dédoublonné par id, `primary` conserve sa version en cas de doublon) : un simple
+    /// remplacement faisait brièvement disparaître un item tout juste ajouté à la wantlist si ce
+    /// rafraîchissement (déclenché par exemple en rebasculant sur l'onglet Wantlist) arrivait
+    /// avant que Discogs n'ait propagé l'ajout côté serveur — voir le même principe déjà en place
+    /// dans `CollectionViewModel.fetchPage(append:)`.
+    private func mergedWantlistItems(primary: [WantlistItem], secondary: [WantlistItem]) -> [WantlistItem] {
+        var seen = Set<Int>()
+        var merged: [WantlistItem] = []
+        for item in primary + secondary where seen.insert(item.id).inserted {
+            merged.append(item)
+        }
+        return merged
     }
 
     private func loadFromLocalStore(username: String) async {
