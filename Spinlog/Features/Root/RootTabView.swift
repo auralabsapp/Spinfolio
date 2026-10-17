@@ -18,6 +18,7 @@ struct RootTabView: View {
     // sinon la notification part avant que quiconque l'écoute et est perdue définitivement.
     @State private var collectionViewModelWarmup = CollectionViewModel.shared
     @State private var wantlistViewModelWarmup = WantlistViewModel.shared
+    @State private var membershipStore = LibraryMembershipStore.shared
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -64,6 +65,18 @@ struct RootTabView: View {
         // identique à Musique). `MiniPlayerBar` adapte sa présentation via `tabViewBottomAccessoryPlacement`.
         .tabViewBottomAccessory(isEnabled: MiniPlayerBar.isActive) {
             MiniPlayerBar()
+        }
+        // Bulle de confirmation ajout/retrait collection/wantlist (voir `LibraryMembershipStore`) :
+        // overlay global plutôt que posé sur chaque écran, puisque l'action peut partir de
+        // n'importe quel onglet (résultats de recherche, fiche release/artiste, Collection, Wantlist...).
+        .overlay(alignment: .bottom) {
+            if let toast = membershipStore.activeToast {
+                LibraryToastBubble(kind: toast)
+                    // L'overlay couvre tout le `TabView`, barre d'onglets comprise : il faut
+                    // donc une marge qui dépasse sa hauteur (+ celle du mini-lecteur si affiché)
+                    // pour que la bulle flotte au-dessus plutôt que d'être masquée derrière.
+                    .padding(.bottom, MiniPlayerBar.isActive ? 150 : 95)
+            }
         }
         .fullScreenCover(isPresented: $showingLaunchPaywall) {
             SpinlogPaywallView()
