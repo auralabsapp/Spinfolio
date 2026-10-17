@@ -551,7 +551,7 @@ struct ArtistDetailView: View {
             if viewModel.ownedCount > 0 {
                 ownershipSummaryStat(
                     count: viewModel.ownedCount,
-                    label: viewModel.ownedCount == 1 ? String(localized: "album possédé") : String(localized: "albums possédés")
+                    label: viewModel.ownedCount == 1 ? String(localized: "album en collection") : String(localized: "albums en collection")
                 )
             }
             if viewModel.ownedCount > 0 && viewModel.wantlistCount > 0 {

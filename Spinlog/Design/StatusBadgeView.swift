@@ -17,7 +17,7 @@ struct StatusBadgeView: View {
 
     private var text: String {
         switch status {
-        case .owned: String(localized: "Possédé")
+        case .owned: String(localized: "Collection")
         case .inWantlist: String(localized: "Wantlist")
         }
     }

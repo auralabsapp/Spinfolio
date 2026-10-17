@@ -74,10 +74,10 @@ struct SearchResultRow: View {
                     if isRelease && (membership.isInCollection(result.id) || membership.isInWantlist(result.id)) {
                         HStack(spacing: 6) {
                             if membership.isInCollection(result.id) {
-                                membershipPill(text: "Collection", systemImage: "square.stack.fill")
+                                membershipPill(text: "Collection", systemImage: "checkmark.circle.fill", color: Color.tagForeground)
                             }
                             if membership.isInWantlist(result.id) {
-                                membershipPill(text: "Wantlist", systemImage: "heart.fill")
+                                membershipPill(text: "Wantlist", systemImage: "heart.fill", color: Color.spinlogPink)
                             }
                         }
                         .padding(.top, 1)
@@ -97,12 +97,12 @@ struct SearchResultRow: View {
         }
     }
 
-    private func membershipPill(text: String, systemImage: String) -> some View {
+    private func membershipPill(text: String, systemImage: String, color: Color) -> some View {
         Label(text, systemImage: systemImage)
             .font(.caption2.weight(.semibold))
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
-            .background(Color.spinlogPinkBadge, in: Capsule())
-            .foregroundStyle(Color.spinlogPink)
+            .background(color.opacity(0.15), in: Capsule())
+            .foregroundStyle(color)
     }
 }
