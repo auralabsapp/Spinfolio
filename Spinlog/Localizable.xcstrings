@@ -2493,6 +2493,9 @@
         }
       }
     },
+    "Ajouté à la collection" : {
+
+    },
     "Ajouté à la collection." : {
       "localizations" : {
         "en" : {
@@ -2502,6 +2505,9 @@
           }
         }
       }
+    },
+    "Ajouté à la wantlist" : {
+
     },
     "Ajouté à la wantlist." : {
       "localizations" : {
@@ -2673,6 +2679,9 @@
         }
       }
     },
+    "album en collection" : {
+
+    },
     "album en wantlist" : {
       "localizations" : {
         "en" : {
@@ -2684,6 +2693,7 @@
       }
     },
     "album possédé" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2723,6 +2733,9 @@
         }
       }
     },
+    "albums en collection" : {
+
+    },
     "albums en wantlist" : {
       "localizations" : {
         "en" : {
@@ -2734,6 +2747,7 @@
       }
     },
     "albums possédés" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7574,6 +7588,7 @@
       }
     },
     "Possédé" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8120,6 +8135,12 @@
           }
         }
       }
+    },
+    "Retiré de la collection" : {
+
+    },
+    "Retiré de la wantlist" : {
+
     },
     "Retiré de la wantlist." : {
       "localizations" : {
