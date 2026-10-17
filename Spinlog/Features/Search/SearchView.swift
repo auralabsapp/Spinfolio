@@ -8,6 +8,7 @@ struct SearchView: View {
     @State private var networkMonitor = NetworkMonitor.shared
     @State private var showingPremiumSheet = false
     @FocusState private var isSearchFieldFocused: Bool
+    @State private var searchDebounceTask: Task<Void, Never>?
 
     private var activityManager = NowPlayingActivityManager.shared
     private var membership = LibraryMembershipStore.shared
@@ -41,16 +42,25 @@ struct SearchView: View {
             BatchScanView()
         }
         .premiumFeaturesSheet(isPresented: $showingPremiumSheet)
-        .task(id: "\(viewModel.query)|\(viewModel.scope.rawValue)") {
+        // `.onChange` plutôt que `.task(id:)` : ce dernier se relance à chaque réapparition
+        // de la vue (ex. retour d'une fiche détail via le bouton précédent) même quand la
+        // requête n'a pas changé, ce qui remplaçait `results` et remettait le scroll à zéro.
+        .onChange(of: viewModel.query) { _, _ in scheduleSearch() }
+        .onChange(of: viewModel.scope) { _, _ in scheduleSearch() }
+        .task {
+            membership.refresh()
+        }
+
+    }
+
+    private func scheduleSearch() {
+        searchDebounceTask?.cancel()
+        searchDebounceTask = Task {
             if viewModel.consumeSuppressFlag() { return }
             try? await Task.sleep(for: .milliseconds(350))
             guard !Task.isCancelled else { return }
             await viewModel.search()
         }
-        .task {
-            membership.refresh()
-        }
-
     }
 
     /// Barre de recherche personnalisée
@@ -221,21 +231,6 @@ struct SearchView: View {
             .scrollContentBackground(.hidden)
             .listRowSeparatorTint(Color.appSeparator)
             .scrollDismissesKeyboard(.immediately)
-            // `.scrollDismissesKeyboard` ne réagit qu'au défilement, et le tap sur le fond de
-            // `VStack` ci-dessus n'est jamais atteint quand on touche directement une ligne (son
-            // propre geste de tap/navigation l'intercepte avant) : sans ce `.simultaneousGesture`
-            // (qui se déclenche EN PLUS du tap de la ligne, pas à sa place), toucher un résultat
-            // pendant que le clavier est ouvert laissait celui-ci affiché par-dessus la navigation.
-            // `DragGesture(minimumDistance: 0)` plutôt que `TapGesture()` : un `TapGesture`
-            // simultané sur toute la `List` entrait en concurrence avec la reconnaissance du tap
-            // du `NavigationLink` de chaque ligne et finissait par l'absorber par endroits (les
-            // résultats devenaient non cliquables) — une détection de toucher par `DragGesture`
-            // à distance nulle n'a pas ce conflit avec les gestes de `NavigationLink`/`List`.
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 0).onEnded { _ in
-                    isSearchFieldFocused = false
-                }
-            )
             .refreshable {
                 await viewModel.search()
             }

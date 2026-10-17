@@ -30,7 +30,17 @@ struct SearchResultRow: View {
     private var isRelease: Bool { result.type == "release" }
 
     var body: some View {
-        NavigationLink(value: SearchDestination(from: result)) {
+        ZStack(alignment: .leading) {
+            // `NavigationLink` invisible mais couvrant toute la ligne. Le libellé doit être une
+            // vue qui s'étend pour remplir l'espace proposé (`Color.clear`) : `EmptyView()` a une
+            // taille intrinsèque nulle et ne s'étend pas, ce qui réduisait la zone cliquable à
+            // (quasiment) rien une fois ce lien sorti de la position "contenu direct de la ligne"
+            // (seul cas où `List` étend automatiquement un `NavigationLink` à toute la ligne).
+            NavigationLink(value: SearchDestination(from: result)) {
+                Color.clear
+            }
+            .opacity(0)
+
             HStack(spacing: 12) {
                 AsyncCoverImage(url: result.thumb ?? result.coverImage, cornerRadius: 8, targetSize: 56)
                     .frame(width: 56, height: 56)
@@ -73,8 +83,17 @@ struct SearchResultRow: View {
                         .padding(.top, 1)
                     }
                 }
+
+                Spacer(minLength: 0)
+
+                // Chevron ajouté manuellement : `List` ne l'ajoute plus automatiquement
+                // puisque le `NavigationLink` n'est plus le contenu direct de la ligne.
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Color.appSecondaryText.opacity(0.5))
             }
             .padding(.vertical, 2)
+            .allowsHitTesting(false)
         }
     }
 
