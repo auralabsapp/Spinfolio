@@ -1,4 +1,5 @@
 import SwiftUI
+import StoreKit
 import UniformTypeIdentifiers
 import Kingfisher
 
@@ -29,6 +30,7 @@ struct SettingsView: View {
     @State private var appleMusicAccount = AppleMusicAccountStore.shared
     @State private var tabCoordinator = TabNavigationCoordinator.shared
     @State private var showingDiscogsWebsite = false
+    @State private var showingManageSubscriptions = false
     @State private var showingPremiumFeaturesSheet = false
     @State private var showingLogoutConfirmation = false
     @State private var showingDeleteAccountConfirmation = false
@@ -94,6 +96,7 @@ struct SettingsView: View {
                 SafariView(url: DiscogsConstants.accountDeletionURL)
             }
             .premiumFeaturesSheet(isPresented: $showingPremiumFeaturesSheet)
+            .manageSubscriptionsSheet(isPresented: $showingManageSubscriptions)
             .task {
                 await loadFolders()
                 await loadPurchasePriceSettings()
@@ -765,6 +768,24 @@ struct SettingsView: View {
                     Image(systemName: "arrow.up.right")
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(Color.appSecondaryText)
+                }
+            }
+
+            // Feuille système StoreKit (lecture seule, aucun risque à l'exposer partout,
+            // contrairement aux outils du menu développeur) : état réel de l'abonnement, utile
+            // notamment en TestFlight pour vérifier qu'un essai Sandbox précédent n'en a pas
+            // laissé un actif avant d'en retenter un nouveau depuis le paywall.
+            Button {
+                showingManageSubscriptions = true
+            } label: {
+                HStack(spacing: 14) {
+                    SettingsIcon(systemName: "creditcard.fill", backgroundColor: .indigo)
+                    Text("Gérer mon abonnement")
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(Color.appTertiaryText)
                 }
             }
 
