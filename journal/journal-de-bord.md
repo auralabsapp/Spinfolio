@@ -13,7 +13,7 @@ Journée consacrée à l'aboutissement de l'audit de l'app (branche `audit-fixes
 soumission App Store, mode démo pour App Review, fiabilité des données, accessibilité, découpage des
 plus gros fichiers, mise en place des tests automatiques et d'un cadre de règles pour la suite,
 puis fiabilisation des données (stores illisibles, déconnexion, dossiers, doublons, suppression de
-compte, conflits iCloud), puis le bloc interface et accessibilité, et enfin le passage en Swift 6 avec un premier lot de qualité.
+compte, conflits iCloud), puis le bloc interface et accessibilité, le passage en Swift 6 avec un premier lot de qualité, et enfin les raccourcis Siri.
 
 ### 12:29 — `0c4f597` Applique l'audit : soumission App Store, mode démo, fiabilité et accessibilité
 - **Soumission App Store** : manifestes de confidentialité `PrivacyInfo.xcprivacy` (app et widget),
@@ -124,6 +124,18 @@ compte, conflits iCloud), puis le bloc interface et accessibilité, et enfin le 
 - **Tests** : signature OAuth vérifiée sur l'exemple de la spécification, retour OAuth, calcul des
   créneaux du limiteur de débit, domaines de la webview (154 tests verts) ; cahier v3.5 (384 cas).
 - 47 fichiers, +457 / −609.
+
+### 22:50 — `9ec9af8` Ajoute les raccourcis Siri ; contraste doré et tertiaire, bulle pour les actions hors ligne
+- **Raccourcis Siri** (Siri, Spotlight, app Raccourcis, proposés sans configuration) : disque au
+  hasard (ouvre sa fiche), démarrer une écoute (Siri demande le disque, recherché dans la
+  collection en cache, hors ligne compris ; Live Activity lancée sans ouvrir l'app), arrêter
+  l'écoute. Phrases en français et en anglais ; démarrage d'écoute unifié pour les écrans et Siri.
+- **Contraste** : or des textes plus profond en mode clair (5,1:1 au lieu de 2,6:1), texte
+  tertiaire plus lisible en mode sombre (5,4:1 au lieu de 2,5:1).
+- **Hors ligne** : ajouts et retraits annoncés par la bulle de confirmation (« Hors ligne :
+  synchronisé au retour du réseau ») au lieu d'une alerte à fermer à chaque action.
+- 156 tests verts ; cahier de recette v3.5 (388 cas).
+- 26 fichiers, +578 / −45.
 
 ---
 
