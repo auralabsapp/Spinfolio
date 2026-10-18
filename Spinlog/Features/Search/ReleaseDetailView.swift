@@ -29,6 +29,7 @@ struct ReleaseDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var viewModel = ReleaseDetailViewModel()
     @State private var actions = ReleaseActions()
@@ -122,6 +123,9 @@ struct ReleaseDetailView: View {
                     },
                     onDelete: {
                         await actions.removeInstance(item)
+                    },
+                    onSaveFailedAfterDismiss: { message in
+                        actions.message = message
                     }
                 )
             }
@@ -184,11 +188,16 @@ struct ReleaseDetailView: View {
                 .background(infoBackgroundColor.ignoresSafeArea())
                 .transition(.opacity)
         } else if let errorMessage = viewModel.errorMessage {
-            ContentUnavailableView(
-                "Impossible de charger la release",
-                systemImage: "exclamationmark.triangle",
-                description: Text(errorMessage)
-            )
+            ContentUnavailableView {
+                Label("Impossible de charger la release", systemImage: "exclamationmark.triangle")
+            } description: {
+                Text(errorMessage)
+            } actions: {
+                Button("Réessayer") {
+                    Task { await viewModel.load(releaseId: releaseId, actions: actions) }
+                }
+                .buttonStyle(.glassProminent)
+            }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(infoBackgroundColor.ignoresSafeArea())
         } else if let release = viewModel.release {
@@ -733,8 +742,9 @@ struct ReleaseDetailView: View {
             // Floutage progressif : de 0 pt (net) à 30 pt (ambiance fluide et colorée)
             let blurRadius = easedProgress * 30.0
 
-            // Effet parallaxe : la jaquette monte 2 fois moins vite que le défilement
-            let parallaxOffset = scrollUp * 0.5
+            // Effet parallaxe : la jaquette monte 2 fois moins vite que le défilement (désactivé
+            // avec Réduire les animations : elle défile alors avec le contenu).
+            let parallaxOffset = reduceMotion ? 0 : scrollUp * 0.5
 
             ZStack {
                 // Fond teinté de la couleur moyenne pour éviter tout blanchiment en arrière-plan

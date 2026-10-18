@@ -12,6 +12,7 @@ final class ThemeManager {
     var currentTheme: AppColorTheme {
         didSet {
             defaults.set(currentTheme.rawValue, forKey: storageKey)
+            publishAccentForExtensions()
             if !isApplyingRemoteTheme {
                 CloudSyncEngine.shared.markAppPreferencesDirty()
             }
@@ -29,6 +30,9 @@ final class ThemeManager {
             initialTheme = theme
         }
         self.currentTheme = initialTheme
+        // `didSet` n'est pas appelé depuis l'init : publication explicite, pour qu'un thème
+        // choisi avant cette version atteigne aussi la Live Activity.
+        publishAccentForExtensions()
 
         // Écoute automatique de la perte ou modification du statut premium
         NotificationCenter.default.addObserver(
@@ -59,6 +63,14 @@ final class ThemeManager {
         if currentTheme.isPremiumOnly && !isPremium {
             currentTheme = .signature
         }
+    }
+
+    /// Transmet la couleur du thème (variante sombre) à l'extension pour la Live Activity.
+    private func publishAccentForExtensions() {
+        let darkColor = currentTheme.primaryUIColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        guard darkColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha) else { return }
+        WidgetSnapshotStore.saveThemeAccentOnDark(red: Double(red), green: Double(green), blue: Double(blue))
     }
 
     /// Applique un thème reçu d'iCloud. N'écrit qu'en local.

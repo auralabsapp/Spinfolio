@@ -1075,6 +1075,110 @@
         }
       }
     },
+    "%lld disques en attente de synchronisation avec Discogs." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld record waiting to sync with Discogs."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld records waiting to sync with Discogs."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld records waiting to sync with Discogs."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld disque en attente de synchronisation avec Discogs."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld disques en attente de synchronisation avec Discogs."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld disque en attente de synchronisation avec Discogs."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld disques n'ont pas pu être ajoutés et restent dans la liste." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld record couldn’t be added and remains in the list."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld records couldn’t be added and remain in the list."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld records couldn’t be added and remain in the list."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld disque n'a pas pu être ajouté et reste dans la liste."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld disques n'ont pas pu être ajoutés et restent dans la liste."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld disque n'a pas pu être ajouté et reste dans la liste."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld écoutes" : {
       "localizations" : {
         "en" : {
@@ -2257,7 +2361,18 @@
         }
       }
     },
+    "À partir de %@ / mois" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Starting at %@ / month"
+          }
+        }
+      }
+    },
     "À partir de 2,50 € / mois" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2384,6 +2499,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Apple Music Access Disabled"
+          }
+        }
+      }
+    },
+    "Accès à la caméra refusé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Camera Access Denied"
+          }
+        }
+      }
+    },
+    "Accès refusé par Discogs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Access denied by Discogs."
           }
         }
       }
@@ -3365,6 +3500,16 @@
         }
       }
     },
+    "Autorise l'accès à la caméra dans les Réglages pour scanner les codes-barres de tes disques." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Allow camera access in Settings to scan your records' barcodes."
+          }
+        }
+      }
+    },
     "Autre" : {
       "localizations" : {
         "en" : {
@@ -3657,6 +3802,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Some copies have already reached the maximum of %lld tags and couldn't receive this tag."
+          }
+        }
+      }
+    },
+    "Cet appareil ne permet pas de scanner des codes-barres. Tu peux rechercher le disque par son nom." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "This device can't scan barcodes. You can search for the record by name."
           }
         }
       }
@@ -4778,6 +4933,16 @@
         }
       }
     },
+    "Discogs rencontre un problème, réessaie plus tard." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Discogs is having a problem. Try again later."
+          }
+        }
+      }
+    },
     "Disponible au retour du réseau." : {
       "localizations" : {
         "en" : {
@@ -5161,6 +5326,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Electronic"
+          }
+        }
+      }
+    },
+    "Élément introuvable sur Discogs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Item not found on Discogs."
           }
         }
       }
@@ -7560,6 +7735,16 @@
         }
       }
     },
+    "Ouvre le menu des actions pour afficher les disques d'un élément." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Open the actions menu to show an item's records."
+          }
+        }
+      }
+    },
     "Ouvrir dans Apple Music" : {
       "localizations" : {
         "en" : {
@@ -7576,6 +7761,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Open in Safari"
+          }
+        }
+      }
+    },
+    "Ouvrir les Réglages" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Open Settings"
           }
         }
       }
@@ -8400,6 +8595,16 @@
         }
       }
     },
+    "Rechercher un disque" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Search for a Record"
+          }
+        }
+      }
+    },
     "Récupère tous tes albums, tes dossiers, ta wantlist et les pochettes" : {
       "localizations" : {
         "en" : {
@@ -8597,6 +8802,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Invalid Discogs response."
+          }
+        }
+      }
+    },
+    "Requête refusée par Discogs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Request rejected by Discogs."
           }
         }
       }
@@ -8841,6 +9056,16 @@
         }
       }
     },
+    "Scan indisponible" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Scanning Unavailable"
+          }
+        }
+      }
+    },
     "Scan par lot" : {
       "localizations" : {
         "en" : {
@@ -8942,6 +9167,7 @@
       }
     },
     "Sélectionner un artiste du classement" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8952,6 +9178,7 @@
       }
     },
     "Sélectionner une année d'ajout à la collection" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8962,6 +9189,7 @@
       }
     },
     "Sélectionner une année de sortie originale" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8972,6 +9200,7 @@
       }
     },
     "Sélectionner une part du graphique de répartition par genre" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8982,6 +9211,7 @@
       }
     },
     "Sélectionner une part du graphique de répartition par label" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8992,6 +9222,7 @@
       }
     },
     "Sélectionner une part du graphique de répartition par support" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9867,6 +10098,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Your collection and album covers are saved on your device so they stay accessible without a network connection."
+          }
+        }
+      }
+    },
+    "Ta session Discogs a expiré : reconnecte-toi dans Réglages." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your Discogs session has expired. Sign in again in Settings."
           }
         }
       }

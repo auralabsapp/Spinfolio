@@ -35,11 +35,16 @@ struct LabelDetailView: View {
             labelDetailSkeleton
                 .transition(.opacity)
         } else if let errorMessage = viewModel.errorMessage {
-            ContentUnavailableView(
-                "Impossible de charger ce label",
-                systemImage: "exclamationmark.triangle",
-                description: Text(errorMessage)
-            )
+            ContentUnavailableView {
+                Label("Impossible de charger ce label", systemImage: "exclamationmark.triangle")
+            } description: {
+                Text(errorMessage)
+            } actions: {
+                Button("Réessayer") {
+                    Task { await viewModel.load(labelId: labelId) }
+                }
+                .buttonStyle(.glassProminent)
+            }
         } else if let label = viewModel.label {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {

@@ -33,11 +33,16 @@ struct MasterDetailView: View {
                 .background(infoBackgroundColor.ignoresSafeArea())
                 .transition(.opacity)
         } else if let errorMessage = viewModel.errorMessage {
-            ContentUnavailableView(
-                "Impossible de charger ce master",
-                systemImage: "exclamationmark.triangle",
-                description: Text(errorMessage)
-            )
+            ContentUnavailableView {
+                Label("Impossible de charger ce master", systemImage: "exclamationmark.triangle")
+            } description: {
+                Text(errorMessage)
+            } actions: {
+                Button("Réessayer") {
+                    Task { await viewModel.load(masterId: masterId) }
+                }
+                .buttonStyle(.glassProminent)
+            }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(infoBackgroundColor.ignoresSafeArea())
         } else if let master = viewModel.master {

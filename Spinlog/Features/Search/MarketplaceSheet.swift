@@ -36,7 +36,16 @@ struct MarketplaceSheet: View {
         if viewModel.isLoading {
             ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if let errorMessage = viewModel.errorMessage {
-            ContentUnavailableView("Indisponible", systemImage: "tag.slash", description: Text(errorMessage))
+            ContentUnavailableView {
+                Label("Indisponible", systemImage: "tag.slash")
+            } description: {
+                Text(errorMessage)
+            } actions: {
+                Button("Réessayer") {
+                    Task { await viewModel.load(releaseId: releaseId) }
+                }
+                .buttonStyle(.glassProminent)
+            }
         } else {
             List {
                 Section {

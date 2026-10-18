@@ -68,7 +68,7 @@ struct SectionIndexBar: View {
                         .minimumScaleFactor(0.7)
                         .fixedSize(horizontal: true, vertical: false)
                         .foregroundStyle(
-                            activeToken == entry.token ? Color.accentColor : (isCurrent ? .white : .secondary)
+                            activeToken == entry.token ? Color.spinlogPink : (isCurrent ? .white : .secondary)
                         )
                         .frame(width: 20, height: 20)
                         .background {

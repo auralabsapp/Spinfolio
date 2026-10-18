@@ -43,6 +43,7 @@ extension StatsView {
                         )
                         .foregroundStyle(topArtistBarGradient)
                         .cornerRadius(4)
+                        .accessibilityHidden(true)
                         .annotation(position: .trailing) {
                             Text("\(entry.count)")
                                 .font(.caption2.weight(.bold))
@@ -74,8 +75,14 @@ extension StatsView {
                                         selectedArtistData = ArtistReleasesSheetData(artist: artistName, items: items)
                                     }
                                 }
-                                .accessibilityLabel("Sélectionner un artiste du classement")
-                                .accessibilityAddTraits(.isButton)
+                                .chartSelectionAccessibility(
+                                    label: Text("Classement des artistes"),
+                                    entries: viewModel.topArtistsByCollectionCount.map {
+                                        ChartAccessibilityEntry(id: $0.name, name: $0.name, valueText: String(localized: "\($0.count) disques"))
+                                    }
+                                ) { artistName in
+                                    selectedArtistData = ArtistReleasesSheetData(artist: artistName, items: viewModel.items(forArtist: artistName))
+                                }
                         }
                     }
                 }
@@ -116,6 +123,7 @@ extension StatsView {
                             .cornerRadius(5)
                             .foregroundStyle(genreColor(for: entry.name, index: index))
                             .opacity(selectedGenreName == nil || isSelected ? 1.0 : 0.35)
+                            .accessibilityHidden(true)
                         }
                         .chartAngleSelection(value: $selectedAngle)
                         .frame(height: 230)
@@ -127,8 +135,15 @@ extension StatsView {
                                     .onTapGesture { location in
                                         handlePieChartTap(at: location, in: geo.size)
                                     }
-                                    .accessibilityLabel("Sélectionner une part du graphique de répartition par genre")
-                                    .accessibilityAddTraits(.isButton)
+                                    .chartSelectionAccessibility(
+                                        label: Text("Répartition par genre"),
+                                        entries: viewModel.genreDistribution.map {
+                                            ChartAccessibilityEntry(id: $0.name, name: $0.name, valueText: String(localized: "\($0.count) disques"))
+                                        }
+                                    ) { genre in
+                                        selectedGenreName = genre
+                                        selectedGenreData = GenreReleasesSheetData(genre: genre, items: viewModel.items(forGenre: genre))
+                                    }
                             }
                         }
 
@@ -358,6 +373,7 @@ extension StatsView {
                             .cornerRadius(5)
                             .foregroundStyle(mediaFormatColor(for: entry.name))
                             .opacity(selectedMediaFormatName == nil || isSelected ? 1.0 : 0.35)
+                            .accessibilityHidden(true)
                         }
                         .chartAngleSelection(value: $selectedMediaFormatAngle)
                         .frame(height: 230)
@@ -369,8 +385,15 @@ extension StatsView {
                                     .onTapGesture { location in
                                         handleMediaFormatPieTap(at: location, in: geo.size)
                                     }
-                                    .accessibilityLabel("Sélectionner une part du graphique de répartition par support")
-                                    .accessibilityAddTraits(.isButton)
+                                    .chartSelectionAccessibility(
+                                        label: Text("Répartition par support"),
+                                        entries: viewModel.mediaFormatDistribution.map {
+                                            ChartAccessibilityEntry(id: $0.name, name: $0.name, valueText: String(localized: "\($0.count) exemplaires"))
+                                        }
+                                    ) { format in
+                                        selectedMediaFormatName = format
+                                        selectedMediaFormatData = MediaFormatReleasesSheetData(title: format, items: viewModel.items(forMediaFormat: format))
+                                    }
                             }
                         }
 
@@ -593,6 +616,7 @@ extension StatsView {
                             .cornerRadius(5)
                             .foregroundStyle(genreColor(for: entry.name, index: index))
                             .opacity(selectedLabelName == nil || isSelected ? 1.0 : 0.35)
+                            .accessibilityHidden(true)
                         }
                         .chartAngleSelection(value: $selectedLabelAngle)
                         .frame(height: 230)
@@ -604,8 +628,15 @@ extension StatsView {
                                     .onTapGesture { location in
                                         handleLabelPieTap(at: location, in: geo.size)
                                     }
-                                    .accessibilityLabel("Sélectionner une part du graphique de répartition par label")
-                                    .accessibilityAddTraits(.isButton)
+                                    .chartSelectionAccessibility(
+                                        label: Text("Répartition par label"),
+                                        entries: viewModel.labelDistribution.map {
+                                            ChartAccessibilityEntry(id: $0.name, name: $0.name, valueText: String(localized: "\($0.count) disques"))
+                                        }
+                                    ) { label in
+                                        selectedLabelName = label
+                                        selectedMediaFormatData = MediaFormatReleasesSheetData(title: label, items: viewModel.items(forLabel: label))
+                                    }
                             }
                         }
 

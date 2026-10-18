@@ -431,6 +431,9 @@ final class ReleaseActions {
             // retiré ou déplacé avant la synchro, et d'y reporter ses tags ensuite.
             let action = PendingAction(type: .addToCollection, releaseId: releaseId, folderId: folderId, instanceId: tempInstanceId)
             syncQueue.enqueue(action)
+            // Sans ce message, seule la bulle « Ajouté à la collection » s'affichait : rien
+            // n'indiquait que l'ajout n'atteindrait Discogs qu'au retour du réseau.
+            message = AppMessages.offlineAddQueued
             return
         }
 
@@ -549,6 +552,7 @@ final class ReleaseActions {
                 instanceId: targetInstanceId
             )
             syncQueue.enqueue(action)
+            message = AppMessages.offlineRemovalQueued
             return
         }
 
@@ -736,6 +740,7 @@ final class ReleaseActions {
                 )
                 syncQueue.enqueue(action)
             }
+            message = AppMessages.offlineRemovalQueued
             return
         }
 
@@ -854,6 +859,7 @@ final class ReleaseActions {
         if !networkMonitor.isConnected {
             let action = PendingAction(type: .addToWantlist, releaseId: releaseId)
             syncQueue.enqueue(action)
+            message = AppMessages.offlineAddQueued
             return
         }
 
@@ -902,6 +908,7 @@ final class ReleaseActions {
         if !networkMonitor.isConnected {
             let action = PendingAction(type: .removeFromWantlist, releaseId: releaseId)
             syncQueue.enqueue(action)
+            message = AppMessages.offlineRemovalQueued
             return
         }
 

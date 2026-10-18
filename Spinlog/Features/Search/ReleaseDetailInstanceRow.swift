@@ -116,8 +116,8 @@ struct SwipeableInstanceRow: View {
                             .font(.footnote.weight(.medium))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Color.accentColor.opacity(0.10), in: Capsule())
-                            .foregroundStyle(Color.accentColor)
+                            .background(Color.spinlogPink.opacity(0.10), in: Capsule())
+                            .foregroundStyle(Color.spinlogPink)
                     }
 
                     if let date = item.dateAddedDate {

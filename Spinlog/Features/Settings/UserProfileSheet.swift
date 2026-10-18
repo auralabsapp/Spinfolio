@@ -51,11 +51,16 @@ struct UserProfileSheet: View {
         if viewModel.isLoading {
             ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if let errorMessage = viewModel.errorMessage {
-            ContentUnavailableView(
-                "Indisponible",
-                systemImage: "person.crop.circle.badge.exclamationmark",
-                description: Text(errorMessage)
-            )
+            ContentUnavailableView {
+                Label("Indisponible", systemImage: "person.crop.circle.badge.exclamationmark")
+            } description: {
+                Text(errorMessage)
+            } actions: {
+                Button("Réessayer") {
+                    Task { await viewModel.load(username: username) }
+                }
+                .buttonStyle(.glassProminent)
+            }
         } else if let profile = viewModel.profile {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
@@ -187,7 +192,7 @@ struct UserProfileSheet: View {
             Circle()
                 .fill(
                     LinearGradient(
-                        colors: [Color.accentColor.opacity(0.85), Color.accentColor],
+                        colors: [Color.spinlogPink.opacity(0.85), Color.spinlogPink],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )

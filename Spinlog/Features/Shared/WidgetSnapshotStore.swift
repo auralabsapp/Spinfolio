@@ -1,4 +1,4 @@
-import Foundation
+import SwiftUI
 
 /// Un disque de la collection, réduit aux seules données nécessaires à l'affichage du widget
 /// (pas de dépendance au cache SwiftData complet, invisible depuis l'extension de widgets).
@@ -17,6 +17,8 @@ struct RandomAlbumSnapshotItem: Codable, Sendable {
 enum WidgetSnapshotStore {
     private static let collectionKey = "com.spinlog.widgetCollectionSnapshot"
     private static let isPremiumKey = PremiumConstants.isPremiumDefaultsKey
+    /// Même clé que dans la copie de ce fichier côté extension (`SpinlogWidgets/`).
+    private static let themeAccentKey = "com.spinlog.themeAccentOnDarkRGB"
 
     private static var defaults: UserDefaults {
         UserDefaults(suiteName: AppGroup.id) ?? .standard
@@ -41,6 +43,20 @@ enum WidgetSnapshotStore {
 
     static var hasReceivedDataFromApp: Bool {
         defaults.object(forKey: collectionKey) != nil || defaults.object(forKey: isPremiumKey) != nil
+    }
+
+    /// Couleur du thème (variante pour fond sombre) transmise à la Live Activity, qui n'a pas
+    /// accès au thème de l'app.
+    static func saveThemeAccentOnDark(red: Double, green: Double, blue: Double) {
+        defaults.set([red, green, blue], forKey: themeAccentKey)
+    }
+
+    /// `nil` tant que l'app n'a jamais publié son thème (première ouverture pas encore faite).
+    static var themeAccentOnDark: Color? {
+        guard let components = defaults.array(forKey: themeAccentKey) as? [Double], components.count == 3 else {
+            return nil
+        }
+        return Color(red: components[0], green: components[1], blue: components[2])
     }
 
     /// Choix stable pour une journée donnée : même date + même liste => même résultat.

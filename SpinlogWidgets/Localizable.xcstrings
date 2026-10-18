@@ -1,6 +1,16 @@
 {
   "sourceLanguage" : "fr",
   "strings" : {
+    "Ajoute des albums à ta collection Discogs pour activer ce widget." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Add albums to your Discogs collection to use this widget."
+          }
+        }
+      }
+    },
     "Album du jour" : {
       "localizations" : {
         "en" : {
@@ -31,6 +41,16 @@
         }
       }
     },
+    "Aucun disque" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "No Records"
+          }
+        }
+      }
+    },
     "Écoute en cours sur la platine" : {
       "localizations" : {
         "en" : {
@@ -47,6 +67,26 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Listening Ended"
+          }
+        }
+      }
+    },
+    "Ouvre l'app une fois pour afficher ici un disque de ta collection." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Open the app once to show a record from your collection here."
+          }
+        }
+      }
+    },
+    "Ouvre Spinfolio" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Open Spinfolio"
           }
         }
       }

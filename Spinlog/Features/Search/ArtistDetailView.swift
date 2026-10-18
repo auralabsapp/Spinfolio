@@ -5,6 +5,7 @@ struct ArtistDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.openURL) private var openURL
     @Environment(\.scenePhase) private var scenePhase
 
@@ -108,11 +109,16 @@ struct ArtistDetailView: View {
             artistDetailSkeleton
                 .transition(.opacity)
         } else if let errorMessage = viewModel.errorMessage {
-            ContentUnavailableView(
-                "Impossible de charger cet artiste",
-                systemImage: "exclamationmark.triangle",
-                description: Text(errorMessage)
-            )
+            ContentUnavailableView {
+                Label("Impossible de charger cet artiste", systemImage: "exclamationmark.triangle")
+            } description: {
+                Text(errorMessage)
+            } actions: {
+                Button("Réessayer") {
+                    Task { await viewModel.load(artistId: artistId) }
+                }
+                .buttonStyle(.glassProminent)
+            }
         } else if viewModel.artistName != nil {
             ScrollView {
                 VStack(spacing: 0) {
@@ -251,7 +257,7 @@ struct ArtistDetailView: View {
             let rawProgress = min(1.0, scrollUp / maxDistance)
             let easedProgress = pow(rawProgress, 1.6)
             let blurRadius = easedProgress * 30.0
-            let parallaxOffset = scrollUp * 0.5
+            let parallaxOffset = reduceMotion ? 0 : scrollUp * 0.5
 
             ZStack {
                 Color(uiColor: .secondarySystemBackground)

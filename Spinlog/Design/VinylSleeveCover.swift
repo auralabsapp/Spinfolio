@@ -56,7 +56,7 @@ struct VinylSleeveCover: View {
             Circle()
                 .fill(
                     LinearGradient(
-                        colors: [Color.spinlogPink, Color.accentColor],
+                        colors: [Color.spinlogPink, Color.spinlogPinkDeep],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )

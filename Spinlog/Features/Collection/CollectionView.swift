@@ -91,6 +91,8 @@ struct CollectionView: View {
                     Task { await viewModel.moveInstance(item, toFolderId: newFolderId) }
                 } onDelete: {
                     await viewModel.remove(item)
+                } onSaveFailedAfterDismiss: { message in
+                    viewModel.actionMessage = message
                 }
             }
             .confirmationDialog(
@@ -675,7 +677,16 @@ struct CollectionView: View {
             LoginPromptView(message: String(localized: "Connecte-toi à Discogs pour voir et gérer ta collection."))
         } else if let error = viewModel.errorMessage, viewModel.items.isEmpty {
             ScrollView {
-                ContentUnavailableView("Erreur", systemImage: "exclamationmark.triangle", description: Text(error))
+                ContentUnavailableView {
+                    Label("Erreur", systemImage: "exclamationmark.triangle")
+                } description: {
+                    Text(error)
+                } actions: {
+                    Button("Réessayer") {
+                        Task { await viewModel.refresh() }
+                    }
+                    .buttonStyle(.glassProminent)
+                }
                     .frame(maxWidth: .infinity, minHeight: 400)
             }
             .refreshable {
@@ -683,11 +694,16 @@ struct CollectionView: View {
             }
         } else if viewModel.items.isEmpty && !viewModel.isLoading {
             ScrollView {
-                ContentUnavailableView(
-                    "Collection vide",
-                    systemImage: "square.stack",
-                    description: Text("Ajoute des disques depuis la recherche ou le scan.")
-                )
+                ContentUnavailableView {
+                    Label("Collection vide", systemImage: "square.stack")
+                } description: {
+                    Text("Ajoute des disques depuis la recherche ou le scan.")
+                } actions: {
+                    Button("Rechercher un disque") {
+                        TabNavigationCoordinator.shared.selectedTab = .search
+                    }
+                    .buttonStyle(.glassProminent)
+                }
                 .frame(maxWidth: .infinity, minHeight: 400)
             }
             .refreshable {

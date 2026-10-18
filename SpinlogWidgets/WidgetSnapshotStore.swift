@@ -1,4 +1,4 @@
-import Foundation
+import SwiftUI
 
 /// Un disque de la collection, réduit aux seules données nécessaires à l'affichage du widget
 /// (pas de dépendance au cache SwiftData complet, invisible depuis l'extension de widgets).
@@ -18,6 +18,7 @@ enum WidgetSnapshotStore {
     private static let appGroupID = "group.com.auralabs.Spinlog"
     private static let collectionKey = "com.spinlog.widgetCollectionSnapshot"
     private static let isPremiumKey = "com.spinlog.isPremium"
+    private static let themeAccentKey = "com.spinlog.themeAccentOnDarkRGB"
 
     private static var defaults: UserDefaults {
         UserDefaults(suiteName: appGroupID) ?? .standard
@@ -49,6 +50,17 @@ enum WidgetSnapshotStore {
     /// elle, est bien présente (valant simplement `false`/liste vide).
     static var hasReceivedDataFromApp: Bool {
         defaults.object(forKey: collectionKey) != nil || defaults.object(forKey: isPremiumKey) != nil
+    }
+
+    /// Couleur du thème choisi dans l'app, dans sa variante pour fond sombre (la Live Activity a
+    /// toujours un fond noir), écrite par `ThemeManager` côté app. L'extension n'a pas accès au
+    /// thème : sans ce relais, la Live Activity restait sur l'ancien rose codé en dur.
+    /// `nil` tant que l'app n'a jamais publié son thème (première ouverture pas encore faite).
+    static var themeAccentOnDark: Color? {
+        guard let components = defaults.array(forKey: themeAccentKey) as? [Double], components.count == 3 else {
+            return nil
+        }
+        return Color(red: components[0], green: components[1], blue: components[2])
     }
 
     /// Choix stable pour une journée donnée : même date + même liste => même résultat.

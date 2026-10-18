@@ -3,6 +3,15 @@ import WidgetKit
 import ActivityKit
 
 /// Composant de disque vinyle pour la Dynamic Island et le Lock Screen.
+
+/// Couleur du thème de l'app, publiée par `ThemeManager` dans l'App Group. Repli sur le rose
+/// historique tant que l'app n'a jamais été ouverte depuis cette version.
+private enum NowPlayingThemeColor {
+    static var accent: Color {
+        WidgetSnapshotStore.themeAccentOnDark ?? Color(red: 232/255, green: 76/255, blue: 139/255)
+    }
+}
+
 struct SpinningVinylIcon: View {
     var size: CGFloat = 22
 
@@ -30,9 +39,9 @@ struct SpinningVinylIcon: View {
                 .stroke(Color.white.opacity(0.12), lineWidth: 0.5)
                 .frame(width: size * 0.65, height: size * 0.65)
 
-            // Macaron central rose signature Spinlog
+            // Macaron central à la couleur du thème
             Circle()
-                .fill(Color(red: 232/255, green: 76/255, blue: 139/255))
+                .fill(NowPlayingThemeColor.accent)
                 .frame(width: size * 0.38, height: size * 0.38)
 
             // Trou central
@@ -86,7 +95,7 @@ struct NowPlayingContentRow: View {
     var isEnded: Bool = false
 
     private var accentColor: Color {
-        isEnded ? Color.white.opacity(0.55) : Color(red: 232/255, green: 76/255, blue: 139/255)
+        isEnded ? Color.white.opacity(0.55) : NowPlayingThemeColor.accent
     }
 
     var body: some View {
@@ -210,7 +219,7 @@ struct NowPlayingLiveActivityWidget: Widget {
                 }
             }
             .widgetURL(URL(string: "spinlog://release/\(context.attributes.releaseId)"))
-            .keylineTint(Color(red: 232/255, green: 76/255, blue: 139/255))
+            .keylineTint(NowPlayingThemeColor.accent)
         }
     }
 }

@@ -61,11 +61,32 @@ final class DiscogsAPIClient {
                 return String(localized: "Réponse Discogs invalide.")
             case .rateLimited:
                 return String(localized: "Trop de requêtes vers Discogs, réessaie dans quelques instants.")
-            case .http(let status, let message):
-                return message ?? String(localized: "Erreur Discogs (\(String(status))).")
+            case .http(let status, _):
+                // Le message renvoyé par Discogs (toujours en anglais) n'est plus affiché tel quel.
+                return DiscogsAPIClient.userMessage(forHTTPStatus: status)
             case .demoReadOnly:
                 return AppMessages.demoModificationBlocked
             }
+        }
+    }
+
+    /// Texte montré à l'utilisateur pour un code HTTP Discogs, dans sa langue.
+    nonisolated static func userMessage(forHTTPStatus status: Int) -> String {
+        switch status {
+        case 401:
+            return String(localized: "Ta session Discogs a expiré : reconnecte-toi dans Réglages.")
+        case 403:
+            return String(localized: "Accès refusé par Discogs.")
+        case 404:
+            return String(localized: "Élément introuvable sur Discogs.")
+        case 400, 409, 422:
+            return String(localized: "Requête refusée par Discogs.")
+        case 429:
+            return String(localized: "Trop de requêtes vers Discogs, réessaie dans quelques instants.")
+        case 500...599:
+            return String(localized: "Discogs rencontre un problème, réessaie plus tard.")
+        default:
+            return String(localized: "Erreur Discogs (\(String(status))).")
         }
     }
 

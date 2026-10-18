@@ -109,15 +109,17 @@ struct BatchScanView: View {
 
     private var scanningView: some View {
         ZStack(alignment: .bottom) {
-            BarcodeScannerRepresentable(
-                onScan: { code in
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                    viewModel.scan(code: code)
-                },
-                onError: { _ in },
-                continuous: true
-            )
-            .ignoresSafeArea()
+            CameraScannerGate {
+                BarcodeScannerRepresentable(
+                    onScan: { code in
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        viewModel.scan(code: code)
+                    },
+                    onError: { _ in },
+                    continuous: true
+                )
+                .ignoresSafeArea()
+            }
 
             scanCounterText
                 .font(.subheadline.weight(.semibold))

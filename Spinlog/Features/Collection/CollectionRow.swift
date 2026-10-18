@@ -102,8 +102,8 @@ struct CollectionRow: View {
                                 .font(.caption2.weight(.semibold))
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
-                                .background(Color.accentColor.opacity(0.12), in: Capsule())
-                                .foregroundStyle(Color.accentColor)
+                                .background(Color.spinlogPink.opacity(0.12), in: Capsule())
+                                .foregroundStyle(Color.spinlogPink)
                         }
 
                         if !tags.isEmpty {

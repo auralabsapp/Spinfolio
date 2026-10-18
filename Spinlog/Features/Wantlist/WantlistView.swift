@@ -398,7 +398,7 @@ struct WantlistView: View {
                     } label: {
                         Label("Vers la collection", systemImage: "square.stack.fill")
                     }
-                    .tint(.accentColor)
+                    .tint(Color.spinlogPink)
                 )
             },
             trailingSwipeActions: { item in
@@ -435,7 +435,16 @@ struct WantlistView: View {
             LoginPromptView(message: String(localized: "Connecte-toi à Discogs pour voir ta wantlist."))
         } else if let error = viewModel.errorMessage, viewModel.items.isEmpty {
             ScrollView {
-                ContentUnavailableView("Erreur", systemImage: "exclamationmark.triangle", description: Text(error))
+                ContentUnavailableView {
+                    Label("Erreur", systemImage: "exclamationmark.triangle")
+                } description: {
+                    Text(error)
+                } actions: {
+                    Button("Réessayer") {
+                        Task { await viewModel.refresh() }
+                    }
+                    .buttonStyle(.glassProminent)
+                }
                     .frame(maxWidth: .infinity, minHeight: 400)
             }
             .refreshable {
@@ -443,11 +452,16 @@ struct WantlistView: View {
             }
         } else if viewModel.items.isEmpty && !viewModel.isLoading {
             ScrollView {
-                ContentUnavailableView(
-                    "Wantlist vide",
-                    systemImage: "heart",
-                    description: Text("Ajoute des disques que tu recherches depuis la recherche ou le scan.")
-                )
+                ContentUnavailableView {
+                    Label("Wantlist vide", systemImage: "heart")
+                } description: {
+                    Text("Ajoute des disques que tu recherches depuis la recherche ou le scan.")
+                } actions: {
+                    Button("Rechercher un disque") {
+                        TabNavigationCoordinator.shared.selectedTab = .search
+                    }
+                    .buttonStyle(.glassProminent)
+                }
                 .frame(maxWidth: .infinity, minHeight: 400)
             }
             .refreshable {

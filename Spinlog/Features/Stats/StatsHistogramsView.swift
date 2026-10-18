@@ -4,6 +4,59 @@ import Charts
 /// Histogrammes (années originales de sortie, exemplaires ajoutés par année) de l'onglet
 /// Stats — extrait de StatsView.swift, voir le commentaire sur `StatsChartsView`.
 extension StatsView {
+    // MARK: - Sélection d'une année (toucher ou action VoiceOver)
+
+    func selectOriginalYear(_ year: Int, tappedYear: String, scrollProxy: ScrollViewProxy) {
+        let items: [CollectionItem]
+        let title: String
+        switch originalYearsGranularity {
+        case .year:
+            items = viewModel.items(forOriginalYear: year)
+            title = String(localized: "Sortis en \(String(year))")
+        case .decade:
+            items = viewModel.items(forOriginalDecade: year)
+            title = String(localized: "Sortis dans les années \(String(year))")
+        }
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+            selectedOriginalYear = tappedYear
+            selectedAdditionsYear = nil
+            selectedYearData = YearReleasesSheetData(
+                year: year,
+                items: items,
+                type: "originalYears",
+                title: title
+            )
+        }
+
+        Task { @MainActor in
+            try? await Task.sleep(for: AppTiming.scrollSettleDelay)
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                scrollProxy.scrollTo("originalYearsTitle", anchor: .top)
+            }
+        }
+    }
+
+    func selectAdditionsYear(_ year: Int, tappedYear: String, scrollProxy: ScrollViewProxy) {
+        let items = viewModel.items(forYear: year)
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+            selectedAdditionsYear = tappedYear
+            selectedOriginalYear = nil
+            selectedYearData = YearReleasesSheetData(
+                year: year,
+                items: items,
+                type: "additions",
+                title: String(localized: "Ajoutés en \(String(year))")
+            )
+        }
+
+        Task { @MainActor in
+            try? await Task.sleep(for: AppTiming.scrollSettleDelay)
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                scrollProxy.scrollTo("additionsTitle", anchor: .top)
+            }
+        }
+    }
+
     // MARK: - Histogramme : Années originales de sortie (Master Year)
 
     @ViewBuilder
@@ -59,6 +112,7 @@ extension StatsView {
                                 )
                                 .foregroundStyle(originalBarStyle(for: entry.year))
                                 .cornerRadius(5)
+                                .accessibilityHidden(true)
                                 .annotation(position: .top, spacing: 4) {
                                     annotationBadge(isSelected: selectedOriginalYear == String(entry.year), count: entry.count)
                                 }
@@ -69,8 +123,16 @@ extension StatsView {
                                     Rectangle()
                                         .fill(Color.clear)
                                         .contentShape(Rectangle())
-                                        .accessibilityLabel("Sélectionner une année de sortie originale")
-                                        .accessibilityAddTraits(.isButton)
+                                        .chartSelectionAccessibility(
+                                            label: Text("Sorties originales"),
+                                            entries: currentOriginalYearsDistribution.map {
+                                                ChartAccessibilityEntry(id: String($0.year), name: String($0.year), valueText: String(localized: "\($0.count) disques"))
+                                            }
+                                        ) { yearText in
+                                            if let year = Int(yearText) {
+                                                selectOriginalYear(year, tappedYear: yearText, scrollProxy: scrollProxy)
+                                            }
+                                        }
                                         .onTapGesture { location in
                                             guard let plotFrame = proxy.plotFrame else { return }
                                             let origin = geometry[plotFrame].origin
@@ -86,33 +148,7 @@ extension StatsView {
                                                         selectedYearData = nil
                                                     }
                                                 } else {
-                                                    let items: [CollectionItem]
-                                                    let title: String
-                                                    switch originalYearsGranularity {
-                                                    case .year:
-                                                        items = viewModel.items(forOriginalYear: year)
-                                                        title = String(localized: "Sortis en \(String(year))")
-                                                    case .decade:
-                                                        items = viewModel.items(forOriginalDecade: year)
-                                                        title = String(localized: "Sortis dans les années \(String(year))")
-                                                    }
-                                                    withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
-                                                        selectedOriginalYear = tappedYear
-                                                        selectedAdditionsYear = nil
-                                                        selectedYearData = YearReleasesSheetData(
-                                                            year: year,
-                                                            items: items,
-                                                            type: "originalYears",
-                                                            title: title
-                                                        )
-                                                    }
-
-                                                    Task { @MainActor in
-                                                        try? await Task.sleep(for: AppTiming.scrollSettleDelay)
-                                                        withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
-                                                            scrollProxy.scrollTo("originalYearsTitle", anchor: .top)
-                                                        }
-                                                    }
+                                                    selectOriginalYear(year, tappedYear: tappedYear, scrollProxy: scrollProxy)
                                                 }
                                             }
                                         }
@@ -194,6 +230,7 @@ extension StatsView {
                             )
                             .foregroundStyle(additionsBarStyle(for: entry.year))
                             .cornerRadius(5)
+                            .accessibilityHidden(true)
                             .annotation(position: .top, spacing: 4) {
                                 annotationBadge(isSelected: selectedAdditionsYear == String(entry.year), count: entry.count)
                             }
@@ -204,8 +241,16 @@ extension StatsView {
                                 Rectangle()
                                     .fill(Color.clear)
                                     .contentShape(Rectangle())
-                                    .accessibilityLabel("Sélectionner une année d'ajout à la collection")
-                                    .accessibilityAddTraits(.isButton)
+                                    .chartSelectionAccessibility(
+                                        label: Text("Exemplaires ajoutés par année"),
+                                        entries: viewModel.additionsPerYear.map {
+                                            ChartAccessibilityEntry(id: String($0.year), name: String($0.year), valueText: String(localized: "\($0.count) exemplaires"))
+                                        }
+                                    ) { yearText in
+                                        if let year = Int(yearText) {
+                                            selectAdditionsYear(year, tappedYear: yearText, scrollProxy: scrollProxy)
+                                        }
+                                    }
                                     .onTapGesture { location in
                                         guard let plotFrame = proxy.plotFrame else { return }
                                         let origin = geometry[plotFrame].origin
@@ -221,24 +266,7 @@ extension StatsView {
                                                     selectedYearData = nil
                                                 }
                                             } else {
-                                                let items = viewModel.items(forYear: year)
-                                                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
-                                                    selectedAdditionsYear = tappedYear
-                                                    selectedOriginalYear = nil
-                                                    selectedYearData = YearReleasesSheetData(
-                                                        year: year,
-                                                        items: items,
-                                                        type: "additions",
-                                                        title: String(localized: "Ajoutés en \(String(year))")
-                                                    )
-                                                }
-
-                                                Task { @MainActor in
-                                                    try? await Task.sleep(for: AppTiming.scrollSettleDelay)
-                                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
-                                                        scrollProxy.scrollTo("additionsTitle", anchor: .top)
-                                                    }
-                                                }
+                                                selectAdditionsYear(year, tappedYear: tappedYear, scrollProxy: scrollProxy)
                                             }
                                         }
                                     }

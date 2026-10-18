@@ -13,8 +13,20 @@ struct SkeletonBlock: View {
     var height: CGFloat? = nil
 
     private let duration: TimeInterval = 2.4
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
+        // Réduire les animations : bloc fixe, sans reflet tournant en continu.
+        if reduceMotion {
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(Color.primary.opacity(0.08))
+                .frame(width: width, height: height)
+        } else {
+            shimmeringBlock
+        }
+    }
+
+    private var shimmeringBlock: some View {
         TimelineView(.animation) { timeline in
             let t = timeline.date.timeIntervalSinceReferenceDate
                 .truncatingRemainder(dividingBy: duration) / duration

@@ -807,6 +807,7 @@ final class CollectionViewModel {
                 instanceId: item.instanceId
             )
             syncQueue.enqueue(action)
+            actionMessage = AppMessages.offlineRemovalQueued
         }
     }
 

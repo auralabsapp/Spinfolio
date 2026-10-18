@@ -15,6 +15,10 @@ struct CollectionItemEditSheet: View {
     /// traite le déplacement comme une action indépendante des champs personnalisés).
     var onFolderChanged: (CollectionItem, Int) -> Void = { _, _ in }
     var onDelete: (() async -> Void)? = nil
+    /// Échec d'un enregistrement lancé à la fermeture de la feuille : l'alerte de la feuille
+    /// n'existe plus, l'appelant affiche donc le message sur son propre écran (sinon l'échec
+    /// passait inaperçu et la saisie était perdue sans que l'utilisateur le sache).
+    var onSaveFailedAfterDismiss: (String) -> Void = { _ in }
 
     @Environment(\.dismiss) private var dismiss
     @State private var networkMonitor = NetworkMonitor.shared
@@ -33,8 +37,8 @@ struct CollectionItemEditSheet: View {
     /// sans rapport avec les dossiers/champs déjà gérés par cette feuille : pas de coût particulier
     /// à la créer ici, ses dépendances (compte, réseau, cache local) sont toutes des singletons.
     @State private var actions = ReleaseActions()
-    @State private var purchasePriceEUR: Double?
-    @State private var marketEstimateEUR: Double?
+    @State private var purchasePriceInDisplayCurrency: Double?
+    @State private var marketEstimateInDisplayCurrency: Double?
     @State private var isLoadingGain = false
     @State private var showingMarketplaceSheet = false
 
@@ -44,7 +48,8 @@ struct CollectionItemEditSheet: View {
         folders: [CollectionFolder] = [],
         onSaved: @escaping (Int, [CollectionFieldValue]) -> Void = { _, _ in },
         onFolderChanged: @escaping (CollectionItem, Int) -> Void = { _, _ in },
-        onDelete: (() async -> Void)? = nil
+        onDelete: (() async -> Void)? = nil,
+        onSaveFailedAfterDismiss: @escaping (String) -> Void = { _ in }
     ) {
         self.item = item
         self.folders = folders
@@ -52,6 +57,7 @@ struct CollectionItemEditSheet: View {
         self.onSaved = onSaved
         self.onFolderChanged = onFolderChanged
         self.onDelete = onDelete
+        self.onSaveFailedAfterDismiss = onSaveFailedAfterDismiss
         _selectedFolderId = State(initialValue: item.folderId)
         var initialValues: [Int: String] = [:]
         for note in item.notes {
@@ -249,7 +255,7 @@ struct CollectionItemEditSheet: View {
                     let current = fieldValues[field.id] ?? ""
                     if current != (savedFieldValues[field.id] ?? "") {
                         Task {
-                            await saveField(field, value: current)
+                            await saveField(field, value: current, afterDismiss: true)
                         }
                     }
                 }
@@ -336,8 +342,15 @@ struct CollectionItemEditSheet: View {
         return PurchasePriceParser.parse(raw, defaultCurrency: CollectionPreferencesStore.defaultCurrency(for: username))
     }
 
-    /// Plus/moins-value de l'exemplaire par rapport à son prix d'achat, toujours exprimée en
-    /// euros (prix d'achat et cote marketplace sont chacun dans leur propre devise d'origine).
+    /// Devise d'affichage de la plus-value : celle choisie dans Réglages → Suivi de cote (elle
+    /// était auparavant toujours l'euro, quel que soit ce réglage).
+    private var displayCurrency: String {
+        guard let username = DiscogsAuthManager.shared.username else { return "EUR" }
+        return CollectionPreferencesStore.defaultCurrency(for: username)
+    }
+
+    /// Plus/moins-value de l'exemplaire par rapport à son prix d'achat, exprimée dans la devise
+    /// d'affichage (prix d'achat et cote marketplace sont chacun dans leur propre devise d'origine).
     @ViewBuilder
     private var gainSection: some View {
         if !PremiumStore.shared.isPremium {
@@ -366,13 +379,13 @@ struct CollectionItemEditSheet: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 20)
                         .appleMusicGroupedCard()
-                } else if let purchasePriceEUR, let marketEstimateEUR {
+                } else if let purchasePriceInDisplayCurrency, let marketEstimateInDisplayCurrency {
                     VStack(spacing: 0) {
                         HStack {
                             Text("Prix d'achat")
                                 .font(.subheadline)
                             Spacer()
-                            Text(purchasePriceEUR.formatted(.currency(code: "EUR")))
+                            Text(purchasePriceInDisplayCurrency.formatted(.currency(code: displayCurrency)))
                                 .font(.subheadline.weight(.semibold))
                                 .monospacedDigit()
                         }
@@ -389,7 +402,7 @@ struct CollectionItemEditSheet: View {
                                     .font(.subheadline)
                                     .foregroundStyle(.primary)
                                 Spacer()
-                                Text(marketEstimateEUR.formatted(.currency(code: "EUR")))
+                                Text(marketEstimateInDisplayCurrency.formatted(.currency(code: displayCurrency)))
                                     .font(.subheadline.weight(.semibold))
                                     .foregroundStyle(Color.spinlogPink)
                                     .monospacedDigit()
@@ -406,13 +419,13 @@ struct CollectionItemEditSheet: View {
 
                         Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 14)
 
-                        let gain = marketEstimateEUR - purchasePriceEUR
-                        let percent = purchasePriceEUR > 0 ? gain / purchasePriceEUR : 0
+                        let gain = marketEstimateInDisplayCurrency - purchasePriceInDisplayCurrency
+                        let percent = purchasePriceInDisplayCurrency > 0 ? gain / purchasePriceInDisplayCurrency : 0
                         HStack {
                             Text("Plus-value latente")
                                 .font(.subheadline.weight(.semibold))
                             Spacer()
-                            Text("\(gain >= 0 ? "+" : "")\(gain.formatted(.currency(code: "EUR").precision(.fractionLength(0)))) (\(percent.formatted(.percent.precision(.fractionLength(0)).sign(strategy: .always()))))")
+                            Text("\(gain >= 0 ? "+" : "")\(gain.formatted(.currency(code: displayCurrency).precision(.fractionLength(0)))) (\(percent.formatted(.percent.precision(.fractionLength(0)).sign(strategy: .always()))))")
                                 .font(.subheadline.weight(.bold))
                                 .foregroundStyle(gain >= 0 ? Color.gainPositive : Color.gainNegative)
                                 .monospacedDigit()
@@ -431,20 +444,20 @@ struct CollectionItemEditSheet: View {
                         .appleMusicGroupedCard()
                 }
             }
-            .task(id: "\(item.releaseId)_\(declaredCondition ?? "")_\(purchasePrice?.amount ?? 0)_\(purchasePrice?.currency ?? "")") {
+            .task(id: "\(item.releaseId)_\(declaredCondition ?? "")_\(purchasePrice?.amount ?? 0)_\(purchasePrice?.currency ?? "")_\(displayCurrency)") {
                 guard let purchasePrice else {
-                    purchasePriceEUR = nil
-                    marketEstimateEUR = nil
+                    purchasePriceInDisplayCurrency = nil
+                    marketEstimateInDisplayCurrency = nil
                     return
                 }
                 isLoadingGain = true
-                async let purchaseConversion = CurrencyConversionService.shared.convert(purchasePrice.amount, from: purchasePrice.currency, to: "EUR")
+                async let purchaseConversion = CurrencyConversionService.shared.convert(purchasePrice.amount, from: purchasePrice.currency, to: displayCurrency)
                 async let estimate = actions.refreshMarketEstimateIfNeeded(releaseId: item.releaseId, condition: declaredCondition)
-                purchasePriceEUR = await purchaseConversion
+                purchasePriceInDisplayCurrency = await purchaseConversion
                 if let marketEstimate = await estimate {
-                    marketEstimateEUR = await CurrencyConversionService.shared.convert(marketEstimate.price, from: marketEstimate.currency, to: "EUR")
+                    marketEstimateInDisplayCurrency = await CurrencyConversionService.shared.convert(marketEstimate.price, from: marketEstimate.currency, to: displayCurrency)
                 } else {
-                    marketEstimateEUR = nil
+                    marketEstimateInDisplayCurrency = nil
                 }
                 isLoadingGain = false
             }
@@ -479,9 +492,16 @@ struct CollectionItemEditSheet: View {
         )
     }
 
-    private func saveField(_ field: CollectionField, value: String) async {
+    private func saveField(_ field: CollectionField, value: String, afterDismiss: Bool = false) async {
+        func report(_ message: String) {
+            if afterDismiss {
+                onSaveFailedAfterDismiss(message)
+            } else {
+                errorMessage = message
+            }
+        }
         guard DiscogsAuthManager.shared.session != nil else {
-            errorMessage = String(localized: "Tu dois être connecté à Discogs pour enregistrer ces modifications.")
+            report(String(localized: "Tu dois être connecté à Discogs pour enregistrer ces modifications."))
             return
         }
         withAnimation {
@@ -521,7 +541,7 @@ struct CollectionItemEditSheet: View {
                 withAnimation {
                     _ = savingFieldIds.remove(field.id)
                 }
-                errorMessage = String(localized: "Impossible d'enregistrer sur Discogs : \(error.localizedDescription)")
+                report(String(localized: "Impossible d'enregistrer sur Discogs : \(error.localizedDescription)"))
                 return
             }
         }

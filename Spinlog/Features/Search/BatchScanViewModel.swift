@@ -208,6 +208,8 @@ final class BatchScanViewModel {
         guard !targets.isEmpty else { return }
         isAdding = true
         var count = 0
+        var queuedCount = 0
+        var failedIds: Set<BatchScanItem.ID> = []
         for target in targets {
             guard case let .found(result) = target.status else { continue }
             count += 1
@@ -218,12 +220,20 @@ final class BatchScanViewModel {
             // jour tant que l'utilisateur ne recharge pas manuellement.
             let release = try? await DiscogsAPIClient.shared.release(id: result.id, credentials: DiscogsAuthManager.shared.credentials)
             await actions.addToCollection(releaseId: result.id, release: release, targetFolderId: folderId)
+            switch Self.addOutcome(forActionMessage: actions.message) {
+            case .added: break
+            case .queued: queuedCount += 1
+            case .failed: failedIds.insert(target.id)
+            }
         }
-        let targetIds = Set(targets.map(\.id))
+        // Les codes dont l'ajout a échoué restent dans la liste, pour pouvoir réessayer.
+        let targetIds = Set(targets.map(\.id)).subtracting(failedIds)
         items.removeAll { targetIds.contains($0.id) }
         addProgressText = nil
         isAdding = false
-        message = String(localized: "\(count) disques ajoutés à la collection.")
+        let addedCount = count - failedIds.count
+        message = String(localized: "\(addedCount) disques ajoutés à la collection.")
+        appendOutcomeDetails(queuedCount: queuedCount, failedCount: failedIds.count)
     }
 
     func addSelectedToWantlist() async {
@@ -235,6 +245,8 @@ final class BatchScanViewModel {
         guard !targets.isEmpty else { return }
         isAdding = true
         var count = 0
+        var queuedCount = 0
+        var failedIds: Set<BatchScanItem.ID> = []
         for target in targets {
             guard case let .found(result) = target.status else { continue }
             count += 1
@@ -242,11 +254,50 @@ final class BatchScanViewModel {
             let actions = ReleaseActions()
             let release = try? await DiscogsAPIClient.shared.release(id: result.id, credentials: DiscogsAuthManager.shared.credentials)
             await actions.addToWantlist(releaseId: result.id, release: release)
+            switch Self.addOutcome(forActionMessage: actions.message) {
+            case .added: break
+            case .queued: queuedCount += 1
+            case .failed: failedIds.insert(target.id)
+            }
         }
-        let targetIds = Set(targets.map(\.id))
+        // Les codes dont l'ajout a échoué restent dans la liste, pour pouvoir réessayer.
+        let targetIds = Set(targets.map(\.id)).subtracting(failedIds)
         items.removeAll { targetIds.contains($0.id) }
         addProgressText = nil
         isAdding = false
-        message = String(localized: "\(count) disques ajoutés à la wantlist.")
+        let addedCount = count - failedIds.count
+        message = String(localized: "\(addedCount) disques ajoutés à la wantlist.")
+        appendOutcomeDetails(queuedCount: queuedCount, failedCount: failedIds.count)
+    }
+
+    // MARK: - Bilan des ajouts groupés
+
+    /// Issue d'un ajout, déduite du message laissé par `ReleaseActions` (`nil` = réussi). Le bilan
+    /// annonçait auparavant « N disques ajoutés » même quand des ajouts avaient échoué ou
+    /// attendaient le retour du réseau, et retirait de la liste les codes en échec.
+    enum AddOutcome: Equatable {
+        case added
+        case queued
+        case failed
+    }
+
+    nonisolated static func addOutcome(forActionMessage message: String?) -> AddOutcome {
+        guard let message else { return .added }
+        if message == AppMessages.offlineAddQueued || message == AppMessages.discogsUnavailableQueued {
+            return .queued
+        }
+        return .failed
+    }
+
+    private func appendOutcomeDetails(queuedCount: Int, failedCount: Int) {
+        var details: [String] = []
+        if queuedCount > 0 {
+            details.append(String(localized: "\(queuedCount) disques en attente de synchronisation avec Discogs."))
+        }
+        if failedCount > 0 {
+            details.append(String(localized: "\(failedCount) disques n'ont pas pu être ajoutés et restent dans la liste."))
+        }
+        guard !details.isEmpty else { return }
+        message = ([message].compactMap { $0 } + details).joined(separator: "\n")
     }
 }

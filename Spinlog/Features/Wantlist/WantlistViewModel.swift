@@ -358,6 +358,7 @@ final class WantlistViewModel {
         } else {
             let action = PendingAction(type: .removeFromWantlist, releaseId: item.id)
             syncQueue.enqueue(action)
+            actionMessage = AppMessages.offlineRemovalQueued
         }
     }
 
@@ -445,6 +446,7 @@ final class WantlistViewModel {
             // par la file pour un ajout — l'autre envoyait le disque dans "Uncategorized".
             let action = PendingAction(type: .addToCollection, releaseId: item.id, folderId: folderId)
             syncQueue.enqueue(action)
+            actionMessage = AppMessages.offlineAddQueued
         }
     }
 }

@@ -168,17 +168,19 @@ struct SearchView: View {
 
     private var scannerSheet: some View {
         NavigationStack {
-            BarcodeScannerRepresentable(
-                onScan: { payload in
-                    isScannerPresented = false
-                    Task { await viewModel.searchByBarcode(payload) }
-                },
-                onError: { error in
-                    isScannerPresented = false
-                    viewModel.reportScannerError(error.localizedDescription)
-                }
-            )
-            .ignoresSafeArea()
+            CameraScannerGate {
+                BarcodeScannerRepresentable(
+                    onScan: { payload in
+                        isScannerPresented = false
+                        Task { await viewModel.searchByBarcode(payload) }
+                    },
+                    onError: { error in
+                        isScannerPresented = false
+                        viewModel.reportScannerError(error.localizedDescription)
+                    }
+                )
+                .ignoresSafeArea()
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Annuler") { isScannerPresented = false }

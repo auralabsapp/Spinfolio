@@ -59,7 +59,7 @@ struct RootTabView: View {
             }
 
             Tab("Réglages", systemImage: "gearshape", value: .settings) {
-                NavigationStack {
+                NavigationStack(path: $coordinator.settingsPath) {
                     SettingsView()
                 }
             }
@@ -183,6 +183,7 @@ final class TabNavigationCoordinator {
     var wantlistPath = NavigationPath()
     var searchPath = NavigationPath()
     var statsPath = NavigationPath()
+    var settingsPath = NavigationPath()
     var scrollToTopOfCollectionTrigger = 0
     var scrollToTopOfWantlistTrigger = 0
     var scrollToTopOfStatsTrigger = 0
@@ -203,7 +204,7 @@ final class TabNavigationCoordinator {
         case .search:
             if !searchPath.isEmpty { searchPath = NavigationPath() } else { scrollToTopOfSearchTrigger += 1 }
         case .settings:
-            scrollToTopOfSettingsTrigger += 1
+            if !settingsPath.isEmpty { settingsPath = NavigationPath() } else { scrollToTopOfSettingsTrigger += 1 }
         }
     }
     /// Alerte à ouvrir dès que `WantlistView` peut résoudre l'élément (au lancement à froid, la
@@ -313,16 +314,18 @@ final class TabNavigationCoordinator {
     /// Ouvre Réglages directement positionné sur la section "Collection & Rangement" (ex: depuis
     /// "Modifier" dans la méthode de classement du guide de rangement), plutôt qu'en haut de la liste.
     func openSettingsAtOrganizationSection() {
+        // Section de la racine de Réglages : un sous-écran resté ouvert la masquerait.
+        settingsPath = NavigationPath()
         selectedTab = .settings
         scrollToOrganizationSectionTrigger += 1
     }
 
     /// Navigation profonde vers une release précise (lien `spinlog://release/{id}` ouvert depuis
-    /// la Live Activity ou le widget "Album du jour"), via l'onglet Recherche.
+    /// la Live Activity ou le widget "Album du jour"). Poussée sur l'onglet courant (Collection
+    /// depuis Réglages) sans vider sa pile : auparavant, l'onglet Recherche était toujours vidé,
+    /// ce qui faisait perdre la recherche ou la fiche en cours de consultation.
     func openRelease(id: Int, coverURL: String? = nil) {
-        searchPath = NavigationPath()
-        selectedTab = .search
-        searchPath.append(SearchDestination.release(id, coverURL: coverURL))
+        returnToRelease(releaseId: id, coverURL: coverURL)
     }
 }
 

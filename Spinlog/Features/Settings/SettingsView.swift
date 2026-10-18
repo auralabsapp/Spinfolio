@@ -32,6 +32,9 @@ struct SettingsView: View {
 
     var body: some View {
         applySheetsAndAlerts(to: applyDialogs(to: settingsList))
+            .navigationDestination(for: SettingsDestination.self) { destination in
+                destination.view
+            }
     }
 
     @ViewBuilder
@@ -165,9 +168,7 @@ struct SettingsView: View {
     @ViewBuilder
     private var organizationSection: some View {
         Section {
-            NavigationLink {
-                TagManagementView()
-            } label: {
+            NavigationLink(value: SettingsDestination.tags) {
                 HStack(spacing: 14) {
                     SettingsIcon(systemName: "tag.fill", backgroundColor: .orange)
                     Text("Gestion des tags")
@@ -179,9 +180,7 @@ struct SettingsView: View {
             }
 
             if authManager.isAuthenticated {
-                NavigationLink {
-                    FolderManagementView()
-                } label: {
+                NavigationLink(value: SettingsDestination.folders) {
                     HStack(spacing: 14) {
                         SettingsIcon(systemName: "folder.fill", backgroundColor: .blue)
                         Text("Gestion des dossiers")
@@ -254,9 +253,7 @@ struct SettingsView: View {
             .tint(Color.spinlogPink)
 
             if shelfPreferences.sortByLastName {
-                NavigationLink {
-                    ArtistSortCustomizationView()
-                } label: {
+                NavigationLink(value: SettingsDestination.artistSort) {
                     HStack(spacing: 14) {
                         SettingsIcon(systemName: "slider.horizontal.3", backgroundColor: .pink)
                         VStack(alignment: .leading, spacing: 2) {
@@ -289,9 +286,7 @@ struct SettingsView: View {
                     message: "Passe premium pour suivre le prix d'achat, la plus-value et l'estimation de ta collection."
                 )
             } else {
-                NavigationLink {
-                    PurchasePriceHelpSheet()
-                } label: {
+                NavigationLink(value: SettingsDestination.purchasePriceHelp) {
                     HStack(spacing: 14) {
                         SettingsIcon(systemName: "questionmark.circle.fill", backgroundColor: .mint)
                         Text("Comment ça fonctionne ?")
@@ -505,9 +500,7 @@ struct SettingsView: View {
             }
 
             #if DEBUG
-            NavigationLink {
-                DeveloperOptionsView()
-            } label: {
+            NavigationLink(value: SettingsDestination.developerOptions) {
                 HStack(spacing: 14) {
                     SettingsIcon(systemName: "hammer.fill", backgroundColor: .gray)
                     VStack(alignment: .leading, spacing: 2) {

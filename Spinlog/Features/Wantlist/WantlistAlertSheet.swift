@@ -312,7 +312,7 @@ struct WantlistAlertSheet: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 6)
-            .background(Color.accentColor.opacity(0.1), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .background(Color.spinlogPink.opacity(0.1), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         }
         .buttonStyle(.plain)
     }

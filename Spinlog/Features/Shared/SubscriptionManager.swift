@@ -234,6 +234,18 @@ public final class SubscriptionManager {
         return String(localized: "2,99 € / mois")
     }
 
+    /// Prix mensuel le plus bas proposé (équivalent mensuel de l'annuel), formaté dans la devise
+    /// de la boutique de l'utilisateur ; `nil` tant que les produits StoreKit ne sont pas chargés.
+    /// Remplace un « À partir de 2,50 € / mois » codé en dur, faux hors zone euro et à chaque
+    /// changement de tarif.
+    public var lowestMonthlyPriceString: String? {
+        let candidates = [yearlyProduct.map { ($0.price / 12, $0.priceFormatStyle) },
+                          monthlyProduct.map { ($0.price, $0.priceFormatStyle) }]
+            .compactMap { $0 }
+        guard let lowest = candidates.min(by: { $0.0 < $1.0 }) else { return nil }
+        return lowest.0.formatted(lowest.1)
+    }
+
     /// Équivalent mensuel de l'abonnement annuel calculé dynamiquement
     public var yearlyMonthlyEquivalentString: String {
         if let yearlyProduct = yearlyProduct {

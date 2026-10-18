@@ -32,11 +32,7 @@ struct SettingsAccountSection: View {
             if authManager.isDemoMode {
                 demoAccountRows
             } else if authManager.isAuthenticated {
-                NavigationLink {
-                    if let username = authManager.username {
-                        UserProfileSheet(username: username)
-                    }
-                } label: {
+                NavigationLink(value: authManager.username.map { SettingsDestination.userProfile(username: $0) }) {
                     HStack(spacing: 14) {
                         if let avatarURLString = authManager.avatarURL,
                            let avatarURL = URL(string: avatarURLString) {
@@ -188,7 +184,7 @@ struct SettingsAccountSection: View {
             Circle()
                 .fill(
                     LinearGradient(
-                        colors: [Color.accentColor.opacity(0.85), Color.accentColor],
+                        colors: [Color.spinlogPink.opacity(0.85), Color.spinlogPink],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -289,9 +285,7 @@ struct SettingsOfflineSection: View {
                     message: "Passe premium pour consulter toute ta collection et les pochettes sans réseau en brocante."
                 )
             } else {
-                NavigationLink {
-                    OfflineSettingsDetailView()
-                } label: {
+                NavigationLink(value: SettingsDestination.offline) {
                     HStack(spacing: 14) {
                         SettingsIcon(systemName: "arrow.down.circle.fill", backgroundColor: .teal)
                         VStack(alignment: .leading, spacing: 3) {
@@ -361,9 +355,7 @@ struct SettingsAppearanceSection: View {
                     message: "Passe premium pour choisir parmi les 8 palettes de thèmes exclusives."
                 )
             } else {
-                NavigationLink {
-                    ColorThemeSelectionView()
-                } label: {
+                NavigationLink(value: SettingsDestination.colorTheme) {
                     HStack(spacing: 14) {
                         SettingsIcon(systemName: "paintpalette.fill", backgroundColor: themeManager.currentTheme.primaryColor)
                         Text("Couleur du thème")

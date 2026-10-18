@@ -85,13 +85,36 @@ struct RandomAlbumEntry: TimelineEntry {
 }
 
 struct RandomAlbumProvider: TimelineProvider {
+    /// Aperçu affiché pendant le chargement et dans la galerie de widgets : la mise en page
+    /// d'un album (masquée par le système en placeholder), plutôt que le message « Aucun disque »,
+    /// qui présentait le widget comme vide avant même son ajout.
+    private static var sampleEntry: RandomAlbumEntry {
+        RandomAlbumEntry(
+            date: Date(),
+            state: .album(
+                RandomAlbumSnapshotItem(releaseId: 0, title: "Kind of Blue", artistNames: "Miles Davis", coverURL: nil),
+                coverImageData: nil,
+                isLightCover: false
+            )
+        )
+    }
+
     func placeholder(in context: Context) -> RandomAlbumEntry {
-        RandomAlbumEntry(date: Date(), state: .empty)
+        Self.sampleEntry
     }
 
     func getSnapshot(in context: Context, completion: @escaping (RandomAlbumEntry) -> Void) {
         Task {
-            completion(await buildEntry(for: Date()))
+            let entry = await buildEntry(for: Date())
+            // Galerie de widgets : sans collection encore disponible, on montre à quoi ressemble
+            // le widget plutôt qu'un message d'état.
+            if context.isPreview, case .album = entry.state {
+                completion(entry)
+            } else if context.isPreview {
+                completion(Self.sampleEntry)
+            } else {
+                completion(entry)
+            }
         }
     }
 
@@ -169,10 +192,13 @@ struct RandomAlbumWidgetView: View {
         Group {
             switch entry.state {
             case .appGroupUnavailable:
+                // Aucune donnée encore reçue de l'app : le plus souvent, elle n'a simplement pas
+                // été ouverte depuis l'installation. Le diagnostic technique (App Group mal
+                // configuré) reste dans les logs, il n'a pas sa place devant l'utilisateur.
                 statusView(
-                    icon: "exclamationmark.triangle.fill",
-                    title: "Widget non configuré",
-                    message: "Ce widget n'arrive pas à communiquer avec Spinlog. Vérifie les App Groups dans Xcode (Signing & Capabilities), puis réinstalle l'app."
+                    icon: "opticaldisc",
+                    title: "Ouvre Spinfolio",
+                    message: "Ouvre l'app une fois pour afficher ici un disque de ta collection."
                 )
             case .empty:
                 statusView(
@@ -355,7 +381,7 @@ struct RandomAlbumWidgetView: View {
         }
     }
 
-    private func statusView(icon: String, title: String, message: String) -> some View {
+    private func statusView(icon: String, title: LocalizedStringKey, message: LocalizedStringKey) -> some View {
         VStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.title2)

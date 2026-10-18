@@ -108,6 +108,7 @@ struct LibraryCarouselView<Item: SortableLibraryItem>: View {
     var quickActions: (Item) -> AnyView = { _ in AnyView(EmptyView()) }
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     // `ScrollPosition` (et non `scrollPosition(id:)`) : en plus de suivre l'identité de la carte
     // centrée au fil du défilement normal, elle permet de sauter à un décalage (`x:`) calculé
     // analytiquement — voir `animatedScroll` pour la raison de ce choix.
@@ -180,11 +181,14 @@ struct LibraryCarouselView<Item: SortableLibraryItem>: View {
                 LazyHStack(spacing: cardSpacing) {
                     ForEach(currentItems) { item in
                         let isRegularDisplay = isRegularDisplay
+                        // Réduire les animations : plus de zoom des pochettes pendant le défilement
+                        // (le fondu, sans mouvement, est conservé).
+                        let sideScale: CGFloat = reduceMotion ? 1.0 : (isRegularDisplay ? 0.92 : 0.88)
                         carouselCard(for: item, size: cardSize, cardWidth: cardWidth, items: currentItems)
                             .id(item.id)
                             .scrollTransition(.interactive, axis: .horizontal) { content, phase in
                                 content
-                                    .scaleEffect(phase.isIdentity ? 1.0 : (isRegularDisplay ? 0.92 : 0.88))
+                                    .scaleEffect(phase.isIdentity ? 1.0 : sideScale)
                                     .opacity(phase.isIdentity ? 1.0 : (isRegularDisplay ? 0.0 : 0.70))
                             }
                             .task {

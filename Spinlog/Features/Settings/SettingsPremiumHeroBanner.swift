@@ -37,9 +37,13 @@ struct SettingsPremiumHeroBanner: View {
                                 .foregroundStyle(.primary)
                         }
 
-                        Text("À partir de 2,50 € / mois")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(Color.goldWarm)
+                        // Prix réel de la boutique (devise locale) ; ligne masquée tant que
+                        // StoreKit n'a pas répondu (hors ligne) plutôt qu'un tarif inventé.
+                        if let lowestMonthlyPrice = SubscriptionManager.shared.lowestMonthlyPriceString {
+                            Text("À partir de \(lowestMonthlyPrice) / mois")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Color.goldWarm)
+                        }
                     }
 
                     Spacer(minLength: 4)
