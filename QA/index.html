@@ -51,6 +51,7 @@
     .tag-devices { background: #38bdf8; color: #000; }
     .tag-dev { background: #a855f7; color: #fff; }
     .tag-audit { background: #14b8a6; color: #042f2e; }
+    .tag-auto { background: #64748b; color: #fff; }
     .legend { font-size: 0.8rem; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
 
     .status-group { display: flex; gap: 4px; }
@@ -73,7 +74,8 @@
       <div>
         <h1>Spinfolio — Cahier de Recette <span id="campaign-subtitle"></span></h1>
         <div class="legend">
-          <span class="tag tag-audit">AUDIT</span> nouveau en v3.1/v3.2 : couvre les corrections de l'audit de fiabilisation et des libellés (famille S) (à passer en priorité avant fusion de la branche <code>audit-fixes</code>).
+          <span class="tag tag-audit">AUDIT</span> nouveau en v3.1 à v3.3 : couvre les corrections de l'audit (fiabilisation, libellés, soumission App Store, mode démo, accessibilité), à passer en priorité avant fusion de la branche <code>audit-fixes</code>.
+          <span class="tag tag-auto">AUTO</span> logique déjà couverte par les tests automatiques Xcode (<code>SpinlogTests</code>, <code>SpinlogUITests</code>) : vérifier surtout le rendu et ce que ces tests ne voient pas.
           Outils utiles : Network Link Conditioner (Réglages iOS › Développeur, profil « 100% Loss » = Discogs injoignable sans être hors ligne), proxy HTTP (Proxyman/Charles), Console.app, CloudKit Dashboard, débogueur Xcode.
         </div>
       </div>
@@ -148,7 +150,7 @@
     const STORAGE_KEY = 'spinfolio_qa_state_v3';
     let testState = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
 
-    const TAG_ORDER = ['AUDIT', 'RÉGRESSION', 'LIMITE', 'PREMIUM', '2 APPAREILS', 'DEV'];
+    const TAG_ORDER = ['AUDIT', 'AUTO', 'RÉGRESSION', 'LIMITE', 'PREMIUM', '2 APPAREILS', 'DEV'];
 
     /// En-tête, filtres par famille et par tag, générés à partir de `testCases`.
     function populateFilters() {
@@ -263,6 +265,7 @@
           if (tag === '2 APPAREILS') cls += ' tag-devices';
           if (tag === 'DEV') cls += ' tag-dev';
           if (tag === 'AUDIT') cls += ' tag-audit';
+          if (tag === 'AUTO') cls += ' tag-auto';
           return `<span class="${cls}">${tag}</span>`;
         }).join('');
 

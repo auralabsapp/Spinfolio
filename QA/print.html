@@ -16,7 +16,7 @@
       size: A4 landscape;
       margin: 14mm 14mm 14mm 14mm;
       @bottom-right { content: "Page " counter(page) " / " counter(pages); font: 7.5pt -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; color: #9a9a9a; }
-      @bottom-left { content: "Spinfolio — Cahier de recette v3.1"; font: 7.5pt -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; color: #9a9a9a; }
+      @bottom-left { content: "Spinfolio — Cahier de recette v3.3"; font: 7.5pt -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; color: #9a9a9a; }
     }
     :root {
       --accent: #b7791f;
@@ -81,6 +81,7 @@
     .tag-DEV { background: #e5e7eb; color: #374151; }
     .tag-LIMITE { background: #e7e0fb; color: #5b3fb3; }
     .tag-AUDIT { background: #ccfbf1; color: #0f766e; }
+    .tag-AUTO { background: #e2e8f0; color: #334155; }
   </style>
   <script src="tests.js"></script>
 </head>
@@ -104,7 +105,8 @@
 
   <script>
     const TAG_LEGEND = [
-      ['AUDIT', "nouveau en v3.1/v3.2 — couvre les corrections de l'audit de fiabilisation et des libellés, à passer en priorité"],
+      ['AUDIT', "nouveau en v3.1 à v3.3 — couvre les corrections de l'audit (fiabilisation, libellés, soumission, mode démo, accessibilité), à passer en priorité"],
+      ['AUTO', 'logique déjà couverte par les tests automatiques Xcode — vérifier surtout le rendu'],
       ['PREMIUM', 'fonctionnalité réservée aux comptes premium'],
       ['RÉGRESSION', 'lié à un bug déjà corrigé — à surveiller en priorité'],
       ['2 APPAREILS', 'nécessite deux appareils physiques'],
@@ -137,7 +139,10 @@
       `<tr class="total"><td colspan="2">Total</td><td class="num">${testCases.length}</td><td class="num">${auditCount}</td></tr>`;
 
     const newOutsideAudit = testCases.filter(t => !t.tags.includes('AUDIT') && /^(F21|F22|N17|O12|O13|P14|P15|Q25|Q26|R\d+)$/.test(t.id)).length;
+    const autoCount = testCases.filter(t => t.tags.includes('AUTO')).length;
     document.getElementById('whatsnew').innerHTML = [
+      `<b>v3.3 — 34 nouveaux tests AUDIT</b> : mode démo sans compte Discogs (A16–A19, B37–B38, H17, I19, L20, M22), soumission App Store (P20, O15, O16), file hors ligne sans perte (N19, N20), scan par lot conservé (G17–G19), Live Activity terminée app suspendue (O14), paywall hebdomadaire (L17–L19), VoiceOver et iOS 26 (P17–P19), gestion des dossiers et re-tap d'onglet (J20–J23), messages Wantlist (E17), textes anglais (S14), non-régression après réorganisation du code (P21).`,
+      `<b>Nouveau tag AUTO (${autoCount} tests)</b> : logique déjà vérifiée par les tests automatiques Xcode (97 tests unitaires, 5 parcours d'interface en mode démo) — le passage manuel peut se limiter au rendu.`,
       `<b>Nouvelle famille S (v3.2)</b> — langues et libellés : interface 100 % anglaise, lexique écoute sur platine / lecture Apple Music (Listen / Play), pluriels, tutoiement, formats régionaux, nom de l'app et autorisations. J6, O4 et O11 reprennent les nouveaux libellés.`,
       `<b>${auditCount} tests AUDIT</b> répartis dans les familles existantes : isolation des comptes (iCloud, file hors ligne), disques supprimés ou déplacés sur discogs.com, erreurs passagères vs définitives (ajout, retrait, déplacement), alertes wantlist en arrière-plan, performances (grosses collections, Stats, synchro), lecture Apple Music, confidentialité des en-têtes.`,
       `<b>Alertes wantlist vérifiées à chaque ouverture de l'app</b> (au plus une fois toutes les 15 min) : F22, F23.`,

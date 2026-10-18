@@ -157,6 +157,7 @@ struct LibraryMosaicView<Item: SortableLibraryItem>: View {
                     }
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("libraryItem-\(item.releaseId)")
             .allowsHitTesting(!isSelecting)
             .accessibilityHidden(isSelecting)
 

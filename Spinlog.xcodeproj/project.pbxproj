@@ -45,6 +45,7 @@
 /* Begin PBXFileReference section */
 		000000000000000000000120 /* Spinlog.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Spinlog.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2703F4B93075962F00634ED4 /* SpinlogTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SpinlogTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		27654D103084DC11009E7CE9 /* SpinlogUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SpinlogUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		27FA070B305E9810004E6B81 /* SpinlogWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SpinlogWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		27FA070D305E9810004E6B81 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		27FA070F305E9811004E6B81 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
@@ -81,6 +82,11 @@
 			path = SpinlogTests;
 			sourceTree = "<group>";
 		};
+		27654D113084DC11009E7CE9 /* SpinlogUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SpinlogUITests;
+			sourceTree = "<group>";
+		};
 		27FA0711305E9811004E6B81 /* SpinlogWidgets */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -103,6 +109,11 @@
 			files = (
 			);
 		};
+		27654D0D3084DC11009E7CE9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
 		27FA0708305E9810004E6B81 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
@@ -119,6 +130,7 @@
 				000000000000000000000010 /* Spinlog */,
 				27FA0711305E9811004E6B81 /* SpinlogWidgets */,
 				2703F4BA3075962F00634ED4 /* SpinlogTests */,
+				27654D113084DC11009E7CE9 /* SpinlogUITests */,
 				27FA070C305E9810004E6B81 /* Frameworks */,
 				000000000000000000000020 /* Products */,
 			);
@@ -130,6 +142,7 @@
 				000000000000000000000120 /* Spinlog.app */,
 				27FA070B305E9810004E6B81 /* SpinlogWidgetsExtension.appex */,
 				2703F4B93075962F00634ED4 /* SpinlogTests.xctest */,
+				27654D103084DC11009E7CE9 /* SpinlogUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -192,6 +205,24 @@
 			productReference = 2703F4B93075962F00634ED4 /* SpinlogTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		27654D0F3084DC11009E7CE9 /* SpinlogUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 27654D163084DC11009E7CE9 /* Build configuration list for PBXNativeTarget "SpinlogUITests" */;
+			buildPhases = (
+				27654D0C3084DC11009E7CE9 /* Sources */,
+				27654D0D3084DC11009E7CE9 /* Frameworks */,
+				27654D0E3084DC11009E7CE9 /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				27654D113084DC11009E7CE9 /* SpinlogUITests */,
+			);
+			name = SpinlogUITests;
+			productName = SpinlogUITests;
+			productReference = 27654D103084DC11009E7CE9 /* SpinlogUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		27FA070A305E9810004E6B81 /* SpinlogWidgetsExtension */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 27FA0720305E9812004E6B81 /* Build configuration list for PBXNativeTarget "SpinlogWidgetsExtension" */;
@@ -226,6 +257,9 @@
 					2703F4B83075962F00634ED4 = {
 						CreatedOnToolsVersion = 27.0;
 					};
+					27654D0F3084DC11009E7CE9 = {
+						CreatedOnToolsVersion = 27.0;
+					};
 					27FA070A305E9810004E6B81 = {
 						CreatedOnToolsVersion = 27.0;
 					};
@@ -252,6 +286,7 @@
 				000000000000000100000000 /* Spinlog */,
 				27FA070A305E9810004E6B81 /* SpinlogWidgetsExtension */,
 				2703F4B83075962F00634ED4 /* SpinlogTests */,
+				27654D0F3084DC11009E7CE9 /* SpinlogUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -263,6 +298,11 @@
 			);
 		};
 		2703F4B73075962F00634ED4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		27654D0E3084DC11009E7CE9 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
 			);
@@ -281,6 +321,11 @@
 			);
 		};
 		2703F4B53075962F00634ED4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		27654D0C3084DC11009E7CE9 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
 			);
@@ -556,7 +601,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.SpinlogTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.auralabs.SpinlogTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
@@ -581,7 +626,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.SpinlogTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.auralabs.SpinlogTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
@@ -593,6 +638,50 @@
 				TARGETED_DEVICE_FAMILY = "1,2,7";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Spinlog.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Spinlog";
 				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Release;
+		};
+		27654D143084DC11009E7CE9 /* Debug configuration for PBXNativeTarget "SpinlogUITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.auralabs.SpinlogUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = Spinlog;
+			};
+			name = Debug;
+		};
+		27654D153084DC11009E7CE9 /* Release configuration for PBXNativeTarget "SpinlogUITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.auralabs.SpinlogUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = Spinlog;
 			};
 			name = Release;
 		};
@@ -683,6 +772,14 @@
 			buildConfigurations = (
 				2703F4BD3075963000634ED4 /* Debug configuration for PBXNativeTarget "SpinlogTests" */,
 				2703F4BE3075963000634ED4 /* Release configuration for PBXNativeTarget "SpinlogTests" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		27654D163084DC11009E7CE9 /* Build configuration list for PBXNativeTarget "SpinlogUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				27654D143084DC11009E7CE9 /* Debug configuration for PBXNativeTarget "SpinlogUITests" */,
+				27654D153084DC11009E7CE9 /* Release configuration for PBXNativeTarget "SpinlogUITests" */,
 			);
 			defaultConfigurationName = Release;
 		};

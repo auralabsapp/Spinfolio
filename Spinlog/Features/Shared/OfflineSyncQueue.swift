@@ -93,7 +93,7 @@ final class OfflineSyncQueue {
     private var consecutiveTransientFailures = 0
     /// Au-delà, une action qui n'a jamais pu partir est abandonnée (avec un message) plutôt que
     /// rejouée indéfiniment sur une collection qui a pu changer entre-temps.
-    private static let maxPendingAge: TimeInterval = 7 * 24 * 3600
+    nonisolated static let maxPendingAge: TimeInterval = 7 * 24 * 3600
     /// Refus définitifs (4xx) tolérés avant abandon : ils se reproduiront presque toujours.
     private static let maxDefinitiveFailures = 3
 
@@ -196,7 +196,7 @@ final class OfflineSyncQueue {
                     // comptaient comme des échecs ordinaires (3 essais à 2 s d'intervalle), si bien
                     // qu'une coupure réseau de quelques secondes suffisait à perdre l'action.
                     if Task.isCancelled || error.isCancellation { break }
-                    if Date().timeIntervalSince(action.date) > Self.maxPendingAge {
+                    if Self.hasExpired(action) {
                         removeAction(id: action.id)
                         lastErrorNotification = String(localized: "Échec définitif de synchronisation : \(actionDescription(for: action)) (\(error.localizedDescription))")
                         continue
@@ -225,6 +225,17 @@ final class OfflineSyncQueue {
         }
     }
 
+    /// Délai avant le prochain essai : 30 s après la première panne passagère, puis doublé à
+    /// chaque panne successive, plafonné à 30 min.
+    nonisolated static func retryDelay(afterConsecutiveFailures failures: Int) -> TimeInterval {
+        min(30 * pow(2, Double(max(0, failures - 1))), 1800)
+    }
+
+    /// Action jamais partie depuis plus de `maxPendingAge` : abandonnée plutôt que rejouée.
+    nonisolated static func hasExpired(_ action: PendingAction, now: Date = Date()) -> Bool {
+        now.timeIntervalSince(action.date) > maxPendingAge
+    }
+
     private static func isRateLimited(_ error: Error) -> Bool {
         guard let apiError = error as? DiscogsAPIClient.APIError else {
             return error.localizedDescription.contains("429")
@@ -240,7 +251,7 @@ final class OfflineSyncQueue {
     /// Complète les reprises déjà déclenchées par le retour du réseau et le retour au premier plan.
     private func scheduleRetry() {
         retryTask?.cancel()
-        let delay = min(30 * pow(2, Double(max(0, consecutiveTransientFailures - 1))), 1800)
+        let delay = Self.retryDelay(afterConsecutiveFailures: consecutiveTransientFailures)
         retryTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(delay))
             guard !Task.isCancelled else { return }

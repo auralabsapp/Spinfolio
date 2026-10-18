@@ -172,3 +172,34 @@ enum DemoServer {
         try JSONSerialization.data(withJSONObject: object)
     }
 }
+
+#if DEBUG
+/// Arguments de lancement réservés aux tests d'interface (`SpinlogUITests`), absents des builds
+/// Release : démarrer directement dans un état connu, sans compte Discogs ni paywall.
+enum UITestLaunchOptions {
+    /// Démarre directement sur la collection de démo.
+    static let demoArgument = "-uiTestDemo"
+    /// Démarre déconnecté, sur l'écran de connexion (qui propose la démo).
+    static let signedOutArgument = "-uiTestSignedOut"
+
+    private static var arguments: [String] { ProcessInfo.processInfo.arguments }
+
+    static var startsInDemo: Bool { arguments.contains(demoArgument) }
+    static var startsSignedOut: Bool { arguments.contains(signedOutArgument) }
+    static var isActive: Bool { startsInDemo || startsSignedOut }
+
+    /// Appliqué au lancement, avant le premier affichage. Déconnecte tout compte présent dans le
+    /// Simulateur, pour que chaque test parte du même état.
+    @MainActor
+    static func apply() {
+        guard isActive else { return }
+        let auth = DiscogsAuthManager.shared
+        if auth.isAuthenticated {
+            auth.logout()
+        }
+        if startsInDemo {
+            auth.startDemo()
+        }
+    }
+}
+#endif

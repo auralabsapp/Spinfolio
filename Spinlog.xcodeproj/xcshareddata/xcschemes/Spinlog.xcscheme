@@ -41,6 +41,17 @@
                ReferencedContainer = "container:Spinlog.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "27654D0F3084DC11009E7CE9"
+               BuildableName = "SpinlogUITests.xctest"
+               BlueprintName = "SpinlogUITests"
+               ReferencedContainer = "container:Spinlog.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

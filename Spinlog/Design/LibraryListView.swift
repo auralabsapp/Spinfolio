@@ -151,6 +151,7 @@ struct LibraryListView<Item: SortableLibraryItem>: View {
                 rowLabel(item)
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("libraryItem-\(item.releaseId)")
             .allowsHitTesting(!isSelecting)
             .accessibilityHidden(isSelecting)
 

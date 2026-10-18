@@ -110,6 +110,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         _ = NetworkMonitor.shared
         _ = OfflineSyncQueue.shared
         SubscriptionManager.shared.start()
+        #if DEBUG
+        UITestLaunchOptions.apply()
+        #endif
 
         // Au démarrage de l'app, aucun filtre n'est appliqué dans Collection et Wantlist
         CollectionViewModel.shared.clearFilters()

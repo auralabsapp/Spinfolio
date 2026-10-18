@@ -96,7 +96,7 @@ struct RootTabView: View {
             guard !hasCheckedLaunchPaywall else { return }
             hasCheckedLaunchPaywall = true
             // Abonnement réel : l'aperçu Premium de la démo ne dispense pas de voir l'offre.
-            if !premiumStore.hasSubscription && LaunchPaywallSchedule.isDue() {
+            if !premiumStore.hasSubscription && LaunchPaywallSchedule.isDue() && !Self.isUITestLaunch {
                 try? await Task.sleep(nanoseconds: 350_000_000)
                 showingLaunchPaywall = true
                 LaunchPaywallSchedule.markShown()
@@ -115,6 +115,15 @@ struct RootTabView: View {
                 autoSyncOfflineIfNeeded()
             }
         }
+    }
+
+    /// Les tests d'interface démarrent sans paywall, pour arriver directement sur les onglets.
+    private static var isUITestLaunch: Bool {
+        #if DEBUG
+        UITestLaunchOptions.isActive
+        #else
+        false
+        #endif
     }
 
     /// Relance silencieusement le téléchargement complet hors ligne (Premium) si l'utilisateur
@@ -145,14 +154,14 @@ enum LaunchPaywallSchedule {
     private static let lastShownKey = "launchPaywallLastShownAt"
     private static let minimumInterval: TimeInterval = 7 * 24 * 3600
 
-    static func isDue(now: Date = Date()) -> Bool {
-        let lastShown = UserDefaults.standard.double(forKey: lastShownKey)
+    static func isDue(now: Date = Date(), defaults: UserDefaults = .standard) -> Bool {
+        let lastShown = defaults.double(forKey: lastShownKey)
         guard lastShown > 0 else { return true }
         return now.timeIntervalSince1970 - lastShown >= minimumInterval
     }
 
-    static func markShown(now: Date = Date()) {
-        UserDefaults.standard.set(now.timeIntervalSince1970, forKey: lastShownKey)
+    static func markShown(now: Date = Date(), defaults: UserDefaults = .standard) {
+        defaults.set(now.timeIntervalSince1970, forKey: lastShownKey)
     }
 }
 

@@ -293,6 +293,7 @@ struct ReleaseQuickActionsBar: View {
                 .contentShape(Capsule())
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("releaseWantlistButton")
         }
         .animation(.easeInOut(duration: 0.15), value: actions.isInCollection)
         .animation(.easeInOut(duration: 0.15), value: actions.isInWantlist)
