@@ -7,13 +7,13 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
-## 2026-10-18 — Audit complet, mode démo, tests automatiques, fiabilité des données, interface, règles du projet
+## 2026-10-18 — Audit complet, mode démo, tests automatiques, fiabilité des données, interface, Swift 6, règles du projet
 
 Journée consacrée à l'aboutissement de l'audit de l'app (branche `audit-fixes`) : préparation de la
 soumission App Store, mode démo pour App Review, fiabilité des données, accessibilité, découpage des
 plus gros fichiers, mise en place des tests automatiques et d'un cadre de règles pour la suite,
 puis fiabilisation des données (stores illisibles, déconnexion, dossiers, doublons, suppression de
-compte, conflits iCloud), et enfin le bloc interface et accessibilité.
+compte, conflits iCloud), puis le bloc interface et accessibilité, et enfin le passage en Swift 6 avec un premier lot de qualité.
 
 ### 12:29 — `0c4f597` Applique l'audit : soumission App Store, mode démo, fiabilité et accessibilité
 - **Soumission App Store** : manifestes de confidentialité `PrivacyInfo.xcprivacy` (app et widget),
@@ -107,6 +107,23 @@ compte, conflits iCloud), et enfin le bloc interface et accessibilité.
   les animations respecté (squelettes, parallaxe, carrousel).
 - Traductions anglaises, 127 tests automatiques, cahier de recette v3.5 (380 cas).
 - 46 fichiers, +1 041 / −210.
+
+### 22:22 — `ef02599` Passe en Swift 6 ; décodage hors fil principal, webview limitée à Discogs, code mort, tests réseau
+- **Swift 6** sur les 4 cibles : 49 avertissements de concurrence stricte corrigés (types décodés
+  ou triés en arrière-plan déclarés non isolés, observateurs de notifications, moteur de sections,
+  widget) ; tâche de fond, suivi du réseau et retour OAuth protégés contre l'arrêt par la
+  vérification d'isolation à l'exécution.
+- **Performance** : pages de collection et de wantlist (jusqu'à 100 exemplaires) décodées hors du
+  fil principal.
+- **Sécurité** : webview limitée à discogs.com (liens externes et site personnel du profil ouverts
+  dans Safari, connexion Google/Apple conservée) ; retour OAuth accepté seulement si son jeton
+  correspond à la demande en cours.
+- **Code mort** : copie de la Live Activity côté app, `VinylSleeveCover`, `StyledNavigationSubtitle`,
+  ancien toast d'écoute, alias de couleurs et constantes inutilisés.
+- **Correctif** : page Discogs de la feuille d'alerte wantlist présentée par `item:` au lieu d'un `Bool`.
+- **Tests** : signature OAuth vérifiée sur l'exemple de la spécification, retour OAuth, calcul des
+  créneaux du limiteur de débit, domaines de la webview (154 tests verts) ; cahier v3.5 (384 cas).
+- 47 fichiers, +457 / −609.
 
 ---
 
