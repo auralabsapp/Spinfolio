@@ -3,14 +3,17 @@
 Détail des évolutions **commitées**, jour par jour, du plus récent au plus ancien.
 Mis à jour chaque jour où des commits sont faits (une entrée par jour, un paragraphe par commit).
 Source : historique git (`git log`). Les volumes indiqués sont ceux de `git --shortstat`.
+Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
-## 2026-10-18 — Audit complet, mode démo, tests automatiques, règles du projet
+## 2026-10-18 — Audit complet, mode démo, tests automatiques, fiabilité des données, règles du projet
 
 Journée consacrée à l'aboutissement de l'audit de l'app (branche `audit-fixes`) : préparation de la
 soumission App Store, mode démo pour App Review, fiabilité des données, accessibilité, découpage des
-plus gros fichiers, mise en place des tests automatiques et d'un cadre de règles pour la suite.
+plus gros fichiers, mise en place des tests automatiques et d'un cadre de règles pour la suite,
+puis fiabilisation des données (stores illisibles, déconnexion, dossiers, doublons, suppression de
+compte, conflits iCloud).
 
 ### 12:29 — `0c4f597` Applique l'audit : soumission App Store, mode démo, fiabilité et accessibilité
 - **Soumission App Store** : manifestes de confidentialité `PrivacyInfo.xcprivacy` (app et widget),
@@ -64,6 +67,28 @@ plus gros fichiers, mise en place des tests automatiques et d'un cadre de règle
   hors ligne, multi-compte, iCloud, widget), confidentialité, compatibilité iOS 26.1, tests, style,
   pièges connus et checklist de fin.
 - 1 fichier, +245.
+
+### 16:38 — `aa00792` Ajoute le journal de bord des évolutions commitées
+- Ce journal, placé dans `journal/` (hors de `docs/`, publié par GitHub Pages), initialisé avec
+  tout l'historique.
+- 1 fichier, +304.
+
+### 17:14 — `293d5da` Fiabilise les données : stores illisibles, déconnexion, dossiers, doublons, compte, conflits iCloud
+- **Stores illisibles** : tags, écoutes, alertes et file hors ligne chargés de façon tolérante
+  (`PersistedStoreDecoding`) ; une entrée abîmée est ignorée et l'original est copié sous une clé
+  de secours, au lieu de vider tout le store à la prochaine écriture.
+- **Déconnexion** : téléchargement hors ligne, années de master, classement des discographies,
+  écoute sur platine et lecture Apple Music arrêtés ; notifications et tâche de fond des alertes
+  du compte quitté retirées ; plus d'écriture tardive dans le widget ni de notification.
+- **Suppression de dossier** : actions en attente redirigées vers Uncategorized, cache local des
+  dossiers élagué, dossier par défaut supprimé sur discogs.com remis à « Toujours demander ».
+- **Doublons** : avant de rejouer un ajout, la file vérifie s'il a déjà abouti chez Discogs.
+- **Suppression de compte** : alertes, actions en attente, préférences, état hors ligne,
+  historique de valeur et métadonnées de cache effacés ; la zone iCloud n'est plus recréée.
+- **Conflits iCloud** : la modification la plus récente l'emporte (`CloudSyncModificationLog`,
+  champ `modifiedAt` sur chaque enregistrement).
+- 24 tests unitaires ajoutés (121 tests verts) ; cahier de recette v3.4 (7 cas, 366 au total).
+- 25 fichiers, +707 / −63.
 
 ---
 
