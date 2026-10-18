@@ -30,6 +30,10 @@ struct PendingAction: Identifiable, Codable, Sendable {
     /// action ne doit jamais être rejouée avec les identifiants d'un autre compte. `nil` pour les
     /// actions persistées par une version antérieure (rejouées sur le compte connecté, comme avant).
     var username: String?
+    /// Exemplaires déjà rattachés à un autre ajout du même disque (seulement pour
+    /// `.addToCollection`) : ils ne doivent pas être pris pour la trace de cet ajout-ci (voir
+    /// `OfflineSyncQueue.matchingAlreadyAddedInstance`). `nil` pour les actions plus anciennes.
+    var excludedInstanceIds: [Int]?
 
     /// Indique si l'action peut être rejouée pour le compte `username`.
     func belongs(to username: String) -> Bool {
@@ -116,6 +120,15 @@ final class OfflineSyncQueue {
 
     // MARK: - Gestion de la file
 
+    /// Suppression des données du compte : ses actions en attente ne doivent plus partir.
+    func removeActions(for username: String) {
+        let before = pendingActions.count
+        pendingActions.removeAll { $0.username?.caseInsensitiveCompare(username) == .orderedSame }
+        if pendingActions.count != before {
+            persistActions()
+        }
+    }
+
     func clearQueue() {
         pendingActions.removeAll()
         persistActions()
@@ -141,11 +154,10 @@ final class OfflineSyncQueue {
         }
     }
 
+    /// Tolérant aux données partiellement illisibles (voir `PersistedStoreDecoding`) : une action
+    /// abîmée ne fait plus perdre toutes les autres actions en attente.
     private func loadPersistedActions() {
-        if let data = UserDefaults.standard.data(forKey: storageKey),
-           let decoded = try? JSONDecoder().decode([PendingAction].self, from: data) {
-            pendingActions = decoded
-        }
+        pendingActions = PersistedStoreDecoding.decodeArray(PendingAction.self, forKey: storageKey) ?? []
     }
 
     // MARK: - Exécution de la file
@@ -297,9 +309,43 @@ final class OfflineSyncQueue {
             retryCount: action.retryCount
         )
         retargeted.username = action.username
+        retargeted.excludedInstanceIds = action.excludedInstanceIds
         pendingActions[index] = retargeted
         persistActions()
         return true
+    }
+
+    /// Un dossier vient d'être supprimé et ses exemplaires déplacés vers `toFolderId` : les
+    /// actions en attente qui le visaient (ajout dedans, déplacement vers lui, ou action sur un
+    /// exemplaire qui s'y trouvait) visent désormais ce nouveau dossier, au lieu d'échouer sur un
+    /// dossier inexistant puis d'être abandonnées.
+    func retargetActions(fromFolderId: Int, toFolderId: Int) {
+        let updated = Self.retargeted(pendingActions, fromFolderId: fromFolderId, toFolderId: toFolderId)
+        guard updated.map(\.folderId) != pendingActions.map(\.folderId)
+                || updated.map(\.targetFolderId) != pendingActions.map(\.targetFolderId) else { return }
+        pendingActions = updated
+        persistActions()
+    }
+
+    nonisolated static func retargeted(_ actions: [PendingAction], fromFolderId: Int, toFolderId: Int) -> [PendingAction] {
+        actions.map { action in
+            guard action.folderId == fromFolderId || action.targetFolderId == fromFolderId else { return action }
+            var updated = PendingAction(
+                id: action.id,
+                type: action.type,
+                releaseId: action.releaseId,
+                folderId: action.folderId == fromFolderId ? toFolderId : action.folderId,
+                instanceId: action.instanceId,
+                date: action.date,
+                retryCount: action.retryCount,
+                fieldId: action.fieldId,
+                value: action.value,
+                targetFolderId: action.targetFolderId == fromFolderId ? toFolderId : action.targetFolderId
+            )
+            updated.username = action.username
+            updated.excludedInstanceIds = action.excludedInstanceIds
+            return updated
+        }
     }
 
     private func removeAction(id: UUID) {
@@ -318,16 +364,34 @@ final class OfflineSyncQueue {
             // `targetFolderId` : écrit par d'anciennes versions de `WantlistViewModel` à la place
             // de `folderId`, ce qui envoyait le disque dans "Uncategorized".
             let folderId = action.folderId ?? action.targetFolderId ?? DiscogsConstants.uncategorizedFolderId
-            let response = try await DiscogsAPIClient.shared.addToCollection(
-                username: username,
-                folderId: folderId,
-                releaseId: action.releaseId,
-                credentials: credentials
-            )
+            // Un ajout n'est pas idempotent chez Discogs : si un premier envoi a abouti sans que la
+            // réponse ne revienne (délai dépassé, coupure), le rejouer créerait un doublon. On
+            // vérifie donc d'abord qu'aucun exemplaire n'a déjà été créé depuis la mise en file.
+            let existing: [CollectionItem]
+            do {
+                existing = try await DiscogsAPIClient.shared.collectionInstances(
+                    username: username, releaseId: action.releaseId, credentials: credentials
+                ).releases
+            } catch where error.isNotFound {
+                // Disque absent de la collection : rien n'a encore été ajouté.
+                existing = []
+            }
+            let instanceId: Int
+            if let alreadyAdded = Self.matchingAlreadyAddedInstance(in: existing, for: action) {
+                instanceId = alreadyAdded
+            } else {
+                instanceId = try await DiscogsAPIClient.shared.addToCollection(
+                    username: username,
+                    folderId: folderId,
+                    releaseId: action.releaseId,
+                    credentials: credentials
+                ).instanceId
+            }
+            excludeInstanceFromOtherAdds(instanceId, releaseId: action.releaseId, exceptActionId: action.id)
             // Exemplaire créé hors ligne : ses tags étaient rattachés à l'identifiant temporaire,
             // on les reporte sur l'identifiant définitif (sinon ils étaient perdus à la synchro).
             if let temporaryInstanceId = action.instanceId, temporaryInstanceId < 0 {
-                TagStore.shared.remapInstanceId(from: temporaryInstanceId, to: response.instanceId)
+                TagStore.shared.remapInstanceId(from: temporaryInstanceId, to: instanceId)
             }
 
         case .removeFromCollection:
@@ -398,6 +462,37 @@ final class OfflineSyncQueue {
                 toFolderId: targetFolderId,
                 credentials: credentials
             )
+        }
+    }
+
+    /// Tolérance sur l'horloge de l'appareil par rapport à celle de Discogs.
+    nonisolated static let addedInstanceClockTolerance: TimeInterval = 120
+
+    /// Exemplaire déjà créé par un précédent envoi de cet ajout : ajouté sur Discogs après la mise
+    /// en file (à la tolérance d'horloge près) et pas déjà rattaché à un autre ajout du même disque.
+    nonisolated static func matchingAlreadyAddedInstance(in instances: [CollectionItem], for action: PendingAction) -> Int? {
+        let excluded = Set(action.excludedInstanceIds ?? [])
+        let threshold = action.date.addingTimeInterval(-addedInstanceClockTolerance)
+        return instances
+            .filter { !excluded.contains($0.instanceId) }
+            .filter { ($0.dateAddedDate ?? .distantPast) >= threshold }
+            .min { ($0.dateAddedDate ?? .distantPast) < ($1.dateAddedDate ?? .distantPast) }?
+            .instanceId
+    }
+
+    /// L'exemplaire vient d'être rattaché à un ajout : les autres ajouts en attente du même disque
+    /// (deux exemplaires ajoutés volontairement hors ligne) ne doivent pas le prendre pour le leur.
+    private func excludeInstanceFromOtherAdds(_ instanceId: Int, releaseId: Int, exceptActionId: UUID) {
+        var changed = false
+        for index in pendingActions.indices
+        where pendingActions[index].type == .addToCollection
+            && pendingActions[index].releaseId == releaseId
+            && pendingActions[index].id != exceptActionId {
+            pendingActions[index].excludedInstanceIds = (pendingActions[index].excludedInstanceIds ?? []) + [instanceId]
+            changed = true
+        }
+        if changed {
+            persistActions()
         }
     }
 

@@ -75,11 +75,19 @@ final class WantlistAlertStore {
     func setActiveUsername(_ username: String?) {
         let normalized = Self.normalize(username)
         guard normalized != activeUsername else { return }
+        let previousUsername = activeUsername
         activeUsername = normalized
+        // Notifications programmées ou affichées du compte qu'on quitte : elles ne doivent pas
+        // s'afficher pour le compte suivant (ni après la déconnexion).
+        if previousUsername != nil {
+            removeAllAlertNotifications()
+        }
         guard let normalized else {
             // Déconnecté : on vide l'état en mémoire sans toucher au disque, pour ne pas laisser
-            // les alertes d'un compte visibles tant qu'aucun compte n'est actif.
+            // les alertes d'un compte visibles tant qu'aucun compte n'est actif, et on annule le
+            // réveil en arrière-plan, qui n'a plus rien à vérifier.
             alerts = [:]
+            BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: wantlistAlertsTaskIdentifier)
             return
         }
         loadAlerts(for: normalized)
@@ -126,8 +134,22 @@ final class WantlistAlertStore {
     /// Identifiant unique par release : une nouvelle bonne affaire remplace la notification
     /// précédente du même disque, et la suppression de l'alerte retrouve bien sa notification.
     /// (L'ancien identifiant, suffixé du prix, ne correspondait jamais à celui retiré ici.)
+    private static let notificationIdentifierPrefix = "wantlist_alert_"
+
     private static func notificationIdentifier(for releaseId: Int) -> String {
-        "wantlist_alert_\(releaseId)"
+        "\(notificationIdentifierPrefix)\(releaseId)"
+    }
+
+    /// Toutes les notifications d'alerte (programmées et affichées), quel que soit le disque.
+    private func removeAllAlertNotifications() {
+        let center = UNUserNotificationCenter.current()
+        Task {
+            let prefix = Self.notificationIdentifierPrefix
+            let pending = await center.pendingNotificationRequests().map(\.identifier).filter { $0.hasPrefix(prefix) }
+            let delivered = await center.deliveredNotifications().map(\.request.identifier).filter { $0.hasPrefix(prefix) }
+            center.removePendingNotificationRequests(withIdentifiers: pending)
+            center.removeDeliveredNotifications(withIdentifiers: delivered)
+        }
     }
 
     private func removeNotifications(for releaseId: Int) {
@@ -174,17 +196,13 @@ final class WantlistAlertStore {
 
     // MARK: - Persistance
 
+    /// Tolérant aux données partiellement illisibles (voir `PersistedStoreDecoding`).
     private func loadAlerts(for username: String) {
-        if let data = UserDefaults.standard.data(forKey: key(storageKey, for: username)),
-           let decoded = try? JSONDecoder().decode([WantlistAlert].self, from: data) {
-            var dict: [Int: WantlistAlertBox] = [:]
-            for item in decoded {
-                dict[item.releaseId] = WantlistAlertBox(alert: item)
-            }
-            alerts = dict
-        } else {
-            alerts = [:]
+        var dict: [Int: WantlistAlertBox] = [:]
+        for item in PersistedStoreDecoding.decodeArray(WantlistAlert.self, forKey: key(storageKey, for: username)) ?? [] {
+            dict[item.releaseId] = WantlistAlertBox(alert: item)
         }
+        alerts = dict
         migrateLegacyAlertsIfNeeded()
     }
 
@@ -215,6 +233,18 @@ final class WantlistAlertStore {
         let array = alerts.values.map(\.alert)
         if let data = try? JSONEncoder().encode(array) {
             UserDefaults.standard.set(data, forKey: key(storageKey, for: activeUsername))
+        }
+    }
+
+    /// Suppression des données du compte (Réglages → Supprimer mon compte) : alertes et date de
+    /// dernière vérification.
+    func clearAccountData(for username: String) {
+        guard let normalized = Self.normalize(username) else { return }
+        UserDefaults.standard.removeObject(forKey: key(storageKey, for: normalized))
+        UserDefaults.standard.removeObject(forKey: key(lastFullCheckKey, for: normalized))
+        if activeUsername == normalized {
+            alerts = [:]
+            removeAllAlertNotifications()
         }
     }
 
@@ -254,8 +284,15 @@ final class WantlistAlertStore {
 
         logger.info("Début de la vérification de \(self.alerts.count) alerte(s)...")
 
+        // Le compte peut changer pendant la vérification (déconnexion) : on s'arrête alors, pour
+        // ne jamais notifier une alerte du compte qu'on vient de quitter.
+        let checkedUsername = activeUsername
         var completed = true
         for box in Array(alerts.values) {
+            guard activeUsername == checkedUsername else {
+                completed = false
+                break
+            }
             // Tâche de fond expirée (voir `AppDelegate`) : on s'arrête net. Chaque alerte déjà
             // vérifiée a été enregistrée au fil de l'eau par `checkSingleAlert`.
             guard !Task.isCancelled else {

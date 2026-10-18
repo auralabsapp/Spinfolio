@@ -188,6 +188,7 @@ final class DiscogsAuthManager: NSObject {
         // reconnexion ou sur un autre appareil), elle ne doit pas rester cochée pour le compte
         // Discogs suivant qui se connecterait sur cet appareil.
         AppleMusicAccountStore.shared.isConnected = false
+        stopAccountBackgroundWork()
 
         // Contrairement à un vrai compte, rien de la démo n'est à conserver pour une reconnexion :
         // tags, écoutes et cache d'exemple sont effacés pour repartir de zéro la prochaine fois.
@@ -196,6 +197,18 @@ final class DiscogsAuthManager: NSObject {
             isDemoMode = false
             PremiumStore.shared.isDemoPreview = false
         }
+    }
+
+    /// Arrête tout ce qui travaille encore pour le compte qu'on quitte : sans ça, téléchargement
+    /// hors ligne, résolution des années de master, classement des discographies, écoute en cours
+    /// et lecture Apple Music continuaient après la déconnexion, avec les identifiants de ce compte.
+    /// (Alertes wantlist et synchro iCloud s'arrêtent via leur `setActiveUsername(nil)`.)
+    private func stopAccountBackgroundWork() {
+        OfflineDownloadManager.shared.cancelDownload()
+        Task { await MasterResolutionService.shared.cancel() }
+        DiscogsCategoryBackfillService.shared.stop()
+        AppleMusicPlaybackService.shared.stop()
+        Task { await NowPlayingActivityManager.shared.endCurrentActivity() }
     }
 
     /// Efface tout ce que la démo a laissé sur l'appareil, à sa sortie ou au lancement suivant
@@ -221,11 +234,18 @@ final class DiscogsAuthManager: NSObject {
             return
         }
         if let currentUsername = username {
+            // Synchro iCloud coupée AVANT d'effacer quoi que ce soit : vider les tags ou les
+            // préférences signale un changement à envoyer, ce qui recréait aussitôt la zone
+            // iCloud qu'on venait de demander de supprimer.
+            CloudSyncEngine.shared.setActiveUsername(nil)
             CloudSyncEngine.shared.deleteCloudData(for: currentUsername)
             LocalDataStore.shared.clearAllUserData(username: currentUsername)
             TagStore.shared.clearAccountData(for: currentUsername)
             ListeningLogStore.shared.clearAccountData(for: currentUsername)
-            CollectionPreferencesStore.setDefaultAddFolderId(CollectionPreferencesStore.alwaysAskFolderId, for: currentUsername)
+            WantlistAlertStore.shared.clearAccountData(for: currentUsername)
+            OfflineSyncQueue.shared.removeActions(for: currentUsername)
+            CollectionPreferencesStore.clearAccountData(for: currentUsername)
+            OfflineDownloadManager.shared.resetOfflineState()
         }
         logout()
     }

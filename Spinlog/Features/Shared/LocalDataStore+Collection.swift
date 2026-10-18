@@ -159,6 +159,9 @@ extension LocalDataStore {
     /// "Album du jour", dédoublonné par release (plusieurs exemplaires d'un même disque ne
     /// doivent compter qu'une fois dans le tirage aléatoire).
     func updateWidgetSnapshot(_ items: [CollectionItem]) {
+        // Une synchro terminée après la déconnexion ne doit pas réafficher dans le widget la
+        // collection du compte qu'on vient de quitter (vidé par `DiscogsAuthManager.logout`).
+        guard DiscogsAuthManager.shared.isAuthenticated else { return }
         var seenReleaseIds = Set<Int>()
         var snapshot: [RandomAlbumSnapshotItem] = []
         for item in items {

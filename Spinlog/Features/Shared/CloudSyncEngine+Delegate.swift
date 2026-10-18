@@ -54,6 +54,10 @@ extension CloudSyncEngine {
                 ListeningLogStore.shared.performBatchUpdate {
                     for modification in fetchedChanges.modifications {
                         rememberSystemFields(of: modification.record)
+                        guard shouldApplyRemote(modification.record) else {
+                            cloudSyncLogger.log("fetchedRecordZoneChanges — \(modification.record.recordID.recordName, privacy: .public) ignoré : modification locale plus récente en attente d'envoi")
+                            continue
+                        }
                         apply(remoteRecord: modification.record, allowMerge: isFirstHydrateForActiveAccount)
                     }
                     for deletion in fetchedChanges.deletions {
@@ -67,6 +71,13 @@ extension CloudSyncEngine {
             cloudSyncLogger.log("sentRecordZoneChanges — \(sentChanges.savedRecords.count) sauvé(s), \(sentChanges.deletedRecordIDs.count) supprimé(s), \(sentChanges.failedRecordSaves.count) échec(s) de sauvegarde, \(sentChanges.failedRecordDeletes.count) échec(s) de suppression")
             for savedRecord in sentChanges.savedRecords {
                 rememberSystemFields(of: savedRecord)
+                if let activeUsername {
+                    CloudSyncModificationLog.clear(
+                        savedRecord.recordID.recordName,
+                        onlyIfDatedAt: savedRecord[CloudSyncModificationLog.modifiedAtField] as? Date,
+                        username: activeUsername
+                    )
+                }
             }
             for recordID in sentChanges.deletedRecordIDs {
                 serverSystemFields[recordID] = nil
@@ -94,10 +105,19 @@ extension CloudSyncEngine {
         cloudSyncLogger.error("failedRecordSave \(recordID.recordName, privacy: .public) : \(String(describing: error), privacy: .public)")
         switch error.code {
         case .serverRecordChanged:
-            // Version locale périmée : on mémorise celle du serveur, et le prochain envoi part
-            // de ses métadonnées (avec toujours le contenu local, voir `nextRecordZoneChangeBatch`).
+            // Le serveur a une autre version. La plus récente des deux l'emporte (voir
+            // `CloudSyncModificationLog`) : si c'est celle du serveur, on l'applique localement et
+            // on renonce à l'envoi ; sinon on renvoie le contenu local, à partir des métadonnées
+            // de la version serveur (voir `nextRecordZoneChangeBatch`).
             if let serverRecord = error.serverRecord {
                 rememberSystemFields(of: serverRecord)
+                if shouldApplyRemote(serverRecord) {
+                    isApplyingRemoteChange = true
+                    apply(remoteRecord: serverRecord, allowMerge: false)
+                    isApplyingRemoteChange = false
+                    cloudSyncLogger.log("serverRecordChanged \(recordID.recordName, privacy: .public) : version serveur plus récente appliquée")
+                    return
+                }
             }
             syncEngine.state.add(pendingRecordZoneChanges: [.saveRecord(recordID)])
 
@@ -198,11 +218,13 @@ extension CloudSyncEngine {
         // de la version serveur ci-dessous a réellement besoin d'être refaite par disque.
         // Capturé en `let` (immuable) par le closure ci-dessous, qui tourne hors de l'acteur
         // principal (`@Sendable`) : une capture par référence mutable (`var`) y serait interdite.
-        let payloadsByRecordID: [CKRecord.ID: (kind: SyncedRecordKind, payload: Data)] = changes.reduce(into: [:]) { result, change in
+        let username = activeUsername
+        let payloadsByRecordID: [CKRecord.ID: (kind: SyncedRecordKind, payload: Data, modifiedAt: Date)] = changes.reduce(into: [:]) { result, change in
             guard case .saveRecord(let recordID) = change else { return }
             guard let kind = SyncedRecordKind.from(recordName: recordID.recordName),
                   let payload = payloadData(for: kind) else { return }
-            result[recordID] = (kind, payload)
+            let modifiedAt = username.flatMap { CloudSyncModificationLog.pendingDate(for: recordID.recordName, username: $0) } ?? Date()
+            result[recordID] = (kind, payload, modifiedAt)
         }
 
         // `.deleteRecord` : CKSyncEngine gère la suppression sans consulter `recordProvider` — il
@@ -212,7 +234,7 @@ extension CloudSyncEngine {
         let systemFieldsByRecordID = serverSystemFields.filter { payloadsByRecordID[$0.key] != nil }
 
         return await CKSyncEngine.RecordZoneChangeBatch(pendingChanges: changes) { recordID in
-            guard let (kind, payload) = payloadsByRecordID[recordID] else { return nil }
+            guard let (kind, payload, modifiedAt) = payloadsByRecordID[recordID] else { return nil }
 
             // Repart de la dernière version serveur connue (voir `serverSystemFields`), mais
             // UNIQUEMENT pour ses métadonnées système — jamais pour fusionner son contenu.
@@ -229,7 +251,26 @@ extension CloudSyncEngine {
             let record = systemFieldsByRecordID[recordID].flatMap(Self.record(fromSystemFields:))
                 ?? CKRecord(recordType: kind.recordType, recordID: recordID)
             record[Self.payloadField] = payload as CKRecordValue
+            record[CloudSyncModificationLog.modifiedAtField] = modifiedAt as CKRecordValue
             return record
         }
+    }
+
+    /// Applique-t-on cette version distante, ou garde-t-on une modification locale plus récente
+    /// encore en attente d'envoi ? Voir `CloudSyncModificationLog.remoteWins`. Une version
+    /// distante appliquée remplace la modification locale, qui n'est donc plus en attente.
+    func shouldApplyRemote(_ record: CKRecord) -> Bool {
+        guard let activeUsername,
+              let kind = SyncedRecordKind.from(recordName: record.recordID.recordName),
+              !kind.isAlwaysMerged else { return true }
+        let recordName = record.recordID.recordName
+        let wins = CloudSyncModificationLog.remoteWins(
+            remoteModifiedAt: record[CloudSyncModificationLog.modifiedAtField] as? Date,
+            localPendingAt: CloudSyncModificationLog.pendingDate(for: recordName, username: activeUsername)
+        )
+        if wins {
+            CloudSyncModificationLog.clear(recordName, username: activeUsername)
+        }
+        return wins
     }
 }

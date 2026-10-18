@@ -19,6 +19,17 @@ enum CollectionPreferencesStore {
         "\(prefix(for: username))_\(suffix)"
     }
 
+    /// Suppression des données du compte : toutes ses préférences (tri, filtres, devise, champs de
+    /// suivi de cote, dossiers…), y compris l'ancienne clé du dernier dossier consulté.
+    static func clearAccountData(for username: String, defaults: UserDefaults = .standard) {
+        let accountPrefix = prefix(for: username) + "_"
+        for key in defaults.dictionaryRepresentation().keys where key.hasPrefix(accountPrefix) {
+            defaults.removeObject(forKey: key)
+        }
+        defaults.removeObject(forKey: "com.spinlog.lastConsultedFolder_\(username.trimmingCharacters(in: .whitespacesAndNewlines).lowercased())")
+        NotificationCenter.default.post(name: .collectionPreferencesChanged, object: nil)
+    }
+
     // MARK: - Accès génériques UserDefaults (factorisent le get/set/remove/notify répété par
     // chaque préférence ci-dessous ; `notify` ne poste que si un écran a réellement besoin
     // d'être notifié du changement, comme le faisaient les setters d'origine).

@@ -94,3 +94,72 @@ struct TransientFailureClassificationTests {
         #expect(!URLError(.timedOut).isNotFound)
     }
 }
+
+/// Suppression d'un dossier : les actions en attente qui le visaient sont redirigées.
+struct FolderRetargetingTests {
+    @Test func actionsTargetingTheDeletedFolderAreRedirected() {
+        var add = PendingAction(type: .addToCollection, releaseId: 1, folderId: 42, instanceId: -1)
+        add.username = "alice"
+        let move = PendingAction(type: .moveCollectionInstance, releaseId: 2, folderId: 7, instanceId: 20, targetFolderId: 42)
+        let field = PendingAction(type: .updateCollectionField, releaseId: 3, folderId: 42, instanceId: 30, fieldId: 4, value: "10 EUR")
+        let other = PendingAction(type: .removeFromCollection, releaseId: 4, folderId: 7, instanceId: 40)
+
+        let result = OfflineSyncQueue.retargeted([add, move, field, other], fromFolderId: 42, toFolderId: 1)
+
+        #expect(result.map(\.folderId) == [1, 7, 1, 7])
+        #expect(result.map(\.targetFolderId) == [nil, 1, nil, nil])
+        #expect(result.map(\.id) == [add, move, field, other].map(\.id))
+        #expect(result[0].username == "alice")
+        #expect(result[2].value == "10 EUR" && result[2].fieldId == 4)
+    }
+}
+
+/// Un ajout rejoué ne doit pas recréer un exemplaire déjà créé par un premier envoi resté sans
+/// réponse, sans pour autant confondre deux ajouts volontaires du même disque.
+@MainActor
+struct DuplicateAddDetectionTests {
+    private func instance(_ id: Int, added: Date) throws -> CollectionItem {
+        let formatter = ISO8601DateFormatter()
+        let json: [String: Any] = [
+            "id": 99, "instance_id": id, "folder_id": 1, "rating": 0,
+            "date_added": formatter.string(from: added),
+            "basic_information": ["id": 99, "title": "T", "resource_url": ""]
+        ]
+        return try JSONDecoder().decode(CollectionItem.self, from: JSONSerialization.data(withJSONObject: json))
+    }
+
+    private let queuedAt = Date(timeIntervalSince1970: 1_800_000_000)
+
+    @Test func copiesOwnedBeforeTheAddAreIgnored() throws {
+        let action = PendingAction(type: .addToCollection, releaseId: 99, date: queuedAt)
+        let owned = try instance(1, added: queuedAt.addingTimeInterval(-86_400))
+        #expect(OfflineSyncQueue.matchingAlreadyAddedInstance(in: [owned], for: action) == nil)
+    }
+
+    @Test func copyCreatedAfterQueuingIsRecognized() throws {
+        let action = PendingAction(type: .addToCollection, releaseId: 99, date: queuedAt)
+        let owned = try instance(1, added: queuedAt.addingTimeInterval(-86_400))
+        let created = try instance(2, added: queuedAt.addingTimeInterval(5))
+        #expect(OfflineSyncQueue.matchingAlreadyAddedInstance(in: [owned, created], for: action) == 2)
+    }
+
+    @Test func smallClockSkewIsTolerated() throws {
+        let action = PendingAction(type: .addToCollection, releaseId: 99, date: queuedAt)
+        let created = try instance(2, added: queuedAt.addingTimeInterval(-60))
+        #expect(OfflineSyncQueue.matchingAlreadyAddedInstance(in: [created], for: action) == 2)
+    }
+
+    @Test func copyClaimedByAnotherAddIsNotReused() throws {
+        var second = PendingAction(type: .addToCollection, releaseId: 99, date: queuedAt)
+        second.excludedInstanceIds = [2]
+        let createdForFirst = try instance(2, added: queuedAt.addingTimeInterval(5))
+        #expect(OfflineSyncQueue.matchingAlreadyAddedInstance(in: [createdForFirst], for: second) == nil)
+    }
+
+    @Test func excludedIdsSurvivePersistence() throws {
+        var action = PendingAction(type: .addToCollection, releaseId: 99)
+        action.excludedInstanceIds = [7, 8]
+        let decoded = try JSONDecoder().decode(PendingAction.self, from: JSONEncoder().encode(action))
+        #expect(decoded.excludedInstanceIds == [7, 8])
+    }
+}

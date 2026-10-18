@@ -58,6 +58,9 @@ final class WidgetSnapshotSyncService {
                     username: username, folderId: DiscogsConstants.allFolderId, credentials: credentials
                 )
                 widgetSyncLogger.log("Sync widget : \(items.count) exemplaire(s) récupéré(s) depuis Discogs.")
+                // Déconnexion ou changement de compte pendant le téléchargement : ce résultat
+                // n'appartient plus au compte actif et ne doit pas atterrir dans le widget.
+                guard DiscogsAuthManager.shared.username == username else { return }
                 await LocalDataStore.shared.syncCollectionFolder(username: username, folderId: DiscogsConstants.allFolderId, fullItems: items)
                 widgetSyncLogger.log("Sync widget : instantané écrit, \(WidgetSnapshotStore.loadCollection().count) disque(s) désormais visibles par le widget.")
             } catch {

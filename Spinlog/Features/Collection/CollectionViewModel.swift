@@ -427,6 +427,7 @@ final class CollectionViewModel {
 
             // Sauvegarde des dossiers dans SwiftData
             localStore.saveFolders(folders, username: username)
+            resetDefaultAddFolderIfMissing(username: username)
 
             // Validation du dossier sélectionné
             let validFolderId: Int
@@ -702,6 +703,15 @@ final class CollectionViewModel {
         // cumulée à chaque page rendait la synchro d'une grosse collection quadratique. Le cache
         // complet du dossier est réécrit une fois, en fin de synchro (`syncCollectionFolder`).
         await localStore.saveCollectionItems(validReleases, username: username, folderId: folderId)
+    }
+
+    /// Dossier d'ajout par défaut supprimé entre-temps (dans l'app ou sur discogs.com) : on revient
+    /// à « Toujours demander », sinon chaque ajout visait un dossier inexistant et échouait.
+    private func resetDefaultAddFolderIfMissing(username: String) {
+        let defaultId = CollectionPreferencesStore.defaultAddFolderId(for: username)
+        guard defaultId != CollectionPreferencesStore.alwaysAskFolderId,
+              !folders.contains(where: { $0.id == defaultId }) else { return }
+        CollectionPreferencesStore.setDefaultAddFolderId(CollectionPreferencesStore.alwaysAskFolderId, for: username)
     }
 
     /// Déplace plusieurs exemplaires vers un même dossier (édition en lot). Discogs n'expose

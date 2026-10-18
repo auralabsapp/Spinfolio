@@ -48,6 +48,13 @@ nonisolated enum SyncedRecordKind: Equatable {
     private static let discogsWorkCategoriesRecordName = "discogsWorkCategories"
     private static let appPreferencesRecordName = "appPreferences"
 
+    /// Toujours fusionné avec la version distante (jamais remplacé) : exclu de la règle « la
+    /// modification la plus récente l'emporte » (voir `CloudSyncModificationLog`).
+    var isAlwaysMerged: Bool {
+        if case .discogsWorkCategories = self { return true }
+        return false
+    }
+
     var recordName: String {
         switch self {
         case .tag(let instanceId): return "\(Self.tagPrefix)\(instanceId)"

@@ -86,6 +86,7 @@ final class FolderManagementViewModel {
             }
             self.progressMessage = String(localized: "Suppression du dossier…")
             try await api.deleteCollectionFolder(username: username, folderId: folder.id, credentials: credentials)
+            OfflineSyncQueue.shared.retargetActions(fromFolderId: folder.id, toFolderId: DiscogsConstants.uncategorizedFolderId)
 
             if self.defaultFolderId == folder.id {
                 CollectionPreferencesStore.setDefaultAddFolderId(CollectionPreferencesStore.alwaysAskFolderId, for: username)

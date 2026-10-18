@@ -193,9 +193,19 @@ extension LocalDataStore {
 
     // MARK: - Dossiers
 
+    /// Remplace la liste des dossiers du compte : un dossier qui n'existe plus sur Discogs
+    /// (supprimé dans l'app ou sur discogs.com) disparaît aussi du cache, au lieu de rester
+    /// proposé hors ligne comme destination d'ajout.
     func saveFolders(_ folders: [CollectionFolder], username: String) {
         let now = Date()
         let encoder = JSONEncoder()
+        let currentIds = Set(folders.map(\.id))
+        let descriptor = FetchDescriptor<CachedFolderEntry>(
+            predicate: #Predicate<CachedFolderEntry> { $0.username == username }
+        )
+        for stale in (try? context.fetch(descriptor)) ?? [] where !currentIds.contains(stale.folderId) {
+            context.delete(stale)
+        }
         for folder in folders {
             guard let data = try? encoder.encode(folder) else { continue }
             let entry = CachedFolderEntry(

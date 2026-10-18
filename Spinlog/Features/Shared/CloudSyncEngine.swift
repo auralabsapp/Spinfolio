@@ -197,6 +197,7 @@ final class CloudSyncEngine: CKSyncEngineDelegate {
         // Réinitialise les marqueurs d'hydratation / push local
         UserDefaults.standard.removeObject(forKey: "\(Self.hydratedFlagKeyPrefix)\(normalized)")
         UserDefaults.standard.removeObject(forKey: "\(Self.initialPushDoneKeyPrefix)\(normalized)")
+        CloudSyncModificationLog.clearAll(for: normalized)
 
         // Si CKSyncEngine est actif, on lui demande de supprimer la zone
         if let syncEngine {
@@ -229,6 +230,7 @@ final class CloudSyncEngine: CKSyncEngineDelegate {
         }
         ensureZoneExists(for: activeUsername)
         let recordID = CKRecord.ID(recordName: kind.recordName, zoneID: zoneID(for: activeUsername))
+        CloudSyncModificationLog.recordLocalModification(kind.recordName, username: activeUsername)
         syncEngine.state.add(pendingRecordZoneChanges: [.saveRecord(recordID)])
         cloudSyncLogger.log("markDirty(\(String(describing: kind), privacy: .public)) — envoi vers zone \(recordID.zoneID.zoneName, privacy: .private(mask: .hash))")
         // La planification automatique du moteur est documentée comme "indéterminée" (dépend des

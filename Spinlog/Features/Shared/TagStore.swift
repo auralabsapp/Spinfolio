@@ -106,27 +106,18 @@ final class TagStore {
         "\(base)_\(username)"
     }
 
+    /// Tolérant aux données partiellement illisibles (voir `PersistedStoreDecoding`) : un tag
+    /// abîmé n'efface plus tous les tags du compte à la prochaine écriture.
     private func load(for username: String) {
-        if let data = UserDefaults.standard.data(forKey: key(instanceStorageKey, for: username)),
-           let decoded = try? JSONDecoder().decode([String: [TimestampedTag]].self, from: data) {
-            timestampedTagsByInstance = decoded
-        } else {
-            timestampedTagsByInstance = [:]
-        }
-
-        if let data = UserDefaults.standard.data(forKey: key(legacyReleaseStorageKey, for: username)),
-           let decoded = try? JSONDecoder().decode([String: [String]].self, from: data) {
-            legacyTagsByRelease = decoded
-        } else {
-            legacyTagsByRelease = [:]
-        }
-
-        if let data = UserDefaults.standard.data(forKey: key(standaloneKey, for: username)),
-           let decoded = try? JSONDecoder().decode(Set<String>.self, from: data) {
-            standaloneTags = decoded
-        } else {
-            standaloneTags = []
-        }
+        timestampedTagsByInstance = PersistedStoreDecoding.decodeDictionaryOfArrays(
+            TimestampedTag.self, forKey: key(instanceStorageKey, for: username)
+        ) ?? [:]
+        legacyTagsByRelease = PersistedStoreDecoding.decodeDictionaryOfArrays(
+            String.self, forKey: key(legacyReleaseStorageKey, for: username)
+        ) ?? [:]
+        standaloneTags = Set(PersistedStoreDecoding.decodeArray(
+            String.self, forKey: key(standaloneKey, for: username)
+        ) ?? [])
 
         migrateLegacyDataIfNeeded()
     }

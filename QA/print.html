@@ -16,7 +16,7 @@
       size: A4 landscape;
       margin: 14mm 14mm 14mm 14mm;
       @bottom-right { content: "Page " counter(page) " / " counter(pages); font: 7.5pt -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; color: #9a9a9a; }
-      @bottom-left { content: "Spinfolio — Cahier de recette v3.3"; font: 7.5pt -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; color: #9a9a9a; }
+      @bottom-left { content: "Spinfolio — Cahier de recette v3.4"; font: 7.5pt -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; color: #9a9a9a; }
     }
     :root {
       --accent: #b7791f;
@@ -141,6 +141,7 @@
     const newOutsideAudit = testCases.filter(t => !t.tags.includes('AUDIT') && /^(F21|F22|N17|O12|O13|P14|P15|Q25|Q26|R\d+)$/.test(t.id)).length;
     const autoCount = testCases.filter(t => t.tags.includes('AUTO')).length;
     document.getElementById('whatsnew').innerHTML = [
+      `<b>v3.4 — 7 nouveaux tests AUDIT de fiabilité des données</b> : déconnexion qui arrête tout (A20), suppression de compte complète iCloud compris (A21), dossiers supprimés avec actions en attente ou sur discogs.com (J24, J25), conflits iCloud résolus par la modification la plus récente (M23), ajouts rejoués sans doublon (N21), données locales partiellement illisibles conservées (P22).`,
       `<b>v3.3 — 34 nouveaux tests AUDIT</b> : mode démo sans compte Discogs (A16–A19, B37–B38, H17, I19, L20, M22), soumission App Store (P20, O15, O16), file hors ligne sans perte (N19, N20), scan par lot conservé (G17–G19), Live Activity terminée app suspendue (O14), paywall hebdomadaire (L17–L19), VoiceOver et iOS 26 (P17–P19), gestion des dossiers et re-tap d'onglet (J20–J23), messages Wantlist (E17), textes anglais (S14), non-régression après réorganisation du code (P21).`,
       `<b>Nouveau tag AUTO (${autoCount} tests)</b> : logique déjà vérifiée par les tests automatiques Xcode (97 tests unitaires, 5 parcours d'interface en mode démo) — le passage manuel peut se limiter au rendu.`,
       `<b>Nouvelle famille S (v3.2)</b> — langues et libellés : interface 100 % anglaise, lexique écoute sur platine / lecture Apple Music (Listen / Play), pluriels, tutoiement, formats régionaux, nom de l'app et autorisations. J6, O4 et O11 reprennent les nouveaux libellés.`,

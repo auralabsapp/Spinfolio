@@ -222,6 +222,14 @@ final class OfflineDownloadManager {
         }
     }
 
+    /// Suppression des données du compte : le cache hors ligne étant effacé, ses compteurs
+    /// (date de dernière synchro, nombre de disques) ne doivent plus s'afficher dans Réglages.
+    func resetOfflineState() {
+        cancelDownload()
+        lastSyncDate = nil
+        offlineItemCount = 0
+    }
+
     /// Interrompt le téléchargement en cours.
     func cancelDownload() {
         downloadTask?.cancel()

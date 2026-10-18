@@ -60,13 +60,10 @@ final class ListeningLogStore {
         "\(storageKeyBase)_\(username)"
     }
 
+    /// Tolérant aux données partiellement illisibles (voir `PersistedStoreDecoding`).
     private func load(for username: String) {
-        if let data = UserDefaults.standard.data(forKey: storageKey(for: username)),
-           let decoded = try? JSONDecoder().decode([ListeningSession].self, from: data) {
-            sessions = decoded.sorted { $0.timestamp > $1.timestamp }
-        } else {
-            sessions = []
-        }
+        sessions = (PersistedStoreDecoding.decodeArray(ListeningSession.self, forKey: storageKey(for: username)) ?? [])
+            .sorted { $0.timestamp > $1.timestamp }
         migrateLegacyDataIfNeeded()
     }
 

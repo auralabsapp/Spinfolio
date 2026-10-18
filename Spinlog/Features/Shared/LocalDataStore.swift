@@ -315,13 +315,18 @@ final class LocalDataStore {
             for entry in entries { context.delete(entry) }
         }
 
-        let collectionMetaId = "\(username)_collection"
-        let wantlistMetaId = CacheMetaKey.wantlist(username: username)
-        let metaDescriptor = FetchDescriptor<CachedFetchMetadata>(
-            predicate: #Predicate<CachedFetchMetadata> { $0.id == collectionMetaId || $0.id == wantlistMetaId }
-        )
-        if let entries = try? context.fetch(metaDescriptor) {
-            for entry in entries { context.delete(entry) }
+        // Toutes les métadonnées du compte (collection de chaque dossier, wantlist) : l'ancien filtre
+        // visait `<compte>_collection`, alors que les clés réelles portent le numéro de dossier
+        // (`CacheMetaKey.collection`), si bien qu'elles n'étaient jamais effacées.
+        let metaPrefix = "\(username)_"
+        if let entries = try? context.fetch(FetchDescriptor<CachedFetchMetadata>()) {
+            for entry in entries where entry.id.hasPrefix(metaPrefix) { context.delete(entry) }
+        }
+
+        // Historique de la valeur de la collection (montants personnels). Il n'est pas encore
+        // séparé par compte sur l'appareil : il est effacé en entier.
+        if let snapshots = try? context.fetch(FetchDescriptor<CollectionSnapshot>()) {
+            for snapshot in snapshots { context.delete(snapshot) }
         }
 
         try? context.save()
