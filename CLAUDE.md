@@ -67,6 +67,12 @@ Code dans `Spinlog/`, widget et Live Activity dans `SpinlogWidgets/`, tests dans
 
 ## 2. Concurrence
 
+- Les 4 cibles sont en **Swift 6** (vérification stricte de la concurrence) : aucun avertissement
+  ni erreur d'isolation n'est toléré. `nonisolated(unsafe)` et `@preconcurrency import` sont
+  réservés aux types système sûrs entre fils mais pas encore annotés `Sendable` (`Notification`,
+  formatters, `NSCache`, `Activity`…), toujours accompagnés d'un commentaire qui le justifie.
+  Un rappel système exécuté hors du fil principal (tâche de fond, réseau, OAuth) doit être
+  `@Sendable` ou planifié sur la file principale, sinon l'app s'arrête à l'exécution.
 - La cible a `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` : tout est `@MainActor` par défaut.
   Marquer `nonisolated` ce qui doit tourner ailleurs (décodage, calculs purs, `Codable` des modèles
   décodés en arrière-plan — voir `CollectionItem`).
