@@ -11,7 +11,6 @@ final class ReleaseActions {
     var message: String?
     /// Exemplaires présents dans la collection pour cette release (peut en contenir plusieurs).
     private(set) var collectionInstances: [CollectionItem] = []
-    var collectionInstance: CollectionItem? { collectionInstances.first }
     var instancesCount: Int { collectionInstances.count }
     private(set) var collectionFields: [CollectionField] = []
     /// Statut collection : modifiable instantanément en UI optimiste.

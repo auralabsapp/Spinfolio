@@ -5,16 +5,18 @@ import Foundation
 /// les deux `ISO8601DateFormatter` statiques et le cache — voir le commentaire original sur la
 /// mesure Instruments (615ms de temps propre pour cette seule ré-analyse répétée ligne après
 /// ligne pendant un défilement) qui avait motivé ce cache.
-enum DiscogsDateParsing {
-    private static let isoFormatter = ISO8601DateFormatter()
-    private static let isoFormatterNoFraction: ISO8601DateFormatter = {
+nonisolated enum DiscogsDateParsing {
+    // `nonisolated(unsafe)` : `ISO8601DateFormatter` et `NSCache` sont sûrs entre fils (documentés
+    // comme tels par Apple) mais pas encore déclarés `Sendable` par Foundation.
+    nonisolated(unsafe) private static let isoFormatter = ISO8601DateFormatter()
+    nonisolated(unsafe) private static let isoFormatterNoFraction: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime]
         return formatter
     }()
     /// `NSCache` (thread-safe nativement) : cette lecture est appelée aussi bien depuis
     /// l'affichage des lignes (main actor) que depuis le tri en arrière-plan.
-    private static let dateCache = NSCache<NSString, NSDate>()
+    nonisolated(unsafe) private static let dateCache = NSCache<NSString, NSDate>()
 
     static func dateAdded(from rawISODate: String) -> Date? {
         let key = rawISODate as NSString

@@ -39,7 +39,10 @@ final class NetworkMonitor {
         // quelques millisecondes (et une requête lancée entre-temps hors ligne retombe déjà sur
         // le cache local).
 
-        monitor.pathUpdateHandler = { [weak self] path in
+        // `@Sendable` explicite : appelé sur `queue` (file de fond). Sans cette mention, la closure
+        // pourrait être considérée comme isolée sur l'acteur principal (type déclaré dans un
+        // contexte isolé) et arrêter l'app à l'exécution en Swift 6.
+        monitor.pathUpdateHandler = { @Sendable [weak self] path in
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 if self.simulatedOffline {

@@ -1,4 +1,4 @@
-import SwiftUI
+import Foundation
 
 /// Un disque de la collection, réduit aux seules données nécessaires à l'affichage du widget
 /// (pas de dépendance au cache SwiftData complet, invisible depuis l'extension de widgets).
@@ -46,17 +46,9 @@ enum WidgetSnapshotStore {
     }
 
     /// Couleur du thème (variante pour fond sombre) transmise à la Live Activity, qui n'a pas
-    /// accès au thème de l'app.
+    /// accès au thème de l'app (lue par la copie de ce fichier côté extension).
     static func saveThemeAccentOnDark(red: Double, green: Double, blue: Double) {
         defaults.set([red, green, blue], forKey: themeAccentKey)
-    }
-
-    /// `nil` tant que l'app n'a jamais publié son thème (première ouverture pas encore faite).
-    static var themeAccentOnDark: Color? {
-        guard let components = defaults.array(forKey: themeAccentKey) as? [Double], components.count == 3 else {
-            return nil
-        }
-        return Color(red: components[0], green: components[1], blue: components[2])
     }
 
     /// Choix stable pour une journée donnée : même date + même liste => même résultat.

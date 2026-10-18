@@ -1,6 +1,8 @@
 import SwiftUI
 import Foundation
-import ActivityKit
+// `@preconcurrency` : `Activity` n'est pas encore déclaré `Sendable` par ActivityKit alors que ses
+// méthodes `update`/`end` sont conçues pour être appelées depuis n'importe quel contexte.
+@preconcurrency import ActivityKit
 import UIKit
 import Observation
 import Kingfisher
@@ -170,7 +172,10 @@ final class NowPlayingActivityManager {
             }
 
             // Si la jaquette n'était pas encore en cache, on la télécharge et met à jour l'activité
-            if initialCoverData == nil, let activity = newActivity, let coverURL {
+            if initialCoverData == nil, let newActivity, let coverURL {
+                // `Activity` n'est pas déclaré `Sendable` par ActivityKit alors que `update` est
+                // conçu pour être appelé depuis n'importe quel contexte.
+                nonisolated(unsafe) let activity = newActivity
                 if let coverData = await fetchAsyncCoverData(from: coverURL) {
                     let updatedState = NowPlayingActivityAttributes.ContentState(
                         startedAt: now,

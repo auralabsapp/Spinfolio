@@ -403,7 +403,7 @@ private struct PaywallHeaderGraphicView: View {
 
 // MARK: - Découpe incurvée de l'en-tête
 
-private struct PaywallHeaderCurve: Shape {
+private nonisolated struct PaywallHeaderCurve: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
         path.move(to: CGPoint(x: 0, y: 0))

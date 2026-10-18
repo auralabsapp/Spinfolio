@@ -15,6 +15,7 @@ struct UserProfileSheet: View {
     let username: String
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @State private var viewModel = UserProfileViewModel()
     @State private var safariTarget: SafariTarget?
     @State private var showingDeleteAccountConfirmation = false
@@ -232,7 +233,13 @@ struct UserProfileSheet: View {
             Spacer()
             if let url = item.url {
                 Button {
-                    safariTarget = SafariTarget(url: url)
+                    // Site personnel indiqué dans le profil : ouvert dans Safari, pas dans la
+                    // webview qui garde la session discogs.com (voir `DiscogsWebPolicy`).
+                    if DiscogsWebPolicy.isDiscogs(url) {
+                        safariTarget = SafariTarget(url: url)
+                    } else {
+                        openURL(url)
+                    }
                 } label: {
                     HStack(spacing: 4) {
                         Text(item.value)

@@ -42,11 +42,6 @@ final class AppleMusicAccountStore {
         }
     }
 
-    /// Bascule l'état coché/décoché du compte Apple Music.
-    func toggleConnected() {
-        isConnected.toggle()
-    }
-
     /// Déclenché quand l'utilisateur coche la case pour connecter son compte.
     func connect() async {
         isChecking = true

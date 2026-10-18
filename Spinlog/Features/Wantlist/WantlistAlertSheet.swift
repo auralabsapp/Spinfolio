@@ -7,14 +7,16 @@ struct WantlistAlertSheet: View {
     @State private var viewModel = WantlistAlertViewModel()
 
     @State private var showPermissionAlert = false
-    @State private var showingSafari = false
+    /// Page à ouvrir : présentée via `fullScreenCover(item:)`, jamais un `Bool` avec une URL
+    /// séparée, qui peut ouvrir une page vide (voir `SafariViewRequest`).
+    @State private var safariRequest: SafariViewRequest?
     @FocusState private var isTargetPriceFocused: Bool
 
     private var existingAlert: WantlistAlert? {
         viewModel.existingAlert(for: item)
     }
 
-    private var marketplaceURL: URL? {
+    private var marketplaceURL: URL {
         DiscogsConstants.websiteURL.appendingPathComponent("sell/release/\(item.id)")
     }
 
@@ -98,10 +100,8 @@ struct WantlistAlertSheet: View {
                 viewModel.setupInitialValues(for: item)
                 await viewModel.loadMarketData(for: item)
             }
-            .fullScreenCover(isPresented: $showingSafari) {
-                if let url = marketplaceURL {
-                    SafariView(url: url)
-                }
+            .fullScreenCover(item: $safariRequest) { request in
+                SafariView(url: request.url)
             }
             .alert("Notifications désactivées", isPresented: $showPermissionAlert) {
                 Button("Ouvrir Réglages") {
@@ -271,7 +271,7 @@ struct WantlistAlertSheet: View {
     private var viewListingsSection: some View {
         Section {
             Button {
-                showingSafari = true
+                safariRequest = SafariViewRequest(url: marketplaceURL)
             } label: {
                 HStack {
                     Spacer()

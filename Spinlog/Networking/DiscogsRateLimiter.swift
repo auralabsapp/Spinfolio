@@ -31,15 +31,15 @@ actor DiscogsRateLimiter {
     private var recentRequestTimestamps: [Date] = []
     /// Marge de sécurité sous le plafond strict Discogs (60 req/min) pour absorber
     /// toute requête concurrente ou dérive d'horloge.
-    private let maxRequestsPerMinute = 50
-    private let rollingWindowSeconds: TimeInterval = 60
+    private static let maxRequestsPerMinute = 50
+    private static let rollingWindowSeconds: TimeInterval = 60
     /// Plafond dur sur l'attente, quelle que soit la cause (fenêtre glissante saturée, solde
     /// Discogs bas) : la réservation est anticipée (voir `waitForSlot`), donc une rafale de
     /// requêtes (plusieurs fiches release ouvertes coup sur coup, 3 requêtes chacune) peut faire
     /// composer les créneaux réservés sur plusieurs minutes. Mieux vaut risquer un 429 ponctuel
     /// (déjà géré par le retry sur `Retry-After` dans `DiscogsAPIClient`) que de laisser l'UI
     /// paraître bloquée indéfiniment.
-    private let maxQueueWaitSeconds: TimeInterval = 20
+    private static let maxQueueWaitSeconds: TimeInterval = 20
 
     /// Dernière requête de priorité normale (action de l'utilisateur, synchro de la collection,
     /// résolution des années…) : les requêtes de fond leur laissent la place.
@@ -47,12 +47,12 @@ actor DiscogsRateLimiter {
     /// Dernier créneau accordé à une requête de fond.
     private var lastBackgroundSlot: Date?
     /// Une requête de fond ne part qu'après ce délai sans requête normale…
-    private let backgroundQuietPeriod: TimeInterval = 8
+    private static let backgroundQuietPeriod: TimeInterval = 8
     /// …si moins de requêtes que ce plafond sont parties dans la dernière minute (la moitié du
     /// quota reste ainsi toujours disponible pour l'utilisateur)…
-    private let backgroundMaxRequestsPerMinute = 25
+    private static let backgroundMaxRequestsPerMinute = 25
     /// …et au plus une toutes les 3 secondes (20 par minute).
-    private let backgroundMinSpacing: TimeInterval = 3
+    private static let backgroundMinSpacing: TimeInterval = 3
 
     /// Point d'entrée du client : attend un créneau selon la priorité de la tâche courante.
     func waitForSlot(priority: DiscogsRequestPriority) async throws {
@@ -83,28 +83,20 @@ actor DiscogsRateLimiter {
         while true {
             let now = Date()
             pruneOldTimestamps()
-            var readyAt = now
-            if let lastNormalRequestDate {
-                readyAt = max(readyAt, lastNormalRequestDate.addingTimeInterval(backgroundQuietPeriod))
-            }
-            if let lastBackgroundSlot {
-                readyAt = max(readyAt, lastBackgroundSlot.addingTimeInterval(backgroundMinSpacing))
-            }
-            if recentRequestTimestamps.count >= backgroundMaxRequestsPerMinute,
-               let oldest = recentRequestTimestamps.first {
-                readyAt = max(readyAt, oldest.addingTimeInterval(rollingWindowSeconds + 0.5))
-            }
-            if let remaining, remaining <= 10 {
-                // Solde Discogs bas : on le laisse se reconstituer pour l'utilisateur.
-                readyAt = max(readyAt, now.addingTimeInterval(15))
-            }
+            let readyAt = Self.backgroundReadyDate(
+                now: now,
+                lastNormalRequest: lastNormalRequestDate,
+                lastBackgroundSlot: lastBackgroundSlot,
+                recentRequests: recentRequestTimestamps,
+                remaining: remaining
+            )
             let delay = readyAt.timeIntervalSince(now)
             if delay <= 0 { break }
             // Plafonné : on redescend boucler plutôt que de dormir d'une traite sur un délai
             // potentiellement très long (voir `maxQueueWaitSeconds`) — une requête normale
             // arrivée entre-temps doit pouvoir faire réévaluer `lastNormalRequestDate` à la
             // prochaine itération plutôt que rester figée dans un unique `Task.sleep`.
-            try await Task.sleep(for: .seconds(min(delay, maxQueueWaitSeconds)))
+            try await Task.sleep(for: .seconds(min(delay, Self.maxQueueWaitSeconds)))
         }
         lastBackgroundSlot = Date()
         try await waitForSlot()
@@ -124,26 +116,9 @@ actor DiscogsRateLimiter {
         let now = Date()
         pruneOldTimestamps()
 
-        var slot = now
-        // Fenêtre glissante : si le quota local est atteint, attendre que la requête la plus
-        // ancienne parmi les `maxRequestsPerMinute` dernières sorte de la fenêtre.
-        if recentRequestTimestamps.count >= maxRequestsPerMinute {
-            let blocking = recentRequestTimestamps[recentRequestTimestamps.count - maxRequestsPerMinute]
-            slot = max(slot, blocking.addingTimeInterval(rollingWindowSeconds + 0.5))
-        }
-        // Si Discogs annonce un solde restant critique, on espace les requêtes à partir de la
-        // dernière déjà planifiée, pour laisser la fenêtre d'une minute se renouveler.
-        if let remaining, remaining <= 5 {
-            let spacing: TimeInterval = remaining <= 1 ? 10 : 2
-            let lastScheduled = recentRequestTimestamps.last ?? now
-            slot = max(slot, lastScheduled.addingTimeInterval(spacing))
-            // Décompte local en attendant la réponse, qui fera foi (`recordResponse`).
-            self.remaining = remaining - 1
-        }
-
-        // Voir `maxQueueWaitSeconds` : évite qu'une rafale de requêtes ne fasse composer les
-        // créneaux réservés sur plusieurs minutes.
-        slot = min(slot, now.addingTimeInterval(maxQueueWaitSeconds))
+        let (slot, remainingAfter) = Self.nextSlot(now: now, reservedSlots: recentRequestTimestamps, remaining: remaining)
+        // Décompte local en attendant la réponse, qui fera foi (`recordResponse`).
+        remaining = remainingAfter
 
         reserve(slot)
         let delay = slot.timeIntervalSince(now)
@@ -154,6 +129,58 @@ actor DiscogsRateLimiter {
             release(slot)
             throw error
         }
+    }
+
+    // MARK: - Calcul des créneaux (fonctions pures, testées dans `DiscogsRateLimiterTests`)
+
+    /// Créneau de la prochaine requête normale, d'après les créneaux déjà réservés de la dernière
+    /// minute (triés) et le solde annoncé par Discogs ; renvoie aussi le solde décompté localement.
+    nonisolated static func nextSlot(now: Date, reservedSlots: [Date], remaining: Int?) -> (slot: Date, remaining: Int?) {
+        var slot = now
+        var remainingAfter = remaining
+        // Fenêtre glissante : si le quota local est atteint, attendre que la requête la plus
+        // ancienne parmi les `maxRequestsPerMinute` dernières sorte de la fenêtre.
+        if reservedSlots.count >= maxRequestsPerMinute {
+            let blocking = reservedSlots[reservedSlots.count - maxRequestsPerMinute]
+            slot = max(slot, blocking.addingTimeInterval(rollingWindowSeconds + 0.5))
+        }
+        // Si Discogs annonce un solde restant critique, on espace les requêtes à partir de la
+        // dernière déjà planifiée, pour laisser la fenêtre d'une minute se renouveler.
+        if let remaining, remaining <= 5 {
+            let spacing: TimeInterval = remaining <= 1 ? 10 : 2
+            let lastScheduled = reservedSlots.last ?? now
+            slot = max(slot, lastScheduled.addingTimeInterval(spacing))
+            remainingAfter = remaining - 1
+        }
+        // Voir `maxQueueWaitSeconds` : évite qu'une rafale de requêtes ne fasse composer les
+        // créneaux réservés sur plusieurs minutes.
+        slot = min(slot, now.addingTimeInterval(maxQueueWaitSeconds))
+        return (slot, remainingAfter)
+    }
+
+    /// Moment à partir duquel une requête de fond peut prendre un créneau.
+    nonisolated static func backgroundReadyDate(
+        now: Date,
+        lastNormalRequest: Date?,
+        lastBackgroundSlot: Date?,
+        recentRequests: [Date],
+        remaining: Int?
+    ) -> Date {
+        var readyAt = now
+        if let lastNormalRequest {
+            readyAt = max(readyAt, lastNormalRequest.addingTimeInterval(backgroundQuietPeriod))
+        }
+        if let lastBackgroundSlot {
+            readyAt = max(readyAt, lastBackgroundSlot.addingTimeInterval(backgroundMinSpacing))
+        }
+        if recentRequests.count >= backgroundMaxRequestsPerMinute, let oldest = recentRequests.first {
+            readyAt = max(readyAt, oldest.addingTimeInterval(rollingWindowSeconds + 0.5))
+        }
+        if let remaining, remaining <= 10 {
+            // Solde Discogs bas : on le laisse se reconstituer pour l'utilisateur.
+            readyAt = max(readyAt, now.addingTimeInterval(15))
+        }
+        return readyAt
     }
 
     private func reserve(_ slot: Date) {
@@ -187,7 +214,7 @@ actor DiscogsRateLimiter {
 
     private func pruneOldTimestamps() {
         let now = Date()
-        recentRequestTimestamps.removeAll { now.timeIntervalSince($0) > rollingWindowSeconds }
+        recentRequestTimestamps.removeAll { now.timeIntervalSince($0) > Self.rollingWindowSeconds }
     }
 }
 

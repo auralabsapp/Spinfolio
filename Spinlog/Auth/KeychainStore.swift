@@ -12,7 +12,7 @@ nonisolated struct KeychainStore {
     /// la tâche `BGAppRefresh` et les notifications silencieuses CloudKit s'exécutent souvent
     /// écran verrouillé, et l'accessibilité par défaut (`WhenUnlocked`) y rendait les tokens
     /// illisibles. Sans `ThisDeviceOnly`, pour conserver la restauration depuis une sauvegarde.
-    private static let accessibility = kSecAttrAccessibleAfterFirstUnlock
+    private static var accessibility: CFString { kSecAttrAccessibleAfterFirstUnlock }
 
     private func baseQuery(forKey key: String) -> [String: Any] {
         [

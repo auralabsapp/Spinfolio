@@ -24,7 +24,7 @@ final class LibrarySectionsEngine<Item: SortableLibraryItem & Sendable> {
         tags: Set<String>, format: String?, searchText: String,
         synchronous: Bool,
         willStartAsync: () -> Void,
-        apply: @escaping ([(key: String, items: [Item])]) -> Void
+        apply: @escaping @MainActor @Sendable ([(key: String, items: [Item])]) -> Void
     ) {
         generation += 1
         let currentGeneration = generation
@@ -56,7 +56,7 @@ final class LibrarySectionsEngine<Item: SortableLibraryItem & Sendable> {
     private func deliverIfCurrent(
         _ result: [(key: String, items: [Item])],
         generation: Int,
-        apply: ([(key: String, items: [Item])]) -> Void
+        apply: @MainActor @Sendable ([(key: String, items: [Item])]) -> Void
     ) {
         guard generation == self.generation else { return }
         apply(result)

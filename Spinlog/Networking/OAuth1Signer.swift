@@ -12,18 +12,22 @@ nonisolated struct OAuth1Signer: Sendable {
     ///   - token: le oauth_token (request token ou access token). `nil` pour une requête non authentifiée.
     ///   - tokenSecret: le secret associé au token ci-dessus.
     ///   - additionalParameters: paramètres OAuth supplémentaires à signer (ex: oauth_callback, oauth_verifier).
+    ///   - nonce, timestamp: aléatoire et heure courante ; injectables pour vérifier la signature
+    ///     sur un exemple de référence dans les tests.
     func authorizationHeader(
         method: String,
         url: URL,
         token: String? = nil,
         tokenSecret: String = "",
-        additionalParameters: [String: String] = [:]
+        additionalParameters: [String: String] = [:],
+        nonce: String = UUID().uuidString.replacingOccurrences(of: "-", with: ""),
+        timestamp: Date = Date()
     ) -> String {
         var oauthParameters: [String: String] = [
             "oauth_consumer_key": consumerKey,
-            "oauth_nonce": UUID().uuidString.replacingOccurrences(of: "-", with: ""),
+            "oauth_nonce": nonce,
             "oauth_signature_method": "HMAC-SHA1",
-            "oauth_timestamp": String(Int(Date().timeIntervalSince1970)),
+            "oauth_timestamp": String(Int(timestamp.timeIntervalSince1970)),
             "oauth_version": "1.0"
         ]
         if let token {

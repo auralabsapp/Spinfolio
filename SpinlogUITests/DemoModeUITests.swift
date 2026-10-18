@@ -4,18 +4,17 @@ import XCTest
 /// ni écriture vers Discogs. L'app est lancée avec un argument réservé aux tests (voir
 /// `UITestLaunchOptions`, Debug uniquement) qui saute le paywall de lancement.
 /// Les fiches release interrogent le vrai catalogue Discogs : le Simulateur doit avoir du réseau.
+@MainActor
 final class DemoModeUITests: XCTestCase {
     private var app: XCUIApplication!
 
-    override func setUpWithError() throws {
+    // Préparation faite ici plutôt que dans `setUpWithError` : cette méthode héritée n'est pas
+    // isolée sur l'acteur principal, contrairement à `XCUIApplication`.
+    private func launch(_ argument: String) {
         continueAfterFailure = false
         app = XCUIApplication()
         // Libellés français, quelle que soit la langue du Simulateur.
-        app.launchArguments += ["-AppleLanguages", "(fr)", "-AppleLocale", "fr_FR"]
-    }
-
-    private func launch(_ argument: String) {
-        app.launchArguments.append(argument)
+        app.launchArguments += ["-AppleLanguages", "(fr)", "-AppleLocale", "fr_FR", argument]
         app.launch()
     }
 

@@ -510,26 +510,24 @@ final class ArtistDetailViewModel {
     /// Photo et biographie si elles manquent encore.
     private func loadAppleMusicContent(for name: String) async {
         guard appleMusicAccess == .authorized, NetworkMonitor.shared.isConnected else { return }
-        let service = AppleMusicArtistArtworkService.shared
-        let needsArtwork = artworkURL == nil
-        let needsBiography = biography == nil
-        await withTaskGroup(of: Void.self) { group in
-            if needsArtwork {
-                group.addTask { @MainActor in
-                    defer { self.isLoadingArtwork = false }
-                    guard let url = await service.artworkURL(for: name, size: 600) else { return }
-                    // Préchargée avant d'être affichée : l'en-tête passe directement de
-                    // l'indicateur de chargement à la photo complète, par un fondu.
-                    _ = try? await KingfisherManager.shared.retrieveImage(with: url)
-                    self.artworkURL = url
-                }
-            }
-            if needsBiography {
-                group.addTask { @MainActor in
-                    self.biography = await service.editorialNotes(for: name)
-                }
-            }
-        }
+        // `async let` plutôt qu'un groupe de tâches : photo et biographie se chargent toujours en
+        // parallèle, et le vérificateur de concurrence de Swift 6 sait analyser ce motif.
+        async let artworkLoad: Void = artworkURL == nil ? loadArtwork(for: name) : ()
+        async let biographyLoad: Void = biography == nil ? loadBiography(for: name) : ()
+        _ = await (artworkLoad, biographyLoad)
+    }
+
+    private func loadArtwork(for name: String) async {
+        defer { isLoadingArtwork = false }
+        guard let url = await AppleMusicArtistArtworkService.shared.artworkURL(for: name, size: 600) else { return }
+        // Préchargée avant d'être affichée : l'en-tête passe directement de l'indicateur de
+        // chargement à la photo complète, par un fondu.
+        _ = try? await KingfisherManager.shared.retrieveImage(with: url)
+        artworkURL = url
+    }
+
+    private func loadBiography(for name: String) async {
+        biography = await AppleMusicArtistArtworkService.shared.editorialNotes(for: name)
     }
 
     // MARK: - Possession locale

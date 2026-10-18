@@ -51,21 +51,6 @@ enum PersistedStoreDecoding {
         return lossy.mapValues(\.elements)
     }
 
-    /// Valeur d'un seul bloc (ex. ensemble de noms) : illisible, elle est mise de côté. `nil` si la
-    /// clé est absente ou la valeur illisible.
-    static func decodeValue<Value: Decodable>(
-        _ type: Value.Type,
-        forKey key: String,
-        defaults: UserDefaults = .standard
-    ) -> Value? {
-        guard let data = defaults.data(forKey: key) else { return nil }
-        if let value = try? JSONDecoder().decode(Value.self, from: data) {
-            return value
-        }
-        preserveUnreadable(data, forKey: key, defaults: defaults, reason: "valeur illisible")
-        return nil
-    }
-
     /// Conserve la toute première version illisible rencontrée : une copie déjà présente n'est pas
     /// écrasée, pour ne jamais remplacer les données d'origine par une version déjà appauvrie.
     private static func preserveUnreadable(_ data: Data, forKey key: String, defaults: UserDefaults, reason: String) {

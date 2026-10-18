@@ -24,6 +24,9 @@ func addLibraryObserver(for name: Notification.Name, perform action: @escaping @
 @discardableResult
 func addLibraryObserver(for name: Notification.Name, handling notification: @escaping @MainActor (Notification) -> Void) -> NSObjectProtocol {
     NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { note in
+        // `Notification` n'est pas `Sendable` : livrée sur la file principale (`queue: .main`) et
+        // traitée de façon synchrone, elle ne change jamais de fil — d'où `nonisolated(unsafe)`.
+        nonisolated(unsafe) let note = note
         MainActor.assumeIsolated {
             notification(note)
         }
@@ -36,6 +39,8 @@ func addLibraryObserver(for name: Notification.Name, handling notification: @esc
 @discardableResult
 func addLibraryObserver<T>(for name: Notification.Name, payloadKey: String, perform action: @escaping @MainActor (T) -> Void) -> NSObjectProtocol {
     NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { notification in
+        // Même raison que ci-dessus.
+        nonisolated(unsafe) let notification = notification
         MainActor.assumeIsolated {
             guard let payload = notification.userInfo?[payloadKey] as? T else { return }
             action(payload)

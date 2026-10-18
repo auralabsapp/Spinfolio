@@ -307,10 +307,6 @@ final class TabNavigationCoordinator {
         pendingWantlistAlertReleaseId = releaseId
     }
 
-    func openSettings() {
-        selectedTab = .settings
-    }
-
     /// Ouvre Réglages directement positionné sur la section "Collection & Rangement" (ex: depuis
     /// "Modifier" dans la méthode de classement du guide de rangement), plutôt qu'en haut de la liste.
     func openSettingsAtOrganizationSection() {

@@ -52,7 +52,8 @@ struct CollectionItem: Codable, Identifiable, Sendable {
     let instanceId: Int
     var notes: [CollectionFieldValue]
 
-    var id: Int { instanceId }
+    /// `nonisolated` : exigence de `SortableLibraryItem`, lue pendant le tri en arrière-plan.
+    nonisolated var id: Int { instanceId }
 
     private enum CodingKeys: String, CodingKey {
         case releaseId = "id"
@@ -111,7 +112,7 @@ struct CollectionItem: Codable, Identifiable, Sendable {
     /// `nonisolated` : appelé aussi bien depuis l'affichage des lignes (main actor) que depuis le
     /// tri en arrière-plan (`CollectionSortOption`). Voir `DiscogsDateParsing` pour le cache
     /// mémoïsé partagé avec `WantlistItem`.
-    var dateAddedDate: Date? {
+    nonisolated var dateAddedDate: Date? {
         DiscogsDateParsing.dateAdded(from: dateAdded)
     }
 
@@ -159,7 +160,9 @@ struct CollectionFieldValue: Codable, Sendable {
     }
 }
 
-struct CollectionReleasesResponse: Decodable {
+/// `nonisolated` : une page (jusqu'à 100 exemplaires) est décodée hors du fil principal, voir
+/// `DiscogsAPIClient.collectionItems`.
+nonisolated struct CollectionReleasesResponse: Decodable, Sendable {
     let pagination: Pagination
     let releases: [CollectionItem]
 }

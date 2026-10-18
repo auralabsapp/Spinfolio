@@ -290,6 +290,20 @@ final class DiscogsAuthManager: NSObject {
         return (token, secret)
     }
 
+    /// Code de vérification renvoyé par Discogs, seulement si le retour concerne bien la demande
+    /// en cours (`oauth_token` identique) : un lien `spinlog://oauth-callback` forgé ailleurs ne peut
+    /// alors pas faire valider une autre autorisation que celle que l'utilisateur vient d'accorder.
+    nonisolated static func verifier(fromCallback callbackURL: URL?, requestToken: String) -> String? {
+        guard let callbackURL,
+              let items = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false)?.queryItems,
+              items.first(where: { $0.name == "oauth_token" })?.value == requestToken,
+              let verifier = items.first(where: { $0.name == "oauth_verifier" })?.value,
+              !verifier.isEmpty else {
+            return nil
+        }
+        return verifier
+    }
+
     private func authorize(requestToken: String) async throws -> String {
         var components = URLComponents(
             url: DiscogsConstants.websiteURL.appendingPathComponent("oauth/authorize"),
@@ -302,14 +316,12 @@ final class DiscogsAuthManager: NSObject {
             let session = ASWebAuthenticationSession(
                 url: authorizeURL,
                 callbackURLScheme: callbackURL.scheme
-            ) { callbackURL, error in
+            ) { @Sendable callbackURL, error in
                 if let error {
                     continuation.resume(throwing: error)
                     return
                 }
-                guard let callbackURL,
-                      let verifier = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false)?
-                        .queryItems?.first(where: { $0.name == "oauth_verifier" })?.value else {
+                guard let verifier = Self.verifier(fromCallback: callbackURL, requestToken: requestToken) else {
                     continuation.resume(throwing: AuthError.invalidResponse)
                     return
                 }

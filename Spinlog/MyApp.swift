@@ -12,9 +12,12 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     ) -> Bool {
         UNUserNotificationCenter.current().delegate = self
 
+        // File principale plutôt que `nil` (file de fond par défaut) : ce gestionnaire est déclaré
+        // dans un type isolé sur l'acteur principal ; en Swift 6, l'appeler depuis une autre file
+        // déclencherait l'arrêt de l'app par la vérification d'isolation à l'exécution.
         BGTaskScheduler.shared.register(
             forTaskWithIdentifier: wantlistAlertsTaskIdentifier,
-            using: nil
+            using: .main
         ) { task in
             guard let appRefreshTask = task as? BGAppRefreshTask else {
                 task.setTaskCompleted(success: false)

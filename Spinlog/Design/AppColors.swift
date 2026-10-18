@@ -96,20 +96,6 @@ extension Color {
     static var spinlogPurple: Color { spinlogPink }
     static var spinlogPurpleLight: Color { spinlogPinkLight }
     static var spinlogPurpleDeep: Color { spinlogPinkDeep }
-    static var spinlogPurpleBadge: Color { spinlogPinkBadge }
-    static var spinlogPurpleGradient: LinearGradient { spinlogPinkGradient }
-    static var chartPurpleSoftTop: Color { buttonPinkTop }
-    static var chartPurpleSoftBottom: Color { buttonPinkBottom }
-    static var spinlogPurpleButtonGradient: LinearGradient { spinlogPinkButtonGradient }
-
-    static var spinlogBlue: Color { spinlogPink }
-    static var spinlogBlueLight: Color { spinlogPinkLight }
-    static var spinlogBlueDeep: Color { spinlogPinkDeep }
-    static var spinlogBlueBadge: Color { spinlogPinkBadge }
-    static var spinlogBlueGradient: LinearGradient { spinlogPinkGradient }
-    static var chartBlueSoftTop: Color { buttonPinkTop }
-    static var chartBlueSoftBottom: Color { buttonPinkBottom }
-    static var spinlogBlueButtonGradient: LinearGradient { spinlogPinkButtonGradient }
 
     // MARK: - Palette "Or Hifi / Ambre Collector" (habillage premium)
     //

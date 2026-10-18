@@ -40,8 +40,6 @@ nonisolated enum DiscogsConstants {
 nonisolated enum AppTiming {
     /// Durée d'affichage du toast "Lecture stoppée" avant disparition automatique.
     static let toastDismissShort: Duration = .seconds(3)
-    /// Durée d'affichage du toast "Lecture démarrée" avant disparition automatique.
-    static let toastDismissLong: Duration = .seconds(4)
     /// Courte pause laissant le temps à un scroll animé de s'installer avant une action suivante
     /// (ex. re-scroller vers le haut après un changement de tri/filtre).
     static let scrollSettleDelay: Duration = .milliseconds(50)
@@ -94,8 +92,6 @@ nonisolated enum AppMessages {
     static var offlineStaleRemovalBlocked: String { String(localized: "Mode hors ligne (données de plus de 6h) : retrait bloqué.") }
 
     static var addedToCollection: String { String(localized: "Ajouté à la collection.") }
-    static var addedToWantlist: String { String(localized: "Ajouté à la wantlist.") }
-    static var removedFromWantlist: String { String(localized: "Retiré de la wantlist.") }
 
     static var offlineAddQueued: String { String(localized: "Ajout enregistré hors ligne (sera synchronisé à la reconnexion).") }
     static var offlineRemovalQueued: String { String(localized: "Retrait enregistré hors ligne (sera synchronisé à la reconnexion).") }

@@ -104,7 +104,6 @@ private struct TrackPlayButton: View {
     private var isLoading: Bool { service.isLoadingTrackID == trackID }
     /// `nil` tant que la correspondance n'a pas encore été vérifiée (voir `.task` ci-dessous).
     private var matchStatus: Bool? { service.matchStatus(for: trackID) }
-    private var hasMatch: Bool { matchStatus == true }
 
     /// Teinte Apple Music adaptée au thème :
     /// - Thème sombre : rouge adouci et profond

@@ -76,8 +76,6 @@ struct SearchResult: Decodable, Identifiable, Sendable {
     }
 
     var isRelease: Bool { type == "release" || type == "master" }
-    var isArtist: Bool { type == "artist" }
-    var isLabel: Bool { type == "label" }
 }
 
 struct SearchResponse: Decodable {

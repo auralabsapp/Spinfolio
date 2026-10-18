@@ -4,7 +4,7 @@ import Observation
 import OSLog
 import UIKit
 
-let cloudSyncLogger = Logger(subsystem: "com.auralabs.Spinlog", category: "CloudSyncEngine")
+nonisolated let cloudSyncLogger = Logger(subsystem: "com.auralabs.Spinlog", category: "CloudSyncEngine")
 
 /// Synchronise les tags, le journal d'écoute, les alertes wantlist et certaines préférences via iCloud (base privée
 /// CloudKit) entre les appareils d'un même compte premium. Une zone `CKRecordZone` dédiée par
@@ -266,11 +266,6 @@ final class CloudSyncEngine: CKSyncEngineDelegate {
     /// Signale qu'une session d'écoute a été créée/modifiée et doit être envoyée vers iCloud.
     func markSessionDirty(id: UUID) {
         markDirty(.listeningSession(id: id))
-    }
-
-    /// Signale qu'une session d'écoute a été supprimée localement et doit l'être aussi sur iCloud.
-    func markSessionDeleted(id: UUID) {
-        markDeleted(.listeningSession(id: id))
     }
 
     /// Signale que les préférences de collection "durables" ont changé (voir

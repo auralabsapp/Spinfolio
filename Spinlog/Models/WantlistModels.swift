@@ -1,7 +1,7 @@
 import Foundation
 
 /// Une release dans la wantlist d'un utilisateur.
-struct WantlistItem: Identifiable, Sendable {
+struct WantlistItem: nonisolated Identifiable, Sendable {
     let id: Int
     let rating: Int
     let notes: String?
@@ -16,12 +16,13 @@ struct WantlistItem: Identifiable, Sendable {
 
     /// Appelé aussi bien depuis l'affichage des lignes (main actor) que depuis le tri en
     /// arrière-plan. Voir `DiscogsDateParsing` pour le cache mémoïsé partagé avec `CollectionItem`.
-    var dateAddedDate: Date? {
+    nonisolated var dateAddedDate: Date? {
         DiscogsDateParsing.dateAdded(from: dateAdded)
     }
 
     /// La wantlist n'a pas d'identifiant d'instance séparé : `id` est déjà l'identifiant de release.
-    var releaseId: Int { id }
+    /// `nonisolated` : exigence de `SortableLibraryItem`, lue pendant le tri en arrière-plan.
+    nonisolated var releaseId: Int { id }
 }
 
 /// `init(from:)`/`encode(to:)` explicites et `nonisolated`, plutôt qu'une synthèse automatique
@@ -53,7 +54,7 @@ extension WantlistItem: Codable {
 /// Permet à `WantlistItem` de réutiliser exactement les mêmes options et logique de tri
 /// que `CollectionItem` (voir `CollectionSortOption.swift`) — même construction d'écran
 /// pour Collection et Wantlist.
-extension WantlistItem: SortableLibraryItem {
+extension WantlistItem: nonisolated SortableLibraryItem {
     /// `nonisolated` + `assumeIsolated` : exigé par le protocole `SortableLibraryItem` (voir
     /// `CollectionSortOption.swift`) ; `WantlistViewModel` l'appelle toujours depuis l'acteur
     /// principal, donc l'hypothèse d'isolation est toujours vraie ici.
@@ -64,7 +65,8 @@ extension WantlistItem: SortableLibraryItem {
     }
 }
 
-struct WantlistResponse: Decodable {
+/// `nonisolated` : décodée hors du fil principal, voir `DiscogsAPIClient.wantlist`.
+nonisolated struct WantlistResponse: Decodable, Sendable {
     let pagination: Pagination
     let wants: [WantlistItem]
 }

@@ -104,13 +104,17 @@ struct RandomAlbumProvider: TimelineProvider {
     }
 
     func getSnapshot(in context: Context, completion: @escaping (RandomAlbumEntry) -> Void) {
+        // WidgetKit accepte l'appel de `completion` depuis n'importe quel fil, mais ne la déclare
+        // pas `Sendable` : sans cette annotation, Swift 6 refuse de la capturer dans la tâche.
+        nonisolated(unsafe) let completion = completion
+        let isPreview = context.isPreview
         Task {
             let entry = await buildEntry(for: Date())
             // Galerie de widgets : sans collection encore disponible, on montre à quoi ressemble
             // le widget plutôt qu'un message d'état.
-            if context.isPreview, case .album = entry.state {
+            if isPreview, case .album = entry.state {
                 completion(entry)
-            } else if context.isPreview {
+            } else if isPreview {
                 completion(Self.sampleEntry)
             } else {
                 completion(entry)
@@ -119,6 +123,8 @@ struct RandomAlbumProvider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<RandomAlbumEntry>) -> Void) {
+        // Voir `getSnapshot`.
+        nonisolated(unsafe) let completion = completion
         Task {
             let entry = await buildEntry(for: Date())
             let calendar = Calendar.current

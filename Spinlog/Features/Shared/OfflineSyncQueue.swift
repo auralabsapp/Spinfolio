@@ -10,7 +10,7 @@ enum ActionType: String, Codable, Sendable {
     case moveCollectionInstance
 }
 
-struct PendingAction: Identifiable, Codable, Sendable {
+nonisolated struct PendingAction: Identifiable, Codable, Sendable {
     let id: UUID
     let type: ActionType
     let releaseId: Int

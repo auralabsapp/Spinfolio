@@ -116,8 +116,8 @@ final class DiscogsAPIClient {
     }
 
     /// Comme `request`, mais décode la réponse hors du fil principal : pour les réponses
-    /// volumineuses reçues en série (classement des discographies), dont le décodage répété
-    /// pourrait saccader l'interface. `T` doit être déclaré `nonisolated` (décodable hors de
+    /// volumineuses ou reçues en série (pages de collection et de wantlist, classement des
+    /// discographies), dont le décodage répété pourrait saccader l'interface. `T` doit être déclaré `nonisolated` (décodable hors de
     /// l'acteur principal).
     func requestDecodingInBackground<T: Decodable & Sendable>(
         path: String,

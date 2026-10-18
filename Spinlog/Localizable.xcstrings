@@ -2666,6 +2666,7 @@
       }
     },
     "Ajouté à la wantlist." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5181,6 +5182,7 @@
       }
     },
     "Écoute arrêtée" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5201,6 +5203,7 @@
       }
     },
     "Écoute en cours sur la platine" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5231,6 +5234,7 @@
       }
     },
     "Écoute sur platine démarrée" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5241,6 +5245,7 @@
       }
     },
     "Écoute terminée" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8857,6 +8862,7 @@
       }
     },
     "Retiré de la wantlist." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

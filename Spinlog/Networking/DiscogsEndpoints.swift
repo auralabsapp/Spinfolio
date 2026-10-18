@@ -174,7 +174,9 @@ extension DiscogsAPIClient {
         if let sortOrder {
             items.append(URLQueryItem(name: "sort_order", value: sortOrder))
         }
-        return try await request(
+        // Décodée hors du fil principal : une page compte jusqu'à 100 exemplaires, et
+        // `fetchAllCollectionItems` en enchaîne des dizaines pour une grosse collection.
+        return try await requestDecodingInBackground(
             path: "users/\(username)/collection/folders/\(folderId)/releases",
             queryItems: items,
             credentials: credentials
@@ -332,7 +334,8 @@ extension DiscogsAPIClient {
         if let sortOrder {
             items.append(URLQueryItem(name: "sort_order", value: sortOrder))
         }
-        return try await request(
+        // Décodée hors du fil principal, comme les pages de collection.
+        return try await requestDecodingInBackground(
             path: "users/\(username)/wants",
             queryItems: items,
             credentials: credentials

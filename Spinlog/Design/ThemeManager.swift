@@ -35,11 +35,7 @@ final class ThemeManager {
         publishAccentForExtensions()
 
         // Écoute automatique de la perte ou modification du statut premium
-        NotificationCenter.default.addObserver(
-            forName: .premiumStatusChanged,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
+        addLibraryObserver(for: .premiumStatusChanged) { [weak self] in
             guard let self else { return }
             let isPremium = UserDefaults(suiteName: AppGroup.id)?.bool(forKey: PremiumConstants.isPremiumDefaultsKey)
                 ?? UserDefaults.standard.bool(forKey: PremiumConstants.isPremiumDefaultsKey)

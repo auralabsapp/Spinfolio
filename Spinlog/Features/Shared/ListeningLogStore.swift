@@ -122,13 +122,6 @@ final class ListeningLogStore {
         return session
     }
 
-    /// Supprime une session d'écoute spécifique (par exemple lors du tap sur "Annuler" dans le toast).
-    func removeSession(id: UUID) {
-        sessions.removeAll { $0.id == id }
-        persist()
-        CloudSyncEngine.shared.markSessionDeleted(id: id)
-    }
-
     // MARK: - Requêtes d'écoute
 
     /// Nombre total d'écoutes enregistrées pour une release.

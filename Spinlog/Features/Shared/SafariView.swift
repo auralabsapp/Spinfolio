@@ -23,6 +23,31 @@ import WebKit
 /// — préférer `item:` à un `Bool` associé à une propriété séparée, source d'une course d'état déjà
 /// rencontrée dans ce projet (voir `UserProfileSheet`). Tout lien vers discogs.com doit passer par
 /// `SafariView` (jamais `Link`/`openURL`, qui ouvriraient Safari externe et sa session partagée).
+/// Domaines autorisés dans la webview de l'app, qui garde la session discogs.com de l'utilisateur.
+/// Une page d'un autre site (lien externe d'une fiche, d'un profil, d'une annonce) s'ouvre dans
+/// Safari plutôt que dans cette session.
+nonisolated enum DiscogsWebPolicy {
+    /// Fournisseurs de connexion proposés par la page de connexion Discogs (« Continuer avec… ») :
+    /// sans eux, se connecter à discogs.com dans la webview avec Google, Apple ou Facebook échouerait.
+    private static let identityProviderHosts: Set<String> = [
+        "accounts.google.com", "appleid.apple.com", "www.facebook.com", "m.facebook.com"
+    ]
+
+    static func isDiscogs(_ url: URL?) -> Bool {
+        guard let url, url.scheme?.lowercased() == "https", let host = url.host?.lowercased() else { return false }
+        return host == "discogs.com" || host.hasSuffix(".discogs.com")
+    }
+
+    /// Navigation de la page principale autorisée dans la webview ?
+    static func allowsInAppNavigation(to url: URL?) -> Bool {
+        guard let url else { return false }
+        if url.scheme?.lowercased() == "about" { return true }
+        if isDiscogs(url) { return true }
+        guard url.scheme?.lowercased() == "https", let host = url.host?.lowercased() else { return false }
+        return identityProviderHosts.contains(host)
+    }
+}
+
 struct SafariViewRequest: Identifiable {
     let url: URL
     var id: String { url.absoluteString }
@@ -103,6 +128,18 @@ private struct EphemeralWebView: UIViewRepresentable {
 
         init(isLoading: Binding<Bool>) {
             _isLoading = isLoading
+        }
+
+        /// Hors de Discogs, la page principale ne change plus dans la webview : le lien s'ouvre
+        /// dans Safari. Les cadres intégrés (vérification anti-robot, lecteurs) restent autorisés.
+        func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {
+            let url = navigationAction.request.url
+            let isMainFrame = navigationAction.targetFrame?.isMainFrame ?? true
+            guard isMainFrame, !DiscogsWebPolicy.allowsInAppNavigation(to: url) else { return .allow }
+            if let url, ["http", "https"].contains(url.scheme?.lowercased() ?? "") {
+                await UIApplication.shared.open(url)
+            }
+            return .cancel
         }
 
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {

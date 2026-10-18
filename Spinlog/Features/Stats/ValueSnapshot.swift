@@ -9,7 +9,7 @@ extension Notification.Name {
 
 /// Formate une date en clé de jour stable (fuseau local), utilisée comme identifiant unique pour
 /// garantir au plus un point d'historique par jour, quel que soit le modèle.
-private func dayStamp(for date: Date) -> String {
+private nonisolated func dayStamp(for date: Date) -> String {
     let formatter = DateFormatter()
     formatter.dateFormat = "yyyy-MM-dd"
     formatter.timeZone = .current
