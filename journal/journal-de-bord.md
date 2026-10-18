@@ -13,7 +13,7 @@ Journée consacrée à l'aboutissement de l'audit de l'app (branche `audit-fixes
 soumission App Store, mode démo pour App Review, fiabilité des données, accessibilité, découpage des
 plus gros fichiers, mise en place des tests automatiques et d'un cadre de règles pour la suite,
 puis fiabilisation des données (stores illisibles, déconnexion, dossiers, doublons, suppression de
-compte, conflits iCloud), puis le bloc interface et accessibilité, le passage en Swift 6 avec un premier lot de qualité, et enfin les raccourcis Siri.
+compte, conflits iCloud), puis le bloc interface et accessibilité, le passage en Swift 6 avec un premier lot de qualité, les raccourcis Siri, et enfin six petits défauts.
 
 ### 12:29 — `0c4f597` Applique l'audit : soumission App Store, mode démo, fiabilité et accessibilité
 - **Soumission App Store** : manifestes de confidentialité `PrivacyInfo.xcprivacy` (app et widget),
@@ -136,6 +136,21 @@ compte, conflits iCloud), puis le bloc interface et accessibilité, le passage e
   synchronisé au retour du réseau ») au lieu d'une alerte à fermer à chaque action.
 - 156 tests verts ; cahier de recette v3.5 (388 cas).
 - 26 fichiers, +578 / −45.
+
+### 23:02 — `7727973` Corrige six défauts : widget au thème, refus Discogs en wantlist, prix Marketplace, recherche, historique par compte, dossiers supprimés
+- **Widget « Album du jour »** aux couleurs du thème (teinte foncée sur pochette claire),
+  redessiné dès le changement de thème.
+- **Wantlist** : un refus définitif de Discogs réaffiche le disque avec un message au lieu
+  d'être mis en file ; le déplacement vers la collection n'enlève le disque de la wantlist
+  qu'une fois l'ajout acquis (avant, un ajout refusé le faisait disparaître des deux listes).
+- **Marketplace** : prix le plus bas converti dans la devise choisie (au lieu du dollar).
+- **Recherche** : bouton « Réessayer » sur l'erreur (texte ou code-barres).
+- **Historique de valeur** séparé par compte : un compte ne voit plus celui des autres, et la
+  suppression d'un compte n'efface plus que le sien.
+- **Dossiers** supprimés sur discogs.com : les actions en attente qui les visaient partent vers
+  Uncategorized.
+- 157 tests verts ; cahier de recette v3.5 (394 cas).
+- 18 fichiers, +238 / −76.
 
 ---
 
