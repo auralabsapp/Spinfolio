@@ -53,17 +53,7 @@ struct CollectionView: View {
                     // En mode sélection, la barre d'icônes habituelle s'efface au profit d'une
                     // unique coche pour en sortir. Les actions en lot apparaissent dans la
                     // barre du bas, façon app Fichiers.
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            withAnimation {
-                                isSelecting = false
-                                selectedItemIds.removeAll()
-                            }
-                        } label: {
-                            Image(systemName: "checkmark")
-                        }
-                        .accessibilityLabel("Terminer la sélection")
-                    }
+                    finishLibrarySelectionToolbarItem(isSelecting: $isSelecting, selectedItemIds: $selectedItemIds)
                 } else if !viewModel.folders.isEmpty || !viewModel.items.isEmpty {
                     // Sur iPhone (compact), bouton aléatoire direct dans la barre.
                     // Sur iPad (regular), un seul ToolbarItem pour éviter que la barre supérieure
@@ -186,6 +176,8 @@ struct CollectionView: View {
             }
             .sheet(isPresented: $showingTagFilterSheet) {
                 TagFilterSheet(allTags: tagStore.allTags, selectedTags: $viewModel.selectedTags)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
             }
 
             .task(id: authManager.isAuthenticated) {
@@ -202,17 +194,11 @@ struct CollectionView: View {
             .onReceive(NotificationCenter.default.publisher(for: .lastConsultedFolderChanged)) { _ in
                 Task { await viewModel.handlePreferencesChanged() }
             }
-            // Résultat d'une action (retrait, déplacement…) : binding dérivé de la seule
-            // `actionMessage`, sans état de présentation séparé qui pourrait se désynchroniser.
-            .alert(
-                viewModel.actionMessage ?? "",
-                isPresented: Binding(
-                    get: { viewModel.actionMessage != nil },
-                    set: { if !$0 { viewModel.actionMessage = nil } }
-                )
-            ) {
-                Button("OK", role: .cancel) {}
-            }
+            // Résultat d'une action (retrait, déplacement…) : voir `messageAlert`.
+            .messageAlert(message: Binding(
+                get: { viewModel.actionMessage },
+                set: { viewModel.actionMessage = $0 }
+            ))
     }
 
 
@@ -234,24 +220,6 @@ struct CollectionView: View {
             } label: {
                 Label("Dossier : \(currentFolderName)", systemImage: viewModel.selectedFolderId == DiscogsConstants.allFolderId ? "folder" : "folder.fill")
             }
-        }
-    }
-
-    @ViewBuilder
-    private var sortMenu: some View {
-        Menu {
-            Picker("Trier par", selection: $viewModel.sortOption) {
-                ForEach(CollectionSortOption.allCases) { option in
-                    Label(option.title, systemImage: option.systemImage).tag(option)
-                }
-            }
-
-            Picker("Sens", selection: $viewModel.sortAscending) {
-                Label("Croissant", systemImage: "arrow.up").tag(true)
-                Label("Décroissant", systemImage: "arrow.down").tag(false)
-            }
-        } label: {
-            Label("Tri : \(viewModel.sortOption.title)", systemImage: viewModel.sortOption.systemImage)
         }
     }
 
@@ -312,20 +280,6 @@ struct CollectionView: View {
     }
 
     @ViewBuilder
-    private var displayModeMenu: some View {
-        Menu {
-            Picker("Mode d'affichage", selection: $displayMode) {
-                ForEach(LibraryDisplayMode.allCases) { mode in
-                    Label(mode.title, systemImage: mode.systemImage)
-                        .tag(mode)
-                }
-            }
-        } label: {
-            Label("Affichage : \(displayMode.title)", systemImage: displayMode.systemImage)
-        }
-    }
-
-    @ViewBuilder
     private var trailingToolbarMenu: some View {
         Menu {
             // Sur iPad uniquement (où l'icône shuffle directe est retirée de la barre pour libérer
@@ -354,9 +308,9 @@ struct CollectionView: View {
             Divider().overlay(Color.appSeparator)
 
             foldersMenu
-            sortMenu
+            LibrarySortMenu(sortOption: $viewModel.sortOption, sortAscending: $viewModel.sortAscending)
             filterMenu
-            displayModeMenu
+            LibraryDisplayModeMenu(displayMode: $displayMode)
         } label: {
             Image(systemName: "ellipsis")
         }
@@ -544,18 +498,13 @@ struct CollectionView: View {
 
 
     private func toggleSelection(_ item: CollectionItem) {
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-        if selectedItemIds.contains(item.id) {
-            selectedItemIds.remove(item.id)
-        } else {
-            selectedItemIds.insert(item.id)
-        }
+        toggleLibrarySelection(item, selectedItemIds: &selectedItemIds)
     }
 
     /// Exemplaires actuellement sélectionnés, dans leur ordre d'apparition (pas celui, non
     /// garanti, de `Set`) — surtout utile pour un message de confirmation stable.
     private var selectedItems: [CollectionItem] {
-        viewModel.sections.flatMap(\.items).filter { selectedItemIds.contains($0.id) }
+        selectedLibraryItems(sections: viewModel.sections, selectedItemIds: selectedItemIds)
     }
 
     /// Barre d'actions en lot façon app Fichiers : pile flottante en vrai Liquid Glass
@@ -564,44 +513,33 @@ struct CollectionView: View {
     /// sélectionné plutôt que la barre entière qui disparaîtrait.
     @ViewBuilder
     private var bulkActionsBar: some View {
-        if isSelecting {
-            GlassEffectContainer {
-                HStack(spacing: 36) {
-                    Menu {
-                        ForEach(viewModel.folders.filter { $0.id != DiscogsConstants.allFolderId }) { folder in
-                            Button(folder.name) {
-                                pendingMoveFolder = folder
-                            }
+        LibraryBulkActionsBar(isSelecting: isSelecting, isEmpty: selectedItemIds.isEmpty, isProcessing: isBulkProcessing) {
+            HStack(spacing: 36) {
+                Menu {
+                    ForEach(viewModel.folders.filter { $0.id != DiscogsConstants.allFolderId }) { folder in
+                        Button(folder.name) {
+                            pendingMoveFolder = folder
                         }
-                    } label: {
-                        Image(systemName: "folder")
-                            .font(.title3)
                     }
-
-                    Button {
-                        showingBulkTagManagement = true
-                    } label: {
-                        Image(systemName: "tag")
-                            .font(.title3)
-                    }
-
-                    Button(role: .destructive) {
-                        showingBulkDeleteConfirmation = true
-                    } label: {
-                        Image(systemName: "trash")
-                            .font(.title3)
-                    }
+                } label: {
+                    Image(systemName: "folder")
+                        .font(.title3)
                 }
-                .tint(.primary)
-                .disabled(selectedItemIds.isEmpty || isBulkProcessing)
-                .opacity(selectedItemIds.isEmpty ? 0.4 : 1)
-                .padding(.horizontal, 32)
-                .padding(.vertical, 16)
-                .glassEffect(.regular.interactive())
+
+                Button {
+                    showingBulkTagManagement = true
+                } label: {
+                    Image(systemName: "tag")
+                        .font(.title3)
+                }
+
+                Button(role: .destructive) {
+                    showingBulkDeleteConfirmation = true
+                } label: {
+                    Image(systemName: "trash")
+                        .font(.title3)
+                }
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 8)
-            .frame(maxWidth: .infinity)
         }
     }
 
@@ -609,21 +547,13 @@ struct CollectionView: View {
     /// grille) — voir le commentaire au point d'appel.
     @ViewBuilder
     private func indexBarOverlay(proxy: ScrollViewProxy) -> some View {
-        if viewModel.indexEntries.count > 1 {
-            SectionIndexBar(entries: viewModel.indexEntries, currentToken: currentIndexToken) { sectionKey in
-                proxy.scrollTo(sectionKey, anchor: .top)
-            }
-            .padding(.trailing, 4)
-            .transition(.opacity)
-        }
-    }
-
-    /// Jeton de `currentSectionKey` dans la barre de navigation rapide (plusieurs sections —
-    /// un artiste par section — peuvent partager le même jeton, leur première lettre commune).
-    private var currentIndexToken: String? {
-        guard let currentSectionKey,
-              let section = viewModel.sections.first(where: { $0.key == currentSectionKey }) else { return nil }
-        return viewModel.indexToken(for: section)
+        LibraryIndexBarOverlay(
+            indexEntries: viewModel.indexEntries,
+            currentSectionKey: currentSectionKey,
+            sections: viewModel.sections,
+            indexToken: { viewModel.indexToken(for: $0) },
+            proxy: proxy
+        )
     }
 
     @ViewBuilder

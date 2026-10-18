@@ -94,22 +94,42 @@ final class OfflineDownloadManager {
         if let lastSyncDate, Date().timeIntervalSince(lastSyncDate) < DiscogsConstants.sixHoursTTL {
             return
         }
+        // Renonce si une autre synchronisation complète du dossier "All" est déjà en cours
+        // (lancement à froid : `StatsViewModel`/`WidgetSnapshotSyncService`/
+        // `CollectionViewModel` peuvent aussi vouloir tout recharger en même temps) — uniquement
+        // sur ce déclenchement automatique, jamais sur le bouton "Synchroniser maintenant"
+        // (`startDownload` direct, doit toujours s'exécuter).
+        guard LocalDataStore.shared.beginFullCollectionSync(username: username, folderId: DiscogsConstants.allFolderId) else { return }
         // Déclenché automatiquement (lancement/retour au premier plan), jamais par le bouton
         // "Synchroniser maintenant" (qui appelle `startDownload` directement et doit rester en
         // priorité normale) — `Task` hérite des valeurs `@TaskLocal` de son contexte de création,
         // donc cette liaison couvre tout le téléchargement lancé par `startDownload` ci-dessous.
         DiscogsRateLimiter.$priority.withValue(.background) {
-            startDownload(username: username, credentials: credentials)
+            startDownload(username: username, credentials: credentials, releasesCollectionSyncLockOnCompletion: true)
         }
     }
 
     /// Lance le téléchargement complet de la collection, de la wantlist et des pochettes,
     /// en respectant scrupuleusement la limitation de débit de l'API Discogs (60 requêtes/min).
-    func startDownload(username: String, credentials: DiscogsCredentials?) {
-        guard !state.isDownloading else { return }
+    /// `releasesCollectionSyncLockOnCompletion` : uniquement `true` quand appelé par
+    /// `autoSyncIfNeeded`, qui a déjà réservé le verrou anti-doublon avant d'arriver ici — le
+    /// `defer` ci-dessous garantit sa libération quelle que soit l'issue (succès, erreur,
+    /// annulation), contrairement à une libération placée au milieu du corps de la tâche.
+    func startDownload(username: String, credentials: DiscogsCredentials?, releasesCollectionSyncLockOnCompletion: Bool = false) {
+        guard !state.isDownloading else {
+            if releasesCollectionSyncLockOnCompletion {
+                LocalDataStore.shared.endFullCollectionSync(username: username, folderId: DiscogsConstants.allFolderId)
+            }
+            return
+        }
         downloadTask?.cancel()
 
         downloadTask = Task { @MainActor in
+            defer {
+                if releasesCollectionSyncLockOnCompletion {
+                    LocalDataStore.shared.endFullCollectionSync(username: username, folderId: DiscogsConstants.allFolderId)
+                }
+            }
             let apiClient = DiscogsAPIClient.shared
 
             do {

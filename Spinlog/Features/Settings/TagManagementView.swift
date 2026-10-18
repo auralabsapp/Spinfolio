@@ -259,18 +259,11 @@ struct TagManagementView: View {
                     VStack(alignment: .leading, spacing: 10) {
                         SectionEyebrow(title: "Tags créés (\(filteredTags.count))", icon: "tag.fill")
 
-                        VStack(spacing: 0) {
-                            ForEach(Array(filteredTags.enumerated()), id: \.element) { index, tag in
-                                tagRow(tag)
-                                if index < filteredTags.count - 1 {
-                                    Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 14)
-                                }
-                            }
+                        GroupedListCard(items: filteredTags, id: \.self) { tag in
+                            tagRow(tag)
                         }
-                        .padding(.vertical, 4)
-                        .appleMusicGroupedCard()
 
-                        Text("Glisse vers la gauche pour modifier ou supprimer un tag.")
+                        (SwipeActionsSupport.isAvailable ? Text("Glisse vers la gauche pour modifier ou supprimer un tag.") : Text("Maintiens le doigt sur un tag pour le modifier ou le supprimer."))
                             .font(.footnote)
                             .foregroundStyle(Color.appSecondaryText)
                     }
@@ -278,7 +271,7 @@ struct TagManagementView: View {
             }
             .padding()
         }
-        .swipeActionsContainer()
+        .swipeActionsContainerIfAvailable()
         .background(Color.appBackground.ignoresSafeArea())
         .navigationTitle("Gestion des tags")
         .navigationBarTitleDisplayMode(.inline)

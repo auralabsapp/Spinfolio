@@ -158,11 +158,15 @@ struct LibraryMosaicView<Item: SortableLibraryItem>: View {
             }
             .buttonStyle(.plain)
             .allowsHitTesting(!isSelecting)
+            .accessibilityHidden(isSelecting)
 
             if isSelecting {
                 Color.clear
                     .contentShape(Rectangle())
                     .onTapGesture {
+                        onToggleSelection?(item)
+                    }
+                    .librarySelectionAccessibility(info: info, isSelected: isSelected) {
                         onToggleSelection?(item)
                     }
             }

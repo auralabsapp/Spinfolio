@@ -77,17 +77,9 @@ struct TracklistSection: View {
     }
 
     private var totalDuration: String? {
-        let totalSeconds = tracklist.compactMap { seconds(from: $0.duration) }.reduce(0, +)
+        let totalSeconds = tracklist.compactMap { $0.duration?.discogsDurationSeconds }.reduce(0, +)
         guard totalSeconds > 0 else { return nil }
-        return String(format: "%d:%02d", totalSeconds / 60, totalSeconds % 60)
-    }
-
-    private func seconds(from duration: String?) -> Int? {
-        guard let duration, let colonIndex = duration.firstIndex(of: ":") else { return nil }
-        let minutesPart = duration[..<colonIndex]
-        let secondsPart = duration[duration.index(after: colonIndex)...]
-        guard let minutes = Int(minutesPart), let seconds = Int(secondsPart) else { return nil }
-        return minutes * 60 + seconds
+        return totalSeconds.formattedAsMinutesSeconds
     }
 }
 

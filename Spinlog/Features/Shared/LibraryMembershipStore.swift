@@ -38,16 +38,33 @@ enum LibraryToastKind: Equatable {
     }
 }
 
-/// Ensembles d'identifiants de releases déjà en collection / en wantlist, pour afficher des
-/// pastilles dans les listes (résultats de recherche...) sans appel réseau dédié : on relit
-/// simplement le cache SwiftData déjà maintenu à jour par les onglets Collection et Wantlist.
+/// Boîte observable individuelle pour une release : permet à `@Observable` de suivre la
+/// mutation du statut d'UNE seule release sans invalider tous les lecteurs de
+/// `LibraryMembershipStore` — même principe que `WantlistAlertBox`. Avant cette boîte, le statut
+/// était stocké dans deux `Set<Int>` observés en bloc : ajouter/retirer N'IMPORTE QUELLE release
+/// (depuis n'importe quel écran) réinvalidait TOUTES les lignes ayant appelé `isInCollection`/
+/// `isInWantlist`, pas seulement celle dont le statut changeait réellement (résultats de
+/// recherche, scan par lot...).
+@MainActor
+@Observable
+final class ReleaseMembershipBox {
+    var inCollection: Bool
+    var inWantlist: Bool
+    init(inCollection: Bool = false, inWantlist: Bool = false) {
+        self.inCollection = inCollection
+        self.inWantlist = inWantlist
+    }
+}
+
+/// Statut (collection / wantlist) de chaque release, pour afficher des pastilles dans les listes
+/// (résultats de recherche...) sans appel réseau dédié : on relit simplement le cache SwiftData
+/// déjà maintenu à jour par les onglets Collection et Wantlist.
 @Observable
 @MainActor
 final class LibraryMembershipStore {
     static let shared = LibraryMembershipStore()
 
-    private(set) var collectionReleaseIds: Set<Int> = []
-    private(set) var wantlistReleaseIds: Set<Int> = []
+    private(set) var boxes: [Int: ReleaseMembershipBox] = [:]
 
     private(set) var activeToast: LibraryToastKind?
     /// Incrémenté à chaque nouvelle bulle : permet à la tâche de disparition automatique de
@@ -78,28 +95,60 @@ final class LibraryMembershipStore {
     /// virtuel Discogs "All", qui agrège l'ensemble de la collection.
     func refresh() {
         guard let username = authManager.username else {
-            collectionReleaseIds = []
-            wantlistReleaseIds = []
+            boxes = [:]
             return
         }
         // Lecture des seuls identifiants : auparavant, toute la collection et toute la wantlist
         // étaient décodées (JSON) à chaque affichage de l'onglet Recherche.
-        collectionReleaseIds = localStore.collectionReleaseIds(username: username)
-        wantlistReleaseIds = localStore.wantlistReleaseIds(username: username)
+        let freshCollectionIds = localStore.collectionReleaseIds(username: username)
+        let freshWantlistIds = localStore.wantlistReleaseIds(username: username)
+
+        // Mutation en place des boîtes existantes (n'invalide que leurs propres lecteurs) plutôt
+        // que de réassigner `boxes` en bloc à chaque refresh — seules les créations/suppressions
+        // de clé ci-dessous (releases jamais vues ou qui sortent des deux listes) invalident
+        // l'ensemble des lecteurs, et ça reste rare comparé aux refresh eux-mêmes.
+        for id in freshCollectionIds.union(freshWantlistIds) {
+            let inCollection = freshCollectionIds.contains(id)
+            let inWantlist = freshWantlistIds.contains(id)
+            if let box = boxes[id] {
+                if box.inCollection != inCollection { box.inCollection = inCollection }
+                if box.inWantlist != inWantlist { box.inWantlist = inWantlist }
+            } else {
+                boxes[id] = ReleaseMembershipBox(inCollection: inCollection, inWantlist: inWantlist)
+            }
+        }
+        // Nettoyage des boîtes devenues obsolètes (ni en collection, ni en wantlist), pour ne pas
+        // accumuler indéfiniment des entrées mortes au fil des sessions.
+        for id in boxes.keys where !freshCollectionIds.contains(id) && !freshWantlistIds.contains(id) {
+            boxes.removeValue(forKey: id)
+        }
         // Le nombre suffit : la liste complète des identifiants, triée et concaténée, était
         // écrite dans les journaux à chaque appel, y compris en production.
-        membershipDebugLogger.log("REFRESH collection=\(self.collectionReleaseIds.count) wantlist=\(self.wantlistReleaseIds.count)")
+        membershipDebugLogger.log("REFRESH collection=\(freshCollectionIds.count) wantlist=\(freshWantlistIds.count)")
     }
 
-    func isInCollection(_ releaseId: Int) -> Bool { collectionReleaseIds.contains(releaseId) }
-    func isInWantlist(_ releaseId: Int) -> Bool { wantlistReleaseIds.contains(releaseId) }
+    func isInCollection(_ releaseId: Int) -> Bool { boxes[releaseId]?.inCollection ?? false }
+    func isInWantlist(_ releaseId: Int) -> Bool { boxes[releaseId]?.inWantlist ?? false }
+
+    /// Boîte existante pour cette release, ou nouvellement créée si c'est la première fois
+    /// qu'on en a besoin. Ne crée (donc ne mute `boxes` lui-même, qui invalide tout le monde)
+    /// que pour une release jamais rencontrée jusqu'ici — un retrait (`markRemoved...`) n'a lui
+    /// jamais besoin de créer de boîte, voir plus bas.
+    private func box(for releaseId: Int) -> ReleaseMembershipBox {
+        if let existing = boxes[releaseId] { return existing }
+        let newBox = ReleaseMembershipBox()
+        boxes[releaseId] = newBox
+        return newBox
+    }
 
     /// Mises à jour optimistes appelées directement par les actions d'ajout/retrait, car le
     /// cache local de Collection/Wantlist n'est réécrit qu'au prochain chargement de ces onglets.
-    func markInCollection(_ releaseId: Int) { collectionReleaseIds.insert(releaseId) }
-    func markRemovedFromCollection(_ releaseId: Int) { collectionReleaseIds.remove(releaseId) }
-    func markInWantlist(_ releaseId: Int) { wantlistReleaseIds.insert(releaseId) }
-    func markRemovedFromWantlist(_ releaseId: Int) { wantlistReleaseIds.remove(releaseId) }
+    /// Chacune ne mute que le champ concerné d'UNE boîte : seuls les lecteurs de cette release
+    /// précise sont invalidés, pas toutes les lignes de la liste affichée.
+    func markInCollection(_ releaseId: Int) { box(for: releaseId).inCollection = true }
+    func markRemovedFromCollection(_ releaseId: Int) { boxes[releaseId]?.inCollection = false }
+    func markInWantlist(_ releaseId: Int) { box(for: releaseId).inWantlist = true }
+    func markRemovedFromWantlist(_ releaseId: Int) { boxes[releaseId]?.inWantlist = false }
 
     // MARK: - Notifications pour mise à jour immédiate des listes
 
@@ -160,9 +209,9 @@ final class LibraryMembershipStore {
     }
 
     func notifyWantlistItemRemoved(releaseId: Int) {
-        membershipDebugLogger.log("POST wantlistItemRemoved release=\(releaseId) containedBefore=\(self.wantlistReleaseIds.contains(releaseId))")
+        membershipDebugLogger.log("POST wantlistItemRemoved release=\(releaseId) containedBefore=\(self.isInWantlist(releaseId))")
         markRemovedFromWantlist(releaseId)
-        membershipDebugLogger.log("POST wantlistItemRemoved release=\(releaseId) containedAfter=\(self.wantlistReleaseIds.contains(releaseId))")
+        membershipDebugLogger.log("POST wantlistItemRemoved release=\(releaseId) containedAfter=\(self.isInWantlist(releaseId))")
         presentToast(.wantlistRemoved)
         NotificationCenter.default.post(
             name: .wantlistItemRemoved,

@@ -52,24 +52,6 @@ struct WantlistView: View {
     }
 
     @ViewBuilder
-    private var sortMenu: some View {
-        Menu {
-            Picker("Trier par", selection: $viewModel.sortOption) {
-                ForEach(CollectionSortOption.allCases.filter { $0 != .shelf }) { option in
-                    Label(option.title, systemImage: option.systemImage).tag(option)
-                }
-            }
-
-            Picker("Sens", selection: $viewModel.sortAscending) {
-                Label("Croissant", systemImage: "arrow.up").tag(true)
-                Label("Décroissant", systemImage: "arrow.down").tag(false)
-            }
-        } label: {
-            Label("Tri : \(viewModel.sortOption.title)", systemImage: viewModel.sortOption.systemImage)
-        }
-    }
-
-    @ViewBuilder
     private var filterMenu: some View {
         let formats = viewModel.availableFormats
         if !formats.isEmpty {
@@ -111,19 +93,6 @@ struct WantlistView: View {
     }
 
     @ViewBuilder
-    private var displayModeMenu: some View {
-        Menu {
-            Picker("Mode d'affichage", selection: $displayMode) {
-                ForEach(LibraryDisplayMode.allCases) { mode in
-                    Label(mode.title, systemImage: mode.systemImage).tag(mode)
-                }
-            }
-        } label: {
-            Label("Affichage : \(displayMode.title)", systemImage: displayMode.systemImage)
-        }
-    }
-
-    @ViewBuilder
     private var trailingToolbarMenu: some View {
         Menu {
             Button {
@@ -135,9 +104,13 @@ struct WantlistView: View {
             }
             Divider().overlay(Color.appSeparator)
 
-            sortMenu
+            LibrarySortMenu(
+                sortOption: $viewModel.sortOption,
+                sortAscending: $viewModel.sortAscending,
+                availableOptions: CollectionSortOption.allCases.filter { $0 != .shelf }
+            )
             filterMenu
-            displayModeMenu
+            LibraryDisplayModeMenu(displayMode: $displayMode)
         } label: {
             Image(systemName: "ellipsis")
         }
@@ -159,17 +132,7 @@ struct WantlistView: View {
         mainView
             .toolbar {
                 if isSelecting {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            withAnimation {
-                                isSelecting = false
-                                selectedItemIds.removeAll()
-                            }
-                        } label: {
-                            Image(systemName: "checkmark")
-                        }
-                        .accessibilityLabel("Terminer la sélection")
-                    }
+                    finishLibrarySelectionToolbarItem(isSelecting: $isSelecting, selectedItemIds: $selectedItemIds)
                 } else if !viewModel.items.isEmpty {
                     ToolbarItem(placement: .topBarTrailing) {
                         trailingToolbarMenu
@@ -182,6 +145,8 @@ struct WantlistView: View {
             }
             .sheet(item: $itemForAlert) { item in
                 WantlistAlertSheet(item: item)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
             }
             .onChange(of: tabCoordinator.pendingWantlistAlertReleaseId, initial: true) {
                 presentPendingAlertIfPossible()
@@ -227,22 +192,22 @@ struct WantlistView: View {
             .onReceive(NotificationCenter.default.publisher(for: .networkConnectionRestored)) { _ in
                 Task { await viewModel.silentRefreshIfNeeded() }
             }
+            // Résultat d'une action (retrait, ajout à la collection…) : voir `messageAlert`.
+            .messageAlert(message: Binding(
+                get: { viewModel.actionMessage },
+                set: { viewModel.actionMessage = $0 }
+            ))
 
     }
 
     private func toggleSelection(_ item: WantlistItem) {
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-        if selectedItemIds.contains(item.id) {
-            selectedItemIds.remove(item.id)
-        } else {
-            selectedItemIds.insert(item.id)
-        }
+        toggleLibrarySelection(item, selectedItemIds: &selectedItemIds)
     }
 
     /// Éléments actuellement sélectionnés, dans leur ordre d'apparition (pas celui, non garanti,
     /// de `Set`) — surtout utile pour un message de confirmation stable.
     private var selectedItems: [WantlistItem] {
-        viewModel.sections.flatMap(\.items).filter { selectedItemIds.contains($0.id) }
+        selectedLibraryItems(sections: viewModel.sections, selectedItemIds: selectedItemIds)
     }
 
     /// Barre d'action en lot façon app Fichiers : une seule icône (corbeille), la wantlist ne
@@ -251,24 +216,13 @@ struct WantlistView: View {
     /// sélectionné plutôt que masquée entièrement.
     @ViewBuilder
     private var bulkActionsBar: some View {
-        if isSelecting {
-            GlassEffectContainer {
-                Button(role: .destructive) {
-                    showingBulkDeleteConfirmation = true
-                } label: {
-                    Image(systemName: "trash")
-                        .font(.title3)
-                }
-                .tint(.primary)
-                .disabled(selectedItemIds.isEmpty || isBulkProcessing)
-                .opacity(selectedItemIds.isEmpty ? 0.4 : 1)
-                .padding(.horizontal, 32)
-                .padding(.vertical, 16)
-                .glassEffect(.regular.interactive())
+        LibraryBulkActionsBar(isSelecting: isSelecting, isEmpty: selectedItemIds.isEmpty, isProcessing: isBulkProcessing) {
+            Button(role: .destructive) {
+                showingBulkDeleteConfirmation = true
+            } label: {
+                Image(systemName: "trash")
+                    .font(.title3)
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 8)
-            .frame(maxWidth: .infinity)
         }
     }
 
@@ -393,21 +347,13 @@ struct WantlistView: View {
     /// grille) — voir le commentaire au point d'appel.
     @ViewBuilder
     private func indexBarOverlay(proxy: ScrollViewProxy) -> some View {
-        if viewModel.indexEntries.count > 1 {
-            SectionIndexBar(entries: viewModel.indexEntries, currentToken: currentIndexToken) { sectionKey in
-                proxy.scrollTo(sectionKey, anchor: .top)
-            }
-            .padding(.trailing, 4)
-            .transition(.opacity)
-        }
-    }
-
-    /// Jeton de `currentSectionKey` dans la barre de navigation rapide (plusieurs sections —
-    /// un artiste par section — peuvent partager le même jeton, leur première lettre commune).
-    private var currentIndexToken: String? {
-        guard let currentSectionKey,
-              let section = viewModel.sections.first(where: { $0.key == currentSectionKey }) else { return nil }
-        return viewModel.indexToken(for: section)
+        LibraryIndexBarOverlay(
+            indexEntries: viewModel.indexEntries,
+            currentSectionKey: currentSectionKey,
+            sections: viewModel.sections,
+            indexToken: { viewModel.indexToken(for: $0) },
+            proxy: proxy
+        )
     }
 
     @ViewBuilder

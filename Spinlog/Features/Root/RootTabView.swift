@@ -22,7 +22,18 @@ struct RootTabView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
-        TabView(selection: $coordinator.selectedTab) {
+        // Liaison manuelle plutôt que `$coordinator.selectedTab` : un nouveau tap sur l'onglet déjà
+        // actif repasse par ce setter avec la même valeur, seul moyen en SwiftUI de le détecter.
+        TabView(selection: Binding(
+            get: { coordinator.selectedTab },
+            set: { newTab in
+                if newTab == coordinator.selectedTab {
+                    coordinator.handleReselection(of: newTab)
+                } else {
+                    coordinator.selectedTab = newTab
+                }
+            }
+        )) {
             Tab("Collection", systemImage: "square.stack", value: .collection) {
                 NavigationStack(path: $coordinator.collectionPath) {
                     CollectionView()
@@ -84,9 +95,11 @@ struct RootTabView: View {
         .task {
             guard !hasCheckedLaunchPaywall else { return }
             hasCheckedLaunchPaywall = true
-            if !premiumStore.isPremium {
+            // Abonnement réel : l'aperçu Premium de la démo ne dispense pas de voir l'offre.
+            if !premiumStore.hasSubscription && LaunchPaywallSchedule.isDue() {
                 try? await Task.sleep(nanoseconds: 350_000_000)
                 showingLaunchPaywall = true
+                LaunchPaywallSchedule.markShown()
             }
         }
         .task(id: authManager.isAuthenticated) {
@@ -124,6 +137,25 @@ struct RootTabView: View {
     }
 }
 
+/// Fréquence du paywall présenté au lancement : au premier lancement, puis au plus une fois par
+/// semaine. L'afficher à chaque ouverture lassait les utilisateurs gratuits (et un paywall
+/// systématique est un motif courant de remarque en App Review) ; l'offre reste accessible à
+/// tout moment depuis Réglages et les fonctions Premium verrouillées.
+enum LaunchPaywallSchedule {
+    private static let lastShownKey = "launchPaywallLastShownAt"
+    private static let minimumInterval: TimeInterval = 7 * 24 * 3600
+
+    static func isDue(now: Date = Date()) -> Bool {
+        let lastShown = UserDefaults.standard.double(forKey: lastShownKey)
+        guard lastShown > 0 else { return true }
+        return now.timeIntervalSince1970 - lastShown >= minimumInterval
+    }
+
+    static func markShown(now: Date = Date()) {
+        UserDefaults.standard.set(now.timeIntervalSince1970, forKey: lastShownKey)
+    }
+}
+
 enum AppTab: Hashable {
     case collection
     case wantlist
@@ -144,7 +176,27 @@ final class TabNavigationCoordinator {
     var statsPath = NavigationPath()
     var scrollToTopOfCollectionTrigger = 0
     var scrollToTopOfWantlistTrigger = 0
+    var scrollToTopOfStatsTrigger = 0
+    var scrollToTopOfSearchTrigger = 0
+    var scrollToTopOfSettingsTrigger = 0
     var scrollToOrganizationSectionTrigger = 0
+
+    /// Nouveau tap sur l'onglet déjà actif : revient à la racine si une fiche est ouverte,
+    /// sinon remonte tout en haut de l'onglet (comportement standard iOS).
+    func handleReselection(of tab: AppTab) {
+        switch tab {
+        case .collection:
+            if !collectionPath.isEmpty { collectionPath = NavigationPath() } else { scrollToTopOfCollectionTrigger += 1 }
+        case .wantlist:
+            if !wantlistPath.isEmpty { wantlistPath = NavigationPath() } else { scrollToTopOfWantlistTrigger += 1 }
+        case .stats:
+            if !statsPath.isEmpty { statsPath = NavigationPath() } else { scrollToTopOfStatsTrigger += 1 }
+        case .search:
+            if !searchPath.isEmpty { searchPath = NavigationPath() } else { scrollToTopOfSearchTrigger += 1 }
+        case .settings:
+            scrollToTopOfSettingsTrigger += 1
+        }
+    }
     /// Alerte à ouvrir dès que `WantlistView` peut résoudre l'élément (au lancement à froid, la
     /// wantlist n'est pas encore chargée au moment du tap sur la notification).
     var pendingWantlistAlertReleaseId: Int?

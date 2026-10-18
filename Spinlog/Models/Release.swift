@@ -139,7 +139,7 @@ struct ReleaseVideo: Decodable, Sendable, Identifiable {
 
     var formattedDuration: String? {
         guard let duration, duration > 0 else { return nil }
-        return String(format: "%d:%02d", duration / 60, duration % 60)
+        return duration.formattedAsMinutesSeconds
     }
 }
 

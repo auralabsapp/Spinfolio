@@ -73,6 +73,27 @@ final class StatsViewModel {
     /// En dessous de ce nombre d'écoutes enregistrées, un classement n'est pas jugé assez
     /// représentatif pour être affiché (trop peu de données pour être pertinent).
     static let minimumListeningSessionsForRanking = 5
+
+    @ObservationIgnored nonisolated(unsafe) private var observerTokens: [NSObjectProtocol] = []
+
+    init() {
+        // Recalcule les classements d'écoute dès qu'une session est ajoutée/retirée ailleurs
+        // dans l'app (fiche release, widget...) — sans cet observateur, `topAlbums`/`topArtists`/
+        // les podiums étaient recalculés à chaque rendu de l'écran Stats plutôt qu'une fois par
+        // changement réel, contrairement à `allCollectionItems` un peu plus bas dans ce fichier.
+        observerTokens = [
+            NotificationCenter.default.addObserver(forName: .listeningLogChanged, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.recomputeListeningStats()
+                }
+            }
+        ]
+    }
+
+    deinit {
+        observerTokens.forEach(NotificationCenter.default.removeObserver)
+    }
+
     private(set) var isLoadingOverview = false
     /// Spécifique aux 3 appels de `loadCounters` (compteurs + derniers ajouts), indépendant de
     /// `isLoadingOverview` : ce dernier passe à `false` dès que le cache local est appliqué, bien
@@ -99,6 +120,9 @@ final class StatsViewModel {
                 .map { ArtistShelfSortHelper.cleanDiscogsSuffix($0.basicInformation.artistNames) }
                 .filter { !$0.isEmpty }
             uniqueArtistsCount = allCollectionItems.isEmpty ? nil : Set(names).count
+            // `releaseById` ci-dessus vient de changer : les classements d'écoute, qui s'appuient
+            // dessus pour résoudre un `releaseId` en disque affichable, doivent suivre.
+            recomputeListeningStats()
         }
     }
 
@@ -311,22 +335,33 @@ final class StatsViewModel {
         }
 
         guard let credentials = authManager.credentials else { return }
+        // Renonce si une autre synchronisation complète du même dossier est déjà en cours
+        // (lancement à froid : `WidgetSnapshotSyncService`/`CollectionViewModel`/
+        // `OfflineDownloadManager` peuvent aussi vouloir tout recharger en même temps) — le cache
+        // sera de toute façon à jour une fois celle-ci terminée.
+        guard localStore.beginFullCollectionSync(username: username, folderId: DiscogsConstants.allFolderId) else { return }
         isLoadingHistogram = true
         histogramTask = Task { [weak self] in
             guard let self else { return }
-            do {
-                let allItems = try await DiscogsAPIClient.shared.fetchAllCollectionItems(
-                    username: username, folderId: DiscogsConstants.allFolderId, credentials: credentials
-                )
-                guard !Task.isCancelled else { return }
-                self.totalCollectionCount = allItems.count
-                await self.localStore.syncCollectionFolder(username: username, folderId: DiscogsConstants.allFolderId, fullItems: allItems)
-                self.applyCollectionItems(allItems)
-                // Le total investi dépend de la collection : le recalculer sur la version fraîche
-                // (il avait été calculé sur le cache, éventuellement périmé).
-                await self.computeTotalInvestedIfNeeded()
-            } catch {
-                // On garde l'histogramme vide en cas d'échec.
+            defer { self.localStore.endFullCollectionSync(username: username, folderId: DiscogsConstants.allFolderId) }
+            // Jamais déclenché par un geste explicite de l'utilisateur (ouverture de l'onglet
+            // Stats avec un cache périmé) — priorité basse pour le quota Discogs, même principe
+            // que `CollectionViewModel.startBackgroundSync`/`WidgetSnapshotSyncService`.
+            await DiscogsRateLimiter.$priority.withValue(.background) {
+                do {
+                    let allItems = try await DiscogsAPIClient.shared.fetchAllCollectionItems(
+                        username: username, folderId: DiscogsConstants.allFolderId, credentials: credentials
+                    )
+                    guard !Task.isCancelled else { return }
+                    self.totalCollectionCount = allItems.count
+                    await self.localStore.syncCollectionFolder(username: username, folderId: DiscogsConstants.allFolderId, fullItems: allItems)
+                    self.applyCollectionItems(allItems)
+                    // Le total investi dépend de la collection : le recalculer sur la version
+                    // fraîche (il avait été calculé sur le cache, éventuellement périmé).
+                    await self.computeTotalInvestedIfNeeded()
+                } catch {
+                    // On garde l'histogramme vide en cas d'échec.
+                }
             }
             self.isLoadingHistogram = false
         }
@@ -823,15 +858,65 @@ final class StatsViewModel {
 
     /// Classement des releases les plus écoutées de la collection, du plus au moins écouté.
     /// Vide tant que le nombre total d'écoutes enregistrées est trop faible pour être pertinent.
-    var topAlbums: [TopAlbumEntry] {
-        guard totalListeningSessionsCount >= Self.minimumListeningSessionsForRanking else { return [] }
-        return rankedAlbums(sessions: listeningStore.sessions)
-    }
+    /// Recalculé par `recomputeListeningStats()` plutôt qu'à chaque lecture (voir son commentaire).
+    private(set) var topAlbums: [TopAlbumEntry] = []
 
     /// Classement des artistes dont les disques cumulent le plus d'écoutes, tous exemplaires
     /// confondus (ex. "Miles Davis : 27 sessions réparties sur 3 disques").
-    var topArtists: [TopArtistEntry] {
-        guard totalListeningSessionsCount >= Self.minimumListeningSessionsForRanking else { return [] }
+    private(set) var topArtists: [TopArtistEntry] = []
+
+    /// Nombre d'écoutes enregistrées depuis le début du mois calendaire en cours.
+    var monthlyListeningSessionsCount: Int {
+        guard let startOfMonth = Self.startOfCurrentMonth else { return 0 }
+        return listeningStore.sessions.filter { $0.timestamp >= startOfMonth }.count
+    }
+
+    /// Nombre d'écoutes enregistrées depuis le début de l'année civile en cours.
+    var yearlyListeningSessionsCount: Int {
+        guard let startOfYear = Self.startOfCurrentYear else { return 0 }
+        return listeningStore.sessions.filter { $0.timestamp >= startOfYear }.count
+    }
+
+    /// Podium (top 3) des albums les plus écoutés depuis le début du mois : les coups de cœur
+    /// récents, "en boucle" en ce moment.
+    private(set) var monthlyPodium: [TopAlbumEntry] = []
+
+    /// Podium (top 3) des albums les plus écoutés depuis le début de l'année : les classiques
+    /// intemporels de la collection, ceux qui reviennent toute l'année.
+    private(set) var yearlyPodium: [TopAlbumEntry] = []
+
+    /// Recalcule `topAlbums`/`topArtists`/les podiums en une fois, appelé depuis le `didSet` de
+    /// `allCollectionItems` et depuis l'observateur de `.listeningLogChanged` — plutôt que des
+    /// propriétés calculées relisant `listeningStore.sessions` à chaque rendu de l'écran Stats,
+    /// qui se redessine toutes les 1,5 s pendant la résolution des masters (même motivation que
+    /// le cache déjà en place sur `allCollectionItems`).
+    private func recomputeListeningStats() {
+        if totalListeningSessionsCount >= Self.minimumListeningSessionsForRanking {
+            topAlbums = rankedAlbums(sessions: listeningStore.sessions)
+            topArtists = computeTopArtists()
+        } else {
+            topAlbums = []
+            topArtists = []
+        }
+
+        if monthlyListeningSessionsCount >= Self.minimumListeningSessionsForRanking,
+           let startOfMonth = Self.startOfCurrentMonth {
+            let sessionsThisMonth = listeningStore.sessions.filter { $0.timestamp >= startOfMonth }
+            monthlyPodium = Array(rankedAlbums(sessions: sessionsThisMonth).prefix(3))
+        } else {
+            monthlyPodium = []
+        }
+
+        if yearlyListeningSessionsCount >= Self.minimumListeningSessionsForRanking,
+           let startOfYear = Self.startOfCurrentYear {
+            let sessionsThisYear = listeningStore.sessions.filter { $0.timestamp >= startOfYear }
+            yearlyPodium = Array(rankedAlbums(sessions: sessionsThisYear).prefix(3))
+        } else {
+            yearlyPodium = []
+        }
+    }
+
+    private func computeTopArtists() -> [TopArtistEntry] {
         let releases = releaseById
         var playsByArtist: [String: Int] = [:]
         var releasesByArtist: [String: Set<Int>] = [:]
@@ -857,36 +942,6 @@ final class StatsViewModel {
             )
         }
         .sorted { $0.totalPlays != $1.totalPlays ? $0.totalPlays > $1.totalPlays : $0.name < $1.name }
-    }
-
-    /// Nombre d'écoutes enregistrées depuis le début du mois calendaire en cours.
-    var monthlyListeningSessionsCount: Int {
-        guard let startOfMonth = Self.startOfCurrentMonth else { return 0 }
-        return listeningStore.sessions.filter { $0.timestamp >= startOfMonth }.count
-    }
-
-    /// Nombre d'écoutes enregistrées depuis le début de l'année civile en cours.
-    var yearlyListeningSessionsCount: Int {
-        guard let startOfYear = Self.startOfCurrentYear else { return 0 }
-        return listeningStore.sessions.filter { $0.timestamp >= startOfYear }.count
-    }
-
-    /// Podium (top 3) des albums les plus écoutés depuis le début du mois : les coups de cœur
-    /// récents, "en boucle" en ce moment.
-    var monthlyPodium: [TopAlbumEntry] {
-        guard monthlyListeningSessionsCount >= Self.minimumListeningSessionsForRanking,
-              let startOfMonth = Self.startOfCurrentMonth else { return [] }
-        let sessionsThisMonth = listeningStore.sessions.filter { $0.timestamp >= startOfMonth }
-        return Array(rankedAlbums(sessions: sessionsThisMonth).prefix(3))
-    }
-
-    /// Podium (top 3) des albums les plus écoutés depuis le début de l'année : les classiques
-    /// intemporels de la collection, ceux qui reviennent toute l'année.
-    var yearlyPodium: [TopAlbumEntry] {
-        guard yearlyListeningSessionsCount >= Self.minimumListeningSessionsForRanking,
-              let startOfYear = Self.startOfCurrentYear else { return [] }
-        let sessionsThisYear = listeningStore.sessions.filter { $0.timestamp >= startOfYear }
-        return Array(rankedAlbums(sessions: sessionsThisYear).prefix(3))
     }
 
     private func rankedAlbums(sessions: [ListeningSession]) -> [TopAlbumEntry] {

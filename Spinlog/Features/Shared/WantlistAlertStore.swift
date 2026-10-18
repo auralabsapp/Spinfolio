@@ -416,7 +416,11 @@ final class WantlistAlertStore {
             // Demande un rafraîchissement au plus tôt après 3 heures
             request.earliestBeginDate = Date(timeIntervalSinceNow: 3 * 3600)
             do {
-                try await BGTaskScheduler.shared.submitTaskRequest(request)
+                if #available(iOS 27.0, *) {
+                    try await BGTaskScheduler.shared.submitTaskRequest(request)
+                } else {
+                    try BGTaskScheduler.shared.submit(request)
+                }
                 logger.info("Tâche d'arrière-plan programmée avec succès.")
             } catch {
                 logger.error("Impossible de soumettre la tâche d'arrière-plan: \(error.localizedDescription)")

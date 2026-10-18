@@ -25,7 +25,6 @@ struct CollectionItemEditSheet: View {
     @State private var selectedFolderId: Int
     @State private var isDeleting = false
     @State private var errorMessage: String?
-    @State private var showingErrorAlert = false
     @State private var showingDeleteConfirmation = false
     @State private var safariRequest: SafariViewRequest?
 
@@ -255,11 +254,7 @@ struct CollectionItemEditSheet: View {
                     }
                 }
             }
-            .alert("Erreur", isPresented: $showingErrorAlert) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(errorMessage ?? "Une erreur est survenue lors de l'enregistrement sur Discogs.")
-            }
+            .errorAlert(message: $errorMessage, fallbackMessage: "Une erreur est survenue lors de l'enregistrement sur Discogs.")
             .confirmationDialog(
                 "Supprimer cet exemplaire ?",
                 isPresented: $showingDeleteConfirmation,
@@ -487,26 +482,29 @@ struct CollectionItemEditSheet: View {
     private func saveField(_ field: CollectionField, value: String) async {
         guard DiscogsAuthManager.shared.session != nil else {
             errorMessage = String(localized: "Tu dois être connecté à Discogs pour enregistrer ces modifications.")
-            showingErrorAlert = true
             return
         }
         withAnimation {
             _ = savingFieldIds.insert(field.id)
         }
+        let newValue = value
         let isOffline = !networkMonitor.isConnected
 
-        do {
-            let newValue = value
-            if isOffline {
-                OfflineSyncQueue.shared.enqueue(PendingAction(
-                    type: .updateCollectionField,
-                    releaseId: item.releaseId,
-                    folderId: item.folderId,
-                    instanceId: item.instanceId,
-                    fieldId: field.id,
-                    value: newValue
-                ))
-            } else {
+        func enqueueOffline() {
+            OfflineSyncQueue.shared.enqueue(PendingAction(
+                type: .updateCollectionField,
+                releaseId: item.releaseId,
+                folderId: item.folderId,
+                instanceId: item.instanceId,
+                fieldId: field.id,
+                value: newValue
+            ))
+        }
+
+        if isOffline {
+            enqueueOffline()
+        } else {
+            do {
                 try await actions.updateCollectionField(
                     folderId: item.folderId,
                     releaseId: item.releaseId,
@@ -514,33 +512,38 @@ struct CollectionItemEditSheet: View {
                     fieldId: field.id,
                     value: newValue
                 )
+            } catch where error.isTransientNetworkFailure {
+                // Discogs injoignable malgré une connexion détectée (429, coupure...) : remis en
+                // file plutôt que perdu silencieusement — même traitement que les autres
+                // mutations dans `ReleaseActions`, qui distinguent déjà ce cas d'un refus définitif.
+                enqueueOffline()
+            } catch {
+                withAnimation {
+                    _ = savingFieldIds.remove(field.id)
+                }
+                errorMessage = String(localized: "Impossible d'enregistrer sur Discogs : \(error.localizedDescription)")
+                return
             }
+        }
 
-            savedFieldValues[field.id] = newValue
+        savedFieldValues[field.id] = newValue
 
-            var updatedNotes = item.notes
-            updatedNotes.removeAll { $0.fieldId == field.id }
-            if !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                updatedNotes.append(CollectionFieldValue(fieldId: field.id, value: newValue))
-            }
-            onSaved(item.rating, updatedNotes)
+        var updatedNotes = item.notes
+        updatedNotes.removeAll { $0.fieldId == field.id }
+        if !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            updatedNotes.append(CollectionFieldValue(fieldId: field.id, value: newValue))
+        }
+        onSaved(item.rating, updatedNotes)
 
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                _ = savingFieldIds.remove(field.id)
-                _ = justSavedFieldIds.insert(field.id)
-            }
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+            _ = savingFieldIds.remove(field.id)
+            _ = justSavedFieldIds.insert(field.id)
+        }
 
-            try? await Task.sleep(for: .seconds(2))
-            withAnimation(.easeInOut(duration: 0.25)) {
-                _ = justSavedFieldIds.remove(field.id)
-            }
-        } catch {
-            withAnimation {
-                _ = savingFieldIds.remove(field.id)
-            }
-            errorMessage = String(localized: "Impossible d'enregistrer sur Discogs : \(error.localizedDescription)")
-            showingErrorAlert = true
+        try? await Task.sleep(for: .seconds(2))
+        withAnimation(.easeInOut(duration: 0.25)) {
+            _ = justSavedFieldIds.remove(field.id)
         }
     }
 }

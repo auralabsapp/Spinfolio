@@ -357,7 +357,7 @@ struct ReleaseQuickActionsBar: View {
         } message: {
             Text("Veux-tu retirer cet album de ta wantlist Discogs ?")
         }
-        .alert("Discogs", isPresented: Binding(
+        .alert(DemoMode.isActive ? Text("Mode démo") : Text(verbatim: "Discogs"), isPresented: Binding(
             get: { actions.message != nil },
             set: { if !$0 { actions.message = nil } }
         )) {

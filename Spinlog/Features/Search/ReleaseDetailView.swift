@@ -436,7 +436,7 @@ struct ReleaseDetailView: View {
             } action: { _, newValue in
                 scrollOffsetY = newValue
             }
-            .swipeActionsContainer()
+            .swipeActionsContainerIfAvailable()
             .ignoresSafeArea(edges: .all)
             .background(infoBackgroundColor.ignoresSafeArea())
             .onAppear {
@@ -527,7 +527,9 @@ struct ReleaseDetailView: View {
             .buttonStyle(.plain)
         } else {
             shelfPlacementRowContent(
-                subtitle: String(localized: "Balaie l'exemplaire concerné vers la gauche dans « Mes exemplaires » pour voir où le ranger"),
+                subtitle: SwipeActionsSupport.isAvailable
+                    ? String(localized: "Balaie l'exemplaire concerné vers la gauche dans « Mes exemplaires » pour voir où le ranger")
+                    : String(localized: "Maintiens le doigt sur l'exemplaire concerné dans « Mes exemplaires » pour voir où le ranger"),
                 showsChevron: false
             )
         }

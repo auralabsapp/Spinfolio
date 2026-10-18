@@ -69,13 +69,12 @@ struct CoverAnalysis: Sendable {
     }
 }
 
-/// États distincts affichables par le widget. `appGroupUnavailable` est délibérément séparé de
-/// `locked`/`empty` : les deux derniers sont des états légitimes (utilisateur non premium,
-/// collection vide), alors que le premier signale que le pont de données app ↔ widget (App
+/// États distincts affichables par le widget (accessible à tous, premium ou non).
+/// `appGroupUnavailable` est délibérément séparé de `empty` : ce dernier est un état légitime
+/// (collection vide), alors que le premier signale que le pont de données app ↔ widget (App
 /// Group) n'a jamais fonctionné — un problème de configuration, pas un état normal de l'app.
 enum RandomAlbumWidgetState {
     case appGroupUnavailable
-    case locked
     case empty
     case album(RandomAlbumSnapshotItem, coverImageData: Data?, isLightCover: Bool)
 }
@@ -174,12 +173,6 @@ struct RandomAlbumWidgetView: View {
                     icon: "exclamationmark.triangle.fill",
                     title: "Widget non configuré",
                     message: "Ce widget n'arrive pas à communiquer avec Spinlog. Vérifie les App Groups dans Xcode (Signing & Capabilities), puis réinstalle l'app."
-                )
-            case .locked:
-                statusView(
-                    icon: "lock.fill",
-                    title: "Fonctionnalité premium",
-                    message: "Active le compte premium dans Spinlog pour découvrir un disque de ta collection chaque jour."
                 )
             case .empty:
                 statusView(

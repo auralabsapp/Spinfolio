@@ -264,7 +264,7 @@ final class AppleMusicPlaybackService {
             try await player.play()
             startFullProgressPolling()
         } catch {
-            logger.error("Lecture complète MusicKit échouée pour \(song.title, privacy: .public) : \(error, privacy: .public)")
+            logger.error("Lecture complète MusicKit échouée pour \(song.title, privacy: .private) : \(error, privacy: .public)")
             playPreview(song)
         }
     }
@@ -344,7 +344,7 @@ final class AppleMusicPlaybackService {
             // Erreur de recherche (réseau, service MusicKit…) : rien n'est mémorisé et le statut
             // reste inconnu, pour qu'un prochain appui retente. Auparavant, le titre était marqué
             // "sans correspondance" et son bouton restait grisé pour toute la session.
-            logger.error("Recherche MusicKit échouée pour \(trackTitle, privacy: .public) : \(error, privacy: .public)")
+            logger.error("Recherche MusicKit échouée pour \(trackTitle, privacy: .private) : \(error, privacy: .public)")
             return nil
         }
     }
@@ -374,7 +374,7 @@ final class AppleMusicPlaybackService {
         let normalizedAlbum = Self.normalize(albumTitle)
         let normalizedTitle = Self.normalize(trackTitle)
 
-        logger.debug("bestMatch pour « \(trackTitle, privacy: .public) » — \(candidates.count, privacy: .public) candidat(s) Apple Music reçu(s)")
+        logger.debug("bestMatch pour « \(trackTitle, privacy: .private) » — \(candidates.count, privacy: .public) candidat(s) Apple Music reçu(s)")
 
         var best: (song: MusicKit.Song, score: Double)?
         for candidate in candidates {
@@ -385,7 +385,7 @@ final class AppleMusicPlaybackService {
             let durationAdjustment = Self.durationAdjustment(discogsDuration: trackDuration, candidateDuration: candidate.duration)
             let combinedScore = titleScore * 0.6 + artistScore * 0.3 + albumBonus + durationAdjustment
 
-            logger.debug("  candidat « \(candidate.title, privacy: .public) » — \(candidate.artistName, privacy: .public) — album « \(candidate.albumTitle ?? "?", privacy: .public) » — durée \(candidate.duration ?? -1, privacy: .public)s — titleScore=\(titleScore, privacy: .public) artistScore=\(artistScore, privacy: .public) albumBonus=\(albumBonus, privacy: .public) durationAdj=\(durationAdjustment, privacy: .public) combined=\(combinedScore, privacy: .public) seuilOK=\(passesThreshold, privacy: .public)")
+            logger.debug("  candidat « \(candidate.title, privacy: .private) » — \(candidate.artistName, privacy: .private) — album « \(candidate.albumTitle ?? "?", privacy: .private) » — durée \(candidate.duration ?? -1, privacy: .public)s — titleScore=\(titleScore, privacy: .public) artistScore=\(artistScore, privacy: .public) albumBonus=\(albumBonus, privacy: .public) durationAdj=\(durationAdjustment, privacy: .public) combined=\(combinedScore, privacy: .public) seuilOK=\(passesThreshold, privacy: .public)")
 
             guard passesThreshold else { continue }
             if best == nil || combinedScore > best!.score {
@@ -393,7 +393,7 @@ final class AppleMusicPlaybackService {
             }
         }
         if best == nil {
-            logger.debug("bestMatch pour « \(trackTitle, privacy: .public) » — aucun candidat au-dessus du seuil (titre≥\(Self.minimumTitleScore, privacy: .public), artiste≥\(Self.minimumArtistScore, privacy: .public))")
+            logger.debug("bestMatch pour « \(trackTitle, privacy: .private) » — aucun candidat au-dessus du seuil (titre≥\(Self.minimumTitleScore, privacy: .public), artiste≥\(Self.minimumArtistScore, privacy: .public))")
         }
         return best?.song
     }
@@ -415,11 +415,8 @@ final class AppleMusicPlaybackService {
 
     /// Lit une durée au format Discogs (`"3:45"`) en secondes, `nil` si absente ou invalide.
     private static func parseDiscogsDuration(_ duration: String?) -> TimeInterval? {
-        guard let duration, let colonIndex = duration.firstIndex(of: ":") else { return nil }
-        let minutesPart = duration[..<colonIndex]
-        let secondsPart = duration[duration.index(after: colonIndex)...]
-        guard let minutes = Int(minutesPart), let seconds = Int(secondsPart) else { return nil }
-        return TimeInterval(minutes * 60 + seconds)
+        guard let seconds = duration?.discogsDurationSeconds else { return nil }
+        return TimeInterval(seconds)
     }
 
     /// Nettoie un titre/nom pour la comparaison : retire le bruit entre parenthèses/crochets

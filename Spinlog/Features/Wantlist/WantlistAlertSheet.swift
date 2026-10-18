@@ -127,10 +127,10 @@ struct WantlistAlertSheet: View {
                 value: SearchDestination.release(item.id, coverURL: item.basicInformation.coverImage ?? item.basicInformation.thumb)
             ) {
                 HStack(spacing: 14) {
-                    AsyncCoverImage(url: item.basicInformation.thumb ?? item.basicInformation.coverImage, cornerRadius: 8)
+                    AsyncCoverImage(url: item.basicInformation.thumb ?? item.basicInformation.coverImage, cornerRadius: AppLayout.coverCornerRadius)
                         .frame(width: 60, height: 60)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            RoundedRectangle(cornerRadius: AppLayout.coverCornerRadius, style: .continuous)
                                 .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
                         )
                         .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)

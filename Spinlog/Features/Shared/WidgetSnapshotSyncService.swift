@@ -39,6 +39,15 @@ final class WidgetSnapshotSyncService {
             widgetSyncLogger.log("Sync widget ignorée : cache déjà frais et instantané non vide.")
             return
         }
+        // Renonce si une autre synchronisation complète du même dossier est déjà en cours
+        // (lancement à froid : `StatsViewModel`/`CollectionViewModel`/`OfflineDownloadManager`
+        // peuvent aussi vouloir tout recharger en même temps) — le widget sera de toute façon
+        // alimenté par `updateWidgetSnapshot` une fois celle-ci terminée.
+        guard LocalDataStore.shared.beginFullCollectionSync(username: username, folderId: DiscogsConstants.allFolderId) else {
+            widgetSyncLogger.log("Sync widget ignorée : une autre synchronisation complète est déjà en cours.")
+            return
+        }
+        defer { LocalDataStore.shared.endFullCollectionSync(username: username, folderId: DiscogsConstants.allFolderId) }
         widgetSyncLogger.log("Sync widget : récupération de la collection complète (isStale=\(isStale), snapshotIsEmpty=\(snapshotIsEmpty))...")
         // Déclenché au lancement/retour au premier plan, jamais en réponse à une action visible
         // de l'utilisateur — priorité basse pour le quota Discogs (voir le même correctif sur

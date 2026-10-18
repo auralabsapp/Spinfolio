@@ -97,6 +97,7 @@ struct HorizontalSectionIndexBar: View {
         }
         .frame(height: 28)
         .padding(.horizontal, 10)
+        .sectionIndexAccessibility(entries: entries, currentToken: currentToken, onSelect: onSelect)
     }
 
     private func railLabel(for token: String) -> String {

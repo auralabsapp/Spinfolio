@@ -2108,7 +2108,14 @@
       }
     },
     "0,00" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "0.00"
+          }
+        }
+      }
     },
     "0.00" : {
       "localizations" : {
@@ -2494,7 +2501,14 @@
       }
     },
     "Ajouté à la collection" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Added to Collection"
+          }
+        }
+      }
     },
     "Ajouté à la collection." : {
       "localizations" : {
@@ -2507,7 +2521,14 @@
       }
     },
     "Ajouté à la wantlist" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Added to Wantlist"
+          }
+        }
+      }
     },
     "Ajouté à la wantlist." : {
       "localizations" : {
@@ -2680,7 +2701,14 @@
       }
     },
     "album en collection" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "album in collection"
+          }
+        }
+      }
     },
     "album en wantlist" : {
       "localizations" : {
@@ -2734,7 +2762,14 @@
       }
     },
     "albums en collection" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "albums in collection"
+          }
+        }
+      }
     },
     "albums en wantlist" : {
       "localizations" : {
@@ -3380,6 +3415,16 @@
         }
       }
     },
+    "Balaie vers le haut ou vers le bas pour changer de section." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Swipe up or down to change section."
+          }
+        }
+      }
+    },
     "Basé sur tes écoutes sur platine. Les lectures Apple Music ne sont pas comptées." : {
       "localizations" : {
         "en" : {
@@ -3401,7 +3446,14 @@
       }
     },
     "Beige vinyle & pochette vintage" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Vinyl beige & vintage sleeve"
+          }
+        }
+      }
     },
     "Biographie" : {
       "localizations" : {
@@ -3887,6 +3939,26 @@
         }
       }
     },
+    "Collection de démo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Demo Collection"
+          }
+        }
+      }
+    },
+    "Collection de démonstration" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Demo Collection"
+          }
+        }
+      }
+    },
     "Collection vide" : {
       "localizations" : {
         "en" : {
@@ -3973,6 +4045,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sign in to Discogs to add to your wantlist."
+          }
+        }
+      }
+    },
+    "Connecte-toi à Discogs pour gérer tes dossiers." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Sign in to Discogs to manage your folders."
           }
         }
       }
@@ -4073,6 +4155,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "View Listings on Discogs.com"
+          }
+        }
+      }
+    },
+    "Continuer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Continue"
           }
         }
       }
@@ -4207,6 +4299,16 @@
         }
       }
     },
+    "Créer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Create"
+          }
+        }
+      }
+    },
     "Créer et ajouter « %@ »" : {
       "localizations" : {
         "en" : {
@@ -4233,6 +4335,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Create Tag \"%@\""
+          }
+        }
+      }
+    },
+    "Créer un dossier" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Create Folder"
           }
         }
       }
@@ -4354,6 +4466,16 @@
         }
       }
     },
+    "Découvre l'app sans compte Discogs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Try the app without a Discogs account"
+          }
+        }
+      }
+    },
     "Découvre tes albums et artistes les plus écoutés sur ta platine, tes podiums du mois et de l'année dans Statistiques. Les lectures Apple Music ne sont pas comptées." : {
       "localizations" : {
         "en" : {
@@ -4400,6 +4522,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Set how each artist should be ordered across all your artist-based sorts (physical shelf, Collection, and Wantlist). Your custom rules take priority."
+          }
+        }
+      }
+    },
+    "Déplacement vers Uncategorized : %lld/%lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Moving to Uncategorized: %1$lld/%2$lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Déplacement vers Uncategorized : %1$lld/%2$lld"
           }
         }
       }
@@ -4600,6 +4738,16 @@
         }
       }
     },
+    "Discogs a refusé l'opération : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Discogs rejected the operation: %@"
+          }
+        }
+      }
+    },
     "Discogs n'expose pas de « prix médian » pour une release précise, seulement des suggestions de prix par état du disque (Mint, Near Mint, VG+...). %@ utilise donc l'état renseigné dans le champ état du disque pour sélectionner la suggestion la plus pertinente." : {
       "localizations" : {
         "en" : {
@@ -4747,6 +4895,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Discogs Folder"
+          }
+        }
+      }
+    },
+    "Dossier par défaut" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Default Folder"
+          }
+        }
+      }
+    },
+    "Dossiers (%lld)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Folders (%lld)"
           }
         }
       }
@@ -4907,6 +5075,16 @@
         }
       }
     },
+    "Écoute terminée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Listening Ended"
+          }
+        }
+      }
+    },
     "Éditer le tri" : {
       "localizations" : {
         "en" : {
@@ -4977,6 +5155,16 @@
         }
       }
     },
+    "Électronique" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Electronic"
+          }
+        }
+      }
+    },
     "Emplacement dans mon meuble" : {
       "localizations" : {
         "en" : {
@@ -5043,6 +5231,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Now Listening"
+          }
+        }
+      }
+    },
+    "En mode démo, il n'est pas possible d'ajouter des albums à la collection ou à la wantlist. Connecte ton compte Discogs dans Réglages pour gérer ta propre collection." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "You can’t add albums to the collection or wantlist in demo mode. Sign in to your Discogs account in Settings to manage your own collection."
+          }
+        }
+      }
+    },
+    "En mode démo, il n'est pas possible de retirer des albums de la collection ou de la wantlist. Connecte ton compte Discogs dans Réglages pour gérer ta propre collection." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "You can’t remove albums from the collection or wantlist in demo mode. Sign in to your Discogs account in Settings to manage your own collection."
+          }
+        }
+      }
+    },
+    "En mode démo, la collection et la wantlist ne peuvent pas être modifiées. Connecte ton compte Discogs dans Réglages pour gérer ta propre collection." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The collection and wantlist can’t be changed in demo mode. Sign in to your Discogs account in Settings to manage your own collection."
           }
         }
       }
@@ -5311,6 +5529,16 @@
         }
       }
     },
+    "Explorer avec une collection de démo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Explore with a Demo Collection"
+          }
+        }
+      }
+    },
     "Export" : {
       "localizations" : {
         "en" : {
@@ -5322,7 +5550,14 @@
       }
     },
     "Export CSV & PDF" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "CSV & PDF Export"
+          }
+        }
+      }
     },
     "Export CSV complet" : {
       "extractionState" : "stale",
@@ -5346,7 +5581,14 @@
       }
     },
     "Exporte toute ta discothèque au format tableur (Excel, Numbers, Sheets) avec métadonnées, notes et tags, ou en PDF avec état et prix d'achat." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Export your entire collection as a spreadsheet (Excel, Numbers, Sheets) with metadata, notes, and tags, or as a PDF with condition and purchase price."
+          }
+        }
+      }
     },
     "Exporte toute ta discothèque au format tableur (Excel, Numbers, Sheets) avec métadonnées, notes et tags." : {
       "extractionState" : "stale",
@@ -5415,6 +5657,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Close"
+          }
+        }
+      }
+    },
+    "Fermer et garder les codes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Close and Keep Barcodes"
+          }
+        }
+      }
+    },
+    "Fermer le scan par lot ?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Close Batch Scan?"
           }
         }
       }
@@ -5663,7 +5925,24 @@
       }
     },
     "Gérer mon abonnement" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Manage My Subscription"
+          }
+        }
+      }
+    },
+    "Gestion des dossiers" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Folder Management"
+          }
+        }
+      }
     },
     "Gestion des tags" : {
       "localizations" : {
@@ -5731,6 +6010,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Physical Shelving Guide"
+          }
+        }
+      }
+    },
+    "Hors ligne : les codes scannés sont conservés et seront recherchés au retour du réseau." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Offline: scanned barcodes are saved and will be looked up when the network is back."
           }
         }
       }
@@ -5956,6 +6245,16 @@
         }
       }
     },
+    "Index des sections" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Section Index"
+          }
+        }
+      }
+    },
     "Indisponible" : {
       "localizations" : {
         "en" : {
@@ -6106,6 +6405,16 @@
         }
       }
     },
+    "L'achat n'a pas pu être vérifié auprès de l'App Store." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The purchase couldn’t be verified with the App Store."
+          }
+        }
+      }
+    },
     "L'alerte se déclenche dès qu'un exemplaire à ce prix ou moins est détecté, lors d'une vérification (à l'ouverture de l'app ou occasionnellement en arrière-plan) — pas nécessairement en temps réel. L'état exact du disque et les frais de port seront à vérifier sur l'annonce Discogs." : {
       "localizations" : {
         "en" : {
@@ -6132,6 +6441,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The CSV export includes all your albums (across all folders) with their metadata, tags, and notes for your spreadsheets (Excel, Numbers). The PDF declaration lists your collection with condition and purchase price, handy to show an insurer, for example."
+          }
+        }
+      }
+    },
+    "La gestion des dossiers nécessite une connexion réseau." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Managing folders requires a network connection."
           }
         }
       }
@@ -6369,6 +6688,78 @@
         }
       }
     },
+    "Les %lld codes scannés sont conservés : tu les retrouveras à la prochaine ouverture du scan par lot." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "Your %lld scanned barcode is saved. You’ll find it the next time you open Batch Scan."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "Your %lld scanned barcodes are saved. You’ll find them the next time you open Batch Scan."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "Your %lld scanned barcodes are saved. You’ll find them the next time you open Batch Scan."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld code scanné est conservé : tu le retrouveras à la prochaine ouverture du scan par lot."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "Les %lld codes scannés sont conservés : tu les retrouveras à la prochaine ouverture du scan par lot."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "Les %lld codes scannés sont conservés : tu les retrouveras à la prochaine ouverture du scan par lot."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Les données affichées sont des exemples et les modifications vers Discogs sont désactivées. Les fonctions Premium sont offertes pendant la démo. Connecte ton compte pour retrouver ta propre collection." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The data shown is sample data, and changes to Discogs are turned off. Premium features are free during the demo. Sign in to your account to get back to your own collection."
+          }
+        }
+      }
+    },
+    "Les dossiers All et Uncategorized sont des dossiers système de Discogs : ils ne peuvent être ni renommés, ni supprimés." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "All and Uncategorized are Discogs system folders: they can’t be renamed or deleted."
+          }
+        }
+      }
+    },
     "Les modifications seront synchronisées avec Discogs au retour du réseau" : {
       "localizations" : {
         "en" : {
@@ -6499,6 +6890,26 @@
         }
       }
     },
+    "Maintiens le doigt sur l'exemplaire concerné dans « Mes exemplaires » pour voir où le ranger" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Touch and hold the copy in “My Copies” to see where to shelve it"
+          }
+        }
+      }
+    },
+    "Maintiens le doigt sur un tag pour le modifier ou le supprimer." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Touch and hold a tag to edit or delete it."
+          }
+        }
+      }
+    },
     "Marketplace" : {
       "localizations" : {
         "en" : {
@@ -6520,7 +6931,14 @@
       }
     },
     "Marron Espresso" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Espresso Brown"
+          }
+        }
+      }
     },
     "Masquer ce message" : {
       "localizations" : {
@@ -6644,6 +7062,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Display Mode"
+          }
+        }
+      }
+    },
+    "Mode démo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Demo Mode"
           }
         }
       }
@@ -6849,6 +7277,16 @@
         }
       }
     },
+    "Nom du dossier" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Folder Name"
+          }
+        }
+      }
+    },
     "Nom du tag" : {
       "localizations" : {
         "en" : {
@@ -6981,6 +7419,16 @@
         }
       }
     },
+    "Nouveau dossier" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "New Folder"
+          }
+        }
+      }
+    },
     "Numéro de catalogue" : {
       "comment" : "En-tête de colonne CSV : numéro de catalogue du label",
       "localizations" : {
@@ -7103,7 +7551,14 @@
       }
     },
     "Ouvre le Marketplace Discogs pour cette release" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Opens the Discogs Marketplace for this release"
+          }
+        }
+      }
     },
     "Ouvrir dans Apple Music" : {
       "localizations" : {
@@ -7780,6 +8235,16 @@
         }
       }
     },
+    "Quitter le mode démo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Exit Demo Mode"
+          }
+        }
+      }
+    },
     "Raccourcis par rapport au prix saisi ci-dessus :" : {
       "localizations" : {
         "en" : {
@@ -8046,6 +8511,26 @@
         }
       }
     },
+    "Renommer ce dossier" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Rename This Folder"
+          }
+        }
+      }
+    },
+    "Renommer le dossier" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Rename Folder"
+          }
+        }
+      }
+    },
     "Renommer le tag" : {
       "localizations" : {
         "en" : {
@@ -8137,10 +8622,24 @@
       }
     },
     "Retiré de la collection" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Removed from Collection"
+          }
+        }
+      }
     },
     "Retiré de la wantlist" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Removed from Wantlist"
+          }
+        }
+      }
     },
     "Retiré de la wantlist." : {
       "localizations" : {
@@ -8773,12 +9272,94 @@
         }
       }
     },
+    "Suppression du dossier…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Deleting folder…"
+          }
+        }
+      }
+    },
     "Supprimer" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Delete"
+          }
+        }
+      }
+    },
+    "Supprimer « %@ » ? Ses %lld exemplaires seront déplacés vers Uncategorized." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Delete “%1$@”? %#@copies@"
+          },
+          "substitutions" : {
+            "copies" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "machine_translated",
+                      "value" : "Its %arg copy will be moved to Uncategorized."
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "machine_translated",
+                      "value" : "Its %arg copies will be moved to Uncategorized."
+                    }
+                  },
+                  "zero" : {
+                    "stringUnit" : {
+                      "state" : "machine_translated",
+                      "value" : "This folder is empty."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Supprimer « %1$@ » ? %#@copies@"
+          },
+          "substitutions" : {
+            "copies" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "machine_translated",
+                      "value" : "Son exemplaire sera déplacé vers Uncategorized."
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "machine_translated",
+                      "value" : "Ses %arg exemplaires seront déplacés vers Uncategorized."
+                    }
+                  },
+                  "zero" : {
+                    "stringUnit" : {
+                      "state" : "machine_translated",
+                      "value" : "Ce dossier est vide."
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -8859,6 +9440,16 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Supprimer ce dossier" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Delete This Folder"
           }
         }
       }
@@ -8973,12 +9564,32 @@
         }
       }
     },
+    "Supprimer le dossier" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Delete Folder"
+          }
+        }
+      }
+    },
     "Supprimer le tag" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Delete Tag"
+          }
+        }
+      }
+    },
+    "Supprimer les codes scannés" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Delete Scanned Barcodes"
           }
         }
       }
@@ -9009,6 +9620,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Delete All Copies?"
+          }
+        }
+      }
+    },
+    "Supprimer un dossier déplace automatiquement tous les exemplaires qu'il contient vers le dossier Uncategorized." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Deleting a folder automatically moves all the copies it contains to the Uncategorized folder."
           }
         }
       }
@@ -9584,12 +10205,52 @@
         }
       }
     },
+    "Touche deux fois pour désélectionner." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Double-tap to deselect."
+          }
+        }
+      }
+    },
+    "Touche deux fois pour sélectionner." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Double-tap to select."
+          }
+        }
+      }
+    },
     "Touche le disque quand tu l'écoutes" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tap the record when you listen to it"
+          }
+        }
+      }
+    },
+    "Touche un dossier pour en faire le dossier d'ajout par défaut. Glisse vers la gauche pour le renommer ou le supprimer." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tap a folder to make it the default folder for new additions. Swipe left to rename or delete it."
+          }
+        }
+      }
+    },
+    "Touche un dossier pour en faire le dossier d'ajout par défaut. Maintiens le doigt dessus pour le renommer ou le supprimer." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tap a folder to make it the default folder for new additions. Touch and hold it to rename or delete it."
           }
         }
       }
@@ -9630,6 +10291,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tap a tag to assign it. Swipe left to edit or delete it."
+          }
+        }
+      }
+    },
+    "Touche un tag pour l'attribuer. Maintiens le doigt dessus pour le modifier ou le supprimer." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tap a tag to assign it. Touch and hold it to edit or delete it."
           }
         }
       }
@@ -9976,6 +10647,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "A Field Doesn't Match?"
+          }
+        }
+      }
+    },
+    "Un dossier porte déjà ce nom." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "A folder with this name already exists."
           }
         }
       }

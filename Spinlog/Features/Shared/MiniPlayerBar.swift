@@ -42,10 +42,7 @@ struct MiniPlayerBar: View {
 
     private func formatTime(_ time: TimeInterval) -> String {
         guard !time.isNaN, !time.isInfinite, time >= 0 else { return "0:00" }
-        let totalSeconds = Int(time)
-        let minutes = totalSeconds / 60
-        let seconds = totalSeconds % 60
-        return String(format: "%d:%02d", minutes, seconds)
+        return Int(time).formattedAsMinutesSeconds
     }
 
     var body: some View {

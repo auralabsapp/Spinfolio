@@ -120,6 +120,7 @@ struct SectionIndexBar: View {
                     .transition(.opacity.combined(with: .scale))
             }
         }
+        .sectionIndexAccessibility(entries: entries, currentToken: currentToken, onSelect: onSelect)
         .animation(.easeOut(duration: 0.15), value: activeToken)
         // Anime aussi la position de l'aperçu en grand : sans ça, son déplacement suivait le
         // doigt au repère près (même fréquence que le glissé), ce qui donnait un mouvement saccadé
@@ -148,5 +149,57 @@ struct SectionIndexBar: View {
             activeToken = entry.token
             onSelect(entry.sectionKey)
         }
+    }
+}
+
+/// Accessibilité des barres de navigation rapide (`SectionIndexBar`, `HorizontalSectionIndexBar`) :
+/// leur seul geste, un glissé du doigt, est inutilisable avec VoiceOver. La barre devient un
+/// unique élément « ajustable » (comme l'index de Contacts) : VoiceOver annonce la section
+/// affichée, et un balayage vertical passe à la section suivante ou précédente.
+private struct SectionIndexAccessibility: ViewModifier {
+    let entries: [(token: String, sectionKey: String)]
+    let currentToken: String?
+    let onSelect: (String) -> Void
+
+    /// Section choisie via VoiceOver, en attendant que le défilement mette à jour `currentToken`
+    /// (sans quoi deux balayages rapides repartiraient de la même section).
+    @State private var pendingToken: String?
+
+    private var displayedToken: String? {
+        pendingToken ?? currentToken ?? entries.first?.token
+    }
+
+    func body(content: Content) -> some View {
+        content
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text("Index des sections"))
+            .accessibilityValue(Text(displayedToken ?? ""))
+            .accessibilityHint(Text("Balaie vers le haut ou vers le bas pour changer de section."))
+            .accessibilityAdjustableAction { direction in
+                guard !entries.isEmpty else { return }
+                let currentIndex = entries.firstIndex { $0.token == displayedToken } ?? 0
+                let newIndex: Int
+                switch direction {
+                case .increment: newIndex = min(currentIndex + 1, entries.count - 1)
+                case .decrement: newIndex = max(currentIndex - 1, 0)
+                @unknown default: return
+                }
+                guard newIndex != currentIndex else { return }
+                pendingToken = entries[newIndex].token
+                onSelect(entries[newIndex].sectionKey)
+            }
+            .onChange(of: currentToken) { _, newValue in
+                if newValue == pendingToken { pendingToken = nil }
+            }
+    }
+}
+
+extension View {
+    func sectionIndexAccessibility(
+        entries: [(token: String, sectionKey: String)],
+        currentToken: String?,
+        onSelect: @escaping (String) -> Void
+    ) -> some View {
+        modifier(SectionIndexAccessibility(entries: entries, currentToken: currentToken, onSelect: onSelect))
     }
 }

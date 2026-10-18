@@ -23,7 +23,7 @@ extension Error {
         switch apiError {
         case .rateLimited: return true
         case .http(let status, _): return status == 429 || status >= 500
-        case .invalidURL, .invalidResponse: return false
+        case .invalidURL, .invalidResponse, .demoReadOnly: return false
         }
     }
 
@@ -50,6 +50,8 @@ final class DiscogsAPIClient {
         case invalidResponse
         case rateLimited
         case http(status: Int, message: String?)
+        /// Modification du compte refusée en mode démo (voir `DemoMode`).
+        case demoReadOnly
 
         var errorDescription: String? {
             switch self {
@@ -61,13 +63,15 @@ final class DiscogsAPIClient {
                 return String(localized: "Trop de requêtes vers Discogs, réessaie dans quelques instants.")
             case .http(let status, let message):
                 return message ?? String(localized: "Erreur Discogs (\(String(status))).")
+            case .demoReadOnly:
+                return AppMessages.demoModificationBlocked
             }
         }
     }
 
     private struct DiscogsErrorBody: Decodable { let message: String? }
 
-    private let baseURL = URL(string: "https://api.discogs.com")!
+    private let baseURL = DiscogsConstants.apiBaseURL
     private let session = URLSession.shared
     private let signer = OAuth1Signer(
         consumerKey: DiscogsSecrets.consumerKey,
@@ -127,6 +131,19 @@ final class DiscogsAPIClient {
         body: Data? = nil,
         credentials: DiscogsCredentials?
     ) async throws -> (Data, HTTPURLResponse) {
+        var credentials = credentials
+        if DemoMode.isActive {
+            if let data = try DemoServer.response(path: path, method: method, queryItems: queryItems) {
+                let url = baseURL.appendingPathComponent(path)
+                guard let http = HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil) else {
+                    throw APIError.invalidResponse
+                }
+                return (data, http)
+            }
+            // Requête publique (catalogue) : les identifiants fictifs de la démo seraient
+            // refusés par Discogs, la clé de l'app suffit.
+            credentials = nil
+        }
         guard var components = URLComponents(url: baseURL.appendingPathComponent(path), resolvingAgainstBaseURL: false) else {
             throw APIError.invalidURL
         }

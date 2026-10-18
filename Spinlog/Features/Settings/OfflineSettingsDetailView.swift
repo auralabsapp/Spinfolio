@@ -13,7 +13,6 @@ struct OfflineSettingsDetailView: View {
     @State private var showingClearCacheConfirmation = false
     @State private var showingCellularConfirmation = false
     @State private var alertMessage: String? = nil
-    @State private var showingAlert = false
     // `OfflineDownloadManager.isAutoSyncOverWifiEnabled` est une propriété calculée adossée à
     // UserDefaults (comme `lastSyncDate`), donc non suivie par `@Observable` : miroir local pour
     // piloter le Toggle, réécrit vers le manager via `onChange`.
@@ -205,9 +204,7 @@ struct OfflineSettingsDetailView: View {
         } message: {
             Text("Tu n'es pas connecté en Wi-Fi. Télécharger toute ta collection et ses pochettes peut consommer une quantité importante de données mobiles.")
         }
-        .alert(alertMessage ?? "", isPresented: $showingAlert) {
-            Button("OK", role: .cancel) {}
-        }
+        .messageAlert(message: $alertMessage)
     }
 
     private var statusHeroCard: some View {
@@ -258,7 +255,6 @@ struct OfflineSettingsDetailView: View {
     private func startSync(ignoringNetworkCost: Bool = false) {
         guard let (username, credentials) = authManager.session else {
             alertMessage = String(localized: "Connecte-toi à ton compte Discogs dans les Réglages pour synchroniser.")
-            showingAlert = true
             return
         }
 

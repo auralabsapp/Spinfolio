@@ -319,10 +319,10 @@ struct ShelfPlacementView: View {
                 .background((isLeft ? Color.blue : Color.purple).opacity(0.12), in: Capsule())
 
                 // Pochette
-                AsyncCoverImage(url: release.primaryImageURL, cornerRadius: 8, targetSize: 76)
+                AsyncCoverImage(url: release.primaryImageURL, cornerRadius: AppLayout.coverCornerRadius, targetSize: 76)
                     .frame(width: 76, height: 76)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        RoundedRectangle(cornerRadius: AppLayout.coverCornerRadius, style: .continuous)
                             .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
                     )
                     .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)

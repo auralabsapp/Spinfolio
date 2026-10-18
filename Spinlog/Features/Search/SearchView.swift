@@ -221,20 +221,26 @@ struct SearchView: View {
         } else if viewModel.results.isEmpty {
             ContentUnavailableView.search(text: trimmed)
         } else {
-            List(viewModel.results) { result in
-                SearchResultRow(result: result)
-                    .task { await viewModel.loadMoreIfNeeded(current: result) }
-                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                        leadingSwipeActions(for: result)
-                    }
-                    .listRowBackground(Color.clear)
-            }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .listRowSeparatorTint(Color.appSeparator)
-            .scrollDismissesKeyboard(.immediately)
-            .refreshable {
-                await viewModel.search()
+            ScrollViewReader { proxy in
+                List(viewModel.results) { result in
+                    SearchResultRow(result: result)
+                        .task { await viewModel.loadMoreIfNeeded(current: result) }
+                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                            leadingSwipeActions(for: result)
+                        }
+                        .listRowBackground(Color.clear)
+                }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .listRowSeparatorTint(Color.appSeparator)
+                .scrollDismissesKeyboard(.immediately)
+                .refreshable {
+                    await viewModel.search()
+                }
+                .onChange(of: TabNavigationCoordinator.shared.scrollToTopOfSearchTrigger) {
+                    guard let first = viewModel.results.first else { return }
+                    withAnimation { proxy.scrollTo(first.id, anchor: .top) }
+                }
             }
         }
     }

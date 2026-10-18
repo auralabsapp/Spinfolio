@@ -108,29 +108,11 @@ struct CollectionItem: Codable, Identifiable, Sendable {
         try container.encode(notes, forKey: .notes)
     }
 
-    private static let isoFormatter = ISO8601DateFormatter()
-    private static let isoFormatterNoFraction: ISO8601DateFormatter = {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime]
-        return formatter
-    }()
-    /// `NSCache` (thread-safe nativement) plutôt qu'un dictionnaire simple : `dateAddedDate` est
-    /// `nonisolated` et appelé aussi bien depuis l'affichage des lignes (main actor) que depuis le
-    /// tri en arrière-plan (`CollectionSortOption`). Sans ce cache, Instruments a mesuré 615ms de
-    /// temps propre dans ce getter pendant un simple défilement de la Collection — l'intégralité
-    /// du coût de ré-analyse ISO8601 de la même chaîne, ligne après ligne, frame après frame.
-    private static let dateCache = NSCache<NSString, NSDate>()
-
+    /// `nonisolated` : appelé aussi bien depuis l'affichage des lignes (main actor) que depuis le
+    /// tri en arrière-plan (`CollectionSortOption`). Voir `DiscogsDateParsing` pour le cache
+    /// mémoïsé partagé avec `WantlistItem`.
     var dateAddedDate: Date? {
-        let key = dateAdded as NSString
-        if let cached = Self.dateCache.object(forKey: key) {
-            return cached as Date
-        }
-        guard let parsed = Self.isoFormatter.date(from: dateAdded) ?? Self.isoFormatterNoFraction.date(from: dateAdded) else {
-            return nil
-        }
-        Self.dateCache.setObject(parsed as NSDate, forKey: key)
-        return parsed
+        DiscogsDateParsing.dateAdded(from: dateAdded)
     }
 
     func value(forFieldId fieldId: Int) -> String {

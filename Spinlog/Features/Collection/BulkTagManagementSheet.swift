@@ -208,7 +208,7 @@ struct BulkTagManagementSheet: View {
                 }
                 .padding()
             }
-            .swipeActionsContainer()
+            .swipeActionsContainerIfAvailable()
             .background(Color.appBackground.ignoresSafeArea())
             .navigationTitle("Tags de la sélection")
             .navigationBarTitleDisplayMode(.inline)

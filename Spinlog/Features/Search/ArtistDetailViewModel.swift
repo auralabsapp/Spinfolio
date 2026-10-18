@@ -39,13 +39,6 @@ final class ArtistDetailViewModel {
     /// rendu).
     private(set) var isLibrarySnapshotStale = false
 
-    /// Statut d'une œuvre par rapport à la collection locale de l'utilisateur (voir
-    /// `StatusBadgeView`).
-    enum OwnershipStatus {
-        case owned
-        case inWantlist
-    }
-
     /// Un exemplaire de la collection ou de la wantlist locale (tous artistes confondus : la
     /// discographie Discogs rapproche par identifiant de master/release, sans dépendre des
     /// crédits d'artiste du disque).
@@ -636,46 +629,30 @@ final class ArtistDetailViewModel {
     /// ne refléterait pas le changement. Suit aussi le retour du réseau, pour compléter la page
     /// sans action de l'utilisateur.
     private func observeLibraryChanges() {
-        let center = NotificationCenter.default
         observerTokens = [
-            center.addObserver(forName: .collectionItemAdded, object: nil, queue: .main) { [weak self] note in
-                MainActor.assumeIsolated {
-                    guard let self, let item = note.userInfo?["item"] as? CollectionItem else { return }
-                    self.handleCollectionItemAdded(item)
+            addLibraryObserver(for: .collectionItemAdded, payloadKey: "item") { [weak self] (item: CollectionItem) in
+                self?.handleCollectionItemAdded(item)
+            },
+            addLibraryObserver(for: .collectionInstanceReplaced, payloadKey: "newItem") { [weak self] (item: CollectionItem) in
+                self?.handleCollectionItemAdded(item)
+            },
+            addLibraryObserver(for: .collectionItemRemoved, payloadKey: "releaseId") { [weak self] (releaseId: Int) in
+                guard let self else { return }
+                // Retiré seulement s'il ne reste aucun autre exemplaire de cette release.
+                if !LibraryMembershipStore.shared.isInCollection(releaseId) {
+                    self.ownedRecords[releaseId] = nil
                 }
             },
-            center.addObserver(forName: .collectionInstanceReplaced, object: nil, queue: .main) { [weak self] note in
-                MainActor.assumeIsolated {
-                    guard let self, let item = note.userInfo?["newItem"] as? CollectionItem else { return }
-                    self.handleCollectionItemAdded(item)
-                }
+            addLibraryObserver(for: .wantlistItemAdded, payloadKey: "item") { [weak self] (item: WantlistItem) in
+                guard let self else { return }
+                self.wantedRecords[item.id] = self.record(for: item.basicInformation, releaseId: item.id, dateAdded: item.dateAddedDate)
             },
-            center.addObserver(forName: .collectionItemRemoved, object: nil, queue: .main) { [weak self] note in
-                MainActor.assumeIsolated {
-                    guard let self, let releaseId = note.userInfo?["releaseId"] as? Int else { return }
-                    // Retiré seulement s'il ne reste aucun autre exemplaire de cette release.
-                    if !LibraryMembershipStore.shared.isInCollection(releaseId) {
-                        self.ownedRecords[releaseId] = nil
-                    }
-                }
+            addLibraryObserver(for: .wantlistItemRemoved, payloadKey: "releaseId") { [weak self] (releaseId: Int) in
+                self?.wantedRecords[releaseId] = nil
             },
-            center.addObserver(forName: .wantlistItemAdded, object: nil, queue: .main) { [weak self] note in
-                MainActor.assumeIsolated {
-                    guard let self, let item = note.userInfo?["item"] as? WantlistItem else { return }
-                    self.wantedRecords[item.id] = self.record(for: item.basicInformation, releaseId: item.id, dateAdded: item.dateAddedDate)
-                }
-            },
-            center.addObserver(forName: .wantlistItemRemoved, object: nil, queue: .main) { [weak self] note in
-                MainActor.assumeIsolated {
-                    guard let self, let releaseId = note.userInfo?["releaseId"] as? Int else { return }
-                    self.wantedRecords[releaseId] = nil
-                }
-            },
-            center.addObserver(forName: .networkConnectionRestored, object: nil, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated {
-                    guard let self else { return }
-                    Task { await self.handleConnectionRestored() }
-                }
+            addLibraryObserver(for: .networkConnectionRestored) { [weak self] in
+                guard let self else { return }
+                Task { await self.handleConnectionRestored() }
             }
         ]
     }

@@ -12,6 +12,7 @@ struct BatchScanView: View {
     @State private var selectedFolderId: Int?
     @State private var authManager = DiscogsAuthManager.shared
     @State private var networkMonitor = NetworkMonitor.shared
+    @State private var showingCloseConfirmation = false
 
     private enum Phase {
         case scanning
@@ -32,15 +33,32 @@ struct BatchScanView: View {
             .navigationTitle(phase == .scanning ? "Scan par lot" : "Revue du scan")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
+            // Réseau perdu (fréquent en brocante, en sous-sol de disquaire) : on reste sur l'écran.
+            // Les codes déjà scannés sont conservés et les recherches en attente repartent au
+            // retour de la connexion — auparavant, l'écran se fermait et tout le lot était perdu.
+            .safeAreaInset(edge: .top) {
+                if !networkMonitor.isConnected {
+                    OfflineBannerView(customMessage: String(localized: "Hors ligne : les codes scannés sont conservés et seront recherchés au retour du réseau."))
+                }
+            }
         }
+        .interactiveDismissDisabled(!viewModel.items.isEmpty)
         .task { await loadFolders() }
-        // Scan comme revue groupée nécessitent tous deux le réseau (lookup code-barres, ajout
-        // à la collection) : si la connexion tombe pendant que cet écran est ouvert, on revient
-        // à la recherche plutôt que de laisser l'utilisateur continuer dans un état cassé.
-        .onChange(of: networkMonitor.isConnected) { _, isConnected in
-            if !isConnected {
+        .confirmationDialog(
+            "Fermer le scan par lot ?",
+            isPresented: $showingCloseConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Fermer et garder les codes") {
                 dismiss()
             }
+            Button("Supprimer les codes scannés", role: .destructive) {
+                viewModel.clearAll()
+                dismiss()
+            }
+            Button("Continuer", role: .cancel) {}
+        } message: {
+            Text("Les \(viewModel.items.count) codes scannés sont conservés : tu les retrouveras à la prochaine ouverture du scan par lot.")
         }
         .alert("Discogs", isPresented: Binding(
             get: { viewModel.message != nil },
@@ -57,7 +75,7 @@ struct BatchScanView: View {
         ToolbarItem(placement: .topBarLeading) {
             Button(phase == .scanning ? "Annuler" : "Retour au scan") {
                 if phase == .scanning {
-                    dismiss()
+                    requestClose()
                 } else {
                     withAnimation { phase = .scanning }
                 }
@@ -73,8 +91,17 @@ struct BatchScanView: View {
             }
         } else {
             ToolbarItem(placement: .topBarTrailing) {
-                SheetCloseButton()
+                SheetCloseButton(action: requestClose)
             }
+        }
+    }
+
+    /// Fermeture directe s'il n'y a rien à perdre, sinon confirmation (garder ou supprimer).
+    private func requestClose() {
+        if viewModel.items.isEmpty {
+            dismiss()
+        } else {
+            showingCloseConfirmation = true
         }
     }
 

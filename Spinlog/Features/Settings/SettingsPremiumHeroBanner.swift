@@ -6,22 +6,6 @@ import SwiftUI
 struct SettingsPremiumHeroBanner: View {
     var onTap: () -> Void
 
-    // MARK: - Palette Or Hifi / Ambre Collector
-    private static let goldAccent = Color(red: 0.95, green: 0.68, blue: 0.18)
-    private static let goldWarm = Color(red: 0.88, green: 0.52, blue: 0.12)
-    private static let goldBadgeBg = Color(red: 0.95, green: 0.68, blue: 0.18).opacity(0.18)
-
-    private var goldButtonGradient: LinearGradient {
-        LinearGradient(
-            colors: [
-                Color(red: 0.98, green: 0.78, blue: 0.28),
-                Color(red: 0.88, green: 0.52, blue: 0.12)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    }
-
     var body: some View {
         Button {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
@@ -33,9 +17,9 @@ struct SettingsPremiumHeroBanner: View {
                     // Badge circulaire cadenas or satiné
                     ZStack {
                         Circle()
-                            .fill(goldButtonGradient)
+                            .fill(Color.goldButtonGradient)
                             .frame(width: 44, height: 44)
-                            .shadow(color: Self.goldWarm.opacity(0.35), radius: 5, y: 2)
+                            .shadow(color: Color.goldWarm.opacity(0.35), radius: 5, y: 2)
 
                         Image(systemName: "lock.fill")
                             .font(.system(size: 18, weight: .bold))
@@ -46,7 +30,7 @@ struct SettingsPremiumHeroBanner: View {
                         HStack(spacing: 6) {
                             Image(systemName: "crown.fill")
                                 .font(.system(size: 13, weight: .bold))
-                                .foregroundStyle(Self.goldAccent)
+                                .foregroundStyle(Color.goldAccent)
 
                             Text("Passe à \(AppInfo.name) Premium")
                                 .font(.headline.weight(.bold))
@@ -55,19 +39,19 @@ struct SettingsPremiumHeroBanner: View {
 
                         Text("À partir de 2,50 € / mois")
                             .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(Self.goldWarm)
+                            .foregroundStyle(Color.goldWarm)
                     }
 
                     Spacer(minLength: 4)
 
                     // Pastille chevron ambrée
                     Circle()
-                        .fill(Self.goldBadgeBg)
+                        .fill(Color.goldBadgeBg)
                         .frame(width: 28, height: 28)
                         .overlay(
                             Image(systemName: "chevron.right")
                                 .font(.inlineIcon)
-                                .foregroundStyle(Self.goldWarm)
+                                .foregroundStyle(Color.goldWarm)
                         )
                 }
 
@@ -85,8 +69,8 @@ struct SettingsPremiumHeroBanner: View {
                     // Halo dégradé or chaleureux
                     LinearGradient(
                         colors: [
-                            Self.goldAccent.opacity(0.20),
-                            Self.goldWarm.opacity(0.06),
+                            Color.goldAccent.opacity(0.20),
+                            Color.goldWarm.opacity(0.06),
                             Color.clear
                         ],
                         startPoint: .topLeading,
@@ -100,8 +84,8 @@ struct SettingsPremiumHeroBanner: View {
                     .strokeBorder(
                         LinearGradient(
                             colors: [
-                                Self.goldAccent.opacity(0.50),
-                                Self.goldWarm.opacity(0.18),
+                                Color.goldAccent.opacity(0.50),
+                                Color.goldWarm.opacity(0.18),
                                 Color.clear
                             ],
                             startPoint: .topLeading,

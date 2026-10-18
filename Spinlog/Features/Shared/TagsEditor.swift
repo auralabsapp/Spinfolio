@@ -39,9 +39,9 @@ struct TagsEditor: View {
             } label: {
                 HStack(spacing: 5) {
                     Image(systemName: "plus")
-                        .font(.caption.weight(.bold))
+                        .font(.footnote.weight(.bold))
                     Text(tags.isEmpty ? "Ajouter un tag" : "Ajouter")
-                        .font(.caption.weight(.semibold))
+                        .font(.footnote.weight(.semibold))
                 }
                 .padding(.horizontal, 11)
                 .padding(.vertical, 4)
@@ -55,6 +55,8 @@ struct TagsEditor: View {
         }
         .sheet(isPresented: $showingManagementSheet) {
             ReleaseTagSheet(instanceId: instanceId, releaseId: releaseId)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
     }
 }
@@ -243,7 +245,7 @@ struct ReleaseTagSheet: View {
                             .padding(.vertical, 4)
                             .appleMusicGroupedCard()
 
-                            Text("Touche un tag pour l'attribuer. Glisse vers la gauche pour le modifier ou le supprimer.")
+                            (SwipeActionsSupport.isAvailable ? Text("Touche un tag pour l'attribuer. Glisse vers la gauche pour le modifier ou le supprimer.") : Text("Touche un tag pour l'attribuer. Maintiens le doigt dessus pour le modifier ou le supprimer."))
                                 .font(.footnote)
                                 .foregroundStyle(Color.appSecondaryText)
 
@@ -264,7 +266,7 @@ struct ReleaseTagSheet: View {
                     isSearchFieldFocused = false
                 }
             )
-            .swipeActionsContainer()
+            .swipeActionsContainerIfAvailable()
             .navigationTitle("Gestion des tags")
             .navigationBarTitleDisplayMode(.inline)
             .onChange(of: searchText) { _, newValue in
@@ -415,7 +417,7 @@ struct TagPill: View {
     var body: some View {
         HStack(spacing: 4) {
             Text(tag)
-                .font(.caption.weight(.medium))
+                .font(.footnote.weight(.medium))
             if let onRemove {
                 Button(action: onRemove) {
                     Image(systemName: "xmark")

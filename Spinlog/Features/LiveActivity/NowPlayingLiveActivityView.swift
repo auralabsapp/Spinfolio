@@ -81,6 +81,13 @@ struct NowPlayingContentRow: View {
     var coverSize: CGFloat = 54
     var cornerRadius: CGFloat = 10
     var stopButtonSize: CGFloat = 36
+    /// Durée d'écoute maximale dépassée (`context.isStale`) : l'app, suspendue, n'a pas pu fermer
+    /// l'activité à temps. On l'affiche comme terminée plutôt que « en cours » pendant des heures.
+    var isEnded: Bool = false
+
+    private var accentColor: Color {
+        isEnded ? Color.white.opacity(0.55) : Color(red: 232/255, green: 76/255, blue: 139/255)
+    }
 
     var body: some View {
         HStack(spacing: 14) {
@@ -96,14 +103,14 @@ struct NowPlayingContentRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
                     Circle()
-                        .fill(Color(red: 232/255, green: 76/255, blue: 139/255))
+                        .fill(accentColor)
                         .frame(width: 6, height: 6)
 
                     // Libellé localisé par l'extension elle-même : `ContentState.statusText`,
                     // fourni par l'app, s'affichait tel quel (toujours en français).
-                    Text("Écoute en cours sur la platine")
+                    Text(isEnded ? "Écoute terminée" : "Écoute en cours sur la platine")
                         .font(.emphasisLabel)
-                        .foregroundStyle(Color(red: 232/255, green: 76/255, blue: 139/255))
+                        .foregroundStyle(accentColor)
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
                 }
@@ -146,7 +153,8 @@ struct NowPlayingLiveActivityWidget: Widget {
                 imageData: context.state.coverImageData,
                 coverSize: 56,
                 cornerRadius: 10,
-                stopButtonSize: 38
+                stopButtonSize: 38,
+                isEnded: context.isStale
             )
             .padding(16)
             .activityBackgroundTint(Color.black.opacity(0.85))
@@ -163,7 +171,8 @@ struct NowPlayingLiveActivityWidget: Widget {
                         imageData: context.state.coverImageData,
                         coverSize: 50,
                         cornerRadius: 9,
-                        stopButtonSize: 34
+                        stopButtonSize: 34,
+                        isEnded: context.isStale
                     )
                     .padding(.horizontal, 14)
                     .padding(.vertical, 6)

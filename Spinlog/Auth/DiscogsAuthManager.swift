@@ -16,6 +16,8 @@ final class DiscogsAuthManager: NSObject {
     private(set) var username: String?
     private(set) var avatarURL: String?
     private(set) var isAuthenticating = false
+    /// Session de démonstration sans compte Discogs (voir `DemoMode`).
+    private(set) var isDemoMode: Bool
     var lastError: String?
 
     private let keychain = KeychainStore()
@@ -52,6 +54,8 @@ final class DiscogsAuthManager: NSObject {
     private override init() {
         let keychain = KeychainStore()
         keychain.migrateAccessibilityIfNeeded()
+        // La démo ne survit jamais à un relancement (voir `DemoMode.isActive`).
+        self.isDemoMode = false
         let token = keychain.get(Keys.accessToken)
         self.isAuthenticated = token != nil
         self.username = keychain.get(Keys.username)
@@ -60,11 +64,16 @@ final class DiscogsAuthManager: NSObject {
             self.credentials = DiscogsCredentials(token: token, tokenSecret: secret)
         }
         super.init()
+        if DemoMode.hasLeftoverSession {
+            Self.clearDemoData()
+        }
         // Propage le compte déjà connu (relance de l'app) aux stores isolés par compte, pour
         // qu'ils chargent tout de suite les bonnes données plutôt que de démarrer à vide.
         TagStore.shared.setActiveUsername(self.username)
         ListeningLogStore.shared.setActiveUsername(self.username)
-        CloudSyncEngine.shared.setActiveUsername(self.username)
+        // Jamais de synchro iCloud pour la démo : rien à conserver, et l'appareil d'un testeur
+        // ne doit pas recevoir de zone CloudKit à ce nom.
+        CloudSyncEngine.shared.setActiveUsername(isDemoMode ? nil : self.username)
         WantlistAlertStore.shared.setActiveUsername(self.username)
     }
 
@@ -74,6 +83,11 @@ final class DiscogsAuthManager: NSObject {
             return
         }
         guard !isAuthenticating else { return }
+        // Connexion d'un vrai compte depuis la démo : on quitte d'abord la démo, pour ne pas
+        // mélanger ses données d'exemple avec celles du compte.
+        if isDemoMode {
+            logout()
+        }
         isAuthenticating = true
         lastError = nil
         defer { isAuthenticating = false }
@@ -116,7 +130,24 @@ final class DiscogsAuthManager: NSObject {
         }
     }
 
+    /// Ouvre une session de démonstration sur la collection d'exemple (voir `DemoMode`).
+    func startDemo() {
+        guard !isAuthenticated else { return }
+        DemoMode.setActive(true)
+        DemoMode.applyPreferences()
+        isDemoMode = true
+        PremiumStore.shared.isDemoPreview = true
+        lastError = nil
+        username = DemoMode.username
+        credentials = DemoMode.credentials
+        isAuthenticated = true
+        TagStore.shared.setActiveUsername(username)
+        ListeningLogStore.shared.setActiveUsername(username)
+        WantlistAlertStore.shared.setActiveUsername(username)
+    }
+
     func logout() {
+        let wasDemo = isDemoMode
         keychain.remove(Keys.accessToken)
         keychain.remove(Keys.accessTokenSecret)
         keychain.remove(Keys.username)
@@ -157,6 +188,26 @@ final class DiscogsAuthManager: NSObject {
         // reconnexion ou sur un autre appareil), elle ne doit pas rester cochée pour le compte
         // Discogs suivant qui se connecterait sur cet appareil.
         AppleMusicAccountStore.shared.isConnected = false
+
+        // Contrairement à un vrai compte, rien de la démo n'est à conserver pour une reconnexion :
+        // tags, écoutes et cache d'exemple sont effacés pour repartir de zéro la prochaine fois.
+        if wasDemo {
+            Self.clearDemoData()
+            isDemoMode = false
+            PremiumStore.shared.isDemoPreview = false
+        }
+    }
+
+    /// Efface tout ce que la démo a laissé sur l'appareil, à sa sortie ou au lancement suivant
+    /// si l'app a été fermée en pleine démo.
+    private static func clearDemoData() {
+        LocalDataStore.shared.clearAllUserData(username: DemoMode.username)
+        TagStore.shared.clearAccountData(for: DemoMode.username)
+        ListeningLogStore.shared.clearAccountData(for: DemoMode.username)
+        // Sans ça, le widget continuait de proposer des disques de la démo après relancement.
+        WidgetSnapshotStore.saveCollection([])
+        WidgetCenter.shared.reloadTimelines(ofKind: WidgetKinds.randomAlbum)
+        DemoMode.setActive(false)
     }
 
     // MARK: - Suppression complète des données locales et cloud (Guideline 5.1.1(v))
@@ -164,6 +215,11 @@ final class DiscogsAuthManager: NSObject {
     /// Supprime définitivement l'ensemble des données locales et synchronisées iCloud associées au compte connecté
     /// (cache SwiftData, tags, journal d'écoute, préférences, zone CloudKit) et déconnecte l'utilisateur.
     func deleteLocalAccountData() {
+        // La démo n'a ni zone iCloud ni réglages propres : la quitter efface déjà tout.
+        if isDemoMode {
+            logout()
+            return
+        }
         if let currentUsername = username {
             CloudSyncEngine.shared.deleteCloudData(for: currentUsername)
             LocalDataStore.shared.clearAllUserData(username: currentUsername)
@@ -192,7 +248,7 @@ final class DiscogsAuthManager: NSObject {
     // MARK: - Étapes OAuth (réponses form-encoded, pas JSON)
 
     private func fetchRequestToken() async throws -> (token: String, secret: String) {
-        let url = URL(string: "https://api.discogs.com/oauth/request_token")!
+        let url = DiscogsConstants.apiBaseURL.appendingPathComponent("oauth/request_token")
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue(DiscogsSecrets.userAgent, forHTTPHeaderField: "User-Agent")
@@ -257,7 +313,7 @@ final class DiscogsAuthManager: NSObject {
         requestTokenSecret: String,
         verifier: String
     ) async throws -> (token: String, secret: String) {
-        let url = URL(string: "https://api.discogs.com/oauth/access_token")!
+        let url = DiscogsConstants.apiBaseURL.appendingPathComponent("oauth/access_token")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue(DiscogsSecrets.userAgent, forHTTPHeaderField: "User-Agent")

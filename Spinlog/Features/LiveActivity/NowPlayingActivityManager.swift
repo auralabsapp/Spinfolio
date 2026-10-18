@@ -5,6 +5,7 @@ import UIKit
 import Observation
 import Kingfisher
 import OSLog
+import BackgroundTasks
 
 private let logger = Logger(subsystem: "com.aurelienscarpa.Spinlog", category: "LiveActivity")
 
@@ -115,6 +116,7 @@ final class NowPlayingActivityManager {
 
         // Programme l'arrêt automatique après la durée maximale
         scheduleAutoStop(for: releaseId, remainingSeconds: duration)
+        scheduleBackgroundExpiryCheck(at: now.addingTimeInterval(duration))
 
         let authInfo = ActivityAuthorizationInfo()
         guard authInfo.areActivitiesEnabled else {
@@ -198,6 +200,34 @@ final class NowPlayingActivityManager {
             guard let self = self, self.activeReleaseId == releaseId else { return }
             logger.info("Durée max d'écoute atteinte pour release \(releaseId), arrêt automatique.")
             await self.endCurrentActivity()
+        }
+    }
+
+    /// `scheduleAutoStop` ne tourne que tant que l'app est active : suspendue, elle laissait la
+    /// Live Activity affichée bien après la durée maximale (jusqu'à la limite système de 8 h).
+    /// Un réveil en arrière-plan est donc demandé à l'échéance — sans garantie d'horaire de la
+    /// part d'iOS, d'où l'affichage « Écoute terminée » de l'extension (`staleDate`) en complément.
+    /// Partage l'identifiant de tâche des alertes wantlist (seul déclaré dans l'Info.plist), dont
+    /// le gestionnaire appelle aussi `checkExpiry()` ; ne remplace pas une demande déjà prévue
+    /// plus tôt, pour ne jamais retarder la vérification des alertes.
+    private func scheduleBackgroundExpiryCheck(at date: Date) {
+        Task {
+            let pending = await BGTaskScheduler.shared.pendingTaskRequests()
+            if let existing = pending.first(where: { $0.identifier == wantlistAlertsTaskIdentifier }),
+               let earliest = existing.earliestBeginDate, earliest <= date {
+                return
+            }
+            let request = BGAppRefreshTaskRequest(identifier: wantlistAlertsTaskIdentifier)
+            request.earliestBeginDate = date
+            do {
+                if #available(iOS 27.0, *) {
+                    try await BGTaskScheduler.shared.submitTaskRequest(request)
+                } else {
+                    try BGTaskScheduler.shared.submit(request)
+                }
+            } catch {
+                logger.error("Réveil de fin d'écoute non programmé : \(error.localizedDescription)")
+            }
         }
     }
 

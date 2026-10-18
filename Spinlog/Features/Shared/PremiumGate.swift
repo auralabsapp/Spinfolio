@@ -19,22 +19,6 @@ struct PremiumLockedCard: View {
 
     @State private var showingPremiumSheet = false
 
-    // MARK: - Palette Or Hifi / Ambre Collector
-    private static let goldAccent = Color(red: 0.95, green: 0.68, blue: 0.18)
-    private static let goldWarm = Color(red: 0.88, green: 0.52, blue: 0.12)
-    private static let goldBadgeBg = Color(red: 0.95, green: 0.68, blue: 0.18).opacity(0.16)
-
-    private var goldButtonGradient: LinearGradient {
-        LinearGradient(
-            colors: [
-                Color(red: 0.98, green: 0.78, blue: 0.28),
-                Color(red: 0.88, green: 0.52, blue: 0.12)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    }
-
     var body: some View {
         if isInteractive {
             Button {
@@ -61,9 +45,9 @@ struct PremiumLockedCard: View {
             // Badge circulaire cadenas or satiné avec halo
             ZStack {
                 Circle()
-                    .fill(goldButtonGradient)
+                    .fill(Color.goldButtonGradient)
                     .frame(width: 34, height: 34)
-                    .shadow(color: Self.goldWarm.opacity(0.40), radius: 5, y: 2)
+                    .shadow(color: Color.goldWarm.opacity(0.40), radius: 5, y: 2)
 
                 Image(systemName: "lock.fill")
                     .font(.system(size: 13, weight: .bold))
@@ -74,7 +58,7 @@ struct PremiumLockedCard: View {
                 HStack(spacing: 5) {
                     Image(systemName: icon)
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(Self.goldAccent)
+                        .foregroundStyle(Color.goldAccent)
 
                     Text(title)
                         .font(.subheadline.weight(.semibold))
@@ -88,11 +72,11 @@ struct PremiumLockedCard: View {
                         Text("PREMIUM")
                             .font(.emphasisLabel)
                     }
-                    .foregroundStyle(Self.goldWarm)
+                    .foregroundStyle(Color.goldWarm)
                     .lineLimit(1)
                     .padding(.horizontal, 5)
                     .padding(.vertical, 2)
-                    .background(Self.goldBadgeBg, in: Capsule())
+                    .background(Color.goldBadgeBg, in: Capsule())
                     .fixedSize(horizontal: true, vertical: true)
                 }
 
@@ -107,12 +91,12 @@ struct PremiumLockedCard: View {
 
             if showsCTA {
                 Circle()
-                    .fill(Self.goldBadgeBg)
+                    .fill(Color.goldBadgeBg)
                     .frame(width: 22, height: 22)
                     .overlay(
                         Image(systemName: "chevron.right")
                             .font(.inlineIcon)
-                            .foregroundStyle(Self.goldWarm)
+                            .foregroundStyle(Color.goldWarm)
                     )
             }
         }
@@ -125,8 +109,8 @@ struct PremiumLockedCard: View {
                 // Halo dégradé or doux
                 LinearGradient(
                     colors: [
-                        Self.goldAccent.opacity(0.14),
-                        Self.goldWarm.opacity(0.04),
+                        Color.goldAccent.opacity(0.14),
+                        Color.goldWarm.opacity(0.04),
                         Color.clear
                     ],
                     startPoint: .topLeading,
@@ -140,8 +124,8 @@ struct PremiumLockedCard: View {
                 .strokeBorder(
                     LinearGradient(
                         colors: [
-                            Self.goldAccent.opacity(0.45),
-                            Self.goldWarm.opacity(0.15),
+                            Color.goldAccent.opacity(0.45),
+                            Color.goldWarm.opacity(0.15),
                             Color.clear
                         ],
                         startPoint: .topLeading,

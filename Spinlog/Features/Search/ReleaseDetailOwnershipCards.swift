@@ -190,6 +190,8 @@ struct MyItemCard: View {
                 currentValue: purchasePriceFieldId.map { item.value(forFieldId: $0) } ?? "",
                 actions: actions
             )
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
         }
         .task(id: "\(releaseId)_\(declaredCondition ?? "")_\(PremiumStore.shared.isPremium)") {
             guard PremiumStore.shared.isPremium else {
@@ -417,6 +419,25 @@ private struct SwipeableInstanceRow: View {
                 .tint(.indigo)
                 .labelStyle(.iconOnly)
                 .accessibilityLabel("Où ranger cet exemplaire")
+            }
+            // Repli d'iOS 26 (pas de `swipeActionsContainer`, voir `SwipeActionsContainerCompat`),
+            // et raccourci par appui long sur iOS 27.
+            .contextMenu {
+                Button {
+                    onOpenNotes()
+                } label: {
+                    Label("Modifier", systemImage: "pencil")
+                }
+                Button {
+                    onShelfPlacement()
+                } label: {
+                    Label("Où ranger cet exemplaire", systemImage: "books.vertical.fill")
+                }
+                Button(role: .destructive) {
+                    onRequestDelete()
+                } label: {
+                    Label("Supprimer", systemImage: "trash.fill")
+                }
             }
             .fullScreenCover(isPresented: $showingPremiumSheet) {
                 SpinlogPaywallView()

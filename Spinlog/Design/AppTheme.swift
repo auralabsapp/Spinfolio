@@ -323,8 +323,8 @@ final class ThemeManager {
             queue: .main
         ) { [weak self] _ in
             guard let self else { return }
-            let isPremium = UserDefaults(suiteName: "group.com.auralabs.Spinlog")?.bool(forKey: "com.spinlog.isPremium")
-                ?? UserDefaults.standard.bool(forKey: "com.spinlog.isPremium")
+            let isPremium = UserDefaults(suiteName: AppGroup.id)?.bool(forKey: PremiumConstants.isPremiumDefaultsKey)
+                ?? UserDefaults.standard.bool(forKey: PremiumConstants.isPremiumDefaultsKey)
             self.revertToDefaultIfNeeded(isPremium: isPremium)
         }
     }
@@ -463,6 +463,21 @@ extension Color {
     static var chartBlueSoftTop: Color { buttonPinkTop }
     static var chartBlueSoftBottom: Color { buttonPinkBottom }
     static var spinlogBlueButtonGradient: LinearGradient { spinlogPinkButtonGradient }
+
+    // MARK: - Palette "Or Hifi / Ambre Collector" (habillage premium)
+    //
+    // Avant cette centralisation, `SpinlogPaywallView`, `SettingsPremiumHeroBanner` et
+    // `PremiumGate` retapaient chacun les mêmes valeurs RGB indépendamment — avec une divergence
+    // passée inaperçue (opacité du badge à 0.18 dans un fichier, 0.16 dans les deux autres),
+    // unifiée ici à 0.16.
+    static let goldAccent = Color(red: 0.95, green: 0.68, blue: 0.18)
+    static let goldWarm = Color(red: 0.88, green: 0.52, blue: 0.12)
+    static let goldDeep = Color(red: 0.72, green: 0.40, blue: 0.08)
+    static let goldLight = Color(red: 0.98, green: 0.78, blue: 0.28)
+    static let goldBadgeBg = goldAccent.opacity(0.16)
+    static var goldButtonGradient: LinearGradient {
+        LinearGradient(colors: [goldLight, goldWarm], startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
 
     /// Vert plus soutenu et contrasté pour le texte de plus-value (évite le vert fluo clair illisible).
     static let gainPositive = Color(uiColor: UIColor { trait in

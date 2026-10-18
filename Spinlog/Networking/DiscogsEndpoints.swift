@@ -108,6 +108,37 @@ extension DiscogsAPIClient {
         try await request(path: "users/\(username)/collection/folders", credentials: credentials)
     }
 
+    private struct FolderNamePayload: Encodable {
+        let name: String
+    }
+
+    func createCollectionFolder(username: String, name: String, credentials: DiscogsCredentials) async throws {
+        try await requestVoid(
+            path: "users/\(username)/collection/folders",
+            method: "POST",
+            body: JSONEncoder().encode(FolderNamePayload(name: name)),
+            credentials: credentials
+        )
+    }
+
+    func renameCollectionFolder(username: String, folderId: Int, name: String, credentials: DiscogsCredentials) async throws {
+        try await requestVoid(
+            path: "users/\(username)/collection/folders/\(folderId)",
+            method: "POST",
+            body: JSONEncoder().encode(FolderNamePayload(name: name)),
+            credentials: credentials
+        )
+    }
+
+    /// Discogs refuse la suppression d'un dossier non vide : vider le dossier d'abord.
+    func deleteCollectionFolder(username: String, folderId: Int, credentials: DiscogsCredentials) async throws {
+        try await requestVoid(
+            path: "users/\(username)/collection/folders/\(folderId)",
+            method: "DELETE",
+            credentials: credentials
+        )
+    }
+
     /// Estimation globale de la collection basée sur l'historique réel des ventes Discogs
     /// (pas les annonces en cours) — un seul appel, pas besoin d'interroger chaque release.
     func collectionValue(username: String, credentials: DiscogsCredentials) async throws -> CollectionValueResponse {

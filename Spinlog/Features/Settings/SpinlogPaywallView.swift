@@ -1,24 +1,14 @@
 import SwiftUI
 import StoreKit
 
-// MARK: - Palette Or Hifi / Ambre Collector (identique aux bannières Premium)
+// MARK: - Palette Or Hifi / Ambre Collector (partagée, voir Color.goldAccent etc. dans AppTheme.swift)
 
-private let goldAccent = Color(red: 0.95, green: 0.68, blue: 0.18)
-private let goldWarm = Color(red: 0.88, green: 0.52, blue: 0.12)
-private let goldDeep = Color(red: 0.72, green: 0.40, blue: 0.08)
-private let goldLight = Color(red: 0.98, green: 0.78, blue: 0.28)
-private let goldBadgeBg = Color(red: 0.95, green: 0.68, blue: 0.18).opacity(0.16)
-
-private var goldButtonGradient: LinearGradient {
-    LinearGradient(
-        colors: [
-            Color(red: 0.98, green: 0.78, blue: 0.28),
-            Color(red: 0.88, green: 0.52, blue: 0.12)
-        ],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
-}
+private let goldAccent = Color.goldAccent
+private let goldWarm = Color.goldWarm
+private let goldDeep = Color.goldDeep
+private let goldLight = Color.goldLight
+private let goldBadgeBg = Color.goldBadgeBg
+private var goldButtonGradient: LinearGradient { Color.goldButtonGradient }
 
 private var goldHeaderGradient: LinearGradient {
     LinearGradient(
@@ -139,7 +129,18 @@ struct SpinlogPaywallView: View {
         .background(Color.appBackground)
         .onInAppPurchaseCompletion { _, result in
             switch result {
-            case .success(.success):
+            case .success(.success(let verification)):
+                // Ce modificateur remplace le traitement par défaut de l'achat : rien ne garantit
+                // que la transaction repasse par `Transaction.updates`. On la valide, la termine et
+                // met à jour les droits ici, sinon le Premium pouvait ne pas s'activer avant le
+                // prochain lancement (et la transaction restait non terminée).
+                guard let transaction = try? SubscriptionManager.verify(verification) else {
+                    purchaseErrorMessage = String(localized: "L'achat n'a pas pu être vérifié auprès de l'App Store.")
+                    showingPurchaseErrorAlert = true
+                    return
+                }
+                await transaction.finish()
+                await SubscriptionManager.shared.updateCustomerProductStatus()
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
                 dismiss()
             case .success(.pending):

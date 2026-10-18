@@ -148,80 +148,42 @@ final class CollectionViewModel {
     private let syncQueue = OfflineSyncQueue.shared
 
     init() {
-        NotificationCenter.default.addObserver(
-            forName: .collectionItemAdded,
-            object: nil,
-            queue: .main
-        ) { [weak self] notification in
-            MainActor.assumeIsolated {
-                guard let self, let item = notification.userInfo?["item"] as? CollectionItem else { return }
-                self.handleCollectionItemAdded(item)
-            }
+        addLibraryObserver(for: .collectionItemAdded, payloadKey: "item") { [weak self] (item: CollectionItem) in
+            self?.handleCollectionItemAdded(item)
         }
 
-        NotificationCenter.default.addObserver(
-            forName: .collectionItemRemoved,
-            object: nil,
-            queue: .main
-        ) { [weak self] notification in
-            MainActor.assumeIsolated {
-                guard let self, let releaseId = notification.userInfo?["releaseId"] as? Int else { return }
-                let instanceId = notification.userInfo?["instanceId"] as? Int
-                self.handleCollectionItemRemoved(releaseId: releaseId, instanceId: instanceId)
-            }
+        addLibraryObserver(for: .collectionItemRemoved) { [weak self] notification in
+            guard let self, let releaseId = notification.userInfo?["releaseId"] as? Int else { return }
+            let instanceId = notification.userInfo?["instanceId"] as? Int
+            self.handleCollectionItemRemoved(releaseId: releaseId, instanceId: instanceId)
         }
 
-        NotificationCenter.default.addObserver(
-            forName: .collectionInstanceReplaced,
-            object: nil,
-            queue: .main
-        ) { [weak self] notification in
-            MainActor.assumeIsolated {
-                guard let self,
-                      let oldId = notification.userInfo?["oldInstanceId"] as? Int,
-                      let newItem = notification.userInfo?["newItem"] as? CollectionItem else { return }
-                self.handleCollectionInstanceReplaced(oldInstanceId: oldId, newItem: newItem)
-            }
+        addLibraryObserver(for: .collectionInstanceReplaced) { [weak self] notification in
+            guard let self,
+                  let oldId = notification.userInfo?["oldInstanceId"] as? Int,
+                  let newItem = notification.userInfo?["newItem"] as? CollectionItem else { return }
+            self.handleCollectionInstanceReplaced(oldInstanceId: oldId, newItem: newItem)
         }
 
-        NotificationCenter.default.addObserver(
-            forName: .shelfPreferencesChanged,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            MainActor.assumeIsolated {
-                guard let self else { return }
-                if self.sortOption == .shelf || self.sortOption == .artist {
-                    self.recomputeSections()
-                    if self.sortOption == .shelf && ShelfPreferencesStore.shared.sortStrategy.usesMasterYear {
-                        self.resolveMissingMastersIfNeeded()
-                    }
-                }
-            }
-        }
-
-        NotificationCenter.default.addObserver(
-            forName: .masterYearResolved,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            MainActor.assumeIsolated {
-                guard let self else { return }
+        addLibraryObserver(for: .shelfPreferencesChanged) { [weak self] in
+            guard let self else { return }
+            if self.sortOption == .shelf || self.sortOption == .artist {
+                self.recomputeSections()
                 if self.sortOption == .shelf && ShelfPreferencesStore.shared.sortStrategy.usesMasterYear {
-                    self.recomputeSections()
+                    self.resolveMissingMastersIfNeeded()
                 }
             }
         }
 
-        NotificationCenter.default.addObserver(
-            forName: .tagsChanged,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            MainActor.assumeIsolated {
-                guard let self else { return }
+        addLibraryObserver(for: .masterYearResolved) { [weak self] in
+            guard let self else { return }
+            if self.sortOption == .shelf && ShelfPreferencesStore.shared.sortStrategy.usesMasterYear {
                 self.recomputeSections()
             }
+        }
+
+        addLibraryObserver(for: .tagsChanged) { [weak self] in
+            self?.recomputeSections()
         }
     }
 
@@ -651,7 +613,13 @@ final class CollectionViewModel {
     /// propage la valeur à tous les `await` de cette tâche, y compris dans `fetchPage`.
     private func startBackgroundSync(username: String, folderId: Int, credentials: DiscogsCredentials) {
         backgroundSyncTask?.cancel()
+        // Renonce si une autre synchronisation complète du même dossier est déjà en cours
+        // (lancement à froid : `StatsViewModel`/`WidgetSnapshotSyncService`/
+        // `OfflineDownloadManager` peuvent aussi vouloir tout recharger en même temps) — la
+        // page 1 déjà affichée reste valide, un prochain passage sur cet onglet réessaiera.
+        guard localStore.beginFullCollectionSync(username: username, folderId: folderId) else { return }
         backgroundSyncTask = Task(priority: .utility) { [weak self] in
+            defer { self?.localStore.endFullCollectionSync(username: username, folderId: folderId) }
             await DiscogsRateLimiter.$priority.withValue(.background) {
                 guard let self else { return }
                 var reachedLastPage = false
@@ -755,6 +723,10 @@ final class CollectionViewModel {
     }
 
     func remove(_ item: CollectionItem) async {
+        if DemoMode.isActive {
+            actionMessage = AppMessages.demoRemovalBlocked
+            return
+        }
         guard let username = authManager.username else { return }
 
         // Si l'appareil est hors ligne et que les données ont plus de 6 heures (Option B) :
@@ -832,6 +804,10 @@ final class CollectionViewModel {
     /// dossiers concernés. Hors ligne, mis en file pour une synchro différée (même mécanique
     /// que `remove`).
     func moveInstance(_ item: CollectionItem, toFolderId: Int) async {
+        if DemoMode.isActive {
+            actionMessage = AppMessages.demoModificationBlocked
+            return
+        }
         guard let username = authManager.username, item.folderId != toFolderId else { return }
 
         if !networkMonitor.isConnected && isOfflineAndStale {

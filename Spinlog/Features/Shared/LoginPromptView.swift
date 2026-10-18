@@ -25,6 +25,12 @@ struct LoginPromptView: View {
                 .buttonStyle(.glassProminent)
                 .disabled(authManager.isAuthenticating)
 
+                Button("Explorer avec une collection de démo") {
+                    authManager.startDemo()
+                }
+                .buttonStyle(.glass)
+                .disabled(authManager.isAuthenticating)
+
                 if let error = authManager.lastError {
                     Text(error)
                         .font(.footnote)

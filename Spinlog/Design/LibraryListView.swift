@@ -152,11 +152,15 @@ struct LibraryListView<Item: SortableLibraryItem>: View {
             }
             .buttonStyle(.plain)
             .allowsHitTesting(!isSelecting)
+            .accessibilityHidden(isSelecting)
 
             if isSelecting {
                 Color.clear
                     .contentShape(Rectangle())
                     .onTapGesture {
+                        onToggleSelection?(item)
+                    }
+                    .librarySelectionAccessibility(info: info, isSelected: selectedItemIds.contains(item.id)) {
                         onToggleSelection?(item)
                     }
             }

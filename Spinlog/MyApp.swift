@@ -21,6 +21,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
                 return
             }
             let work = Task { @MainActor in
+                // Ce réveil sert aussi à fermer une écoute arrivée à échéance pendant que l'app
+                // était suspendue (voir `NowPlayingActivityManager.scheduleBackgroundExpiryCheck`).
+                await NowPlayingActivityManager.shared.checkExpiry()
                 WantlistAlertStore.shared.scheduleBackgroundCheck()
                 // Vraie tâche de fond iOS (l'utilisateur ne regarde pas l'app) : priorité basse
                 // pour le quota Discogs, par cohérence avec les autres synchros de fond.
@@ -149,6 +152,16 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
                     } else if newPhase == .active {
                         // Classement des discographies de la bibliothèque, discret (voir le service).
                         DiscogsCategoryBackfillService.shared.start()
+                        // Expiration, remboursement ou achat fait sur un autre appareil pendant que
+                        // l'app était suspendue : `Transaction.updates` ne les signale pas toujours.
+                        Task {
+                            await SubscriptionManager.shared.updateCustomerProductStatus()
+                        }
+                        // Actions hors ligne restées en attente pendant que l'app était suspendue
+                        // (le réseau a pu revenir sans que `networkConnectionRestored` soit reçu).
+                        Task {
+                            await OfflineSyncQueue.shared.processQueue()
+                        }
                         Task {
                             await NowPlayingActivityManager.shared.checkExpiry()
                         }

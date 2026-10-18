@@ -17,6 +17,16 @@ struct LabelDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .disablesContentPopGesture()
             .task { await viewModel.load(labelId: labelId) }
+            // Seul des 4 écrans de détail (Release/Artist/Master/Label) à ne pas s'enregistrer
+            // auprès de `TabNavigationCoordinator` : sa déduplication de navigation (ex: ne pas
+            // repousser la même destination si elle est déjà au sommet de la pile) ne fonctionnait
+            // donc pas quand une fiche label était au sommet.
+            .onAppear {
+                TabNavigationCoordinator.shared.registerTopDestination(.label(labelId))
+            }
+            .onDisappear {
+                TabNavigationCoordinator.shared.unregisterTopDestination(.label(labelId))
+            }
     }
 
     @ViewBuilder

@@ -86,9 +86,18 @@ final class ReleaseActions {
         }
     }
 
-    /// Pré-charge les dossiers pour le sélecteur contextuel
+    /// Pré-charge les dossiers pour le sélecteur contextuel. Réutilise d'abord ceux déjà en
+    /// mémoire dans `CollectionViewModel` (chargés dès le lancement, voir `RootTabView`) plutôt
+    /// que de refaire systématiquement l'appel réseau `GET .../collection/folders` : chaque
+    /// ouverture de fiche release en appelait sinon une copie indépendante, alors que cette
+    /// donnée change rarement et est déjà fraîche dans l'immense majorité des cas.
     func loadFoldersIfNeeded() async {
         guard let username = authManager.username else { return }
+        let sharedFolders = CollectionViewModel.shared.folders
+        if !sharedFolders.isEmpty {
+            folders = sharedFolders
+            return
+        }
         let result = await FolderPickerLoader.loadFolders(
             username: username,
             networkMonitor: networkMonitor,
@@ -206,6 +215,10 @@ final class ReleaseActions {
     /// exemplaires possédés) : l'écriture se fait via n'importe quel exemplaire, puis la
     /// valeur est répercutée sur tous les exemplaires locaux.
     func updateReleaseRating(_ rating: Int) async {
+        if DemoMode.isActive {
+            message = AppMessages.demoModificationBlocked
+            return
+        }
         guard let (username, credentials) = authManager.session,
               let anchor = collectionInstances.first else { return }
 
@@ -241,6 +254,10 @@ final class ReleaseActions {
     /// Discogs entre tous les exemplaires d'une release), le prix d'achat est un champ personnalisé
     /// propre à chaque exemplaire physique : deux copies peuvent avoir été achetées à des prix différents.
     func updatePurchasePrice(_ canonicalValue: String, for instanceId: Int) async {
+        if DemoMode.isActive {
+            message = AppMessages.demoModificationBlocked
+            return
+        }
         guard let (username, credentials) = authManager.session,
               let fieldId = CollectionPreferencesStore.purchasePriceFieldId(for: username),
               let index = collectionInstances.firstIndex(where: { $0.instanceId == instanceId }) else { return }
@@ -340,6 +357,10 @@ final class ReleaseActions {
 
     /// Bascule instantanément l'état collection (grisé/dégrisé) au clic.
     func addToCollection(releaseId: Int, release: Release? = nil, targetFolderId: Int? = nil) async {
+        if DemoMode.isActive {
+            message = AppMessages.demoAddBlocked
+            return
+        }
         guard let username = authManager.username else {
             message = AppMessages.loginRequiredForCollection
             return
@@ -477,6 +498,10 @@ final class ReleaseActions {
 
     /// Supprime un exemplaire spécifique de la collection
     func removeInstance(_ instance: CollectionItem) async {
+        if DemoMode.isActive {
+            message = AppMessages.demoRemovalBlocked
+            return
+        }
         guard let username = authManager.username else { return }
 
         let targetInstanceId = instance.instanceId
@@ -575,6 +600,10 @@ final class ReleaseActions {
     /// appliquée localement tout de suite et mise en file pour une synchro différée (même
     /// mécanique que `CollectionItemEditSheet` pour les champs personnalisés).
     func moveInstance(_ instance: CollectionItem, toFolderId: Int) async {
+        if DemoMode.isActive {
+            message = AppMessages.demoModificationBlocked
+            return
+        }
         guard let username = authManager.username, instance.folderId != toFolderId else { return }
 
         let instanceId = instance.instanceId
@@ -658,6 +687,10 @@ final class ReleaseActions {
 
     /// Supprime tous les exemplaires de la release de la collection
     func removeFromCollection(releaseId: Int) async {
+        if DemoMode.isActive {
+            message = AppMessages.demoRemovalBlocked
+            return
+        }
         guard let username = authManager.username else { return }
 
         let savedInstances = collectionInstances
@@ -779,6 +812,10 @@ final class ReleaseActions {
     }
 
     func addToWantlist(releaseId: Int, release: Release? = nil) async {
+        if DemoMode.isActive {
+            message = AppMessages.demoAddBlocked
+            return
+        }
         guard let username = authManager.username else {
             message = AppMessages.loginRequiredForWantlist
             return
@@ -839,6 +876,10 @@ final class ReleaseActions {
     }
 
     func removeFromWantlist(releaseId: Int) async {
+        if DemoMode.isActive {
+            message = AppMessages.demoRemovalBlocked
+            return
+        }
         guard let username = authManager.username else { return }
 
         // Vérifié AVANT toute modification : auparavant, l'élément était déjà supprimé du cache

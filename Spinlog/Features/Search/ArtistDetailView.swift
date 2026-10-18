@@ -389,10 +389,10 @@ struct ArtistDetailView: View {
         if isOwned || isInWantlist {
             VStack(alignment: .trailing, spacing: 4) {
                 if isOwned {
-                    StatusBadgeView(status: .owned)
+                    StatusBadgeView(status: .collection)
                 }
                 if isInWantlist {
-                    StatusBadgeView(status: .inWantlist)
+                    StatusBadgeView(status: .wantlist)
                 }
             }
         }

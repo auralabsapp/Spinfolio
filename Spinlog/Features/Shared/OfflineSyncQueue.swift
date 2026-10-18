@@ -87,6 +87,16 @@ final class OfflineSyncQueue {
     private let storageKey = "com.spinlog.offlinePendingActions"
     private var lastRequestTime: Date = .distantPast
 
+    /// Nouvel essai programmé après une panne passagère (réseau instable, Discogs indisponible).
+    private var retryTask: Task<Void, Never>?
+    /// Pannes passagères successives, pour espacer les essais (30 s, 1 min, 2 min… jusqu'à 30 min).
+    private var consecutiveTransientFailures = 0
+    /// Au-delà, une action qui n'a jamais pu partir est abandonnée (avec un message) plutôt que
+    /// rejouée indéfiniment sur une collection qui a pu changer entre-temps.
+    private static let maxPendingAge: TimeInterval = 7 * 24 * 3600
+    /// Refus définitifs (4xx) tolérés avant abandon : ils se reproduiront presque toujours.
+    private static let maxDefinitiveFailures = 3
+
     private init() {
         loadPersistedActions()
 
@@ -169,49 +179,72 @@ final class OfflineSyncQueue {
 
                 // Succès : retirer de la file
                 removeAction(id: action.id)
+                consecutiveTransientFailures = 0
             } catch where error.isNotFound && (action.type == .removeFromCollection || action.type == .removeFromWantlist) {
                 // Retrait d'un élément déjà absent sur Discogs : le but est atteint. Auparavant,
                 // ce 404 était retenté trois fois puis signalé comme un échec définitif.
                 removeAction(id: action.id)
             } catch {
-                // Gestion du Rate Limiting HTTP 429
-                let errorString = error.localizedDescription
-                let isRateLimited: Bool
-                if let apiError = error as? DiscogsAPIClient.APIError {
-                    switch apiError {
-                    case .rateLimited: isRateLimited = true
-                    case .http(let status, _): isRateLimited = (status == 429)
-                    default: isRateLimited = false
-                    }
-                } else {
-                    isRateLimited = errorString.contains("429")
-                }
-
-                if isRateLimited {
+                if Self.isRateLimited(error) {
                     // Backoff de sécurité avant de réessayer
                     try? await Task.sleep(for: .seconds(5))
                     continue
                 }
 
-                // Incrémenter les tentatives ou déclarer l'échec définitif
+                if error.isTransientNetworkFailure {
+                    // Panne passagère : l'action reste en file, intacte. Auparavant, ces erreurs
+                    // comptaient comme des échecs ordinaires (3 essais à 2 s d'intervalle), si bien
+                    // qu'une coupure réseau de quelques secondes suffisait à perdre l'action.
+                    if Task.isCancelled || error.isCancellation { break }
+                    if Date().timeIntervalSince(action.date) > Self.maxPendingAge {
+                        removeAction(id: action.id)
+                        lastErrorNotification = String(localized: "Échec définitif de synchronisation : \(actionDescription(for: action)) (\(error.localizedDescription))")
+                        continue
+                    }
+                    consecutiveTransientFailures += 1
+                    scheduleRetry()
+                    break
+                }
+
+                // Refus définitif (4xx...) : quelques essais, puis abandon signalé à l'utilisateur.
                 var updatedAction = action
                 updatedAction.retryCount += 1
 
-                if updatedAction.retryCount >= 3 {
-                    // Échec définitif : suppression de la file et notification de l'utilisateur
+                if updatedAction.retryCount >= Self.maxDefinitiveFailures {
                     removeAction(id: action.id)
                     lastErrorNotification = String(localized: "Échec définitif de synchronisation : \(actionDescription(for: action)) (\(error.localizedDescription))")
                 } else {
-                    // Mise à jour de l'action avec nouveau compteur
                     if let index = pendingActions.firstIndex(where: { $0.id == action.id }) {
                         pendingActions[index] = updatedAction
                         persistActions()
                     }
-                    // Pause temporaire avant la prochaine tentative
                     try? await Task.sleep(for: .seconds(2))
                 }
             }
         }
+        }
+    }
+
+    private static func isRateLimited(_ error: Error) -> Bool {
+        guard let apiError = error as? DiscogsAPIClient.APIError else {
+            return error.localizedDescription.contains("429")
+        }
+        switch apiError {
+        case .rateLimited: return true
+        case .http(let status, _): return status == 429
+        default: return false
+        }
+    }
+
+    /// Reprend la file plus tard, avec un délai qui double à chaque panne passagère successive.
+    /// Complète les reprises déjà déclenchées par le retour du réseau et le retour au premier plan.
+    private func scheduleRetry() {
+        retryTask?.cancel()
+        let delay = min(30 * pow(2, Double(max(0, consecutiveTransientFailures - 1))), 1800)
+        retryTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(delay))
+            guard !Task.isCancelled else { return }
+            await self?.processQueue()
         }
     }
 

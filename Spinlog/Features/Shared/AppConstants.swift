@@ -18,6 +18,10 @@ nonisolated enum DiscogsConstants {
     static let uncategorizedFolderId = 1
     /// Taille de page maximale acceptée par l'API Discogs pour les listes paginées.
     static let maxPageSize = 100
+    /// Hôte de l'API Discogs (distinct de `websiteURL` ci-dessous) — avant cette constante,
+    /// cette même chaîne était retapée à la main dans `DiscogsAPIClient` et `DiscogsAuthManager`
+    /// (handshake OAuth), sans qu'une faute de frappe dans l'une des deux copies soit détectée.
+    static let apiBaseURL = URL(string: "https://api.discogs.com")!
     static let websiteURL = URL(string: "https://www.discogs.com")!
     /// URL officielle de suppression définitive de compte Discogs (Guideline Apple 5.1.1(v))
     static let accountDeletionURL = websiteURL.appendingPathComponent("users/delete")
@@ -48,6 +52,21 @@ nonisolated enum AppTiming {
 /// (dupliqué là-bas : les deux cibles ne partagent pas de fichiers Swift entre elles).
 nonisolated enum WidgetKinds {
     static var randomAlbum: String { String(localized: "RandomAlbumWidget") }
+}
+
+/// Identifiant du App Group partagé par l'app, le widget et la Live Activity — nécessaire pour
+/// toute donnée qui doit traverser ces cibles. Avant cette constante, cette chaîne était retapée
+/// à la main dans `PremiumStore`, `AppTheme` et `WidgetSnapshotStore`.
+nonisolated enum AppGroup {
+    static let id = "group.com.auralabs.Spinlog"
+}
+
+/// Clé UserDefaults (App Group) du statut premium. Avant cette constante, `PremiumStore.storageKey`
+/// (la source de vérité) était `private`, forçant `AppTheme` et `WidgetSnapshotStore` à retaper la
+/// même chaîne à la main pour lire le même statut — une faute de frappe dans une seule des copies
+/// aurait désynchronisé silencieusement leur lecture du statut réel de `PremiumStore`.
+nonisolated enum PremiumConstants {
+    static let isPremiumDefaultsKey = "com.spinlog.isPremium"
 }
 
 /// Contraintes de saisie pour les tags (donnée 100% locale à l'app, non liée à Discogs).
@@ -85,4 +104,9 @@ nonisolated enum AppMessages {
     static var addFailed: String { String(localized: "Impossible d'ajouter ce disque sur Discogs.") }
     static var removalFailed: String { String(localized: "Impossible de retirer ce disque sur Discogs.") }
     static var moveFailed: String { String(localized: "Impossible de changer ce disque de dossier sur Discogs.") }
+
+    // Mode démo (voir `DemoMode`) : la collection et la wantlist d'exemple sont en lecture seule.
+    static var demoAddBlocked: String { String(localized: "En mode démo, il n'est pas possible d'ajouter des albums à la collection ou à la wantlist. Connecte ton compte Discogs dans Réglages pour gérer ta propre collection.") }
+    static var demoRemovalBlocked: String { String(localized: "En mode démo, il n'est pas possible de retirer des albums de la collection ou de la wantlist. Connecte ton compte Discogs dans Réglages pour gérer ta propre collection.") }
+    static var demoModificationBlocked: String { String(localized: "En mode démo, la collection et la wantlist ne peuvent pas être modifiées. Connecte ton compte Discogs dans Réglages pour gérer ta propre collection.") }
 }

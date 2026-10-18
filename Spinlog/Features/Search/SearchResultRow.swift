@@ -1,25 +1,5 @@
 import SwiftUI
 
-enum SearchDestination: Hashable {
-    case release(id: Int, coverURL: String?)
-    case master(Int)
-    case artist(Int)
-    case label(Int)
-
-    static func release(_ id: Int, coverURL: String? = nil) -> SearchDestination {
-        .release(id: id, coverURL: coverURL)
-    }
-
-    init(from result: SearchResult) {
-        switch result.type {
-        case "master": self = .master(result.id)
-        case "artist": self = .artist(result.id)
-        case "label": self = .label(result.id)
-        default: self = .release(result.id, coverURL: result.thumb ?? result.coverImage)
-        }
-    }
-}
-
 struct SearchResultRow: View {
     let result: SearchResult
 
@@ -74,10 +54,10 @@ struct SearchResultRow: View {
                     if isRelease && (membership.isInCollection(result.id) || membership.isInWantlist(result.id)) {
                         HStack(spacing: 6) {
                             if membership.isInCollection(result.id) {
-                                membershipPill(text: "Collection", systemImage: "checkmark.circle.fill", color: Color.tagForeground)
+                                StatusBadgeView(status: .collection)
                             }
                             if membership.isInWantlist(result.id) {
-                                membershipPill(text: "Wantlist", systemImage: "heart.fill", color: Color.spinlogPink)
+                                StatusBadgeView(status: .wantlist)
                             }
                         }
                         .padding(.top, 1)
@@ -95,14 +75,5 @@ struct SearchResultRow: View {
             .padding(.vertical, 2)
             .allowsHitTesting(false)
         }
-    }
-
-    private func membershipPill(text: String, systemImage: String, color: Color) -> some View {
-        Label(text, systemImage: systemImage)
-            .font(.caption2.weight(.semibold))
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(color.opacity(0.15), in: Capsule())
-            .foregroundStyle(color)
     }
 }

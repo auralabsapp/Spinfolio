@@ -79,6 +79,8 @@ enum OriginalYearsGranularity: String, CaseIterable, Identifiable {
 }
 
 struct StatsView: View {
+    private static let scrollTopAnchor = "statsTop"
+
     /// Partagée entre les pochettes de `recentAdditionsSection` et son squelette, pour que ce
     /// dernier ne puisse pas diverger silencieusement de la taille réelle.
     static let recentAdditionCoverSize: CGFloat = 96
@@ -165,6 +167,7 @@ struct StatsView: View {
             // au contenu réel.
             ScrollViewReader { scrollProxy in
                 ScrollView {
+                    Color.clear.frame(height: 0).id(Self.scrollTopAnchor)
                     VStack(alignment: .leading, spacing: 24) {
                         if viewModel.isLoadingOverview {
                             statsSkeletonContent
@@ -199,6 +202,9 @@ struct StatsView: View {
                     // Marge inférieure augmentée quand la bottom sheet est ouverte pour garantir que
                     // le titre du graphique puisse défiler librement jusqu'au bord supérieur de l'écran.
                     .padding(.bottom, (selectedYearData != nil || selectedGenreData != nil || selectedArtistData != nil || selectedMediaFormatData != nil) ? 420 : 0)
+                }
+                .onChange(of: TabNavigationCoordinator.shared.scrollToTopOfStatsTrigger) {
+                    withAnimation { scrollProxy.scrollTo(Self.scrollTopAnchor, anchor: .top) }
                 }
                 .sheet(item: $selectedYearData, onDismiss: {
                     withAnimation(.easeInOut(duration: 0.25)) {

@@ -16,6 +16,9 @@ final class WantlistViewModel {
     }
     private(set) var isLoading = false
     private(set) var errorMessage: String?
+    /// Résultat d'une action (retrait, ajout à la collection…), affiché en alerte par
+    /// `WantlistView` — `errorMessage`, lui, n'est visible que lorsque la liste est vide.
+    var actionMessage: String?
     private(set) var isOfflineAndStale: Bool = false
 
     var searchText = "" {
@@ -164,26 +167,12 @@ final class WantlistViewModel {
     private let syncQueue = OfflineSyncQueue.shared
 
     init() {
-        NotificationCenter.default.addObserver(
-            forName: .wantlistItemAdded,
-            object: nil,
-            queue: .main
-        ) { [weak self] notification in
-            MainActor.assumeIsolated {
-                guard let self, let item = notification.userInfo?["item"] as? WantlistItem else { return }
-                self.handleWantlistItemAdded(item)
-            }
+        addLibraryObserver(for: .wantlistItemAdded, payloadKey: "item") { [weak self] (item: WantlistItem) in
+            self?.handleWantlistItemAdded(item)
         }
 
-        NotificationCenter.default.addObserver(
-            forName: .wantlistItemRemoved,
-            object: nil,
-            queue: .main
-        ) { [weak self] notification in
-            MainActor.assumeIsolated {
-                guard let self, let releaseId = notification.userInfo?["releaseId"] as? Int else { return }
-                self.handleWantlistItemRemoved(releaseId: releaseId)
-            }
+        addLibraryObserver(for: .wantlistItemRemoved, payloadKey: "releaseId") { [weak self] (releaseId: Int) in
+            self?.handleWantlistItemRemoved(releaseId: releaseId)
         }
     }
 
@@ -341,12 +330,16 @@ final class WantlistViewModel {
     }
 
     func remove(_ item: WantlistItem) async {
+        if DemoMode.isActive {
+            actionMessage = AppMessages.demoRemovalBlocked
+            return
+        }
         guard let username = authManager.username else { return }
 
         // Si l'appareil est hors ligne et que les données ont plus de 6 heures (Option B) :
         // maintien de l'affichage en lecture seule et blocage des modifications
         if !networkMonitor.isConnected && isOfflineAndStale {
-            errorMessage = String(localized: "Mode hors ligne (données de plus de 6 h) : modification bloquée.")
+            actionMessage = String(localized: "Mode hors ligne (données de plus de 6 h) : modification bloquée.")
             return
         }
 
@@ -377,10 +370,14 @@ final class WantlistViewModel {
     }
 
     func beginMoveToCollection(_ item: WantlistItem) async {
+        if DemoMode.isActive {
+            actionMessage = AppMessages.demoAddBlocked
+            return
+        }
         guard let username = authManager.username else { return }
 
         if !networkMonitor.isConnected && isOfflineAndStale {
-            errorMessage = String(localized: "Mode hors ligne (données de plus de 6 h) : modification bloquée.")
+            actionMessage = String(localized: "Mode hors ligne (données de plus de 6 h) : modification bloquée.")
             return
         }
 
@@ -404,7 +401,7 @@ final class WantlistViewModel {
             folders = response.folders.filter { $0.id != 0 }
             itemAwaitingFolderChoice = item
         } catch {
-            errorMessage = error.localizedDescription
+            actionMessage = error.localizedDescription
         }
     }
 

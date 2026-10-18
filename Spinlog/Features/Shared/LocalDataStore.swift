@@ -72,6 +72,19 @@ final class CachedFetchMetadata {
     }
 }
 
+/// Identifiants de `CachedFetchMetadata` ("quand ce dossier/cette wantlist a-t-il été récupéré
+/// pour la dernière fois") — avant ces helpers, le même format de chaîne était retapé à la main
+/// une dizaine de fois dans `LocalDataStore`, au risque qu'une des copies diverge silencieusement
+/// (ex: ordre des composants inversé) sans qu'aucun compilateur ne le détecte.
+private enum CacheMetaKey {
+    static func collection(username: String, folderId: Int) -> String {
+        "\(username)_collection_\(folderId)"
+    }
+    static func wantlist(username: String) -> String {
+        "\(username)_wantlist"
+    }
+}
+
 /// Gestionnaire de persistance locale basé sur SwiftData avec règle de TTL de 6 heures.
 @MainActor
 final class LocalDataStore {
@@ -341,7 +354,7 @@ final class LocalDataStore {
         }
 
         // Met à jour l'horodatage global pour ce dossier
-        let metaId = "\(username)_collection_\(folderId)"
+        let metaId = CacheMetaKey.collection(username: username, folderId: folderId)
         let meta = CachedFetchMetadata(id: metaId, lastFetchedAt: now)
         context.insert(meta)
 
@@ -419,7 +432,7 @@ final class LocalDataStore {
             await saveAndYieldIfNeeded(index)
         }
 
-        let metaId = "\(username)_collection_\(folderId)"
+        let metaId = CacheMetaKey.collection(username: username, folderId: folderId)
         let meta = CachedFetchMetadata(id: metaId, lastFetchedAt: now)
         context.insert(meta)
 
@@ -613,7 +626,7 @@ final class LocalDataStore {
     }
 
     func lastCollectionFetchedAt(username: String, folderId: Int) -> Date? {
-        let targetId = "\(username)_collection_\(folderId)"
+        let targetId = CacheMetaKey.collection(username: username, folderId: folderId)
         let descriptor = FetchDescriptor<CachedFetchMetadata>(
             predicate: #Predicate<CachedFetchMetadata> { $0.id == targetId }
         )
@@ -627,14 +640,38 @@ final class LocalDataStore {
         return Date().timeIntervalSince(date) >= DiscogsConstants.sixHoursTTL
     }
 
+    // MARK: - Garde anti-doublon pour une synchronisation complète en cours
+
+    /// Au lancement à froid avec un cache périmé, `StatsViewModel`, `WidgetSnapshotSyncService`,
+    /// `CollectionViewModel.startBackgroundSync` et `OfflineDownloadManager` peuvent chacun décider
+    /// indépendamment de recharger tout le même dossier ("All") pour le même compte, puisqu'ils
+    /// vérifient tous `isCollectionStale` avant qu'aucun n'ait commencé à écrire le résultat — sans
+    /// ce verrou, ça peut lancer 3-4 crawls complets concurrents de la même donnée, en concurrence
+    /// pour le même quota Discogs.
+    private var activeFullCollectionSyncKeys: Set<String> = []
+
+    /// Tente de réserver une synchronisation complète de ce dossier : `false` si une autre est
+    /// déjà en cours pour le même compte/dossier (l'appelant doit alors renoncer, le cache sera de
+    /// toute façon rafraîchi par celle en cours). Toujours appairé à `endFullCollectionSync`.
+    func beginFullCollectionSync(username: String, folderId: Int) -> Bool {
+        let key = "\(username)_\(folderId)"
+        guard !activeFullCollectionSyncKeys.contains(key) else { return false }
+        activeFullCollectionSyncKeys.insert(key)
+        return true
+    }
+
+    func endFullCollectionSync(username: String, folderId: Int) {
+        activeFullCollectionSyncKeys.remove("\(username)_\(folderId)")
+    }
+
     // MARK: - Outils Développeur / Simulation
 
     /// Simule un cache plus vieux que 6 heures (7h en arrière) pour tester l'apparition
     /// des bandeaux hors ligne et le comportement de synchronisation selon la règle Discogs.
     func simulateStaleCache(username: String) {
         let sevenHoursAgo = Date().addingTimeInterval(-7 * 3600)
-        let collectionMetaId = "\(username)_collection_\(DiscogsConstants.allFolderId)"
-        let wantlistMetaId = "\(username)_wantlist"
+        let collectionMetaId = CacheMetaKey.collection(username: username, folderId: DiscogsConstants.allFolderId)
+        let wantlistMetaId = CacheMetaKey.wantlist(username: username)
 
         let cMeta = CachedFetchMetadata(id: collectionMetaId, lastFetchedAt: sevenHoursAgo)
         context.insert(cMeta)
@@ -648,8 +685,8 @@ final class LocalDataStore {
     /// Réinitialise l'horodatage du cache à l'instant présent (tout frais).
     func resetCacheFreshness(username: String) {
         let now = Date()
-        let collectionMetaId = "\(username)_collection_\(DiscogsConstants.allFolderId)"
-        let wantlistMetaId = "\(username)_wantlist"
+        let collectionMetaId = CacheMetaKey.collection(username: username, folderId: DiscogsConstants.allFolderId)
+        let wantlistMetaId = CacheMetaKey.wantlist(username: username)
 
         let cMeta = CachedFetchMetadata(id: collectionMetaId, lastFetchedAt: now)
         context.insert(cMeta)
@@ -695,7 +732,7 @@ final class LocalDataStore {
             context.insert(entry)
         }
 
-        let metaId = "\(username)_wantlist"
+        let metaId = CacheMetaKey.wantlist(username: username)
         let meta = CachedFetchMetadata(id: metaId, lastFetchedAt: now)
         context.insert(meta)
 
@@ -718,7 +755,7 @@ final class LocalDataStore {
             await saveAndYieldIfNeeded(index)
         }
 
-        let metaId = "\(username)_wantlist"
+        let metaId = CacheMetaKey.wantlist(username: username)
         let meta = CachedFetchMetadata(id: metaId, lastFetchedAt: now)
         context.insert(meta)
 
@@ -834,7 +871,7 @@ final class LocalDataStore {
     }
 
     func lastWantlistFetchedAt(username: String) -> Date? {
-        let targetId = "\(username)_wantlist"
+        let targetId = CacheMetaKey.wantlist(username: username)
         let descriptor = FetchDescriptor<CachedFetchMetadata>(
             predicate: #Predicate<CachedFetchMetadata> { $0.id == targetId }
         )
@@ -901,7 +938,7 @@ final class LocalDataStore {
         }
 
         let collectionMetaId = "\(username)_collection"
-        let wantlistMetaId = "\(username)_wantlist"
+        let wantlistMetaId = CacheMetaKey.wantlist(username: username)
         let metaDescriptor = FetchDescriptor<CachedFetchMetadata>(
             predicate: #Predicate<CachedFetchMetadata> { $0.id == collectionMetaId || $0.id == wantlistMetaId }
         )

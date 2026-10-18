@@ -170,12 +170,17 @@ struct LibraryCarouselView<Item: SortableLibraryItem>: View {
     }
 
     var body: some View {
+        // Aplati UNE fois par passage de rendu plutôt qu'à chaque accès à `items` (jusqu'à 4-5
+        // fois par rendu : `ForEach`, et `positionIndicator` + son propre `firstIndex(where:)`
+        // une fois par carte matérialisée) — `items` reste une propriété calculée pour les appels
+        // peu fréquents (saut programmé, position initiale), qui n'ont pas besoin de ce cache.
+        let currentItems = items
         VStack(spacing: isRegularDisplay ? 6 : 2) {
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: cardSpacing) {
-                    ForEach(items) { item in
+                    ForEach(currentItems) { item in
                         let isRegularDisplay = isRegularDisplay
-                        carouselCard(for: item, size: cardSize, cardWidth: cardWidth)
+                        carouselCard(for: item, size: cardSize, cardWidth: cardWidth, items: currentItems)
                             .id(item.id)
                             .scrollTransition(.interactive, axis: .horizontal) { content, phase in
                                 content
@@ -287,7 +292,7 @@ struct LibraryCarouselView<Item: SortableLibraryItem>: View {
 
     // MARK: - Carte Carrousel
 
-    private func carouselCard(for item: Item, size: CGFloat, cardWidth: CGFloat) -> some View {
+    private func carouselCard(for item: Item, size: CGFloat, cardWidth: CGFloat, items: [Item]) -> some View {
         let info = item.basicInformation
         let coverURL = info.coverImage ?? info.thumb
         let isSelected = selectedItemIds.contains(item.id)
@@ -330,11 +335,15 @@ struct LibraryCarouselView<Item: SortableLibraryItem>: View {
                 }
                 .buttonStyle(.plain)
                 .allowsHitTesting(!isSelecting)
+                .accessibilityHidden(isSelecting)
 
                 if isSelecting {
                     Color.clear
                         .contentShape(Rectangle())
                         .onTapGesture {
+                            onToggleSelection?(item)
+                        }
+                        .librarySelectionAccessibility(info: info, isSelected: isSelected) {
                             onToggleSelection?(item)
                         }
                 }
@@ -398,7 +407,7 @@ struct LibraryCarouselView<Item: SortableLibraryItem>: View {
                     .transition(.opacity.combined(with: .scale(scale: 0.95)))
 
                 // Indicateur de position (ex : "14 sur 85"), juste sous les icônes d'actions.
-                positionIndicator
+                positionIndicator(items: items)
                     .padding(.top, isRegularDisplay ? 8 : 4)
             }
         }
@@ -408,7 +417,7 @@ struct LibraryCarouselView<Item: SortableLibraryItem>: View {
 
     // MARK: - Indicateur de position
 
-    private var positionIndicator: some View {
+    private func positionIndicator(items: [Item]) -> some View {
         let currentIndex = items.firstIndex(where: { $0.id == displayItemId }) ?? 0
         return HStack(spacing: 6) {
             Image(systemName: "opticaldisc")

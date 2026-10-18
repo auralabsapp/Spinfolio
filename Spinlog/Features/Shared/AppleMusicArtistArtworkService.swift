@@ -142,7 +142,7 @@ final class AppleMusicArtistArtworkService {
             editorialNotesCache[key] = text
             return text
         } catch {
-            logger.error("Récupération de la biographie échouée pour \(artistName, privacy: .public) : \(error, privacy: .public)")
+            logger.error("Récupération de la biographie échouée pour \(artistName, privacy: .private) : \(error, privacy: .public)")
             return nil
         }
     }
@@ -259,7 +259,7 @@ final class AppleMusicArtistArtworkService {
             candidatesCache[key] = Array(candidates)
             return Array(candidates)
         } catch {
-            logger.error("Recherche MusicKit échouée pour \(artistName, privacy: .public) : \(error, privacy: .public)")
+            logger.error("Recherche MusicKit échouée pour \(artistName, privacy: .private) : \(error, privacy: .public)")
             return nil
         }
     }

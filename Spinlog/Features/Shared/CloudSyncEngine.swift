@@ -269,7 +269,7 @@ final class CloudSyncEngine {
 
     private func start() {
         guard syncEngine == nil else { return }
-        cloudSyncLogger.log("start() — activeUsername=\(self.activeUsername ?? "nil", privacy: .public)")
+        cloudSyncLogger.log("start() — activeUsername=\(self.activeUsername ?? "nil", privacy: .private(mask: .hash))")
         var stateSerialization: CKSyncEngine.State.Serialization?
         if let data = UserDefaults.standard.data(forKey: Self.stateStorageKey) {
             do {
@@ -338,7 +338,7 @@ final class CloudSyncEngine {
     /// points que `TagStore.setActiveUsername`/`ListeningLogStore.setActiveUsername`.
     func setActiveUsername(_ username: String?) {
         let normalized = username?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        cloudSyncLogger.log("setActiveUsername(\(username ?? "nil", privacy: .public)) — était \(self.activeUsername ?? "nil", privacy: .public), syncEngine \(self.syncEngine == nil ? "absent" : "présent", privacy: .public)")
+        cloudSyncLogger.log("setActiveUsername(\(username ?? "nil", privacy: .private(mask: .hash))) — était \(self.activeUsername ?? "nil", privacy: .private(mask: .hash)), syncEngine \(self.syncEngine == nil ? "absent" : "présent", privacy: .public)")
         guard normalized != activeUsername else { return }
         activeUsername = normalized
         guard normalized != nil else { return }
@@ -393,13 +393,13 @@ final class CloudSyncEngine {
         assert(!isApplyingRemoteChange, "markDirty appelé pendant l'application d'un changement distant")
         guard !isApplyingRemoteChange else { return }
         guard let syncEngine, let activeUsername else {
-            cloudSyncLogger.log("markDirty(\(String(describing: kind), privacy: .public)) ignoré — syncEngine=\(self.syncEngine == nil ? "nil" : "ok", privacy: .public) activeUsername=\(self.activeUsername ?? "nil", privacy: .public)")
+            cloudSyncLogger.log("markDirty(\(String(describing: kind), privacy: .public)) ignoré — syncEngine=\(self.syncEngine == nil ? "nil" : "ok", privacy: .public) activeUsername=\(self.activeUsername ?? "nil", privacy: .private(mask: .hash))")
             return
         }
         ensureZoneExists(for: activeUsername)
         let recordID = CKRecord.ID(recordName: kind.recordName, zoneID: zoneID(for: activeUsername))
         syncEngine.state.add(pendingRecordZoneChanges: [.saveRecord(recordID)])
-        cloudSyncLogger.log("markDirty(\(String(describing: kind), privacy: .public)) — envoi vers zone \(recordID.zoneID.zoneName, privacy: .public)")
+        cloudSyncLogger.log("markDirty(\(String(describing: kind), privacy: .public)) — envoi vers zone \(recordID.zoneID.zoneName, privacy: .private(mask: .hash))")
         // La planification automatique du moteur est documentée comme "indéterminée" (dépend des
         // conditions système). On force un envoi pour que le changement apparaisse sur les autres
         // appareils sans attendre un cycle de synchronisation en arrière-plan.
@@ -411,12 +411,12 @@ final class CloudSyncEngine {
         assert(!isApplyingRemoteChange, "markDeleted appelé pendant l'application d'un changement distant")
         guard !isApplyingRemoteChange else { return }
         guard let syncEngine, let activeUsername else {
-            cloudSyncLogger.log("markDeleted(\(String(describing: kind), privacy: .public)) ignoré — syncEngine=\(self.syncEngine == nil ? "nil" : "ok", privacy: .public) activeUsername=\(self.activeUsername ?? "nil", privacy: .public)")
+            cloudSyncLogger.log("markDeleted(\(String(describing: kind), privacy: .public)) ignoré — syncEngine=\(self.syncEngine == nil ? "nil" : "ok", privacy: .public) activeUsername=\(self.activeUsername ?? "nil", privacy: .private(mask: .hash))")
             return
         }
         let recordID = CKRecord.ID(recordName: kind.recordName, zoneID: zoneID(for: activeUsername))
         syncEngine.state.add(pendingRecordZoneChanges: [.deleteRecord(recordID)])
-        cloudSyncLogger.log("markDeleted(\(String(describing: kind), privacy: .public)) — suppression vers zone \(recordID.zoneID.zoneName, privacy: .public)")
+        cloudSyncLogger.log("markDeleted(\(String(describing: kind), privacy: .public)) — suppression vers zone \(recordID.zoneID.zoneName, privacy: .private(mask: .hash))")
         scheduleSend()
     }
 
@@ -556,10 +556,10 @@ final class CloudSyncEngine {
         // bas — et la vraie poussée initiale de ses données pré-existantes ne se déclencherait
         // alors plus jamais lors de son passage effectif au premium.
         guard let activeUsername, syncEngine != nil else {
-            cloudSyncLogger.log("hydrateActiveZone() ignoré — activeUsername=\(self.activeUsername ?? "nil", privacy: .public) syncEngine=\(self.syncEngine == nil ? "nil" : "ok", privacy: .public)")
+            cloudSyncLogger.log("hydrateActiveZone() ignoré — activeUsername=\(self.activeUsername ?? "nil", privacy: .private(mask: .hash)) syncEngine=\(self.syncEngine == nil ? "nil" : "ok", privacy: .public)")
             return
         }
-        cloudSyncLogger.log("hydrateActiveZone() pour \(activeUsername, privacy: .public)")
+        cloudSyncLogger.log("hydrateActiveZone() pour \(activeUsername, privacy: .private(mask: .hash))")
 
         let pushDoneKey = Self.initialPushDoneKeyPrefix + activeUsername
         guard !UserDefaults.standard.bool(forKey: pushDoneKey) else {
@@ -643,7 +643,7 @@ final class CloudSyncEngine {
         }
         UserDefaults.standard.removeObject(forKey: Self.initialPushDoneKeyPrefix + activeUsername)
         UserDefaults.standard.removeObject(forKey: Self.hydratedFlagKeyPrefix + activeUsername)
-        cloudSyncLogger.log("resetInitialSyncForActiveAccount() — drapeaux réinitialisés pour \(activeUsername, privacy: .public), nouvelle poussée initiale")
+        cloudSyncLogger.log("resetInitialSyncForActiveAccount() — drapeaux réinitialisés pour \(activeUsername, privacy: .private(mask: .hash)), nouvelle poussée initiale")
         hydrateActiveZone()
     }
 
@@ -672,7 +672,7 @@ final class CloudSyncEngine {
     @discardableResult
     private func performFetchChanges() async -> Bool {
         guard let syncEngine, let activeUsername else {
-            cloudSyncLogger.log("performFetchChanges() ignoré — syncEngine=\(self.syncEngine == nil ? "nil" : "ok", privacy: .public) activeUsername=\(self.activeUsername ?? "nil", privacy: .public)")
+            cloudSyncLogger.log("performFetchChanges() ignoré — syncEngine=\(self.syncEngine == nil ? "nil" : "ok", privacy: .public) activeUsername=\(self.activeUsername ?? "nil", privacy: .private(mask: .hash))")
             return false
         }
 
@@ -689,13 +689,13 @@ final class CloudSyncEngine {
         defer { isFirstHydrateForActiveAccount = false }
         do {
             try await syncEngine.fetchChanges()
-            cloudSyncLogger.log("fetchChanges() terminé pour \(activeUsername, privacy: .public)")
+            cloudSyncLogger.log("fetchChanges() terminé pour \(activeUsername, privacy: .private(mask: .hash))")
             if isFirstHydrate {
                 UserDefaults.standard.set(true, forKey: hydratedKey)
             }
             return true
         } catch {
-            cloudSyncLogger.error("fetchChanges() a échoué pour \(activeUsername, privacy: .public) : \(error, privacy: .public)")
+            cloudSyncLogger.error("fetchChanges() a échoué pour \(activeUsername, privacy: .private(mask: .hash)) : \(error, privacy: .public)")
             return false
         }
     }
@@ -715,7 +715,7 @@ final class CloudSyncEngine {
             return
         }
         guard record.recordID.zoneID == zoneID(for: activeUsername) else {
-            cloudSyncLogger.log("apply(remoteRecord:) ignoré — zone \(record.recordID.zoneID.zoneName, privacy: .public) différente de la zone active")
+            cloudSyncLogger.log("apply(remoteRecord:) ignoré — zone \(record.recordID.zoneID.zoneName, privacy: .private(mask: .hash)) différente de la zone active")
             return
         }
         guard let kind = SyncedRecordKind.from(recordName: record.recordID.recordName) else {

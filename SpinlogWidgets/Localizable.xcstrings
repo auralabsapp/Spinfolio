@@ -41,6 +41,16 @@
         }
       }
     },
+    "Écoute terminée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Listening Ended"
+          }
+        }
+      }
+    },
     "Un disque de ta collection Discogs tiré au hasard chaque jour." : {
       "localizations" : {
         "en" : {
