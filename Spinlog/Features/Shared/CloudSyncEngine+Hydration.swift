@@ -55,7 +55,7 @@ extension CloudSyncEngine {
 
             let existingInstanceIds = TagStore.shared.allTaggedInstanceIds()
             let existingSessionIds = ListeningLogStore.shared.allSessionIds()
-            let existingDayStamps = LocalDataStore.shared.collectionSnapshotDayStamps()
+            let existingDayStamps = LocalDataStore.shared.collectionSnapshotDayStamps(username: activeUsername)
             let existingAlertReleaseIds = WantlistAlertStore.shared.allAlertReleaseIds()
             cloudSyncLogger.log("Poussée initiale de \(existingInstanceIds.count) exemplaire(s) tagué(s), \(existingSessionIds.count) session(s) d'écoute, \(existingDayStamps.count) point(s) d'historique de valeur et \(existingAlertReleaseIds.count) alerte(s) wantlist, ainsi que des préférences")
             // Cède périodiquement la main (toutes les 25 itérations) : pour une grosse collection,
@@ -264,7 +264,7 @@ extension CloudSyncEngine {
             }
             cloudSyncLogger.log("apply(remoteRecord:) point d'historique de valeur \(dayStamp, privacy: .public)")
             LocalDataStore.shared.applyRemoteCollectionSnapshot(
-                dayStamp: dayStamp,
+                username: activeUsername,
                 date: snapshot.date,
                 currency: snapshot.currency,
                 low: snapshot.low,
@@ -372,7 +372,8 @@ extension CloudSyncEngine {
             return try? JSONEncoder().encode(prefs)
 
         case .collectionSnapshot(let dayStamp):
-            guard let snapshot = LocalDataStore.shared.collectionSnapshot(dayStamp: dayStamp) else { return nil }
+            guard let activeUsername,
+                  let snapshot = LocalDataStore.shared.collectionSnapshot(dayStamp: dayStamp, username: activeUsername) else { return nil }
             let synced = SyncedCollectionSnapshot(
                 date: snapshot.date,
                 currency: snapshot.currency,

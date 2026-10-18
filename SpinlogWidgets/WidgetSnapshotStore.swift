@@ -19,6 +19,7 @@ enum WidgetSnapshotStore {
     private static let collectionKey = "com.spinlog.widgetCollectionSnapshot"
     private static let isPremiumKey = "com.spinlog.isPremium"
     private static let themeAccentKey = "com.spinlog.themeAccentOnDarkRGB"
+    private static let themeAccentOnLightKey = "com.spinlog.themeAccentOnLightRGB"
 
     private static var defaults: UserDefaults {
         UserDefaults(suiteName: appGroupID) ?? .standard
@@ -56,8 +57,13 @@ enum WidgetSnapshotStore {
     /// toujours un fond noir), écrite par `ThemeManager` côté app. L'extension n'a pas accès au
     /// thème : sans ce relais, la Live Activity restait sur l'ancien rose codé en dur.
     /// `nil` tant que l'app n'a jamais publié son thème (première ouverture pas encore faite).
-    static var themeAccentOnDark: Color? {
-        guard let components = defaults.array(forKey: themeAccentKey) as? [Double], components.count == 3 else {
+    static var themeAccentOnDark: Color? { color(forKey: themeAccentKey) }
+
+    /// Variante foncée du thème, lisible sur un fond clair (pochette claire du widget).
+    static var themeAccentOnLight: Color? { color(forKey: themeAccentOnLightKey) }
+
+    private static func color(forKey key: String) -> Color? {
+        guard let components = defaults.array(forKey: key) as? [Double], components.count == 3 else {
             return nil
         }
         return Color(red: components[0], green: components[1], blue: components[2])

@@ -1,4 +1,5 @@
 import SwiftUI
+import WidgetKit
 import Observation
 
 /// Gestionnaire réactif du thème de couleur actif dans toute l'application.
@@ -13,6 +14,9 @@ final class ThemeManager {
         didSet {
             defaults.set(currentTheme.rawValue, forKey: storageKey)
             publishAccentForExtensions()
+            // Le widget n'est redessiné qu'à la demande : sans cela, il gardait l'ancienne couleur
+            // jusqu'au tirage du lendemain.
+            WidgetCenter.shared.reloadTimelines(ofKind: WidgetKinds.randomAlbum)
             if !isApplyingRemoteTheme {
                 CloudSyncEngine.shared.markAppPreferencesDirty()
             }
@@ -61,12 +65,19 @@ final class ThemeManager {
         }
     }
 
-    /// Transmet la couleur du thème (variante sombre) à l'extension pour la Live Activity.
+    /// Transmet la couleur du thème à l'extension (Live Activity et widget) : teinte principale
+    /// du mode sombre pour les fonds sombres, teinte foncée du mode clair pour les fonds clairs
+    /// (pochette claire du widget), assez contrastée pour du texte.
     private func publishAccentForExtensions() {
-        let darkColor = currentTheme.primaryUIColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
-        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
-        guard darkColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha) else { return }
-        WidgetSnapshotStore.saveThemeAccentOnDark(red: Double(red), green: Double(green), blue: Double(blue))
+        func components(_ color: UIColor, style: UIUserInterfaceStyle) -> [Double]? {
+            var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+            guard color.resolvedColor(with: UITraitCollection(userInterfaceStyle: style))
+                .getRed(&red, green: &green, blue: &blue, alpha: &alpha) else { return nil }
+            return [Double(red), Double(green), Double(blue)]
+        }
+        guard let onDark = components(currentTheme.primaryUIColor, style: .dark),
+              let onLight = components(currentTheme.deepUIColor, style: .light) else { return }
+        WidgetSnapshotStore.saveThemeAccents(onDark: onDark, onLight: onLight)
     }
 
     /// Applique un thème reçu d'iCloud. N'écrit qu'en local.

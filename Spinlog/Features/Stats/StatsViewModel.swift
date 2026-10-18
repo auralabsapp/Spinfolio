@@ -114,7 +114,11 @@ final class StatsViewModel {
     /// utilisé quand `CloudSyncEngine` reçoit un nouveau point d'un autre appareil pendant que cet
     /// écran est déjà ouvert (`loadOverview()` ne se redéclenche pas de lui-même dans ce cas).
     func refreshValueHistoryFromLocalStore() {
-        valueHistoryPoints = localStore.allCollectionSnapshots().map { ($0.date, $0.low, $0.median, $0.high) }
+        guard let username = authManager.username else {
+            valueHistoryPoints = []
+            return
+        }
+        valueHistoryPoints = localStore.allCollectionSnapshots(username: username).map { ($0.date, $0.low, $0.median, $0.high) }
     }
 
     /// Total investi (somme des prix d'achat renseignés, convertis vers la devise par défaut) et
@@ -211,22 +215,22 @@ final class StatsViewModel {
         collectionValue = try? await DiscogsAPIClient.shared.collectionValue(username: username, credentials: credentials)
         isLoadingValuation = false
         recordCollectionSnapshotIfNeeded()
-        valueHistoryPoints = localStore.allCollectionSnapshots().map { ($0.date, $0.low, $0.median, $0.high) }
+        refreshValueHistoryFromLocalStore()
     }
 
     /// Enregistre un nouveau point d'historique (au plus 1 par jour) à partir de la valeur de
     /// collection déjà chargée. `CollectionValueResponse` renvoie des montants déjà formatés par
     /// Discogs (ex. `"$960.00"`) : on les reparse pour en tirer des nombres exploitables en graphique.
     private func recordCollectionSnapshotIfNeeded() {
-        guard let collectionValue else { return }
+        guard let collectionValue, let username = authManager.username else { return }
         let oneDay: TimeInterval = DiscogsConstants.oneDayTTL
-        if let latest = localStore.latestCollectionSnapshot(), Date().timeIntervalSince(latest.date) < oneDay {
+        if let latest = localStore.latestCollectionSnapshot(username: username), Date().timeIntervalSince(latest.date) < oneDay {
             return
         }
         guard let low = PurchasePriceParser.parseFormattedDiscogsAmount(collectionValue.minimum),
               let median = PurchasePriceParser.parseFormattedDiscogsAmount(collectionValue.median),
               let high = PurchasePriceParser.parseFormattedDiscogsAmount(collectionValue.maximum) else { return }
-        localStore.saveCollectionSnapshot(currency: median.currency, low: low.amount, median: median.amount, high: high.amount)
+        localStore.saveCollectionSnapshot(username: username, currency: median.currency, low: low.amount, median: median.amount, high: high.amount)
     }
 
     /// Somme les prix d'achat renseignés sur la collection (déjà chargée en cache), convertis

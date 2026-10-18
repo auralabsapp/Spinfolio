@@ -125,10 +125,11 @@ final class LocalDataStore {
 
     // MARK: - Value Snapshots (Cote & Prix d'achat)
 
-    /// Enregistre un nouveau point d'historique de la valeur globale de la collection, ou met à
-    /// jour celui du jour s'il existe déjà (au plus un point par jour).
-    func saveCollectionSnapshot(currency: String, low: Double, median: Double, high: Double) {
-        let snapshot = CollectionSnapshot(currency: currency, low: low, median: median, high: high)
+    /// Enregistre un nouveau point d'historique de la valeur globale de la collection du compte, ou
+    /// met à jour celui du jour s'il existe déjà (au plus un point par jour et par compte).
+    func saveCollectionSnapshot(username: String, currency: String, low: Double, median: Double, high: Double) {
+        claimLegacyCollectionSnapshots(for: username)
+        let snapshot = CollectionSnapshot(username: username, currency: currency, low: low, median: median, high: high)
         let targetId = snapshot.id
         let descriptor = FetchDescriptor<CollectionSnapshot>(
             predicate: #Predicate<CollectionSnapshot> { $0.id == targetId }
@@ -143,52 +144,66 @@ final class LocalDataStore {
             context.insert(snapshot)
         }
         try? context.save()
-        CloudSyncEngine.shared.markCollectionSnapshotDirty(dayStamp: targetId)
+        CloudSyncEngine.shared.markCollectionSnapshotDirty(dayStamp: snapshot.dayStamp)
     }
 
-    /// Point d'historique de collection le plus récent (pour déterminer si un rafraîchissement
-    /// est nécessaire, ou pour afficher la dernière valeur connue).
-    func latestCollectionSnapshot() -> CollectionSnapshot? {
-        var descriptor = FetchDescriptor<CollectionSnapshot>(sortBy: [SortDescriptor(\.date, order: .reverse)])
-        descriptor.fetchLimit = 1
-        return (try? context.fetch(descriptor))?.first
+    /// Point d'historique le plus récent du compte (pour déterminer si un rafraîchissement est
+    /// nécessaire, ou pour afficher la dernière valeur connue).
+    func latestCollectionSnapshot(username: String) -> CollectionSnapshot? {
+        allCollectionSnapshots(username: username).last
     }
 
-    /// Historique complet, trié chronologiquement, pour le graphique d'évolution de la valeur.
-    func allCollectionSnapshots() -> [CollectionSnapshot] {
-        let descriptor = FetchDescriptor<CollectionSnapshot>(sortBy: [SortDescriptor(\.date, order: .forward)])
+    /// Historique complet du compte, trié chronologiquement, pour le graphique d'évolution.
+    func allCollectionSnapshots(username: String) -> [CollectionSnapshot] {
+        claimLegacyCollectionSnapshots(for: username)
+        let descriptor = FetchDescriptor<CollectionSnapshot>(
+            predicate: #Predicate<CollectionSnapshot> { $0.username == username },
+            sortBy: [SortDescriptor(\.date, order: .forward)]
+        )
         return (try? context.fetch(descriptor)) ?? []
+    }
+
+    /// Points enregistrés avant la séparation par compte : rattachés une seule fois au premier
+    /// compte qui consulte son historique (même principe que la reprise des anciens tags), au
+    /// lieu de rester visibles par tous les comptes de l'appareil.
+    private func claimLegacyCollectionSnapshots(for username: String) {
+        let descriptor = FetchDescriptor<CollectionSnapshot>(
+            predicate: #Predicate<CollectionSnapshot> { $0.username == nil }
+        )
+        guard let legacy = try? context.fetch(descriptor), !legacy.isEmpty else { return }
+        for snapshot in legacy {
+            snapshot.username = username
+            snapshot.id = CollectionSnapshot.identifier(username: username, date: snapshot.date)
+        }
+        try? context.save()
     }
 
     // MARK: - Synchronisation iCloud (compte premium)
 
-    /// Identifiants (jour, "yyyy-MM-dd") de tous les points d'historique de collection, pour la
-    /// synchronisation initiale (même besoin que `TagStore.allTaggedInstanceIds()`).
-    func collectionSnapshotDayStamps() -> [String] {
-        allCollectionSnapshots().map(\.id)
+    /// Jours (`yyyy-MM-dd`) de tous les points d'historique du compte, pour la synchronisation
+    /// initiale (même besoin que `TagStore.allTaggedInstanceIds()`).
+    func collectionSnapshotDayStamps(username: String) -> [String] {
+        allCollectionSnapshots(username: username).map(\.dayStamp)
     }
 
-    /// Point d'historique correspondant à ce jour, pour construire le contenu à envoyer vers
-    /// iCloud.
-    func collectionSnapshot(dayStamp: String) -> CollectionSnapshot? {
-        let descriptor = FetchDescriptor<CollectionSnapshot>(
-            predicate: #Predicate<CollectionSnapshot> { $0.id == dayStamp }
-        )
-        return (try? context.fetch(descriptor))?.first
+    /// Point d'historique du compte pour ce jour, pour construire le contenu à envoyer vers iCloud.
+    func collectionSnapshot(dayStamp: String, username: String) -> CollectionSnapshot? {
+        allCollectionSnapshots(username: username).first { $0.dayStamp == dayStamp }
     }
 
-    /// Applique un point d'historique reçu d'iCloud (ajout ou mise à jour). N'écrit qu'en local :
-    /// ne redéclenche pas d'envoi vers CloudKit, cette donnée en vient déjà.
+    /// Applique un point d'historique reçu d'iCloud (ajout ou mise à jour) pour le compte actif de
+    /// la synchronisation. N'écrit qu'en local : ne redéclenche pas d'envoi vers CloudKit.
     func applyRemoteCollectionSnapshot(
-        dayStamp: String,
+        username: String,
         date: Date,
         currency: String,
         low: Double,
         median: Double,
         high: Double
     ) {
+        let targetId = CollectionSnapshot.identifier(username: username, date: date)
         let descriptor = FetchDescriptor<CollectionSnapshot>(
-            predicate: #Predicate<CollectionSnapshot> { $0.id == dayStamp }
+            predicate: #Predicate<CollectionSnapshot> { $0.id == targetId }
         )
         if let existing = (try? context.fetch(descriptor))?.first {
             existing.date = date
@@ -197,7 +212,7 @@ final class LocalDataStore {
             existing.median = median
             existing.high = high
         } else {
-            context.insert(CollectionSnapshot(date: date, currency: currency, low: low, median: median, high: high))
+            context.insert(CollectionSnapshot(username: username, date: date, currency: currency, low: low, median: median, high: high))
         }
         try? context.save()
         NotificationCenter.default.post(name: .collectionSnapshotsChanged, object: nil)
@@ -323,9 +338,12 @@ final class LocalDataStore {
             for entry in entries where entry.id.hasPrefix(metaPrefix) { context.delete(entry) }
         }
 
-        // Historique de la valeur de la collection (montants personnels). Il n'est pas encore
-        // séparé par compte sur l'appareil : il est effacé en entier.
-        if let snapshots = try? context.fetch(FetchDescriptor<CollectionSnapshot>()) {
+        // Historique de la valeur de la collection du compte (montants personnels) : les autres
+        // comptes de l'appareil gardent le leur.
+        let snapshotDescriptor = FetchDescriptor<CollectionSnapshot>(
+            predicate: #Predicate<CollectionSnapshot> { $0.username == username }
+        )
+        if let snapshots = try? context.fetch(snapshotDescriptor) {
             for snapshot in snapshots { context.delete(snapshot) }
         }
 

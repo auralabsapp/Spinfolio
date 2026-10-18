@@ -372,8 +372,20 @@ struct ReleaseQuickActionsBar: View {
 /// Bouton Marketplace élégant et discret placé sous la tracklist
 struct MarketplaceButton: View {
     let numForSale: Int
+    /// Prix le plus bas renvoyé par `/releases/{id}`, toujours en dollars.
     let lowestPrice: Double?
     let action: () -> Void
+
+    /// Prix converti dans la devise choisie (Réglages → Suivi de cote) ; `nil` tant que la
+    /// conversion n'est pas faite, le prix s'affiche alors en dollars comme avant.
+    @State private var convertedPrice: (amount: Double, currency: String)?
+
+    private var formattedLowestPrice: String? {
+        if let convertedPrice {
+            return convertedPrice.amount.formatted(.currency(code: convertedPrice.currency))
+        }
+        return lowestPrice?.formatted(.currency(code: "USD"))
+    }
 
     var body: some View {
         Button(action: action) {
@@ -388,8 +400,8 @@ struct MarketplaceButton: View {
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.primary)
 
-                    if let lowestPrice {
-                        Text("\(numForSale) exemplaires en vente dès \(lowestPrice.formatted(.currency(code: "USD")))")
+                    if let formattedLowestPrice {
+                        Text("\(numForSale) exemplaires en vente dès \(formattedLowestPrice)")
                             .font(.caption)
                             .foregroundStyle(Color.appSecondaryText)
                     } else {
@@ -410,6 +422,13 @@ struct MarketplaceButton: View {
             .appleMusicGroupedCard()
         }
         .buttonStyle(.plain)
+        .task(id: lowestPrice) {
+            guard let lowestPrice, let username = DiscogsAuthManager.shared.username else { return }
+            let currency = CollectionPreferencesStore.defaultCurrency(for: username)
+            guard currency != "USD" else { return }
+            let amount = await CurrencyConversionService.shared.convert(lowestPrice, from: "USD", to: currency)
+            convertedPrice = (amount, currency)
+        }
     }
 }
 

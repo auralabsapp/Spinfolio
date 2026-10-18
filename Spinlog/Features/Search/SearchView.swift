@@ -206,11 +206,16 @@ struct SearchView: View {
                 description: Text("La recherche Discogs nécessite une connexion réseau.")
             )
         } else if let errorMessage = viewModel.errorMessage {
-            ContentUnavailableView(
-                "Recherche impossible",
-                systemImage: "exclamationmark.triangle",
-                description: Text(errorMessage)
-            )
+            ContentUnavailableView {
+                Label("Recherche impossible", systemImage: "exclamationmark.triangle")
+            } description: {
+                Text(errorMessage)
+            } actions: {
+                Button("Réessayer") {
+                    Task { await viewModel.retry() }
+                }
+                .buttonStyle(.glassProminent)
+            }
         } else if trimmed.isEmpty {
             ContentUnavailableView(
                 "Recherche Discogs",

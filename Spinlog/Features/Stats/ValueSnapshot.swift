@@ -21,20 +21,37 @@ private nonisolated func dayStamp(for date: Date) -> String {
 /// (titre, artiste, image...) n'est stockée, seulement des montants et une date.
 @Model
 final class CollectionSnapshot {
+    /// `<compte>_<jour>` ; les points enregistrés avant la séparation par compte ont pour
+    /// identifiant le seul jour et `username == nil` (voir `LocalDataStore.claimLegacyCollectionSnapshots`).
     @Attribute(.unique) var id: String
+    /// Compte Discogs auquel appartient ce point (`nil` : point enregistré avant la séparation
+    /// par compte). Auparavant, l'historique était commun à tous les comptes de l'appareil.
+    var username: String?
     var date: Date
     var currency: String
     var low: Double
     var median: Double
     var high: Double
 
-    init(date: Date = Date(), currency: String, low: Double, median: Double, high: Double) {
-        self.id = dayStamp(for: date)
+    /// Jour de mesure (`yyyy-MM-dd`), nom de l'enregistrement iCloud correspondant.
+    var dayStamp: String { Self.dayStamp(for: date) }
+
+    init(username: String, date: Date = Date(), currency: String, low: Double, median: Double, high: Double) {
+        self.id = Self.identifier(username: username, date: date)
+        self.username = username
         self.date = date
         self.currency = currency
         self.low = low
         self.median = median
         self.high = high
+    }
+
+    nonisolated static func identifier(username: String, date: Date) -> String {
+        "\(username)_\(dayStamp(for: date))"
+    }
+
+    nonisolated static func dayStamp(for date: Date) -> String {
+        Spinlog.dayStamp(for: date)
     }
 }
 

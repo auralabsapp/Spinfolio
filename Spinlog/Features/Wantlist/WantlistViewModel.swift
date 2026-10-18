@@ -351,9 +351,21 @@ final class WantlistViewModel {
         if networkMonitor.isConnected, let credentials = authManager.credentials {
             do {
                 try await DiscogsAPIClient.shared.removeFromWantlist(username: username, releaseId: item.id, credentials: credentials)
-            } catch {
+            } catch where error.isNotFound {
+                // Déjà absent sur Discogs : le retrait est acquis.
+            } catch where error.isTransientNetworkFailure {
                 let action = PendingAction(type: .removeFromWantlist, releaseId: item.id)
                 syncQueue.enqueue(action)
+                actionMessage = AppMessages.discogsUnavailableQueued
+            } catch {
+                // Refus définitif : on réaffiche le disque plutôt que de mettre en file une action
+                // qui échouerait à l'identique plusieurs fois avant d'être abandonnée.
+                if !items.contains(where: { $0.id == item.id }) {
+                    items.append(item)
+                }
+                await localStore.saveWantlistItems([item], username: username)
+                LibraryMembershipStore.shared.markInWantlist(item.id)
+                actionMessage = AppMessages.removalFailed
             }
         } else {
             let action = PendingAction(type: .removeFromWantlist, releaseId: item.id)
@@ -410,10 +422,9 @@ final class WantlistViewModel {
         guard let username = authManager.username else { return }
         itemAwaitingFolderChoice = nil
 
-        // Retrait immédiat de la wantlist
-        await remove(item)
-
-        // Ajout à la collection (optimistic UI géré par NotificationCenter dans CollectionViewModel)
+        // Ajout à la collection d'abord, retrait de la wantlist seulement une fois l'ajout acquis ou
+        // mis en file : auparavant, un refus définitif de l'ajout laissait le disque retiré de la
+        // wantlist sans être entré dans la collection.
         if networkMonitor.isConnected, let credentials = authManager.credentials {
             do {
                 let response = try await DiscogsAPIClient.shared.addToCollection(
@@ -435,18 +446,24 @@ final class WantlistViewModel {
                     object: nil,
                     userInfo: ["item": newItem]
                 )
-            } catch {
+            } catch where error.isTransientNetworkFailure {
                 // `folderId` (et non `targetFolderId`, réservé aux déplacements) : c'est le champ lu
-            // par la file pour un ajout — l'autre envoyait le disque dans "Uncategorized".
-            let action = PendingAction(type: .addToCollection, releaseId: item.id, folderId: folderId)
+                // par la file pour un ajout — l'autre envoyait le disque dans "Uncategorized".
+                let action = PendingAction(type: .addToCollection, releaseId: item.id, folderId: folderId)
                 syncQueue.enqueue(action)
+                actionMessage = AppMessages.discogsUnavailableQueued
+            } catch {
+                // Refus définitif : le disque reste dans la wantlist.
+                actionMessage = AppMessages.addFailed
+                return
             }
         } else {
-            // `folderId` (et non `targetFolderId`, réservé aux déplacements) : c'est le champ lu
-            // par la file pour un ajout — l'autre envoyait le disque dans "Uncategorized".
+            // Voir le commentaire sur `folderId` ci-dessus.
             let action = PendingAction(type: .addToCollection, releaseId: item.id, folderId: folderId)
             syncQueue.enqueue(action)
             LibraryMembershipStore.shared.noteQueuedOffline(.collectionAdded)
         }
+
+        await remove(item)
     }
 }

@@ -19,6 +19,7 @@ enum WidgetSnapshotStore {
     private static let isPremiumKey = PremiumConstants.isPremiumDefaultsKey
     /// Même clé que dans la copie de ce fichier côté extension (`SpinlogWidgets/`).
     private static let themeAccentKey = "com.spinlog.themeAccentOnDarkRGB"
+    private static let themeAccentOnLightKey = "com.spinlog.themeAccentOnLightRGB"
 
     private static var defaults: UserDefaults {
         UserDefaults(suiteName: AppGroup.id) ?? .standard
@@ -45,10 +46,12 @@ enum WidgetSnapshotStore {
         defaults.object(forKey: collectionKey) != nil || defaults.object(forKey: isPremiumKey) != nil
     }
 
-    /// Couleur du thème (variante pour fond sombre) transmise à la Live Activity, qui n'a pas
-    /// accès au thème de l'app (lue par la copie de ce fichier côté extension).
-    static func saveThemeAccentOnDark(red: Double, green: Double, blue: Double) {
-        defaults.set([red, green, blue], forKey: themeAccentKey)
+    /// Couleur du thème transmise à l'extension (Live Activity, widget « Album du jour »), qui n'a
+    /// pas accès au thème de l'app : variante pour fond sombre et variante foncée pour fond clair,
+    /// lues par la copie de ce fichier côté extension. Composantes RGB entre 0 et 1.
+    static func saveThemeAccents(onDark: [Double], onLight: [Double]) {
+        defaults.set(onDark, forKey: themeAccentKey)
+        defaults.set(onLight, forKey: themeAccentOnLightKey)
     }
 
     /// Choix stable pour une journée donnée : même date + même liste => même résultat.

@@ -39,6 +39,9 @@ final class SearchViewModel {
     /// Empêche la recherche texte débouncée de se relancer juste après avoir renseigné
     /// `query` avec un code-barres scanné (on a déjà les résultats de `searchByBarcode`).
     private var suppressNextAutoSearch = false
+    /// Code-barres de la dernière recherche par scan (`nil` pour une recherche texte) : permet à
+    /// « Réessayer » de relancer la même recherche.
+    private var lastBarcode: String?
 
     func consumeSuppressFlag() -> Bool {
         guard suppressNextAutoSearch else { return false }
@@ -123,7 +126,17 @@ final class SearchViewModel {
         return inCollection + inWantlist + others
     }
 
+    /// Relance la dernière recherche après une erreur (texte ou code-barres).
+    func retry() async {
+        if let lastBarcode {
+            await searchByBarcode(lastBarcode)
+        } else {
+            await search()
+        }
+    }
+
     func search() async {
+        lastBarcode = nil
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             results = []
@@ -193,6 +206,7 @@ final class SearchViewModel {
     /// été scanné, sans déclencher la recherche texte débouncée derrière (`suppressNextAutoSearch`).
     func searchByBarcode(_ code: String) async {
         suppressNextAutoSearch = true
+        lastBarcode = code
         query = code
         LibraryMembershipStore.shared.refresh()
         isLoading = true

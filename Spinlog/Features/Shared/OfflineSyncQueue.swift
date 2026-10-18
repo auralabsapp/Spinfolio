@@ -327,6 +327,24 @@ final class OfflineSyncQueue {
         persistActions()
     }
 
+    /// Dossiers supprimés sur discogs.com (absents de la liste reçue de Discogs) : les actions en
+    /// attente du compte qui les visaient partent vers Uncategorized, où Discogs a déplacé leurs
+    /// exemplaires, au lieu d'échouer puis d'être abandonnées.
+    func retargetActionsForDeletedFolders(validFolderIds: Set<Int>, username: String) {
+        let missing = Self.missingFolderIds(in: pendingActions.filter { $0.belongs(to: username) }, validFolderIds: validFolderIds)
+        for folderId in missing {
+            retargetActions(fromFolderId: folderId, toFolderId: DiscogsConstants.uncategorizedFolderId)
+        }
+    }
+
+    /// Dossiers visés par ces actions qui n'existent plus. « All » (0) et Uncategorized (1),
+    /// dossiers permanents de Discogs, ne sont jamais concernés.
+    nonisolated static func missingFolderIds(in actions: [PendingAction], validFolderIds: Set<Int>) -> Set<Int> {
+        let permanent: Set<Int> = [DiscogsConstants.allFolderId, DiscogsConstants.uncategorizedFolderId]
+        let targeted = actions.flatMap { [$0.folderId, $0.targetFolderId].compactMap { $0 } }
+        return Set(targeted).subtracting(validFolderIds).subtracting(permanent)
+    }
+
     nonisolated static func retargeted(_ actions: [PendingAction], fromFolderId: Int, toFolderId: Int) -> [PendingAction] {
         actions.map { action in
             guard action.folderId == fromFolderId || action.targetFolderId == fromFolderId else { return action }

@@ -428,6 +428,7 @@ final class CollectionViewModel {
             // Sauvegarde des dossiers dans SwiftData
             localStore.saveFolders(folders, username: username)
             resetDefaultAddFolderIfMissing(username: username)
+            syncQueue.retargetActionsForDeletedFolders(validFolderIds: Set(folders.map(\.id)), username: username)
 
             // Validation du dossier sélectionné
             let validFolderId: Int

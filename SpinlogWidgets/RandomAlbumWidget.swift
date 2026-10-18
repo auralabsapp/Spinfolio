@@ -6,7 +6,16 @@ import OSLog
 /// Dupliqué depuis `Secrets.swift` (côté app, non visible depuis l'extension) : Discogs demande
 /// un User-Agent identifiable sur toutes les requêtes, y compris les images de pochette.
 private let widgetUserAgent = "Spinlog/1.0 +https://github.com/aurelienscarpa/Spinlog"
-private let spinlogPink = Color(red: 232 / 255, green: 76 / 255, blue: 139 / 255)
+/// Couleur du thème choisi dans l'app (voir `WidgetSnapshotStore`), avec repli sur le rose
+/// historique tant que l'app ne l'a pas encore transmise.
+private enum WidgetThemeColor {
+    static var onDark: Color {
+        WidgetSnapshotStore.themeAccentOnDark ?? Color(red: 232 / 255, green: 76 / 255, blue: 139 / 255)
+    }
+    static var onLight: Color {
+        WidgetSnapshotStore.themeAccentOnLight ?? Color(red: 185 / 255, green: 20 / 255, blue: 90 / 255)
+    }
+}
 private let widgetLogger = Logger(subsystem: "com.aurelienscarpa.Spinlog", category: "WidgetSnapshotSync")
 
 /// Analyse de la couleur et luminosité de la jaquette pour adapter dynamiquement la lisibilité du texte.
@@ -341,7 +350,7 @@ struct RandomAlbumWidgetView: View {
         isLight ? Color.black.opacity(0.70) : Color.white.opacity(0.80)
     }
 
-    /// Titre "Album du jour" : rose magenta profond sur fond clair (ratio > 5:1), rose néon sur fond sombre.
+    /// Titre "Album du jour" : teinte foncée du thème sur fond clair, teinte vive sur fond sombre.
     private func eyebrow(isLight: Bool) -> some View {
         HStack(spacing: 4) {
             Image(systemName: "shuffle")
@@ -350,7 +359,7 @@ struct RandomAlbumWidgetView: View {
                 .font(.caption2.weight(.bold))
                 .kerning(0.5)
         }
-        .foregroundStyle(isLight ? Color(red: 185 / 255, green: 20 / 255, blue: 90 / 255) : spinlogPink)
+        .foregroundStyle(isLight ? WidgetThemeColor.onLight : WidgetThemeColor.onDark)
     }
 
     @ViewBuilder
@@ -391,7 +400,7 @@ struct RandomAlbumWidgetView: View {
         VStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundStyle(spinlogPink)
+                .foregroundStyle(WidgetThemeColor.onDark)
             if family != .systemSmall {
                 Text(title)
                     .font(.caption.weight(.semibold))

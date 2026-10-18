@@ -97,6 +97,18 @@ struct TransientFailureClassificationTests {
 
 /// Suppression d'un dossier : les actions en attente qui le visaient sont redirigées.
 struct FolderRetargetingTests {
+    @Test func foldersDeletedOnDiscogsAreDetected() {
+        let actions = [
+            PendingAction(type: .addToCollection, releaseId: 1, folderId: 42, instanceId: -1),
+            PendingAction(type: .moveCollectionInstance, releaseId: 2, folderId: 7, instanceId: 20, targetFolderId: 99),
+            PendingAction(type: .removeFromCollection, releaseId: 3, folderId: 1, instanceId: 30),
+            PendingAction(type: .addToWantlist, releaseId: 4)
+        ]
+        // 42 et 99 n'existent plus ; 7 existe ; 1 (Uncategorized) n'est jamais concerné.
+        #expect(OfflineSyncQueue.missingFolderIds(in: actions, validFolderIds: [0, 1, 7]) == [42, 99])
+        #expect(OfflineSyncQueue.missingFolderIds(in: actions, validFolderIds: [0, 1, 7, 42, 99]).isEmpty)
+    }
+
     @Test func actionsTargetingTheDeletedFolderAreRedirected() {
         var add = PendingAction(type: .addToCollection, releaseId: 1, folderId: 42, instanceId: -1)
         add.username = "alice"
