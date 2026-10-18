@@ -189,27 +189,33 @@ struct SwipeableInstanceRow: View {
                 .buttonStyle(.plain)
             }
         } else if !isPremium {
+            // Même pastille que pour un compte Premium (`InstanceGainBadge` : montant seul, sans
+            // pourcentage), montant masqué ; le toucher ouvre l'offre Premium.
             Button {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 showingPremiumSheet = true
             } label: {
                 HStack(spacing: 3) {
-                    Image(systemName: "arrow.right")
+                    Image(systemName: "arrow.up.right")
                         .font(.inlineIcon)
-                    Text("? € (+ ?%)")
+                    Text(verbatim: "+" + Self.maskedAmount(currency: defaultCurrency))
                 }
-                .font(.footnote.weight(.semibold))
+                .font(.footnote.weight(.medium))
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
-                .foregroundStyle(Color(red: 0.88, green: 0.52, blue: 0.12))
-                .background(Color(red: 0.95, green: 0.68, blue: 0.18).opacity(0.14), in: Capsule())
-                .overlay(
-                    Capsule()
-                        .strokeBorder(Color(red: 0.95, green: 0.68, blue: 0.18).opacity(0.35), lineWidth: 1)
-                )
+                .background(Color.gainPositive.opacity(0.14), in: Capsule())
+                .foregroundStyle(Color.gainPositive)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(Text("Plus-value masquée"))
+            .accessibilityHint(Text("Réservée au Premium. Touche deux fois pour découvrir l'offre."))
         }
+    }
+
+    /// Montant masqué au format de la devise (« ? € » en français, « €? » en anglais) : même mise
+    /// en forme que le montant réel, chiffres remplacés par un point d'interrogation.
+    nonisolated static func maskedAmount(currency: String) -> String {
+        0.formatted(.currency(code: currency).precision(.fractionLength(0))).replacingOccurrences(of: "0", with: "?")
     }
 }
 

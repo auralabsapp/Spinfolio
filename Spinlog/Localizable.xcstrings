@@ -22,6 +22,7 @@
       }
     },
     "? € (+ ?%)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8309,6 +8310,16 @@
         }
       }
     },
+    "Plus-value masquée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Value Gain Hidden"
+          }
+        }
+      }
+    },
     "plusieurs exemplaires de ce disque, supprime-le manuellement" : {
       "localizations" : {
         "en" : {
@@ -8954,6 +8965,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Request rejected by Discogs."
+          }
+        }
+      }
+    },
+    "Réservée au Premium. Touche deux fois pour découvrir l'offre." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Premium only. Double-tap to see the offer."
           }
         }
       }
