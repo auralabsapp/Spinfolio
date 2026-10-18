@@ -221,11 +221,11 @@ struct SpinlogPaywallView: View {
                         HStack(spacing: 8) {
                             Image(systemName: "plus")
                                 .font(.system(size: 13, weight: .bold))
-                                .foregroundStyle(goldWarm)
+                                .foregroundStyle(Color.goldText)
 
                             Text("et \(paywallFeatures.count - visibleFeatures.count) fonctionnalités supplémentaires")
                                 .font(.subheadline.weight(.medium))
-                                .foregroundStyle(goldWarm)
+                                .foregroundStyle(Color.goldText)
                         }
                         .padding(.top, 2)
                     }

@@ -1,0 +1,79 @@
+{
+  "sourceLanguage" : "fr",
+  "strings" : {
+    "Arrête l'écoute dans ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "machine_translated",
+            "values" : [
+              "Stop listening in ${applicationName}",
+              "Stop the record in ${applicationName}",
+              "End listening with ${applicationName}"
+            ]
+          }
+        },
+        "fr" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Arrête l'écoute dans ${applicationName}",
+              "Arrête l'écoute avec ${applicationName}"
+            ]
+          }
+        }
+      }
+    },
+    "Démarre une écoute dans ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "machine_translated",
+            "values" : [
+              "Start listening in ${applicationName}",
+              "I'm putting a record on with ${applicationName}",
+              "Log a listen in ${applicationName}"
+            ]
+          }
+        },
+        "fr" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Démarre une écoute dans ${applicationName}",
+              "Je mets un disque sur la platine avec ${applicationName}"
+            ]
+          }
+        }
+      }
+    },
+    "Un disque au hasard avec ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "machine_translated",
+            "values" : [
+              "Pick a random record with ${applicationName}",
+              "Random record in ${applicationName}",
+              "What should I listen to with ${applicationName}"
+            ]
+          }
+        },
+        "fr" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Un disque au hasard avec ${applicationName}",
+              "Tire un disque au hasard dans ${applicationName}",
+              "Qu'est-ce que j'écoute avec ${applicationName}"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.3"
+}

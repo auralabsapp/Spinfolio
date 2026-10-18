@@ -5,6 +5,7 @@ import SwiftUI
 /// teinte du thème actif, glyphe blanc), plutôt que le noir/blanc fixe de la référence.
 struct LibraryToastBubble: View {
     let kind: LibraryToastKind
+    var queuedOffline: Bool = false
 
     var body: some View {
         HStack(spacing: 10) {
@@ -13,10 +14,18 @@ struct LibraryToastBubble: View {
                 .symbolRenderingMode(.palette)
                 .foregroundStyle(.white, Color.spinlogPink)
 
-            Text(kind.message)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.primary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(kind.message)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                if queuedOffline {
+                    Text("Hors ligne : synchronisé au retour du réseau")
+                        .font(.footnote)
+                        .foregroundStyle(Color.appSecondaryText)
+                }
+            }
         }
+        .accessibilityElement(children: .combine)
         .padding(.horizontal, 18)
         .padding(.vertical, 13)
         .background(Capsule().fill(.thinMaterial))

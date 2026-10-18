@@ -82,7 +82,7 @@ struct RootTabView: View {
         // n'importe quel onglet (résultats de recherche, fiche release/artiste, Collection, Wantlist...).
         .overlay(alignment: .bottom) {
             if let toast = membershipStore.activeToast {
-                LibraryToastBubble(kind: toast)
+                LibraryToastBubble(kind: toast, queuedOffline: membershipStore.activeToastIsQueuedOffline)
                     // L'overlay couvre tout le `TabView`, barre d'onglets comprise : il faut
                     // donc une marge qui dépasse sa hauteur (+ celle du mini-lecteur si affiché)
                     // pour que la bulle flotte au-dessus plutôt que d'être masquée derrière.

@@ -42,7 +42,7 @@ struct SettingsPremiumHeroBanner: View {
                         if let lowestMonthlyPrice = SubscriptionManager.shared.lowestMonthlyPriceString {
                             Text("À partir de \(lowestMonthlyPrice) / mois")
                                 .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(Color.goldWarm)
+                                .foregroundStyle(Color.goldText)
                         }
                     }
 

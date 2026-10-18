@@ -67,6 +67,9 @@ final class LibraryMembershipStore {
     private(set) var boxes: [Int: ReleaseMembershipBox] = [:]
 
     private(set) var activeToast: LibraryToastKind?
+    /// La bulle affichée concerne une action mise en file hors ligne : elle l'indique sur une
+    /// deuxième ligne (au lieu d'une alerte à fermer après chaque ajout ou retrait hors ligne).
+    private(set) var activeToastIsQueuedOffline = false
     /// Incrémenté à chaque nouvelle bulle : permet à la tâche de disparition automatique de
     /// vérifier qu'aucune bulle plus récente n'a pris le relais avant de vider `activeToast`.
     private var toastGeneration = 0
@@ -76,11 +79,12 @@ final class LibraryMembershipStore {
 
     private init() {}
 
-    private func presentToast(_ kind: LibraryToastKind) {
+    private func presentToast(_ kind: LibraryToastKind, queuedOffline: Bool = false) {
         toastGeneration += 1
         let generation = toastGeneration
         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
             activeToast = kind
+            activeToastIsQueuedOffline = queuedOffline
         }
         Task {
             try? await Task.sleep(for: AppTiming.toastDismissShort)
@@ -88,6 +92,18 @@ final class LibraryMembershipStore {
             withAnimation(.easeOut(duration: 0.25)) {
                 activeToast = nil
             }
+        }
+    }
+
+    /// Action enregistrée hors ligne (file `OfflineSyncQueue`) : complète la bulle déjà affichée
+    /// pour cette action, ou l'affiche si l'écran d'origine n'en montre pas (retrait par balayage…).
+    func noteQueuedOffline(_ kind: LibraryToastKind) {
+        if activeToast == kind {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                activeToastIsQueuedOffline = true
+            }
+        } else {
+            presentToast(kind, queuedOffline: true)
         }
     }
 

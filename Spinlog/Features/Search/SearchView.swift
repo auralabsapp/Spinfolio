@@ -281,10 +281,8 @@ struct SearchView: View {
 
     private func triggerListeningLog(for result: SearchResult) {
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        ListeningLogStore.shared.logListening(for: result.id)
-
         let (artist, album) = parseArtistAndAlbum(from: result.title)
-        NowPlayingActivityManager.shared.startActivity(
+        NowPlayingActivityManager.shared.startListening(
             releaseId: result.id,
             albumTitle: album,
             artistName: artist,

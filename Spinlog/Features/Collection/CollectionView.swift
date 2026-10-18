@@ -365,9 +365,7 @@ struct CollectionView: View {
 
     private func triggerListeningLog(for item: CollectionItem) {
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        ListeningLogStore.shared.logListening(for: item.releaseId)
-
-        NowPlayingActivityManager.shared.startActivity(
+        NowPlayingActivityManager.shared.startListening(
             releaseId: item.releaseId,
             albumTitle: item.basicInformation.title,
             artistName: item.basicInformation.artistNames,

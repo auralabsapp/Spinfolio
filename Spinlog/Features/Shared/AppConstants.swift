@@ -93,8 +93,6 @@ nonisolated enum AppMessages {
 
     static var addedToCollection: String { String(localized: "Ajouté à la collection.") }
 
-    static var offlineAddQueued: String { String(localized: "Ajout enregistré hors ligne (sera synchronisé à la reconnexion).") }
-    static var offlineRemovalQueued: String { String(localized: "Retrait enregistré hors ligne (sera synchronisé à la reconnexion).") }
 
     static var discogsUnavailableQueued: String { String(localized: "Discogs ne répond pas : la modification sera synchronisée automatiquement.") }
     static var addFailed: String { String(localized: "Impossible d'ajouter ce disque sur Discogs.") }

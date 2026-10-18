@@ -87,6 +87,13 @@ final class NowPlayingActivityManager {
         activeReleaseId != nil
     }
 
+    /// Écoute sur platine : enregistre la session puis lance la Live Activity. Point d'entrée
+    /// commun aux écrans (Collection, Recherche, fiche release) et au raccourci Siri.
+    func startListening(releaseId: Int, albumTitle: String, artistName: String, coverURL: String?) {
+        ListeningLogStore.shared.logListening(for: releaseId)
+        startActivity(releaseId: releaseId, albumTitle: albumTitle, artistName: artistName, coverURL: coverURL)
+    }
+
     /// Démarre une nouvelle Live Activity pour l'album en cours d'écoute.
     /// Si une écoute était déjà en cours, elle est immédiatement arrêtée au profit de la nouvelle.
     func startActivity(

@@ -72,7 +72,7 @@ struct PremiumLockedCard: View {
                         Text("PREMIUM")
                             .font(.emphasisLabel)
                     }
-                    .foregroundStyle(Color.goldWarm)
+                    .foregroundStyle(Color.goldText)
                     .lineLimit(1)
                     .padding(.horizontal, 5)
                     .padding(.vertical, 2)

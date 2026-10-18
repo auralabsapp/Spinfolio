@@ -220,7 +220,7 @@ final class BatchScanViewModel {
             // jour tant que l'utilisateur ne recharge pas manuellement.
             let release = try? await DiscogsAPIClient.shared.release(id: result.id, credentials: DiscogsAuthManager.shared.credentials)
             await actions.addToCollection(releaseId: result.id, release: release, targetFolderId: folderId)
-            switch Self.addOutcome(forActionMessage: actions.message) {
+            switch Self.addOutcome(forActionMessage: actions.message, isOffline: !NetworkMonitor.shared.isConnected) {
             case .added: break
             case .queued: queuedCount += 1
             case .failed: failedIds.insert(target.id)
@@ -254,7 +254,7 @@ final class BatchScanViewModel {
             let actions = ReleaseActions()
             let release = try? await DiscogsAPIClient.shared.release(id: result.id, credentials: DiscogsAuthManager.shared.credentials)
             await actions.addToWantlist(releaseId: result.id, release: release)
-            switch Self.addOutcome(forActionMessage: actions.message) {
+            switch Self.addOutcome(forActionMessage: actions.message, isOffline: !NetworkMonitor.shared.isConnected) {
             case .added: break
             case .queued: queuedCount += 1
             case .failed: failedIds.insert(target.id)
@@ -281,9 +281,10 @@ final class BatchScanViewModel {
         case failed
     }
 
-    nonisolated static func addOutcome(forActionMessage message: String?) -> AddOutcome {
-        guard let message else { return .added }
-        if message == AppMessages.offlineAddQueued || message == AppMessages.discogsUnavailableQueued {
+    /// `isOffline` : hors ligne, un ajout accepté (sans message) est mis en file, pas encore fait.
+    nonisolated static func addOutcome(forActionMessage message: String?, isOffline: Bool) -> AddOutcome {
+        guard let message else { return isOffline ? .queued : .added }
+        if message == AppMessages.discogsUnavailableQueued {
             return .queued
         }
         return .failed

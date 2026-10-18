@@ -160,13 +160,11 @@ struct ReleaseDetailView: View {
 
     private func triggerListeningLog() {
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        ListeningLogStore.shared.logListening(for: releaseId)
-
         // Lance la Live Activity / Dynamic Island ET le mini-lecteur platine immédiatement
         let title = viewModel.release?.title ?? "Vinyle"
         let artist = viewModel.release?.artistNames ?? ""
         let cover = viewModel.release?.primaryImageURL ?? initialCoverURL
-        NowPlayingActivityManager.shared.startActivity(
+        NowPlayingActivityManager.shared.startListening(
             releaseId: releaseId,
             albumTitle: title,
             artistName: artist,

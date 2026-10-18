@@ -97,6 +97,16 @@
         }
       }
     },
+    "%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "%@"
+          }
+        }
+      }
+    },
     "%@ – " : {
       "extractionState" : "stale",
       "localizations" : {
@@ -632,6 +642,22 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@, %2$@. Écoute en cours sur la platine. Touche pour ouvrir l'album."
+          }
+        }
+      }
+    },
+    "%@, de %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "%1$@, by %2$@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, de %2$@."
           }
         }
       }
@@ -2626,6 +2652,7 @@
       }
     },
     "Ajout enregistré hors ligne (sera synchronisé à la reconnexion)." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3391,6 +3418,16 @@
         }
       }
     },
+    "Aucun disque disponible : ouvre ta collection dans %@ une première fois." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "No records available. Open your collection in %@ once first."
+          }
+        }
+      }
+    },
     "Aucun disque trouvé" : {
       "localizations" : {
         "en" : {
@@ -3457,6 +3494,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No complete local archive"
+          }
+        }
+      }
+    },
+    "Aucune écoute en cours." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "No listening session in progress."
           }
         }
       }
@@ -4255,6 +4302,16 @@
         }
       }
     },
+    "Connecte-toi à ton compte Discogs dans %@ pour utiliser ce raccourci." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Sign in to your Discogs account in %@ to use this shortcut."
+          }
+        }
+      }
+    },
     "Connecte-toi à ton compte Discogs dans les Réglages pour synchroniser." : {
       "localizations" : {
         "en" : {
@@ -4682,6 +4739,26 @@
         }
       }
     },
+    "Démarrer l'écoute de ${record}" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Start listening to ${record}"
+          }
+        }
+      }
+    },
+    "Démarrer une écoute" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Start Listening"
+          }
+        }
+      }
+    },
     "Déplacement vers Uncategorized : %lld/%lld" : {
       "localizations" : {
         "en" : {
@@ -4954,6 +5031,16 @@
         }
       }
     },
+    "Disque" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Record"
+          }
+        }
+      }
+    },
     "Disque au hasard" : {
       "localizations" : {
         "en" : {
@@ -5188,6 +5275,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Listening stopped"
+          }
+        }
+      }
+    },
+    "Écoute arrêtée." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Listening stopped."
+          }
+        }
+      }
+    },
+    "Écoute de %@ lancée." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Now listening to %@."
           }
         }
       }
@@ -5481,6 +5588,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Log at least %lld turntable listens (I'm Listening button on an album page) to unlock your rankings."
+          }
+        }
+      }
+    },
+    "Enregistre l'écoute sur platine d'un disque de ta collection et l'affiche sur l'écran verrouillé." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Logs a turntable listen for a record in your collection and shows it on the Lock Screen."
           }
         }
       }
@@ -6200,6 +6317,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Offline: scanned barcodes are saved and will be looked up when the network is back."
+          }
+        }
+      }
+    },
+    "Hors ligne : synchronisé au retour du réseau" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Offline: will sync when you're back online"
           }
         }
       }
@@ -8435,6 +8562,16 @@
         }
       }
     },
+    "Quel disque écoutes-tu ?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Which record are you listening to?"
+          }
+        }
+      }
+    },
     "Quitter le mode démo" : {
       "localizations" : {
         "en" : {
@@ -8973,6 +9110,7 @@
       }
     },
     "Retrait enregistré hors ligne (sera synchronisé à la reconnexion)." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -10351,6 +10489,16 @@
         }
       }
     },
+    "Termine l'écoute sur platine en cours." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Ends the current turntable listening session."
+          }
+        }
+      }
+    },
     "Terminer (%lld)" : {
       "localizations" : {
         "en" : {
@@ -10377,6 +10525,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Themes and Color Palettes"
+          }
+        }
+      }
+    },
+    "Tire un disque au hasard dans ta collection et ouvre sa fiche." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Picks a random record from your collection and opens its page."
           }
         }
       }

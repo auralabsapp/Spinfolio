@@ -108,6 +108,15 @@ extension Color {
     static let goldDeep = Color(red: 0.72, green: 0.40, blue: 0.08)
     static let goldLight = Color(red: 0.98, green: 0.78, blue: 0.28)
     static let goldBadgeBg = goldAccent.opacity(0.16)
+    /// Or des TEXTES (prix, mention « PREMIUM », liens dorés) : `goldWarm` ne faisait que 2,6:1
+    /// sur le fond clair, sous le seuil de lisibilité (4,5:1). Or plus profond en mode clair
+    /// (5,1:1 sur le fond, 4,6:1 sur la carte dorée), `goldWarm` inchangé en mode sombre (6,6:1).
+    /// Les fonds, dégradés et ombres dorés gardent les teintes ci-dessus.
+    static let goldText = Color(uiColor: UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(red: 0.88, green: 0.52, blue: 0.12, alpha: 1.0)
+            : UIColor(red: 0.62, green: 0.34, blue: 0.04, alpha: 1.0)
+    })
     static var goldButtonGradient: LinearGradient {
         LinearGradient(colors: [goldLight, goldWarm], startPoint: .topLeading, endPoint: .bottomTrailing)
     }
@@ -140,6 +149,7 @@ extension Color {
     /// unique plutôt que de rechercher des `UIColor(white:)` éparpillés dans le fichier.
     private static let lightSecondaryTextBrightness: CGFloat = 0.18
     private static let lightTertiaryTextBrightness: CGFloat = 0.28
+    private static let darkTertiaryTextOpacity: CGFloat = 0.55
 
     /// Gris "secondaire" plus soutenu dans toute l'app : le `.secondary` système est jugé trop
     /// pâle en thème clair. Le thème sombre garde exactement le gris système par défaut, inchangé.
@@ -150,7 +160,11 @@ extension Color {
     /// Idem pour le niveau "tertiaire" (chevrons de navigation, libellés très discrets) :
     /// le `.tertiary` système (~30% de noir) devient quasi illisible en thème clair.
     static let appTertiaryText = Color(uiColor: UIColor { trait in
-        trait.userInterfaceStyle == .dark ? UIColor.tertiaryLabel : UIColor(white: lightTertiaryTextBrightness, alpha: 1.0)
+        // Mode sombre : même teinte que `tertiaryLabel` mais à 55 % au lieu de 30 % d'opacité
+        // (5,4:1 au lieu de 2,5:1 sur le fond) — utilisé par de vrais textes (dates, mentions).
+        trait.userInterfaceStyle == .dark
+            ? UIColor(red: 235.0 / 255.0, green: 235.0 / 255.0, blue: 245.0 / 255.0, alpha: darkTertiaryTextOpacity)
+            : UIColor(white: lightTertiaryTextBrightness, alpha: 1.0)
     })
 
     /// Fond uni de l'app :
