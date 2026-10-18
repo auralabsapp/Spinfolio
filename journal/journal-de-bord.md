@@ -158,6 +158,13 @@ compte, conflits iCloud), puis le bloc interface et accessibilité, le passage e
 - Clé `UIRequiresFullScreen`, dépréciée depuis iOS 26, retirée (plus aucun avertissement de build).
 - 2 fichiers, +5 / −6.
 
+### 23:12 — `5c9ac4e` CLAUDE.md : règle Swift 6
+- Ajout au §2 (Concurrence) : cibles en Swift 6, aucun avertissement d'isolation toléré,
+  `nonisolated(unsafe)` / `@preconcurrency import` réservés aux types système non annotés et
+  toujours commentés, rappels système hors fil principal `@Sendable` ou planifiés sur la file
+  principale.
+- 1 fichier, +6.
+
 ---
 
 ## 2026-10-17 — Finitions d'interface, abonnement, typographie centralisée
