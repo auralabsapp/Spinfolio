@@ -165,6 +165,12 @@ compte, conflits iCloud), puis le bloc interface et accessibilité, le passage e
   principale.
 - 1 fichier, +6.
 
+### 23:41 — `90009b5` Mon exemplaire : plus-value masquée sans Premium, au format du Premium
+- Sans abonnement, la pastille de plus-value de « Mon exemplaire » reprend celle du Premium
+  (flèche, montant seul, sans pourcentage) avec le montant masqué « +? € » ; le toucher ouvre
+  l'offre Premium. Couleurs en dur remplacées par le design system, libellé VoiceOver ajouté.
+- 6 fichiers, +49 / −10.
+
 ---
 
 ## 2026-10-17 — Finitions d'interface, abonnement, typographie centralisée
