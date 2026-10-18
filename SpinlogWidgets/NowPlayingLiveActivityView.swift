@@ -116,12 +116,13 @@ struct NowPlayingContentRow: View {
                         .frame(width: 6, height: 6)
 
                     // Libellé localisé par l'extension elle-même : `ContentState.statusText`,
-                    // fourni par l'app, s'affichait tel quel (toujours en français).
-                    Text(isEnded ? "Écoute terminée" : "Écoute en cours sur la platine")
-                        .font(.system(size: 9.5, weight: .bold))
+                    // fourni par l'app, s'affichait tel quel (toujours en français). Deux `Text`
+                    // distincts : un `Text(condition ? "a" : "b")` reçoit une `String` et n'est
+                    // donc pas traduit. 11 pt minimum (`caption2`), sans réduction automatique.
+                    (isEnded ? Text("Écoute terminée") : Text("Écoute en cours sur la platine"))
+                        .font(.caption2.weight(.bold))
                         .foregroundStyle(accentColor)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.85)
                 }
 
                 Text(albumTitle)
