@@ -152,6 +152,12 @@ compte, conflits iCloud), puis le bloc interface et accessibilité, le passage e
 - 157 tests verts ; cahier de recette v3.5 (394 cas).
 - 18 fichiers, +238 / −76.
 
+### 23:10 — `a34cf4d` Live Activity : libellé d'écoute à 11 pt et traduit ; retire UIRequiresFullScreen
+- Libellé « Écoute en cours sur la platine » / « Écoute terminée » de la Live Activity passé de
+  9,5 pt à 11 pt, et écrit de façon à être bien traduit.
+- Clé `UIRequiresFullScreen`, dépréciée depuis iOS 26, retirée (plus aucun avertissement de build).
+- 2 fichiers, +5 / −6.
+
 ---
 
 ## 2026-10-17 — Finitions d'interface, abonnement, typographie centralisée
