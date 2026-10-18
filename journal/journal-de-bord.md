@@ -7,13 +7,13 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
-## 2026-10-18 — Audit complet, mode démo, tests automatiques, fiabilité des données, règles du projet
+## 2026-10-18 — Audit complet, mode démo, tests automatiques, fiabilité des données, interface, règles du projet
 
 Journée consacrée à l'aboutissement de l'audit de l'app (branche `audit-fixes`) : préparation de la
 soumission App Store, mode démo pour App Review, fiabilité des données, accessibilité, découpage des
 plus gros fichiers, mise en place des tests automatiques et d'un cadre de règles pour la suite,
 puis fiabilisation des données (stores illisibles, déconnexion, dossiers, doublons, suppression de
-compte, conflits iCloud).
+compte, conflits iCloud), et enfin le bloc interface et accessibilité.
 
 ### 12:29 — `0c4f597` Applique l'audit : soumission App Store, mode démo, fiabilité et accessibilité
 - **Soumission App Store** : manifestes de confidentialité `PrivacyInfo.xcprivacy` (app et widget),
@@ -89,6 +89,24 @@ compte, conflits iCloud).
   champ `modifiedAt` sur chaque enregistrement).
 - 24 tests unitaires ajoutés (121 tests verts) ; cahier de recette v3.4 (7 cas, 366 au total).
 - 25 fichiers, +707 / −63.
+
+### 21:48 — `341cfce` Interface et accessibilité : prix réels, thème, messages, navigation, états vides, VoiceOver
+- **Montants** : bannière Premium au prix StoreKit réel (plus de « 2,50 € » codé en dur) ;
+  plus-value de « Mon exemplaire » dans la devise choisie au lieu de l'euro.
+- **Thème** : `accentColor` (violet fixe) remplacé par la couleur du thème dans 8 écrans ; Live
+  Activity aux couleurs du thème via l'App Group.
+- **Widget et scan** : aperçu de galerie et message « Ouvre Spinfolio » ; caméra refusée ou absente
+  expliquée avec accès aux Réglages au lieu d'un écran noir.
+- **Messages** : échec d'enregistrement à la fermeture de « Mon exemplaire » affiché sur l'écran
+  d'origine ; ajouts et retraits hors ligne annoncés ; bilan du scan par lot qui distingue les
+  ajouts en attente et les échecs (codes en échec conservés).
+- **Navigation** : liens profonds sans vider la Recherche ; pile gérée et re-tap pour Réglages.
+- **États vides et erreurs** : boutons Réessayer et Rechercher un disque ; erreurs HTTP Discogs
+  traduites au lieu du message anglais de l'API.
+- **Accessibilité** : graphiques des Stats utilisables avec VoiceOver (résumé et actions), Réduire
+  les animations respecté (squelettes, parallaxe, carrousel).
+- Traductions anglaises, 127 tests automatiques, cahier de recette v3.5 (380 cas).
+- 46 fichiers, +1 041 / −210.
 
 ---
 
