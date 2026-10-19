@@ -9,7 +9,7 @@ struct SwipeableInstanceRow: View {
     let purchasePriceFieldId: Int?
     let isPremium: Bool
     let defaultCurrency: String
-    let marketEstimate: (price: Double, currency: String)?
+    let marketEstimate: MarketEstimate?
     let onOpenNotes: () -> Void
     let onRequestDelete: () -> Void
     let onEditPurchasePrice: () -> Void
@@ -169,6 +169,14 @@ struct SwipeableInstanceRow: View {
                         marketPrice: marketEstimate.price,
                         marketCurrency: marketEstimate.currency
                     )
+                    // Cote de plus de 6 h servie hors ligne : sa date, pour ne pas la faire passer
+                    // pour une cote à jour (CGU Discogs).
+                    if let staleSince = marketEstimate.staleSince {
+                        Text("Cote du \(staleSince.formatted(.dateTime.day().month(.abbreviated)))")
+                            .font(.footnote)
+                            .foregroundStyle(Color.appSecondaryText)
+                            .lineLimit(1)
+                    }
                 }
             } else {
                 Button(action: onEditPurchasePrice) {

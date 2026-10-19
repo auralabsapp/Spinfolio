@@ -39,6 +39,8 @@ struct CollectionItemEditSheet: View {
     @State private var actions = ReleaseActions()
     @State private var purchasePriceInDisplayCurrency: Double?
     @State private var marketEstimateInDisplayCurrency: Double?
+    /// Date de la cote si elle a plus de 6 h (servie hors ligne), voir `MarketEstimate`.
+    @State private var marketEstimateStaleSince: Date?
     @State private var isLoadingGain = false
     @State private var showingMarketplaceSheet = false
 
@@ -398,9 +400,17 @@ struct CollectionItemEditSheet: View {
                             showingMarketplaceSheet = true
                         } label: {
                             HStack {
-                                Text("Cote actuelle")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.primary)
+                                // Cote de plus de 6 h servie hors ligne : datée plutôt que
+                                // présentée comme actuelle (CGU Discogs).
+                                Group {
+                                    if let staleSince = marketEstimateStaleSince {
+                                        Text("Cote du \(staleSince.formatted(.dateTime.day().month(.abbreviated)))")
+                                    } else {
+                                        Text("Cote actuelle")
+                                    }
+                                }
+                                .font(.subheadline)
+                                .foregroundStyle(.primary)
                                 Spacer()
                                 Text(marketEstimateInDisplayCurrency.formatted(.currency(code: displayCurrency)))
                                     .font(.subheadline.weight(.semibold))
@@ -448,6 +458,7 @@ struct CollectionItemEditSheet: View {
                 guard let purchasePrice else {
                     purchasePriceInDisplayCurrency = nil
                     marketEstimateInDisplayCurrency = nil
+                    marketEstimateStaleSince = nil
                     return
                 }
                 isLoadingGain = true
@@ -456,8 +467,10 @@ struct CollectionItemEditSheet: View {
                 purchasePriceInDisplayCurrency = await purchaseConversion
                 if let marketEstimate = await estimate {
                     marketEstimateInDisplayCurrency = await CurrencyConversionService.shared.convert(marketEstimate.price, from: marketEstimate.currency, to: displayCurrency)
+                    marketEstimateStaleSince = marketEstimate.staleSince
                 } else {
                     marketEstimateInDisplayCurrency = nil
+                    marketEstimateStaleSince = nil
                 }
                 isLoadingGain = false
             }

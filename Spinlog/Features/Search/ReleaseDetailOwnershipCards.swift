@@ -16,7 +16,7 @@ struct MyItemCard: View {
 
     @State private var itemPendingDeletion: CollectionItem? = nil
     @State private var priceEditTarget: CollectionItem?
-    @State private var marketEstimate: (price: Double, currency: String)?
+    @State private var marketEstimate: MarketEstimate?
 
     private var isAlwaysAsk: Bool {
         guard let username = DiscogsAuthManager.shared.username else { return false }

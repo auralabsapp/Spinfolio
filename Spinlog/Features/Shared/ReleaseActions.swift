@@ -311,26 +311,25 @@ final class ReleaseActions {
 
     /// Estimation de la cote actuelle d'une release, à partir des suggestions de prix Discogs
     /// pour l'état renseigné (ou de leur moyenne si l'état est inconnu/non trouvé). Throttlé via
-    /// `ReleasePriceSnapshot` : renvoie immédiatement la dernière valeur connue si elle date de
-    /// moins de 6h (les CGU de l'API Discogs interdisent d'afficher du Content de plus de 6h),
-    /// ou en cas d'absence de réseau — sauf si l'état déclaré a changé depuis ce dernier calcul,
-    /// auquel cas le cache est invalidé pour refléter tout de suite le nouvel état (l'estimation
-    /// dépend directement de l'état saisi).
-    func refreshMarketEstimateIfNeeded(releaseId: Int, condition: String?) async -> (price: Double, currency: String)? {
-        let freshnessWindow: TimeInterval = DiscogsConstants.sixHoursTTL
+    /// `ReleasePriceSnapshot` : règle de lecture du cache dans `MarketEstimate.fromCache` (cote
+    /// de moins de 6 h réutilisée, cote plus ancienne seulement hors ligne et alors datée, car les
+    /// CGU de l'API Discogs interdisent d'afficher du Content de plus de 6 h comme à jour).
+    func refreshMarketEstimateIfNeeded(releaseId: Int, condition: String?) async -> MarketEstimate? {
+        let credentials = networkMonitor.isConnected ? authManager.credentials : nil
 
         if let cached = localStore.latestReleasePriceSnapshot(releaseId: releaseId),
-           cached.condition == condition,
-           Date().timeIntervalSince(cached.date) < freshnessWindow {
-            return (cached.medianPrice, cached.currency)
+           let estimate = MarketEstimate.fromCache(
+               price: cached.medianPrice,
+               currency: cached.currency,
+               date: cached.date,
+               cachedCondition: cached.condition,
+               requestedCondition: condition,
+               canFetch: credentials != nil
+           ) {
+            return estimate
         }
 
-        guard networkMonitor.isConnected, let credentials = authManager.credentials else {
-            if let cached = localStore.latestReleasePriceSnapshot(releaseId: releaseId) {
-                return (cached.medianPrice, cached.currency)
-            }
-            return nil
-        }
+        guard let credentials else { return nil }
 
         guard let suggestions = try? await DiscogsAPIClient.shared.priceSuggestions(releaseId: releaseId, credentials: credentials),
               !suggestions.isEmpty else {
@@ -349,7 +348,7 @@ final class ReleaseActions {
         }
 
         localStore.saveReleasePriceSnapshot(releaseId: releaseId, currency: estimate.currency, medianPrice: estimate.value, condition: condition)
-        return (estimate.value, estimate.currency)
+        return MarketEstimate(price: estimate.value, currency: estimate.currency, staleSince: nil)
     }
 
     // MARK: - Collection Toggle & Actions
