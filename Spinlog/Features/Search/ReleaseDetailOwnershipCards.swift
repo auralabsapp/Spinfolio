@@ -17,14 +17,18 @@ struct MyItemCard: View {
     @State private var itemPendingDeletion: CollectionItem? = nil
     @State private var priceEditTarget: CollectionItem?
     @State private var marketEstimate: MarketEstimate?
+    /// Cote convertie dans la devise d'affichage, pour la ligne « Cote actuelle » du compte gratuit.
+    @State private var marketEstimateInDisplayCurrency: Double?
 
     private var isAlwaysAsk: Bool {
         guard let username = DiscogsAuthManager.shared.username else { return false }
         return CollectionPreferencesStore.isAlwaysAsk(for: username)
     }
 
+    /// Champ prix d'achat configuré, pour tous les comptes : la saisie est libre (c'est un champ
+    /// personnalisé Discogs), seul le calcul de la plus-value est Premium.
     private var purchasePriceFieldId: Int? {
-        guard PremiumStore.shared.isPremium, let username = DiscogsAuthManager.shared.username else { return nil }
+        guard let username = DiscogsAuthManager.shared.username else { return nil }
         return CollectionPreferencesStore.purchasePriceFieldId(for: username)
     }
 
@@ -155,10 +159,20 @@ struct MyItemCard: View {
             .appleMusicGroupedCard()
 
             if !PremiumStore.shared.isPremium {
+                // La cote seule est gratuite ; sa comparaison au prix d'achat (pastille de
+                // plus-value) reste réservée au Premium.
+                if let marketEstimate, let marketEstimateInDisplayCurrency {
+                    MarketEstimateRow(
+                        price: marketEstimateInDisplayCurrency,
+                        currency: defaultCurrency,
+                        staleSince: marketEstimate.staleSince
+                    )
+                    .appleMusicGroupedCard()
+                }
                 PremiumLockedCard(
                     icon: "arrow.left.arrow.right",
                     title: "Plus-value de l'exemplaire",
-                    message: "Passe premium pour renseigner ton prix d'achat et suivre la plus-value de cet album."
+                    message: "Passe premium pour calculer la plus-value de cet album à partir de ton prix d'achat."
                 )
             }
         }
@@ -193,12 +207,17 @@ struct MyItemCard: View {
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
         }
-        .task(id: "\(releaseId)_\(declaredCondition ?? "")_\(PremiumStore.shared.isPremium)") {
-            guard PremiumStore.shared.isPremium else {
-                marketEstimate = nil
-                return
+        .task(id: "\(releaseId)_\(declaredCondition ?? "")_\(defaultCurrency)") {
+            let estimate = await actions.refreshMarketEstimateIfNeeded(releaseId: releaseId, condition: declaredCondition)
+            guard !Task.isCancelled else { return }
+            marketEstimate = estimate
+            if let estimate {
+                let converted = await CurrencyConversionService.shared.convert(estimate.price, from: estimate.currency, to: defaultCurrency)
+                guard !Task.isCancelled else { return }
+                marketEstimateInDisplayCurrency = converted
+            } else {
+                marketEstimateInDisplayCurrency = nil
             }
-            marketEstimate = await actions.refreshMarketEstimateIfNeeded(releaseId: releaseId, condition: declaredCondition)
         }
     }
 }

@@ -477,7 +477,7 @@ struct DeveloperOptionsView: View {
     /// vient de créer sur discogs.com pour cet outil ponctuel.
     private func runNetPurchasePriceBackfill(username: String, credentials: DiscogsCredentials) async {
         guard let purchaseFieldId = CollectionPreferencesStore.purchasePriceFieldId(for: username) else {
-            showToast("Configure d'abord le champ « Prix d'achat » dans Réglages > Suivi de cote.")
+            showToast("Configure d'abord le champ « Prix d'achat » dans Réglages > Suivi de plus-value.")
             return
         }
         guard let fieldsResponse = try? await DiscogsAPIClient.shared.collectionFields(username: username, credentials: credentials) else {

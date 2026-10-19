@@ -122,6 +122,7 @@ struct SettingsView: View {
                         .id("organizationSection")
                     SettingsListeningSection()
                     SettingsAppleMusicSection()
+                    gainTrackingSection
                     purchasePriceSection
                     SettingsOfflineSection()
                     exportSection
@@ -274,16 +275,99 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - 2bis. Suivi de cote (prix d'achat)
+    // MARK: - 2bis. Prix d'achat et état (gratuit)
 
+    /// Réglages gratuits : le prix d'achat est un champ personnalisé Discogs que chacun peut
+    /// remplir (ici comme sur discogs.com), et l'état et la devise servent aussi à la cote, elle
+    /// aussi gratuite. Seul le calcul de la plus-value est Premium (`gainTrackingSection`).
     @ViewBuilder
     private var purchasePriceSection: some View {
+        if authManager.isAuthenticated {
+            Section {
+                Picker(selection: Binding(
+                    get: { purchasePriceFieldId ?? -1 },
+                    set: { newValue in
+                        let fieldId = newValue == -1 ? nil : newValue
+                        purchasePriceFieldId = fieldId
+                        if let user = authManager.username {
+                            CollectionPreferencesStore.setPurchasePriceFieldId(fieldId, for: user)
+                        }
+                    }
+                )) {
+                    Text("Aucun").tag(-1)
+                    ForEach(availableCollectionFields) { field in
+                        Text(field.name).tag(field.id)
+                    }
+                } label: {
+                    HStack(spacing: 14) {
+                        SettingsIcon(systemName: "tag.fill", backgroundColor: .green)
+                        Text("Champ prix d'achat")
+                    }
+                }
+                .pickerStyle(.menu)
+                .tint(Color.spinlogPink)
+
+                Picker(selection: Binding(
+                    get: { mediaConditionFieldId ?? -1 },
+                    set: { newValue in
+                        let fieldId = newValue == -1 ? nil : newValue
+                        mediaConditionFieldId = fieldId
+                        if let user = authManager.username {
+                            CollectionPreferencesStore.setMediaConditionFieldId(fieldId, for: user)
+                        }
+                    }
+                )) {
+                    Text("Aucun").tag(-1)
+                    ForEach(availableCollectionFields) { field in
+                        Text(field.name).tag(field.id)
+                    }
+                } label: {
+                    HStack(spacing: 14) {
+                        SettingsIcon(systemName: "opticaldisc.fill", backgroundColor: .purple)
+                        Text("Champ état du disque")
+                    }
+                }
+                .pickerStyle(.menu)
+                .tint(Color.spinlogPink)
+
+                Picker(selection: Binding(
+                    get: { defaultCurrency },
+                    set: { newValue in
+                        defaultCurrency = newValue
+                        if let user = authManager.username {
+                            CollectionPreferencesStore.setDefaultCurrency(newValue, for: user)
+                        }
+                    }
+                )) {
+                    ForEach(PurchasePriceParser.supportedCurrencies, id: \.self) { code in
+                        Text(code).tag(code)
+                    }
+                } label: {
+                    HStack(spacing: 14) {
+                        SettingsIcon(systemName: "eurosign.circle.fill", backgroundColor: .blue)
+                        Text("Devise par défaut")
+                    }
+                }
+                .pickerStyle(.menu)
+                .tint(Color.spinlogPink)
+            } header: {
+                SectionEyebrow(title: "Prix d'achat et état", icon: "tag.fill")
+            } footer: {
+                Text("Associe les champs personnalisés Discogs correspondants à ton prix d'achat et à l'état de conservation pour alimenter le suivi de valeur.")
+            }
+        }
+    }
+
+    // MARK: - 2ter. Suivi de plus-value (Premium)
+
+    @ViewBuilder
+    private var gainTrackingSection: some View {
         Section {
             if !premiumStore.isPremium {
                 PremiumLockedCard(
-                    icon: "banknote.fill",
-                    title: "Suivi de cote",
-                    message: "Passe premium pour suivre le prix d'achat, la plus-value et l'estimation de ta collection."
+                    icon: "chart.line.uptrend.xyaxis",
+                    title: "Suivi de plus-value",
+                    message: "Passe premium pour comparer ton investissement à la cote actuelle et suivre ta plus-value."
                 )
             } else {
                 NavigationLink(value: SettingsDestination.purchasePriceHelp) {
@@ -292,82 +376,9 @@ struct SettingsView: View {
                         Text("Comment ça fonctionne ?")
                     }
                 }
-
-                if authManager.isAuthenticated {
-                    Picker(selection: Binding(
-                        get: { purchasePriceFieldId ?? -1 },
-                        set: { newValue in
-                            let fieldId = newValue == -1 ? nil : newValue
-                            purchasePriceFieldId = fieldId
-                            if let user = authManager.username {
-                                CollectionPreferencesStore.setPurchasePriceFieldId(fieldId, for: user)
-                            }
-                        }
-                    )) {
-                        Text("Aucun").tag(-1)
-                        ForEach(availableCollectionFields) { field in
-                            Text(field.name).tag(field.id)
-                        }
-                    } label: {
-                        HStack(spacing: 14) {
-                            SettingsIcon(systemName: "tag.fill", backgroundColor: .green)
-                            Text("Champ prix d'achat")
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .tint(Color.spinlogPink)
-
-                    Picker(selection: Binding(
-                        get: { mediaConditionFieldId ?? -1 },
-                        set: { newValue in
-                            let fieldId = newValue == -1 ? nil : newValue
-                            mediaConditionFieldId = fieldId
-                            if let user = authManager.username {
-                                CollectionPreferencesStore.setMediaConditionFieldId(fieldId, for: user)
-                            }
-                        }
-                    )) {
-                        Text("Aucun").tag(-1)
-                        ForEach(availableCollectionFields) { field in
-                            Text(field.name).tag(field.id)
-                        }
-                    } label: {
-                        HStack(spacing: 14) {
-                            SettingsIcon(systemName: "opticaldisc.fill", backgroundColor: .purple)
-                            Text("Champ état du disque")
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .tint(Color.spinlogPink)
-
-                    Picker(selection: Binding(
-                        get: { defaultCurrency },
-                        set: { newValue in
-                            defaultCurrency = newValue
-                            if let user = authManager.username {
-                                CollectionPreferencesStore.setDefaultCurrency(newValue, for: user)
-                            }
-                        }
-                    )) {
-                        ForEach(PurchasePriceParser.supportedCurrencies, id: \.self) { code in
-                            Text(code).tag(code)
-                        }
-                    } label: {
-                        HStack(spacing: 14) {
-                            SettingsIcon(systemName: "eurosign.circle.fill", backgroundColor: .blue)
-                            Text("Devise par défaut")
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .tint(Color.spinlogPink)
-                }
             }
         } header: {
-            SectionEyebrow(title: "Suivi de cote", icon: "chart.line.uptrend.xyaxis")
-        } footer: {
-            if premiumStore.isPremium && authManager.isAuthenticated {
-                Text("Associe les champs personnalisés Discogs correspondants à ton prix d'achat et à l'état de conservation pour alimenter le suivi de valeur.")
-            }
+            SectionEyebrow(title: "Suivi de plus-value", icon: "chart.line.uptrend.xyaxis")
         }
     }
 

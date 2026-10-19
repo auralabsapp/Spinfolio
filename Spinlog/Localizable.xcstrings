@@ -4193,6 +4193,16 @@
         }
       }
     },
+    "Compare le prix payé pour chaque album à sa cote Discogs : plus-value de chaque exemplaire et de toute ta collection dans Statistiques." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Compare the price you paid for each album to its Discogs value: see the gain on each copy and on your whole collection in Statistics."
+          }
+        }
+      }
+    },
     "Compilations" : {
       "localizations" : {
         "en" : {
@@ -8125,6 +8135,16 @@
         }
       }
     },
+    "Passe premium pour calculer la plus-value de cet album à partir de ton prix d'achat." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Go Premium to calculate this album's gain from your purchase price."
+          }
+        }
+      }
+    },
     "Passe premium pour choisir parmi les 8 palettes de thèmes exclusives." : {
       "localizations" : {
         "en" : {
@@ -8166,6 +8186,7 @@
       }
     },
     "Passe premium pour renseigner ton prix d'achat et suivre la plus-value de cet album." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8196,6 +8217,7 @@
       }
     },
     "Passe premium pour suivre le prix d'achat, la plus-value et l'estimation de ta collection." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8550,6 +8572,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Purchase Price"
+          }
+        }
+      }
+    },
+    "Prix d'achat et état" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Purchase Price and Condition"
           }
         }
       }
@@ -8931,6 +8963,7 @@
       }
     },
     "Renseigne le prix payé pour chaque album et compare-le à sa cote Discogs en temps réel pour voir si tes albums ont pris de la valeur." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9660,11 +9693,22 @@
       }
     },
     "Suivi de cote" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Value Tracking"
+          }
+        }
+      }
+    },
+    "Suivi de plus-value" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Gain Tracking"
           }
         }
       }

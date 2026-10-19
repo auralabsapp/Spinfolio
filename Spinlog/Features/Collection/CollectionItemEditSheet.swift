@@ -358,11 +358,30 @@ struct CollectionItemEditSheet: View {
         if !PremiumStore.shared.isPremium {
             VStack(alignment: .leading, spacing: 10) {
                 SectionEyebrow(title: "Plus-value de l'exemplaire", icon: "arrow.left.arrow.right")
+                // La cote seule est gratuite (donnée Discogs affichée avec son attribution) ; seule
+                // sa comparaison au prix d'achat est réservée au Premium.
+                if let marketEstimateInDisplayCurrency {
+                    marketEstimateButton(price: marketEstimateInDisplayCurrency)
+                        .appleMusicGroupedCard()
+                }
                 PremiumLockedCard(
                     icon: "arrow.left.arrow.right",
                     title: "Plus-value de l'exemplaire",
-                    message: "Passe premium pour renseigner ton prix d'achat et suivre la plus-value de cet album."
+                    message: "Passe premium pour calculer la plus-value de cet album à partir de ton prix d'achat."
                 )
+            }
+            .task(id: "\(item.releaseId)_\(declaredCondition ?? "")_\(displayCurrency)") {
+                let estimate = await actions.refreshMarketEstimateIfNeeded(releaseId: item.releaseId, condition: declaredCondition)
+                guard !Task.isCancelled else { return }
+                if let estimate {
+                    let converted = await CurrencyConversionService.shared.convert(estimate.price, from: estimate.currency, to: displayCurrency)
+                    guard !Task.isCancelled else { return }
+                    marketEstimateInDisplayCurrency = converted
+                    marketEstimateStaleSince = estimate.staleSince
+                } else {
+                    marketEstimateInDisplayCurrency = nil
+                    marketEstimateStaleSince = nil
+                }
             }
         } else {
             VStack(alignment: .leading, spacing: 10) {
@@ -396,36 +415,7 @@ struct CollectionItemEditSheet: View {
 
                         Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 14)
 
-                        Button {
-                            showingMarketplaceSheet = true
-                        } label: {
-                            HStack {
-                                // Cote de plus de 6 h servie hors ligne : datée plutôt que
-                                // présentée comme actuelle (CGU Discogs).
-                                Group {
-                                    if let staleSince = marketEstimateStaleSince {
-                                        Text("Cote du \(staleSince.formatted(.dateTime.day().month(.abbreviated)))")
-                                    } else {
-                                        Text("Cote actuelle")
-                                    }
-                                }
-                                .font(.subheadline)
-                                .foregroundStyle(.primary)
-                                Spacer()
-                                Text(marketEstimateInDisplayCurrency.formatted(.currency(code: displayCurrency)))
-                                    .font(.subheadline.weight(.semibold))
-                                    .foregroundStyle(Color.spinlogPink)
-                                    .monospacedDigit()
-                                Image(systemName: "chevron.right")
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(Color.appTertiaryText)
-                            }
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityHint("Ouvre le Marketplace Discogs pour cette release")
+                        marketEstimateButton(price: marketEstimateInDisplayCurrency)
 
                         Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 14)
 
@@ -475,6 +465,17 @@ struct CollectionItemEditSheet: View {
                 isLoadingGain = false
             }
         }
+    }
+
+    /// Ligne de cote qui ouvre le Marketplace Discogs de la release (compte gratuit et Premium).
+    private func marketEstimateButton(price: Double) -> some View {
+        Button {
+            showingMarketplaceSheet = true
+        } label: {
+            MarketEstimateRow(price: price, currency: displayCurrency, staleSince: marketEstimateStaleSince, showsChevron: true)
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Ouvre le Marketplace Discogs pour cette release")
     }
 
     private var discRow: some View {

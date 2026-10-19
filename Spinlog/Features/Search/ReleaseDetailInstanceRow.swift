@@ -157,12 +157,16 @@ struct SwipeableInstanceRow: View {
     /// Pastille de plus-value si un prix d'achat est renseigné et qu'une cote est connue, ou
     /// bouton discret pour en saisir un sinon. Bouton distinct du reste de la ligne (qui ouvre les
     /// notes) : `Button` conserve sa propre priorité de toucher au sein de son cadre.
+    /// La saisie est ouverte à tous ; sans Premium, la pastille garde son aspect mais masque le
+    /// montant (le calcul de la plus-value est la fonction Premium).
     @ViewBuilder
     private var purchasePriceBadge: some View {
         if let fieldId = purchasePriceFieldId {
             let rawValue = item.value(forFieldId: fieldId)
             if let parsed = PurchasePriceParser.parse(rawValue, defaultCurrency: defaultCurrency), !rawValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                if let marketEstimate {
+                if !isPremium {
+                    maskedGainBadge
+                } else if let marketEstimate {
                     InstanceGainBadge(
                         purchaseAmount: parsed.amount,
                         purchaseCurrency: parsed.currency,
@@ -196,28 +200,30 @@ struct SwipeableInstanceRow: View {
                 }
                 .buttonStyle(.plain)
             }
-        } else if !isPremium {
-            // Même pastille que pour un compte Premium (`InstanceGainBadge` : montant seul, sans
-            // pourcentage), montant masqué ; le toucher ouvre l'offre Premium.
-            Button {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                showingPremiumSheet = true
-            } label: {
-                HStack(spacing: 3) {
-                    Image(systemName: "arrow.up.right")
-                        .font(.inlineIcon)
-                    Text(verbatim: "+" + Self.maskedAmount(currency: defaultCurrency))
-                }
-                .font(.footnote.weight(.medium))
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(Color.gainPositive.opacity(0.14), in: Capsule())
-                .foregroundStyle(Color.gainPositive)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(Text("Plus-value masquée"))
-            .accessibilityHint(Text("Réservée au Premium. Touche deux fois pour découvrir l'offre."))
         }
+    }
+
+    /// Même pastille que pour un compte Premium (`InstanceGainBadge` : montant seul, sans
+    /// pourcentage), montant masqué ; le toucher ouvre l'offre Premium.
+    private var maskedGainBadge: some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            showingPremiumSheet = true
+        } label: {
+            HStack(spacing: 3) {
+                Image(systemName: "arrow.up.right")
+                    .font(.inlineIcon)
+                Text(verbatim: "+" + Self.maskedAmount(currency: defaultCurrency))
+            }
+            .font(.footnote.weight(.medium))
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(Color.gainPositive.opacity(0.14), in: Capsule())
+            .foregroundStyle(Color.gainPositive)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text("Plus-value masquée"))
+        .accessibilityHint(Text("Réservée au Premium. Touche deux fois pour découvrir l'offre."))
     }
 
     /// Montant masqué au format de la devise (« ? € » en français, « €? » en anglais) : même mise

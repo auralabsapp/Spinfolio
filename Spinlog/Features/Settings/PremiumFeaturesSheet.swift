@@ -18,8 +18,8 @@ private let premiumFeatures: [PremiumFeatureInfo] = [
     PremiumFeatureInfo(
         icon: "banknote.fill",
         color: .green,
-        title: "Suivi de cote",
-        description: "Renseigne le prix payé pour chaque album et compare-le à sa cote Discogs en temps réel pour voir si tes albums ont pris de la valeur."
+        title: "Suivi de plus-value",
+        description: "Compare le prix payé pour chaque album à sa cote Discogs : plus-value de chaque exemplaire et de toute ta collection dans Statistiques."
     ),
     PremiumFeatureInfo(
         icon: "icloud.fill",

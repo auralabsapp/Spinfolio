@@ -73,7 +73,7 @@ struct PurchasePriceHelpSheet: View {
             }
             .padding()
         }
-        .navigationTitle("Suivi de cote")
+        .navigationTitle("Suivi de plus-value")
         .navigationBarTitleDisplayMode(.inline)
     }
 

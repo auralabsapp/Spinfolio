@@ -134,7 +134,7 @@ extension StatsView {
     var premiumLockedInvestedCard: some View {
         PremiumLockedCard(
             icon: "arrow.left.arrow.right.circle.fill",
-            title: "Suivi de cote",
+            title: "Suivi de plus-value",
             message: "Passe premium pour comparer ton investissement à la cote actuelle et suivre ta plus-value."
         )
     }
