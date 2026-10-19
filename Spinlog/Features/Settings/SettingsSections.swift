@@ -109,7 +109,7 @@ struct SettingsAccountSection: View {
                             Text("Explorer avec une collection de démo")
                                 .font(.body.weight(.medium))
                                 .foregroundStyle(.primary)
-                            Text("Découvre l'app sans compte Discogs")
+                            Text("Découvre l'app et ses fonctions Premium, sans compte Discogs")
                                 .font(.caption)
                                 .foregroundStyle(Color.appSecondaryText)
                         }
@@ -160,6 +160,24 @@ struct SettingsAccountSection: View {
             Spacer()
         }
         .padding(.vertical, 4)
+
+        // Signale l'aperçu Premium de la démo : sans cette mention, les fonctions Premium
+        // débloquées sans abonnement pouvaient laisser croire à un abonnement actif.
+        if PremiumStore.shared.isDemoPreview && !PremiumStore.shared.hasSubscription {
+            HStack(alignment: .top, spacing: 14) {
+                SettingsIcon(systemName: "crown.fill", backgroundColor: Color.goldWarm)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Aperçu Premium (mode démo)")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(Color.goldText)
+                    Text("Toutes les fonctions Premium sont débloquées pendant la démo, sans abonnement. Elles se verrouillent en quittant le mode démo.")
+                        .font(.footnote)
+                        .foregroundStyle(Color.appSecondaryText)
+                }
+            }
+            .padding(.vertical, 4)
+            .accessibilityElement(children: .combine)
+        }
 
         Button {
             Task { await authManager.login() }

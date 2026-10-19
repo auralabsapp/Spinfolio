@@ -3067,6 +3067,16 @@
         }
       }
     },
+    "Aperçu Premium (mode démo)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Premium Preview (Demo Mode)"
+          }
+        }
+      }
+    },
     "Apparence" : {
       "localizations" : {
         "en" : {
@@ -4463,6 +4473,16 @@
         }
       }
     },
+    "Cote du %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Value as of %@"
+          }
+        }
+      }
+    },
     "Cote moyenne récente par état (Discogs)" : {
       "localizations" : {
         "en" : {
@@ -4680,7 +4700,18 @@
         }
       }
     },
+    "Découvre l'app et ses fonctions Premium, sans compte Discogs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Explore the app and its Premium features, no Discogs account needed"
+          }
+        }
+      }
+    },
     "Découvre l'app sans compte Discogs" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -10873,6 +10904,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Entire collection by original year (Master)"
+          }
+        }
+      }
+    },
+    "Toutes les fonctions Premium sont débloquées pendant la démo, sans abonnement. Elles se verrouillent en quittant le mode démo." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "All Premium features are unlocked during the demo, no subscription needed. They lock again when you exit demo mode."
           }
         }
       }
