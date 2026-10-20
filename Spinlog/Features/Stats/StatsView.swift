@@ -102,6 +102,9 @@ struct StatsView: View {
     @State var selectedLabelAngle: Double?
     @State var podiumPeriod: PodiumPeriod = .yearly
     @State var topEntityKind: TopEntityKind = .albums
+    /// Hauteurs mesurées des classements d'écoute (voir `cappedListHeight`).
+    @State var topAlbumsContentHeight: CGFloat = 0
+    @State var topArtistsContentHeight: CGFloat = 0
     @State var networkMonitor = NetworkMonitor.shared
     @State var originalYearsGranularity: OriginalYearsGranularity = .decade
 

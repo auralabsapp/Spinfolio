@@ -17,6 +17,7 @@ struct SettingsView: View {
     @State private var showingLogoutConfirmation = false
     @State private var showingDeleteAccountConfirmation = false
     @State private var showingDeleteAccountWebsite = false
+    @State private var isShelfRuleHighlighted = false
 
     // Export CSV/PDF de la collection (appels réseau délégués à ce ViewModel)
     @State private var exportViewModel = CollectionExportViewModel()
@@ -161,6 +162,12 @@ struct SettingsView: View {
                     // respiration au-dessus du titre plutôt que de le coller au bord de l'écran.
                     try? await Task.sleep(for: .milliseconds(450))
                     withAnimation { proxy.scrollTo("organizationSection", anchor: UnitPoint(x: 0.5, y: 0.08)) }
+                    // Seul point d'entrée : « Modifier » du guide de rangement. La règle de
+                    // rangement est mise en évidence 2 s pour qu'on la repère tout de suite.
+                    try? await Task.sleep(for: .milliseconds(350))
+                    withAnimation(.settingsRowHighlight) { isShelfRuleHighlighted = true }
+                    try? await Task.sleep(for: .seconds(2))
+                    withAnimation(.settingsRowHighlight) { isShelfRuleHighlighted = false }
                 }
             }
         }
@@ -213,6 +220,15 @@ struct SettingsView: View {
             }
             .pickerStyle(.menu)
             .tint(Color.spinlogPink)
+            // Fond de ligne par défaut, teinté le temps de la mise en évidence (voir
+            // `scrollToOrganizationSectionTrigger`), comme les badges actifs de l'app.
+            .listRowBackground(
+                ZStack {
+                    Color(uiColor: .secondarySystemGroupedBackground)
+                    Color.spinlogPinkBadge
+                        .opacity(isShelfRuleHighlighted ? 1 : 0)
+                }
+            )
 
             Toggle(isOn: $shelfPreferences.ignoreArticles) {
                 HStack(spacing: 14) {

@@ -15,4 +15,8 @@ extension Animation {
 
     /// Apparition/disparition de la mini-lecture en cours (mini-player, Live Activity).
     static let nowPlayingTransition = Animation.spring(response: 0.35, dampingFraction: 0.82)
+
+    /// Apparition/effacement de la surbrillance d'un réglage vers lequel on vient d'être envoyé
+    /// (fondu de couleur, sans mouvement : compatible avec Réduire les animations).
+    static let settingsRowHighlight = Animation.easeInOut(duration: 0.35)
 }

@@ -53,12 +53,13 @@ extension StatsView {
             switch topEntityKind {
             case .albums:
                 let visibleAlbums = Array(viewModel.topAlbums.prefix(20).enumerated())
-                // 5 lignes visibles par défaut, jusqu'à 20 en faisant défiler verticalement —
-                // même convention que le classement des artistes ci-dessous (pochette 44pt, donc
-                // une rowHeight un peu plus grande).
-                let rowHeight: CGFloat = 64
-                let fullHeight = CGFloat(visibleAlbums.count) * rowHeight
-                let visibleHeight = min(fullHeight, rowHeight * 5)
+                // 5 lignes visibles par défaut, jusqu'à 20 en faisant défiler verticalement (hauteur
+                // calculée par `cappedListHeight`).
+                let visibleHeight = Self.cappedListHeight(
+                    contentHeight: topAlbumsContentHeight,
+                    rowCount: visibleAlbums.count,
+                    estimatedRowHeight: 64
+                )
 
                 if visibleAlbums.count > 5 {
                     Text("Faire défiler verticalement pour afficher les autres albums")
@@ -75,17 +76,25 @@ extension StatsView {
                             topAlbumRow(rank: index + 1, entry: entry)
                         }
                     }
+                    // Hauteur réelle des lignes (taille de texte, noms sur deux lignes...) : une
+                    // hauteur de ligne estimée coupait la 5ᵉ ligne. `@Sendable` : voir CLAUDE.md §12.
+                    .onGeometryChange(for: CGFloat.self) { @Sendable proxy in
+                        proxy.size.height
+                    } action: { height in
+                        topAlbumsContentHeight = height
+                    }
                 }
                 .frame(height: visibleHeight)
                 .appleMusicGroupedCard()
             case .artists:
                 let visibleArtists = Array(viewModel.topArtists.prefix(20).enumerated())
-                // 5 lignes visibles par défaut, jusqu'à 20 en faisant défiler verticalement —
-                // même convention que `topArtistsSection` ci-dessus (rowHeight approximative,
-                // indice textuel affiché seulement s'il y a effectivement plus à découvrir).
-                let rowHeight: CGFloat = 56
-                let fullHeight = CGFloat(visibleArtists.count) * rowHeight
-                let visibleHeight = min(fullHeight, rowHeight * 5)
+                // Même convention que les albums ci-dessus (indice textuel affiché seulement s'il y
+                // a effectivement plus à découvrir).
+                let visibleHeight = Self.cappedListHeight(
+                    contentHeight: topArtistsContentHeight,
+                    rowCount: visibleArtists.count,
+                    estimatedRowHeight: 56
+                )
 
                 if visibleArtists.count > 5 {
                     Text("Faire défiler verticalement pour afficher les autres artistes")
@@ -102,11 +111,26 @@ extension StatsView {
                             topArtistRow(rank: index + 1, entry: entry)
                         }
                     }
+                    .onGeometryChange(for: CGFloat.self) { @Sendable proxy in
+                        proxy.size.height
+                    } action: { height in
+                        topArtistsContentHeight = height
+                    }
                 }
                 .frame(height: visibleHeight)
                 .appleMusicGroupedCard()
             }
         }
+    }
+
+    /// Hauteur du cadre défilant des classements : exactement 5 lignes visibles (moins s'il y en a
+    /// moins), d'après la hauteur mesurée du contenu — les lignes ont toutes la même hauteur. Tant
+    /// que la mesure n'est pas connue, repli sur une hauteur de ligne estimée.
+    nonisolated static func cappedListHeight(contentHeight: CGFloat, rowCount: Int, estimatedRowHeight: CGFloat, visibleRows: Int = 5) -> CGFloat {
+        guard rowCount > 0 else { return 0 }
+        let shown = min(rowCount, visibleRows)
+        guard contentHeight > 0 else { return estimatedRowHeight * CGFloat(shown) }
+        return contentHeight * CGFloat(shown) / CGFloat(rowCount)
     }
 
     @ViewBuilder
