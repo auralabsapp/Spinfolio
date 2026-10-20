@@ -293,7 +293,14 @@ final class NowPlayingActivityManager {
         return resizeAndCompress(image: image)
     }
 
-    /// Redimensionne l'image (72x72 px) et compresse pour garantir un payload compact (< 3.5 Ko)
+    /// Taille maximale de la jaquette dans l'état de la Live Activity. ActivityKit refuse un
+    /// état de plus de 4 Ko (« Payload maximum size exceeded ») et `Data` y est encodée en base64
+    /// (+33 %) : 2 800 octets bruts laissent la place à la date et à l'encodage JSON.
+    nonisolated static let maxCoverDataSize = 2_800
+
+    /// Redimensionne l'image (72x72 px) puis baisse la qualité JPEG jusqu'à passer sous
+    /// `maxCoverDataSize` ; `nil` si c'est impossible (l'activité démarre alors sans jaquette
+    /// plutôt que d'être refusée).
     private func resizeAndCompress(image: UIImage) -> Data? {
         let targetSize = CGSize(width: 72, height: 72)
         let format = UIGraphicsImageRendererFormat()
@@ -302,13 +309,13 @@ final class NowPlayingActivityManager {
         let resizedImage = renderer.image { _ in
             image.draw(in: CGRect(origin: .zero, size: targetSize))
         }
-        guard var data = resizedImage.jpegData(compressionQuality: 0.5) else { return nil }
-        if data.count > 3500 {
-            if let compressed = resizedImage.jpegData(compressionQuality: 0.3) {
-                data = compressed
+        for quality in [0.5, 0.3, 0.15] {
+            if let data = resizedImage.jpegData(compressionQuality: quality), data.count <= Self.maxCoverDataSize {
+                return data
             }
         }
-        return data
+        logger.error("Jaquette trop lourde pour la Live Activity, activité démarrée sans image")
+        return nil
     }
 
     /// Ferme toutes les activités système sans modifier activeReleaseId

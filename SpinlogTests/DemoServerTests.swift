@@ -86,6 +86,47 @@ struct DemoServerTests {
         }
     }
 
+    @Test func exampleEstimateIsStableAndMixesGainsAndLosses() {
+        let first = DemoServer.exampleMarketEstimate(releaseId: 36307255, purchaseAmount: 32)
+        #expect(first == DemoServer.exampleMarketEstimate(releaseId: 36307255, purchaseAmount: 32))
+        #expect(first.currency == "EUR")
+        #expect(first.staleSince == nil)
+
+        let ratios = (1...13).map { DemoServer.exampleMarketEstimate(releaseId: $0, purchaseAmount: 100).price / 100 }
+        #expect(ratios.allSatisfy { (0.75...1.95).contains($0) })
+        #expect(ratios.contains { $0 < 1 } && ratios.contains { $0 > 1 })
+
+        let withoutPurchase = DemoServer.exampleMarketEstimate(releaseId: 1234, purchaseAmount: nil).price
+        #expect((15...60).contains(withoutPurchase))
+    }
+
+    @Test func everyCollectionItemGetsAnExampleEstimate() throws {
+        let releases = try get("\(account)/collection/folders/0/releases", CollectionReleasesResponse.self,
+                               query: [URLQueryItem(name: "per_page", value: "100")]).releases
+        #expect(releases.allSatisfy { DemoServer.exampleMarketEstimate(releaseId: $0.releaseId).price > 0 })
+    }
+
+    @Test(arguments: ["2026-01-01T00:30:00Z", "2026-10-20T12:00:00Z", "2026-12-31T23:00:00Z"])
+    func exampleListeningFillsMonthAndYearPodiums(nowString: String) throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try #require(TimeZone(identifier: "UTC"))
+        let now = try #require(ISO8601DateFormatter().date(from: nowString))
+        let releaseIds = Array(100...143)
+
+        let sessions = DemoServer.exampleListeningSessions(releaseIds: releaseIds, now: now, calendar: calendar)
+        let startOfMonth = try #require(calendar.date(from: calendar.dateComponents([.year, .month], from: now)))
+        let startOfYear = try #require(calendar.date(from: calendar.dateComponents([.year], from: now)))
+
+        #expect(sessions.allSatisfy { $0.timestamp <= now && releaseIds.contains($0.releaseId) })
+        #expect(sessions.filter { $0.timestamp >= startOfMonth }.count >= StatsViewModel.minimumListeningSessionsForRanking)
+        #expect(sessions.filter { $0.timestamp >= startOfYear }.count >= StatsViewModel.minimumListeningSessionsForRanking)
+        #expect(sessions.filter { $0.timestamp < startOfYear }.count > 0)
+        #expect(zip(sessions, sessions.dropFirst()).allSatisfy { $0.timestamp >= $1.timestamp })
+        // Classement net : le disque le plus écouté devance clairement la moyenne.
+        let counts = Dictionary(grouping: sessions, by: \.releaseId).mapValues(\.count)
+        #expect((counts.values.max() ?? 0) >= 3 * sessions.count / max(1, counts.count))
+    }
+
     @Test func catalogRequestsGoToDiscogs() throws {
         #expect(try DemoServer.response(path: "releases/2879", method: "GET", queryItems: []) == nil)
         #expect(try DemoServer.response(path: "database/search", method: "GET", queryItems: []) == nil)

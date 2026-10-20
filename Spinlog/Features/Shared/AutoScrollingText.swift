@@ -2,8 +2,12 @@ import SwiftUI
 
 // MARK: - Auto-scrolling Marquee Text
 
-private struct AutoScrollTextWidthKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
+// `nonisolated` : sinon, avec l'isolation MainActor par défaut du module, la conformance à
+// `PreferenceKey` devient isolée au fil principal alors que SwiftUI lit `defaultValue`/`reduce`
+// depuis son fil de rendu asynchrone (`AsyncRenderer`) — l'app s'arrêtait
+// (`dispatch_assert_queue_fail`) à l'apparition du mini-lecteur au lancement d'une écoute.
+private nonisolated struct AutoScrollTextWidthKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = nextValue()
     }

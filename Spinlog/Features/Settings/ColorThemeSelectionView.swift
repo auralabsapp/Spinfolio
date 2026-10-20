@@ -27,7 +27,8 @@ struct ColorThemeSelectionView: View {
             } header: {
                 Text("Palettes disponibles")
             } footer: {
-                if !premiumStore.isPremium {
+                // Aussi pendant la démo, où tout est débloqué : montre ce que l'abonnement apporte.
+                if !premiumStore.isPremium || premiumStore.showsDemoPremiumBadges {
                     Text("Le thème \(AppInfo.name) Signature est inclus pour tous. Les 8 thèmes alternatifs sont débloqués avec le compte Premium.")
                         .font(.footnote)
                         .foregroundStyle(Color.appSecondaryText)

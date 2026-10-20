@@ -22,7 +22,7 @@ private struct SerifNavigationTitleConfigurator: UIViewControllerRepresentable {
             ?? UIFontDescriptor.preferredFontDescriptor(withTextStyle: .largeTitle)
         let serifLargeTitleFont = UIFont(descriptor: descriptor, size: 0)
 
-        let titleColor = UIColor { trait in
+        let titleColor = UIColor { @Sendable trait in
             trait.userInterfaceStyle == .dark
                 ? UIColor(red: 242.0 / 255.0, green: 239.0 / 255.0, blue: 235.0 / 255.0, alpha: 1.0)
                 : UIColor.label

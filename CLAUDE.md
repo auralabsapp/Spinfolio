@@ -235,6 +235,14 @@ Pour toute fonctionnalité qui lit ou écrit des données, se poser ces question
 - `CKSyncEngineDelegate` (et tout protocole `Sendable`) doit être adopté dans le fichier de la
   classe.
 - Tests push CloudKit : peu fiables en Simulateur / « Designed for iPad », utiliser 2 appareils.
+- Plantage `_dispatch_assert_queue_fail` sur le fil `com.apple.SwiftUI.AsyncRenderer` : une closure
+  ou conformance passée à SwiftUI/UIKit sans `@Sendable` hérite du MainActor par défaut, et le
+  framework l'appelle hors du fil principal (le compilateur ne dit rien). Couleurs dynamiques :
+  toujours `UIColor { @Sendable trait in … }`, sans lire d'état MainActor dedans (thème lu avant) ;
+  `PreferenceKey`, `Layout`, `Shape` en `nonisolated struct` ; closures de géométrie
+  (`onScrollGeometryChange(of:)`…) en `@Sendable`. Lire la pile (`frame #` dans la console) avant
+  de deviner.
+- Live Activity : état limité à 4 Ko, `Data` encodée en base64 (+33 %) → jaquette ≤ 2 800 octets.
 
 ## 13. Checklist avant de rendre une fonctionnalité
 

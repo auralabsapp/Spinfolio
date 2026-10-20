@@ -78,7 +78,7 @@ extension StatsView {
         } else if let invested = viewModel.totalInvested, let value = viewModel.collectionValue,
            let median = PurchasePriceParser.parseFormattedDiscogsAmount(value.median) {
             VStack(alignment: .leading, spacing: 10) {
-                SectionEyebrow(title: "Investi vs Cote actuelle", icon: "arrow.left.arrow.right.circle.fill")
+                SectionEyebrow(title: "Investi vs Cote actuelle", icon: "arrow.left.arrow.right.circle.fill", isPremiumFeature: true)
 
                 VStack(spacing: 0) {
                     HStack {

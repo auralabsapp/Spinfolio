@@ -385,7 +385,7 @@ struct CollectionItemEditSheet: View {
             }
         } else {
             VStack(alignment: .leading, spacing: 10) {
-                SectionEyebrow(title: "Plus-value de l'exemplaire", icon: "arrow.left.arrow.right")
+                SectionEyebrow(title: "Plus-value de l'exemplaire", icon: "arrow.left.arrow.right", isPremiumFeature: true)
 
                 if purchasePrice == nil {
                     Text("Renseigne ton prix d'achat dans les champs personnalisés ci-dessous pour suivre la plus-value de cet exemplaire.")

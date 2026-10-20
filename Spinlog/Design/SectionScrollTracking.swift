@@ -12,13 +12,14 @@ import SwiftUI
 /// `Candidate` (valeur scalaire) coûte une comparaison, pas une allocation — le `GeometryReader`
 /// par en-tête reste nécessaire (SwiftUI doit mesurer sa position), mais ce qu'on en fait pour
 /// déterminer « lequel est en haut » ne coûte plus rien de notable.
-struct SectionHeaderOffsetKey: PreferenceKey {
+/// `nonisolated` : même raison que `AutoScrollTextWidthKey` (lue par le rendu asynchrone de SwiftUI).
+nonisolated struct SectionHeaderOffsetKey: PreferenceKey {
     struct Candidate: Equatable {
         let key: String
         let minY: CGFloat
     }
 
-    static var defaultValue: Candidate? = nil
+    static let defaultValue: Candidate? = nil
 
     /// Avec des en-têtes de section collants (`.listStyle(.plain)`, `pinnedViews:
     /// [.sectionHeaders]`), celui de la section active est accroché à 0 tandis que les suivants,

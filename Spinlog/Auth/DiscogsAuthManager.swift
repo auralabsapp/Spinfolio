@@ -143,6 +143,7 @@ final class DiscogsAuthManager: NSObject {
         isAuthenticated = true
         TagStore.shared.setActiveUsername(username)
         ListeningLogStore.shared.setActiveUsername(username)
+        ListeningLogStore.shared.seedDemoSessions(DemoServer.exampleListeningSessions())
         WantlistAlertStore.shared.setActiveUsername(username)
     }
 

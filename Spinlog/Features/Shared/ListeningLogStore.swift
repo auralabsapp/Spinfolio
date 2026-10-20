@@ -2,7 +2,8 @@ import Foundation
 import Observation
 
 /// Représente une session d'écoute horodatée rattachée à une release Discogs.
-public struct ListeningSession: Codable, Identifiable, Sendable, Hashable {
+/// `nonisolated` : simple valeur, construite aussi par la génération pure du journal de démo.
+nonisolated public struct ListeningSession: Codable, Identifiable, Sendable, Hashable {
     public let id: UUID
     public let releaseId: Int
     public let timestamp: Date
@@ -199,6 +200,14 @@ final class ListeningLogStore {
         for id in addedIds {
             CloudSyncEngine.shared.markSessionDirty(id: id)
         }
+    }
+
+    /// Remplit le journal vide du compte de démo avec ses écoutes d'exemple. Pas de
+    /// `markSessionDirty` : la démo n'est jamais synchronisée avec iCloud.
+    func seedDemoSessions(_ demoSessions: [ListeningSession]) {
+        guard activeUsername == DemoMode.username, sessions.isEmpty else { return }
+        sessions = demoSessions.sorted { $0.timestamp > $1.timestamp }
+        persist()
     }
 
     // MARK: - Suppression complète des données utilisateur (Guideline 5.1.1(v))

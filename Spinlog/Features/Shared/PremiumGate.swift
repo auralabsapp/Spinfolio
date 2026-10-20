@@ -66,18 +66,7 @@ struct PremiumLockedCard: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
 
-                    HStack(spacing: 2) {
-                        Image(systemName: "sparkles")
-                            .font(.inlineIcon)
-                        Text("PREMIUM")
-                            .font(.emphasisLabel)
-                    }
-                    .foregroundStyle(Color.goldText)
-                    .lineLimit(1)
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 2)
-                    .background(Color.goldBadgeBg, in: Capsule())
-                    .fixedSize(horizontal: true, vertical: true)
+                    PremiumPill()
                 }
 
                 Text(message)

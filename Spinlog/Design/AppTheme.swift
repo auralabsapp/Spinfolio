@@ -119,7 +119,7 @@ enum AppColorTheme: String, CaseIterable, Identifiable, Codable, Sendable {
     }
 
     var primaryUIColor: UIColor {
-        UIColor { trait in
+        UIColor { @Sendable trait in
             let isDark = trait.userInterfaceStyle == .dark
             let base: UIColor
             switch self {
@@ -171,7 +171,7 @@ enum AppColorTheme: String, CaseIterable, Identifiable, Codable, Sendable {
     }
 
     var lightUIColor: UIColor {
-        UIColor { trait in
+        UIColor { @Sendable trait in
             let isDark = trait.userInterfaceStyle == .dark
             let base: UIColor
             switch self {
@@ -221,7 +221,7 @@ enum AppColorTheme: String, CaseIterable, Identifiable, Codable, Sendable {
     }
 
     var deepUIColor: UIColor {
-        UIColor { trait in
+        UIColor { @Sendable trait in
             let isDark = trait.userInterfaceStyle == .dark
             let base: UIColor
             switch self {
@@ -276,7 +276,7 @@ extension UIColor {
     /// - En thème clair : désature (-28%) et assombrit (-10%) pour un rendu "pochette vinyle d'époque" avec bon contraste sur fond crème/beige.
     /// - En thème sombre : effet fortement diminué (légère désaturation de -8% seulement, luminosité préservée à 98%)
     ///   pour éviter tout aspect terne, délavé ou fade sur le fond anthracite chaud (#141316).
-    func aged(isDark: Bool = false) -> UIColor {
+    nonisolated func aged(isDark: Bool = false) -> UIColor {
         var hue: CGFloat = 0, saturation: CGFloat = 0, brightness: CGFloat = 0, alpha: CGFloat = 0
         guard getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha) else { return self }
         if isDark {

@@ -5,6 +5,7 @@ import SwiftUI
 struct LoginPromptView: View {
     let message: String
     @State private var authManager = DiscogsAuthManager.shared
+    @State private var safariRequest: SafariViewRequest?
 
     var body: some View {
         ContentUnavailableView {
@@ -25,6 +26,16 @@ struct LoginPromptView: View {
                 .buttonStyle(.glassProminent)
                 .disabled(authManager.isAuthenticating)
 
+                // Inscription dans la webview Discogs de l'app ; une fois le compte créé (et
+                // l'adresse e-mail confirmée), l'utilisateur revient se connecter ci-dessus.
+                Button("Pas de compte ? Crée-en un") {
+                    safariRequest = SafariViewRequest(url: DiscogsConstants.accountCreationURL)
+                }
+                .font(.subheadline.weight(.medium))
+                .tint(Color.spinlogPink)
+                .disabled(authManager.isAuthenticating)
+                .accessibilityIdentifier("createDiscogsAccountButton")
+
                 Button("Explorer avec une collection de démo") {
                     authManager.startDemo()
                 }
@@ -38,6 +49,9 @@ struct LoginPromptView: View {
                         .multilineTextAlignment(.center)
                 }
             }
+        }
+        .sheet(item: $safariRequest) { request in
+            SafariView(url: request.url)
         }
     }
 }

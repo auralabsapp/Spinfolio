@@ -120,7 +120,9 @@ extension StatsView {
                                 outerRadius: .ratio(isSelected ? 1.0 : 0.94),
                                 angularInset: 1.5
                             )
-                            .cornerRadius(5)
+                            // Pas de `.cornerRadius` : son tracé (`Path.roundedSector`) plantait Charts
+                            // (NaN converti en Int) quand le graphique était redimensionné à une
+                            // taille quasi nulle, par ex. à l'apparition animée du mini-lecteur.
                             .foregroundStyle(genreColor(for: entry.name, index: index))
                             .opacity(selectedGenreName == nil || isSelected ? 1.0 : 0.35)
                             .accessibilityHidden(true)
@@ -370,7 +372,9 @@ extension StatsView {
                                 outerRadius: .ratio(isSelected ? 1.0 : 0.94),
                                 angularInset: 1.5
                             )
-                            .cornerRadius(5)
+                            // Pas de `.cornerRadius` : son tracé (`Path.roundedSector`) plantait Charts
+                            // (NaN converti en Int) quand le graphique était redimensionné à une
+                            // taille quasi nulle, par ex. à l'apparition animée du mini-lecteur.
                             .foregroundStyle(mediaFormatColor(for: entry.name))
                             .opacity(selectedMediaFormatName == nil || isSelected ? 1.0 : 0.35)
                             .accessibilityHidden(true)
@@ -613,7 +617,9 @@ extension StatsView {
                                 outerRadius: .ratio(isSelected ? 1.0 : 0.94),
                                 angularInset: 1.5
                             )
-                            .cornerRadius(5)
+                            // Pas de `.cornerRadius` : son tracé (`Path.roundedSector`) plantait Charts
+                            // (NaN converti en Int) quand le graphique était redimensionné à une
+                            // taille quasi nulle, par ex. à l'apparition animée du mini-lecteur.
                             .foregroundStyle(genreColor(for: entry.name, index: index))
                             .opacity(selectedLabelName == nil || isSelected ? 1.0 : 0.35)
                             .accessibilityHidden(true)

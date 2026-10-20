@@ -12,7 +12,7 @@ nonisolated let cloudSyncLogger = Logger(subsystem: "com.auralabs.Spinlog", cate
 /// seule base privée, comme `TagStore` le fait déjà localement avec ses clés `UserDefaults`
 /// préfixées par compte.
 ///
-/// Entièrement gaté par `PremiumStore.shared.isPremium` : côté non-premium, aucun appel réseau
+/// Entièrement gaté par `PremiumStore.shared.isPremium` (et l'interrupteur `isUserEnabled`) : côté non-premium, aucun appel réseau
 /// n'est fait et aucune donnée ne quitte l'appareil. En cas de désabonnement, les zones et
 /// enregistrements déjà présents sur iCloud ne sont jamais supprimés — seul le push/pull depuis
 /// cet appareil s'arrête, pour permettre une reprise sans perte en cas de réabonnement.
@@ -57,6 +57,46 @@ final class CloudSyncEngine: CKSyncEngineDelegate {
     nonisolated static let payloadField = "payload"
     static let hydratedFlagKeyPrefix = "com.spinlog.cloudSync.hydrated_"
     static let initialPushDoneKeyPrefix = "com.spinlog.cloudSync.initialPushDone_"
+    nonisolated static let userEnabledKey = "com.spinlog.cloudSync.userEnabled"
+
+    /// Interrupteur « Synchronisation iCloud » de Réglages, propre à cet appareil (activé par
+    /// défaut). Couper la synchro arrête seulement les échanges depuis cet appareil : rien n'est
+    /// effacé, ni en local ni sur iCloud.
+    private(set) var isUserEnabled = CloudSyncEngine.isUserEnabled(in: .standard)
+
+    /// Absent des réglages (installation neuve, version précédente) = activé, comme avant
+    /// l'existence de l'interrupteur.
+    nonisolated static func isUserEnabled(in defaults: UserDefaults) -> Bool {
+        defaults.object(forKey: userEnabledKey) as? Bool ?? true
+    }
+
+    /// Le moteur ne tourne qu'avec le Premium ET l'interrupteur activé.
+    nonisolated static func shouldRun(isPremium: Bool, isUserEnabled: Bool) -> Bool {
+        isPremium && isUserEnabled
+    }
+
+    private var shouldRun: Bool {
+        Self.shouldRun(isPremium: PremiumStore.shared.isPremium, isUserEnabled: isUserEnabled)
+    }
+
+    /// Les modifications faites pendant la coupure n'ont jamais été signalées au moteur (aucun
+    /// `markDirty` sans moteur actif) : à la réactivation, on oublie la réconciliation initiale
+    /// pour que tout soit à nouveau fusionné avec iCloud et repoussé, sinon elles resteraient
+    /// sur cet appareil.
+    func setUserEnabled(_ enabled: Bool) {
+        guard enabled != isUserEnabled else { return }
+        isUserEnabled = enabled
+        UserDefaults.standard.set(enabled, forKey: Self.userEnabledKey)
+        cloudSyncLogger.log("setUserEnabled(\(enabled, privacy: .public))")
+        if enabled {
+            forgetSyncProgressForAllAccounts()
+            if shouldRun {
+                start()
+            }
+        } else {
+            stop()
+        }
+    }
 
     private init() {
         NotificationCenter.default.addObserver(
@@ -85,13 +125,32 @@ final class CloudSyncEngine: CKSyncEngineDelegate {
             }
         }
 
-        if PremiumStore.shared.isPremium {
+        if shouldRun {
             start()
         }
     }
 
+    /// Statut Premium hors démo au dernier changement, pour repérer le passage au Premium.
+    private var hadAccessOutsideDemo = PremiumStore.shared.hasAccessOutsideDemo
+
+    /// Passer Premium (abonnement ou réabonnement) réactive la synchro, même coupée à la main
+    /// auparavant. L'aperçu de la démo ne compte pas : la démo n'est jamais synchronisée.
+    nonisolated static func shouldAutoEnable(hadAccess: Bool, hasAccess: Bool) -> Bool {
+        !hadAccess && hasAccess
+    }
+
     private func premiumStatusChanged() {
-        if PremiumStore.shared.isPremium {
+        let hasAccess = PremiumStore.shared.hasAccessOutsideDemo
+        if Self.shouldAutoEnable(hadAccess: hadAccessOutsideDemo, hasAccess: hasAccess) {
+            cloudSyncLogger.log("premiumStatusChanged() — passage au Premium, synchro réactivée")
+            isUserEnabled = true
+            UserDefaults.standard.set(true, forKey: Self.userEnabledKey)
+            // Comme pour une réactivation manuelle (`setUserEnabled`) : rien de ce qui a été
+            // modifié sans Premium n'a été envoyé, d'où une fusion complète avec iCloud.
+            forgetSyncProgressForAllAccounts()
+        }
+        hadAccessOutsideDemo = hasAccess
+        if shouldRun {
             start()
         } else {
             stop()
@@ -147,7 +206,7 @@ final class CloudSyncEngine: CKSyncEngineDelegate {
         UserDefaults.standard.removeObject(forKey: Self.stateStorageKey)
         serverSystemFields = [:]
         forgetSyncProgressForAllAccounts()
-        if PremiumStore.shared.isPremium {
+        if shouldRun {
             start()
         }
     }

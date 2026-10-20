@@ -111,6 +111,84 @@ enum DemoServer {
         }
     }
 
+    // MARK: - Cote d'exemple
+
+    /// Cote fictive d'une release, pour montrer la plus-value en démo : Discogs réserve ses
+    /// estimations à un vrai compte connecté (voir `response`). Servie directement par
+    /// `ReleaseActions`, sans passer par le cache des cotes (partagé entre comptes) ni par le
+    /// Marketplace, qui affiche les vraies données Discogs.
+    static func exampleMarketEstimate(releaseId: Int) -> MarketEstimate {
+        let purchaseAmount = library.collection
+            .first { ($0["id"] as? Int) == releaseId }
+            .flatMap { $0["notes"] as? [[String: Any]] }?
+            .first { ($0["field_id"] as? Int) == purchasePriceFieldId }
+            .flatMap { $0["value"] as? String }
+            .flatMap { PurchasePriceParser.parse($0, defaultCurrency: "EUR")?.amount }
+        return exampleMarketEstimate(releaseId: releaseId, purchaseAmount: purchaseAmount)
+    }
+
+    /// Règle de calcul, extraite pour être testée : stable d'un affichage à l'autre (dérivée de
+    /// l'identifiant), entre 0,75 et 1,95 fois le prix d'achat pour mêler plus- et moins-values,
+    /// ou entre 15 et 60 € sans prix d'achat.
+    nonisolated static func exampleMarketEstimate(releaseId: Int, purchaseAmount: Double?) -> MarketEstimate {
+        let seed = abs(releaseId)
+        let price: Double
+        if let purchaseAmount, purchaseAmount > 0 {
+            price = (purchaseAmount * (0.75 + Double(seed % 13) * 0.1)).rounded()
+        } else {
+            price = Double(15 + seed % 46)
+        }
+        return MarketEstimate(price: price, currency: "EUR", staleSince: nil)
+    }
+
+    // MARK: - Écoutes d'exemple
+
+    /// Journal d'écoute fictif, pour que classements et podiums des statistiques ne soient pas
+    /// vides en démo. Généré au démarrage de la démo (voir `DiscogsAuthManager.startDemo`) et
+    /// effacé à sa sortie avec les autres données de démo.
+    static func exampleListeningSessions(now: Date = Date()) -> [ListeningSession] {
+        exampleListeningSessions(
+            releaseIds: library.collection.compactMap { $0["id"] as? Int },
+            now: now,
+            calendar: .current
+        )
+    }
+
+    /// Règle de génération, extraite pour être testée : écoutes réparties sur le mois en cours,
+    /// le reste de l'année et l'année précédente, calculées à partir de `now` pour que les
+    /// podiums du mois et de l'année soient toujours remplis, même le 1ᵉʳ janvier. Le tirage est
+    /// déterministe et favorise les premiers disques, pour des classements nets.
+    nonisolated static func exampleListeningSessions(releaseIds: [Int], now: Date, calendar: Calendar) -> [ListeningSession] {
+        guard !releaseIds.isEmpty,
+              let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now)),
+              let startOfYear = calendar.date(from: calendar.dateComponents([.year], from: now)),
+              let startOfLastYear = calendar.date(byAdding: .year, value: -1, to: startOfYear) else { return [] }
+
+        var state: UInt64 = 0x5EED_CAFE
+        func nextUnit() -> Double {
+            // Générateur congruentiel linéaire (constantes de Knuth) : même journal à chaque démo.
+            state = state &* 6_364_136_223_846_793_005 &+ 1_442_695_040_888_963_407
+            return Double(state >> 11) / Double(UInt64(1) << 53)
+        }
+
+        var sessions: [ListeningSession] = []
+        func spread(_ count: Int, from start: Date, to end: Date) {
+            let span = end.timeIntervalSince(start)
+            guard span > 0 else { return }
+            for index in 0..<count {
+                // Puissance > 1 : tirage concentré sur le début de la liste.
+                let releaseIndex = min(releaseIds.count - 1, Int(Double(releaseIds.count) * pow(nextUnit(), 2.2)))
+                let offset = span * (Double(index) + 0.5) / Double(count)
+                sessions.append(ListeningSession(releaseId: releaseIds[releaseIndex], timestamp: start.addingTimeInterval(offset)))
+            }
+        }
+
+        spread(14, from: startOfMonth, to: now)
+        spread(46, from: startOfYear, to: startOfMonth)
+        spread(36, from: startOfLastYear, to: startOfYear)
+        return sessions.sorted { $0.timestamp > $1.timestamp }
+    }
+
     // MARK: - Réponses
 
     private static var profile: [String: Any] {

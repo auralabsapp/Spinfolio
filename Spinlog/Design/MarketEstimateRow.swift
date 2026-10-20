@@ -2,7 +2,8 @@ import SwiftUI
 
 /// Ligne « Cote actuelle » d'un exemplaire, dans la devise d'affichage. Visible par tous les
 /// comptes : seule la plus-value (comparaison au prix d'achat) est réservée au Premium.
-/// Une cote de plus de 6 h servie hors ligne affiche sa date plutôt que « actuelle » (CGU Discogs).
+/// Une cote de plus de 6 h servie hors ligne affiche sa date plutôt que « actuelle » (CGU Discogs),
+/// et la cote fictive du mode démo est signalée comme exemple.
 struct MarketEstimateRow: View {
     let price: Double
     let currency: String
@@ -12,7 +13,11 @@ struct MarketEstimateRow: View {
     var body: some View {
         HStack {
             Group {
-                if let staleSince {
+                // Cote fictive (`DemoServer.exampleMarketEstimate`) : ne pas la présenter comme
+                // une cote Discogs.
+                if DemoMode.isActive {
+                    Text("Cote d'exemple (démo)")
+                } else if let staleSince {
                     Text("Cote du \(staleSince.formatted(.dateTime.day().month(.abbreviated)))")
                 } else {
                     Text("Cote actuelle")

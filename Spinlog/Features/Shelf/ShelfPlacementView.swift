@@ -53,7 +53,7 @@ struct ShelfPlacementView: View {
                     VStack(alignment: .leading, spacing: 22) {
                         // 1. En-tête : Emplacement chiffré & jauge relative dans le meuble
                         VStack(alignment: .leading, spacing: 8) {
-                            SectionEyebrow(title: "Position dans le meuble", icon: "books.vertical.fill")
+                            SectionEyebrow(title: "Position dans le meuble", icon: "books.vertical.fill", isPremiumFeature: true)
 
                             HStack(alignment: .center) {
                                 // Les vinyles, CD et cassettes ne se rangent jamais ensemble (ni les

@@ -4453,6 +4453,16 @@
         }
       }
     },
+    "Cote d'exemple (démo)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Sample Value (Demo)"
+          }
+        }
+      }
+    },
     "Cote Discogs — maximum" : {
       "localizations" : {
         "en" : {
@@ -4899,6 +4909,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "As soon as your device regains an Internet connection, your albums, folders, and market price estimates sync automatically."
+          }
+        }
+      }
+    },
+    "Désactivée pendant la démo : les données d'exemple restent sur cet appareil." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Off during the demo: sample data stays on this device."
           }
         }
       }
@@ -6090,6 +6110,16 @@
         }
       }
     },
+    "Fonction Premium, offerte pendant la démo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Premium feature, free during the demo"
+          }
+        }
+      }
+    },
     "Fonctionnalité premium" : {
       "localizations" : {
         "en" : {
@@ -6640,6 +6670,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Member Since"
+          }
+        }
+      }
+    },
+    "Inscription gratuite sur Discogs, puis connecte-toi ci-dessus" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Sign up for free on Discogs, then sign in above"
           }
         }
       }
@@ -8075,6 +8115,16 @@
         }
       }
     },
+    "Pas de compte ? Crée-en un" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "No Account? Create One"
+          }
+        }
+      }
+    },
     "Pas encore assez de données de genre." : {
       "localizations" : {
         "en" : {
@@ -8192,6 +8242,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Go Premium to enter your purchase price and track this album's gain."
+          }
+        }
+      }
+    },
+    "Passe premium pour retrouver tes tags, écoutes et préférences sur tous tes appareils." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Go Premium to get your tags, listens, and preferences on all your devices."
           }
         }
       }
@@ -10312,6 +10372,16 @@
         }
       }
     },
+    "Synchroniser avec iCloud" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Sync with iCloud"
+          }
+        }
+      }
+    },
     "Synchroniser maintenant" : {
       "localizations" : {
         "en" : {
@@ -10439,6 +10509,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Available Tags (%lld)"
+          }
+        }
+      }
+    },
+    "Tags, écoutes sur platine, alertes de prix et préférences suivent ton compte sur tous tes appareils. Couper la synchro n'efface rien : à sa réactivation, les modifications faites entre-temps sont fusionnées avec iCloud." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tags, turntable listens, price alerts, and preferences follow your account across all your devices. Turning sync off doesn't erase anything: when you turn it back on, changes made in the meantime are merged with iCloud."
           }
         }
       }

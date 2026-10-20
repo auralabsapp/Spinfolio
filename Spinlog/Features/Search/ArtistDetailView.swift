@@ -189,7 +189,10 @@ struct ArtistDetailView: View {
                 }
             }
             .coordinateSpace(name: "artistScroll")
-            .onScrollGeometryChange(for: CGFloat.self) { geo in
+            // `@Sendable` : sans ça, la closure hérite de l'isolation MainActor du module, alors que
+            // SwiftUI peut l'évaluer sur son fil de rendu asynchrone (`AsyncRenderer`) — l'app
+            // s'arrêtait (`dispatch_assert_queue_fail`) au relayout animé du lancement d'une écoute.
+            .onScrollGeometryChange(for: CGFloat.self) { @Sendable geo in
                 geo.contentOffset.y
             } action: { _, newValue in
                 scrollOffsetY = newValue

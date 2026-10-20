@@ -26,6 +26,7 @@ struct SettingsIcon: View {
 
 struct SettingsAccountSection: View {
     @State private var authManager = DiscogsAuthManager.shared
+    @State private var safariRequest: SafariViewRequest?
 
     var body: some View {
         Section {
@@ -99,6 +100,32 @@ struct SettingsAccountSection: View {
                 }
                 .disabled(authManager.isAuthenticating)
 
+                // Même page d'inscription que l'écran de connexion (`LoginPromptView`).
+                Button {
+                    safariRequest = SafariViewRequest(url: DiscogsConstants.accountCreationURL)
+                } label: {
+                    HStack(spacing: 14) {
+                        SettingsIcon(systemName: "person.badge.plus", backgroundColor: .green)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Pas de compte ? Crée-en un")
+                                .font(.body.weight(.medium))
+                                .foregroundStyle(.primary)
+                            Text("Inscription gratuite sur Discogs, puis connecte-toi ci-dessus")
+                                .font(.caption)
+                                .foregroundStyle(Color.appSecondaryText)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(Color.appTertiaryText)
+                    }
+                    .padding(.vertical, 2)
+                }
+                .disabled(authManager.isAuthenticating)
+
                 Button {
                     authManager.startDemo()
                 } label: {
@@ -132,6 +159,9 @@ struct SettingsAccountSection: View {
             } else if authManager.isAuthenticated {
                 Text("Gère ton profil Discogs.")
             }
+        }
+        .sheet(item: $safariRequest) { request in
+            SafariView(url: request.url)
         }
     }
 
@@ -323,7 +353,7 @@ struct SettingsOfflineSection: View {
                 }
             }
         } header: {
-            SectionEyebrow(title: "Données hors ligne", icon: "arrow.down.circle.fill")
+            SectionEyebrow(title: "Données hors ligne", icon: "arrow.down.circle.fill", isPremiumFeature: true)
         } footer: {
             Text("Télécharge l'ensemble de ta collection et les pochettes d'albums sur ton appareil pour les consulter partout sans connexion Internet.")
         }
@@ -377,6 +407,7 @@ struct SettingsAppearanceSection: View {
                     HStack(spacing: 14) {
                         SettingsIcon(systemName: "paintpalette.fill", backgroundColor: themeManager.currentTheme.primaryColor)
                         Text("Couleur du thème")
+                        DemoPremiumBadge()
                         Spacer()
                         HStack(spacing: 6) {
                             Circle()

@@ -439,8 +439,9 @@ struct LibraryCarouselView<Item: SortableLibraryItem>: View {
 }
 
 
-private struct LibraryCarouselContainerSizeKey: PreferenceKey {
-    static var defaultValue: CGSize = .zero
+// `nonisolated` : même raison que `AutoScrollTextWidthKey` (lue par le rendu asynchrone de SwiftUI).
+private nonisolated struct LibraryCarouselContainerSizeKey: PreferenceKey {
+    static let defaultValue: CGSize = .zero
     static func reduce(value: inout CGSize, nextValue: () -> CGSize) {
         let next = nextValue()
         if next != .zero { value = next }

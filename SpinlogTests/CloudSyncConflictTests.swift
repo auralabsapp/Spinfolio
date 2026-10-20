@@ -43,3 +43,30 @@ struct CloudSyncConflictTests {
         #expect(CloudSyncModificationLog.pendingDate(for: "tags-1", username: "alice", defaults: defaults) == nil)
     }
 }
+
+/// Interrupteur « Synchronisation iCloud » de Réglages : activé par défaut (comportement
+/// d'avant son existence), et le moteur ne tourne qu'avec le Premium ET l'interrupteur.
+@MainActor
+struct CloudSyncToggleTests {
+    @Test func iCloudSyncToggleDefaultsToOnAndGatesTheEngine() throws {
+        let defaults = try #require(UserDefaults(suiteName: "CloudSyncToggleTests"))
+        defaults.removePersistentDomain(forName: "CloudSyncToggleTests")
+        #expect(CloudSyncEngine.isUserEnabled(in: defaults))
+        defaults.set(false, forKey: CloudSyncEngine.userEnabledKey)
+        #expect(!CloudSyncEngine.isUserEnabled(in: defaults))
+
+        #expect(CloudSyncEngine.shouldRun(isPremium: true, isUserEnabled: true))
+        #expect(!CloudSyncEngine.shouldRun(isPremium: true, isUserEnabled: false))
+        #expect(!CloudSyncEngine.shouldRun(isPremium: false, isUserEnabled: true))
+        defaults.removePersistentDomain(forName: "CloudSyncToggleTests")
+    }
+
+    @Test func becomingPremiumTurnsSyncBackOn() {
+        #expect(CloudSyncEngine.shouldAutoEnable(hadAccess: false, hasAccess: true))
+        // Déjà Premium, ou perte du Premium : l'interrupteur n'est pas touché (la perte coupe
+        // le moteur via `shouldRun`).
+        #expect(!CloudSyncEngine.shouldAutoEnable(hadAccess: true, hasAccess: true))
+        #expect(!CloudSyncEngine.shouldAutoEnable(hadAccess: true, hasAccess: false))
+        #expect(!CloudSyncEngine.shouldAutoEnable(hadAccess: false, hasAccess: false))
+    }
+}

@@ -12,6 +12,7 @@ struct BatchScanView: View {
     @State private var selectedFolderId: Int?
     @State private var authManager = DiscogsAuthManager.shared
     @State private var networkMonitor = NetworkMonitor.shared
+    @State private var premiumStore = PremiumStore.shared
     @State private var showingCloseConfirmation = false
 
     private enum Phase {
@@ -72,6 +73,18 @@ struct BatchScanView: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
+        // Démo : titre doublé de l'étiquette Premium (scan par lot réservé aux abonnés).
+        if premiumStore.showsDemoPremiumBadges {
+            ToolbarItem(placement: .principal) {
+                HStack(spacing: 6) {
+                    (phase == .scanning ? Text("Scan par lot") : Text("Revue du scan"))
+                        .font(.headline)
+                    DemoPremiumBadge()
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityAddTraits(.isHeader)
+            }
+        }
         ToolbarItem(placement: .topBarLeading) {
             Button(phase == .scanning ? "Annuler" : "Retour au scan") {
                 if phase == .scanning {

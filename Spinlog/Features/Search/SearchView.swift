@@ -110,47 +110,60 @@ struct SearchView: View {
                     Image(systemName: "rectangle.stack.badge.plus")
                         .font(.system(size: 17, weight: .medium))
                         .foregroundStyle(Color.spinlogPink)
-                } else {
-                    ZStack(alignment: .topTrailing) {
-                        Image(systemName: "rectangle.stack.badge.plus")
-                            .font(.system(size: 17, weight: .medium))
-                            .foregroundStyle(Color(red: 0.92, green: 0.62, blue: 0.16))
-
-                        ZStack {
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            Color(red: 0.98, green: 0.78, blue: 0.28),
-                                            Color(red: 0.88, green: 0.52, blue: 0.12)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: 12, height: 12)
-
-                            // Taille isolée (pas de token partagé) : ce badge fait 12×12 fixe,
-                            // plus petit que tous les autres contextes d'icône de l'app.
-                            Image(systemName: "lock.fill")
-                                .font(.system(size: 8, weight: .bold))
-                                .foregroundStyle(.white)
+                        // Démo : fonction débloquée, mais signalée comme Premium (voir
+                        // `DemoPremiumBadge`) — trop peu de place ici pour l'étiquette entière.
+                        .overlay(alignment: .topTrailing) {
+                            if premiumStore.showsDemoPremiumBadges {
+                                goldCornerBadge(systemName: "sparkles")
+                            }
                         }
-                        .offset(x: 5, y: -5)
-                    }
-                    .padding(.trailing, 2)
+                        .padding(.trailing, premiumStore.showsDemoPremiumBadges ? 2 : 0)
+                } else {
+                    Image(systemName: "rectangle.stack.badge.plus")
+                        .font(.system(size: 17, weight: .medium))
+                        .foregroundStyle(Color(red: 0.92, green: 0.62, blue: 0.16))
+                        .overlay(alignment: .topTrailing) {
+                            goldCornerBadge(systemName: "lock.fill")
+                        }
+                        .padding(.trailing, 2)
                 }
             }
             .buttonStyle(.plain)
             // Seulement si premium : un non-premium doit toujours pouvoir ouvrir le paywall,
             // lui-même sans dépendance réseau.
             .disabled(premiumStore.isPremium && !networkMonitor.isConnected)
-            .accessibilityLabel(premiumStore.isPremium ? "Scan par lot" : "Scan par lot (Premium)")
+            .accessibilityLabel(premiumStore.isPremium && !premiumStore.showsDemoPremiumBadges ? Text("Scan par lot") : Text("Scan par lot (Premium)"))
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
         .background(.fill.tertiary, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .padding(.horizontal)
+    }
+
+    /// Pastille dorée 12×12 posée sur l'icône du scan par lot : cadenas sans Premium, étincelles
+    /// pendant l'aperçu de la démo.
+    private func goldCornerBadge(systemName: String) -> some View {
+        ZStack {
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.98, green: 0.78, blue: 0.28),
+                            Color(red: 0.88, green: 0.52, blue: 0.12)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 12, height: 12)
+
+            // Taille isolée (pas de token partagé) : ce badge fait 12×12 fixe,
+            // plus petit que tous les autres contextes d'icône de l'app.
+            Image(systemName: systemName)
+                .font(.system(size: 8, weight: .bold))
+                .foregroundStyle(.white)
+        }
+        .offset(x: 5, y: -5)
     }
 
     private var scopePicker: some View {

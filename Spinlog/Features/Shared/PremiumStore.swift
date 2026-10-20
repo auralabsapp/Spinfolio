@@ -43,11 +43,46 @@ final class PremiumStore {
         }
     }
 
-    /// Accès aux fonctions Premium, lu partout dans l'app. L'écriture (StoreKit, options
-    /// développeur) ne modifie que l'abonnement réel.
+    #if DEBUG
+    /// Forçage « Compte Premium » des options développeur (builds de développement uniquement).
+    /// Distinct de l'abonnement réel : auparavant, l'interrupteur écrivait dans `hasSubscription`
+    /// et StoreKit n'avait plus le droit de le remettre à `false`, si bien qu'un abonnement de
+    /// test expiré laissait le Premium actif dans les builds lancés depuis Xcode.
+    var developerOverride: Bool {
+        didSet {
+            guard developerOverride != oldValue else { return }
+            UserDefaults.standard.set(developerOverride, forKey: Self.developerOverrideKey)
+            premiumAccessDidChange()
+        }
+    }
+
+    private static let developerOverrideKey = "com.spinlog.debug.premiumOverride"
+    #endif
+
+    /// Accès aux fonctions Premium, lu partout dans l'app : abonnement réel, aperçu de la démo,
+    /// ou forçage développeur (Debug).
     var isPremium: Bool {
-        get { hasSubscription || isDemoPreview }
-        set { hasSubscription = newValue }
+        #if DEBUG
+        hasSubscription || isDemoPreview || developerOverride
+        #else
+        hasSubscription || isDemoPreview
+        #endif
+    }
+
+    /// Premium hors aperçu de la démo (abonnement, ou forçage développeur en Debug) : sert à
+    /// repérer le passage au Premium, qui réactive la synchronisation iCloud.
+    var hasAccessOutsideDemo: Bool {
+        #if DEBUG
+        hasSubscription || developerOverride
+        #else
+        hasSubscription
+        #endif
+    }
+
+    /// Premium offert seulement par la démo : les fonctions Premium y portent une étiquette
+    /// (`DemoPremiumBadge`) pour montrer ce que l'abonnement apporte.
+    var showsDemoPremiumBadges: Bool {
+        isDemoPreview && !hasSubscription
     }
 
     private func premiumAccessDidChange() {
@@ -65,6 +100,9 @@ final class PremiumStore {
             groupDefaults.set(UserDefaults.standard.bool(forKey: storageKey), forKey: storageKey)
         }
         hasSubscription = groupDefaults.bool(forKey: storageKey)
+        #if DEBUG
+        developerOverride = UserDefaults.standard.bool(forKey: Self.developerOverrideKey)
+        #endif
         // Réécrit systématiquement (même valeur) à chaque lancement : ça garantit qu'un widget
         // qui ne verrait jamais rien (App Group cassé/mal provisionné) est détectable en
         // distinguant "clé absente" de "clé présente valant false", plutôt que de dépendre du

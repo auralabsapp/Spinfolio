@@ -42,7 +42,7 @@ struct DeveloperOptionsView: View {
         List {
             // MARK: - 1. Statut Premium & Achat
             Section {
-                Toggle(isOn: $premiumStore.isPremium) {
+                Toggle(isOn: $premiumStore.developerOverride) {
                     HStack(spacing: 12) {
                         Image(systemName: "crown.fill")
                             .foregroundStyle(.yellow)

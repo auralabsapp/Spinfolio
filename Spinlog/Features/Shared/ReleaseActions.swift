@@ -315,6 +315,11 @@ final class ReleaseActions {
     /// de moins de 6 h réutilisée, cote plus ancienne seulement hors ligne et alors datée, car les
     /// CGU de l'API Discogs interdisent d'afficher du Content de plus de 6 h comme à jour).
     func refreshMarketEstimateIfNeeded(releaseId: Int, condition: String?) async -> MarketEstimate? {
+        // Démo : cote d'exemple, jamais enregistrée dans le cache des cotes (partagé entre
+        // comptes), qui la resservirait sinon au vrai compte connecté ensuite.
+        if DemoMode.isActive {
+            return DemoServer.exampleMarketEstimate(releaseId: releaseId)
+        }
         let credentials = networkMonitor.isConnected ? authManager.credentials : nil
 
         if let cached = localStore.latestReleasePriceSnapshot(releaseId: releaseId),

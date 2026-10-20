@@ -28,6 +28,22 @@ public final class SubscriptionManager {
 
     private var transactionListenerTask: Task<Void, Never>? = nil
 
+    // MARK: - Diagnostic (environnements de test uniquement, voir `SubscriptionDiagnosticSection`)
+
+    /// Droit renvoyé par StoreKit lors de la dernière vérification, retenu ou non.
+    public struct EntitlementSnapshot: Identifiable, Sendable {
+        public let id: UInt64
+        public let productID: String
+        public let expirationDate: Date?
+        public let revocationDate: Date?
+        public let counted: Bool
+    }
+
+    /// `true` hors App Store (TestFlight, compte sandbox, fichier StoreKit de Xcode).
+    public private(set) var isTestEnvironment = false
+    public private(set) var lastEntitlementCheck: Date?
+    public private(set) var lastEntitlements: [EntitlementSnapshot] = []
+
     private init() {
         startTransactionListener()
     }
@@ -35,6 +51,9 @@ public final class SubscriptionManager {
     /// Démarre la surveillance continue des transactions StoreKit 2 et synchronise le statut initial
     public func start() {
         Task {
+            if case .verified(let appTransaction)? = try? await AppTransaction.shared {
+                isTestEnvironment = appTransaction.environment != .production
+            }
             await loadProducts()
             await updateCustomerProductStatus()
         }
@@ -95,7 +114,7 @@ public final class SubscriptionManager {
         #if DEBUG
         // En mode développement, on simule l'achat pour permettre de tester l'application sans blocage
         try? await Task.sleep(nanoseconds: 500_000_000)
-        PremiumStore.shared.isPremium = true
+        PremiumStore.shared.developerOverride = true
         return true
         #else
         throw NSError(
@@ -118,7 +137,7 @@ public final class SubscriptionManager {
             let transaction = try Self.verify(verification)
             await transaction.finish()
             await updateCustomerProductStatus()
-            PremiumStore.shared.isPremium = true
+            PremiumStore.shared.hasSubscription = true
             return true
 
         case .userCancelled:
@@ -159,32 +178,42 @@ public final class SubscriptionManager {
         // pourboire, pack de thèmes) ne doit pas débloquer le Premium par simple présence.
         let premiumProductIDs = Set(SubscriptionPlanID.allCases.map(\.rawValue))
 
+        var snapshots: [EntitlementSnapshot] = []
+        let now = Date()
+
         for await result in Transaction.currentEntitlements {
             do {
                 let transaction = try Self.verify(result)
-                if transaction.revocationDate == nil, premiumProductIDs.contains(transaction.productID) {
+                // Expiration revérifiée en plus de la révocation : un droit expiré renvoyé par un
+                // cache StoreKit pas encore rafraîchi ne doit pas laisser le Premium actif.
+                let isActive = transaction.revocationDate == nil
+                    && (transaction.expirationDate.map { $0 > now } ?? true)
+                    && premiumProductIDs.contains(transaction.productID)
+                if isActive {
                     activeIDs.insert(transaction.productID)
                 }
+                snapshots.append(EntitlementSnapshot(
+                    id: transaction.id,
+                    productID: transaction.productID,
+                    expirationDate: transaction.expirationDate,
+                    revocationDate: transaction.revocationDate,
+                    counted: isActive
+                ))
             } catch {
                 logger.error("Droit actif invalide ou révoqué: \(error.localizedDescription, privacy: .public)")
             }
         }
 
         purchasedProductIDs = activeIDs
+        lastEntitlements = snapshots
+        lastEntitlementCheck = now
         let hasActivePremium = !activeIDs.isEmpty
 
         // Reflète l'état réel des droits StoreKit : true si un abonnement est actif, false sinon
         // (expiration, annulation, remboursement...). Sans le `false`, un utilisateur resterait
-        // premium indéfiniment après la fin de son abonnement.
-        #if DEBUG
-        // Préserve le bascule manuel de l'option développeur "Compte Premium" en debug : on ne
-        // force jamais à false ici, seulement à true si un vrai abonnement StoreKit est détecté.
-        if hasActivePremium {
-            PremiumStore.shared.isPremium = true
-        }
-        #else
-        PremiumStore.shared.isPremium = hasActivePremium
-        #endif
+        // premium indéfiniment après la fin de son abonnement. Le forçage développeur (Debug) est
+        // stocké à part (`PremiumStore.developerOverride`) et n'est donc plus écrasé ici.
+        PremiumStore.shared.hasSubscription = hasActivePremium
         logger.info("Droits actifs mis à jour: \(activeIDs.count, privacy: .public) abonnement(s) actif(s)")
     }
 

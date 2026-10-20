@@ -41,9 +41,9 @@ final class ThemeManager {
         // Écoute automatique de la perte ou modification du statut premium
         addLibraryObserver(for: .premiumStatusChanged) { [weak self] in
             guard let self else { return }
-            let isPremium = UserDefaults(suiteName: AppGroup.id)?.bool(forKey: PremiumConstants.isPremiumDefaultsKey)
-                ?? UserDefaults.standard.bool(forKey: PremiumConstants.isPremiumDefaultsKey)
-            self.revertToDefaultIfNeeded(isPremium: isPremium)
+            // Accès effectif (abonnement, aperçu démo, forçage développeur) plutôt que la seule
+            // clé d'abonnement de l'App Group, qui ignorait l'aperçu de la démo.
+            self.revertToDefaultIfNeeded(isPremium: PremiumStore.shared.isPremium)
         }
     }
 

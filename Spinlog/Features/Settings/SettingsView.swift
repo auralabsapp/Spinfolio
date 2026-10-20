@@ -118,6 +118,8 @@ struct SettingsView: View {
                 Group {
                     SettingsAccountSection()
                         .id("accountSection")
+                    // Hors App Store seulement (TestFlight, sandbox, Xcode) : voir la section.
+                    SubscriptionDiagnosticSection()
                     organizationSection
                         .id("organizationSection")
                     SettingsListeningSection()
@@ -125,6 +127,7 @@ struct SettingsView: View {
                     gainTrackingSection
                     purchasePriceSection
                     SettingsOfflineSection()
+                    SettingsICloudSyncSection()
                     exportSection
                 }
                 Group {
@@ -378,7 +381,7 @@ struct SettingsView: View {
                 }
             }
         } header: {
-            SectionEyebrow(title: "Suivi de plus-value", icon: "chart.line.uptrend.xyaxis")
+            SectionEyebrow(title: "Suivi de plus-value", icon: "chart.line.uptrend.xyaxis", isPremiumFeature: true)
         }
     }
 
@@ -445,7 +448,8 @@ struct SettingsView: View {
                 .disabled(!authManager.isAuthenticated || exportViewModel.isExportingPDF)
             }
         } header: {
-            SectionEyebrow(title: "Export", icon: "square.and.arrow.up.fill")
+            // Badge de démo sur le titre : toute la section (CSV et PDF) est Premium.
+            SectionEyebrow(title: "Export", icon: "square.and.arrow.up.fill", isPremiumFeature: true)
         } footer: {
             Text("L'export CSV regroupe tous tes albums (tous dossiers confondus) avec leurs métadonnées, tags et notes pour tes tableurs (Excel, Numbers). La déclaration PDF liste la collection avec état et prix d'achat, à présenter par exemple à un assureur.")
         }

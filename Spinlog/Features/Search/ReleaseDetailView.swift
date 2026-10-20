@@ -438,7 +438,10 @@ struct ReleaseDetailView: View {
                 }
             }
             .coordinateSpace(name: "releaseScroll")
-            .onScrollGeometryChange(for: CGFloat.self) { geo in
+            // `@Sendable` : sans ça, la closure hérite de l'isolation MainActor du module, alors que
+            // SwiftUI peut l'évaluer sur son fil de rendu asynchrone (`AsyncRenderer`) — l'app
+            // s'arrêtait (`dispatch_assert_queue_fail`) au relayout animé du lancement d'une écoute.
+            .onScrollGeometryChange(for: CGFloat.self) { @Sendable geo in
                 geo.contentOffset.y
             } action: { _, newValue in
                 scrollOffsetY = newValue
@@ -550,9 +553,12 @@ struct ReleaseDetailView: View {
                 .frame(width: 28, height: 28)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Emplacement de cet album")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
+                HStack(spacing: 5) {
+                    Text("Emplacement de cet album")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    DemoPremiumBadge()
+                }
 
                 Text(subtitle)
                     .font(.caption)
@@ -611,9 +617,12 @@ struct ReleaseDetailView: View {
                     message: "Passe premium pour savoir instantanément où intercaler ce disque dans ton meuble."
                 )
             } else {
-                Text("\(AppInfo.name) a déterminé l'emplacement exact de ce disque dans ton meuble.")
-                    .font(.caption)
-                    .foregroundStyle(Color.appSecondaryText)
+                HStack(spacing: 5) {
+                    Text("\(AppInfo.name) a déterminé l'emplacement exact de ce disque dans ton meuble.")
+                        .font(.caption)
+                        .foregroundStyle(Color.appSecondaryText)
+                    DemoPremiumBadge()
+                }
 
                 Button {
                     // Masque l'encart "Ajouté à ta collection !" : une fois qu'on a demandé

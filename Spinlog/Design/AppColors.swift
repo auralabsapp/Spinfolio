@@ -2,6 +2,11 @@ import SwiftUI
 
 // Palette de couleurs de l'app (teintes du thème actif, fonds, ombres de pochette) et
 // modificateurs visuels partagés qui s'appuient dessus.
+//
+// Toutes les couleurs dynamiques sont des `UIColor { @Sendable trait in ... }` : sans `@Sendable`,
+// la closure hérite de l'isolation MainActor du module, alors que SwiftUI la résout aussi sur son
+// fil de rendu asynchrone (`AsyncRenderer`) — l'app s'arrêtait (`dispatch_assert_queue_fail`) à
+// l'animation d'apparition du mini-lecteur. Ces closures ne doivent donc lire aucun état MainActor.
 extension Color {
     /// Teinte signature ou personnalisée selon le thème actif dans l'application.
     static var spinlogPink: Color {
@@ -46,10 +51,14 @@ extension Color {
     /// - En sombre : teinte profonde `deepColor` pour garantir un dégradé lumineux, tactile
     ///   et richement contrasté, évitant tout aspect plat ou uniforme.
     static var buttonPinkBottom: Color {
-        Color(uiColor: UIColor { trait in
+        // Thème lu ici (fil principal), pas dans la closure : voir l'en-tête du fichier.
+        let theme = ThemeManager.shared.currentTheme
+        let deep = theme.deepUIColor
+        let primary = theme.primaryUIColor
+        return Color(uiColor: UIColor { @Sendable trait in
             trait.userInterfaceStyle == .dark
-                ? ThemeManager.shared.currentTheme.deepUIColor.resolvedColor(with: trait)
-                : ThemeManager.shared.currentTheme.primaryUIColor.resolvedColor(with: trait)
+                ? deep.resolvedColor(with: trait)
+                : primary.resolvedColor(with: trait)
         })
     }
 
@@ -66,11 +75,11 @@ extension Color {
     /// - En clair : ombre portée teintée douce sous le bouton (22% d'opacité).
     /// - En sombre : halo d'ambiance coloré (38% d'opacité) qui détache la capsule du fond sombre.
     static var buttonPinkShadow: Color {
-        Color(uiColor: UIColor { trait in
-            let theme = ThemeManager.shared.currentTheme
-            return trait.userInterfaceStyle == .dark
-                ? theme.primaryUIColor.resolvedColor(with: trait).withAlphaComponent(0.38)
-                : theme.primaryUIColor.resolvedColor(with: trait).withAlphaComponent(0.22)
+        let primary = ThemeManager.shared.currentTheme.primaryUIColor
+        return Color(uiColor: UIColor { @Sendable trait in
+            trait.userInterfaceStyle == .dark
+                ? primary.resolvedColor(with: trait).withAlphaComponent(0.38)
+                : primary.resolvedColor(with: trait).withAlphaComponent(0.22)
         })
     }
 
@@ -112,7 +121,7 @@ extension Color {
     /// sur le fond clair, sous le seuil de lisibilité (4,5:1). Or plus profond en mode clair
     /// (5,1:1 sur le fond, 4,6:1 sur la carte dorée), `goldWarm` inchangé en mode sombre (6,6:1).
     /// Les fonds, dégradés et ombres dorés gardent les teintes ci-dessus.
-    static let goldText = Color(uiColor: UIColor { trait in
+    static let goldText = Color(uiColor: UIColor { @Sendable trait in
         trait.userInterfaceStyle == .dark
             ? UIColor(red: 0.88, green: 0.52, blue: 0.12, alpha: 1.0)
             : UIColor(red: 0.62, green: 0.34, blue: 0.04, alpha: 1.0)
@@ -122,21 +131,21 @@ extension Color {
     }
 
     /// Vert plus soutenu et contrasté pour le texte de plus-value (évite le vert fluo clair illisible).
-    static let gainPositive = Color(uiColor: UIColor { trait in
+    static let gainPositive = Color(uiColor: UIColor { @Sendable trait in
         trait.userInterfaceStyle == .dark
             ? UIColor(red: 0.35, green: 0.80, blue: 0.45, alpha: 1.0)
             : UIColor(red: 0.12, green: 0.52, blue: 0.22, alpha: 1.0)
     })
 
     /// Rouge contrasté et lisible pour le texte de moins-value (corail lumineux en mode sombre, soutenu en mode clair).
-    static let gainNegative = Color(uiColor: UIColor { trait in
+    static let gainNegative = Color(uiColor: UIColor { @Sendable trait in
         trait.userInterfaceStyle == .dark
             ? UIColor(red: 1.0, green: 0.45, blue: 0.45, alpha: 1.0)
             : UIColor(red: 0.78, green: 0.14, blue: 0.14, alpha: 1.0)
     })
 
     /// Vert doux et élégant pour les tags (non-flashy, adapté aux modes clair et sombre).
-    static let tagForeground = Color(uiColor: UIColor { trait in
+    static let tagForeground = Color(uiColor: UIColor { @Sendable trait in
         trait.userInterfaceStyle == .dark
             ? UIColor(red: 0.42, green: 0.78, blue: 0.56, alpha: 1.0)
             : UIColor(red: 0.18, green: 0.50, blue: 0.32, alpha: 1.0)
@@ -147,19 +156,19 @@ extension Color {
     /// Luminosité (0 = noir, 1 = blanc) des gris de texte en thème clair, centralisée ici : seule
     /// valeur à modifier pour assombrir/éclaircir `appSecondaryText`/`appTertiaryText` en un point
     /// unique plutôt que de rechercher des `UIColor(white:)` éparpillés dans le fichier.
-    private static let lightSecondaryTextBrightness: CGFloat = 0.18
-    private static let lightTertiaryTextBrightness: CGFloat = 0.28
-    private static let darkTertiaryTextOpacity: CGFloat = 0.55
+    nonisolated private static let lightSecondaryTextBrightness: CGFloat = 0.18
+    nonisolated private static let lightTertiaryTextBrightness: CGFloat = 0.28
+    nonisolated private static let darkTertiaryTextOpacity: CGFloat = 0.55
 
     /// Gris "secondaire" plus soutenu dans toute l'app : le `.secondary` système est jugé trop
     /// pâle en thème clair. Le thème sombre garde exactement le gris système par défaut, inchangé.
-    static let appSecondaryText = Color(uiColor: UIColor { trait in
+    static let appSecondaryText = Color(uiColor: UIColor { @Sendable trait in
         trait.userInterfaceStyle == .dark ? UIColor.secondaryLabel : UIColor(white: lightSecondaryTextBrightness, alpha: 1.0)
     })
 
     /// Idem pour le niveau "tertiaire" (chevrons de navigation, libellés très discrets) :
     /// le `.tertiary` système (~30% de noir) devient quasi illisible en thème clair.
-    static let appTertiaryText = Color(uiColor: UIColor { trait in
+    static let appTertiaryText = Color(uiColor: UIColor { @Sendable trait in
         // Mode sombre : même teinte que `tertiaryLabel` mais à 55 % au lieu de 30 % d'opacité
         // (5,4:1 au lieu de 2,5:1 sur le fond) — utilisé par de vrais textes (dates, mentions).
         trait.userInterfaceStyle == .dark
@@ -171,7 +180,7 @@ extension Color {
     /// - Thème clair : beige vinyle / crème papier (#F7F5F0) chaleureux au lieu du blanc froid.
     /// - Thème sombre : anthracite chaud salon Hi-Fi (#141316, 20/19/22) au lieu du noir froid,
     ///   permettant aux ombres portées des pochettes de conserver tout leur relief et leur profondeur physique.
-    static let appBackground = Color(uiColor: UIColor { trait in
+    static let appBackground = Color(uiColor: UIColor { @Sendable trait in
         trait.userInterfaceStyle == .dark
             ? UIColor(red: 20.0 / 255.0, green: 19.0 / 255.0, blue: 22.0 / 255.0, alpha: 1.0)
             : UIColor(red: 247.0 / 255.0, green: 245.0 / 255.0, blue: 240.0 / 255.0, alpha: 1.0)
@@ -181,11 +190,12 @@ extension Color {
     /// - En thème clair : dérivée de la teinte du thème de couleur actif (variante claire), légèrement désaturée.
     /// - En thème sombre : capsule feutrée sombre (#201E24) offrant un détachement net et doux sur l'anthracite.
     static var appHeaderBackground: Color {
-        Color(uiColor: UIColor { trait in
+        let light = ThemeManager.shared.currentTheme.lightUIColor
+        return Color(uiColor: UIColor { @Sendable trait in
             if trait.userInterfaceStyle == .dark {
                 return UIColor(red: 32.0 / 255.0, green: 30.0 / 255.0, blue: 36.0 / 255.0, alpha: 0.92)
             } else {
-                let resolvedLight = ThemeManager.shared.currentTheme.lightUIColor
+                let resolvedLight = light
                     .resolvedColor(with: trait)
                 return resolvedLight.desaturated(by: 0.7).withAlphaComponent(0.25)
             }
@@ -195,7 +205,7 @@ extension Color {
     /// Séparateurs (`Divider()`, traits de `List`) :
     /// - Thème clair : beige doux (#EFECE4).
     /// - Thème sombre : ardoise douce (#26242B, 38/36/43) pour une séparation fine et élégante.
-    static let appSeparator = Color(uiColor: UIColor { trait in
+    static let appSeparator = Color(uiColor: UIColor { @Sendable trait in
         trait.userInterfaceStyle == .dark
             ? UIColor(red: 38.0 / 255.0, green: 36.0 / 255.0, blue: 43.0 / 255.0, alpha: 1.0)
             : UIColor(red: 239.0 / 255.0, green: 236.0 / 255.0, blue: 228.0 / 255.0, alpha: 1.0)
@@ -206,14 +216,14 @@ extension Color {
     /// `coverContactShadow` reconstruisait un `UIColor { trait in ... }` neuf à chaque appel, soit
     /// à chaque ligne/cellule visible et à chaque frame pendant le défilement de la Collection —
     /// une allocation répétée inutile puisque seuls ces 3 cas existent réellement.
-    private static let coverContactShadowResting = Color(uiColor: UIColor { trait in
+    private static let coverContactShadowResting = Color(uiColor: UIColor { @Sendable trait in
         UIColor.black.withAlphaComponent(trait.userInterfaceStyle == .dark ? 0.45 : 0.22)
     })
-    private static let coverContactShadowSelected = Color(uiColor: UIColor { trait in
+    private static let coverContactShadowSelected = Color(uiColor: UIColor { @Sendable trait in
         let base: CGFloat = trait.userInterfaceStyle == .dark ? 0.45 : 0.22
         return UIColor.black.withAlphaComponent(min(base * 1.35, 1.0))
     })
-    private static let coverContactShadowDeselected = Color(uiColor: UIColor { trait in
+    private static let coverContactShadowDeselected = Color(uiColor: UIColor { @Sendable trait in
         let base: CGFloat = trait.userInterfaceStyle == .dark ? 0.45 : 0.22
         return UIColor.black.withAlphaComponent(base * 0.55)
     })
@@ -224,14 +234,14 @@ extension Color {
         return isSelected ? coverContactShadowSelected : coverContactShadowDeselected
     }
 
-    private static let coverAmbientShadowResting = Color(uiColor: UIColor { trait in
+    private static let coverAmbientShadowResting = Color(uiColor: UIColor { @Sendable trait in
         UIColor.black.withAlphaComponent(trait.userInterfaceStyle == .dark ? 0.65 : 0.35)
     })
-    private static let coverAmbientShadowSelected = Color(uiColor: UIColor { trait in
+    private static let coverAmbientShadowSelected = Color(uiColor: UIColor { @Sendable trait in
         let base: CGFloat = trait.userInterfaceStyle == .dark ? 0.65 : 0.35
         return UIColor.black.withAlphaComponent(min(base * 1.3, 1.0))
     })
-    private static let coverAmbientShadowDeselected = Color(uiColor: UIColor { trait in
+    private static let coverAmbientShadowDeselected = Color(uiColor: UIColor { @Sendable trait in
         let base: CGFloat = trait.userInterfaceStyle == .dark ? 0.65 : 0.35
         return UIColor.black.withAlphaComponent(base * 0.5)
     })
@@ -245,7 +255,7 @@ extension Color {
 
 private extension UIColor {
     /// Réduit la saturation de la couleur de `amount` (0 = inchangée, 1 = niveaux de gris).
-    func desaturated(by amount: CGFloat) -> UIColor {
+    nonisolated func desaturated(by amount: CGFloat) -> UIColor {
         var hue: CGFloat = 0, saturation: CGFloat = 0, brightness: CGFloat = 0, alpha: CGFloat = 0
         guard getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha) else { return self }
         return UIColor(hue: hue, saturation: saturation * (1 - amount), brightness: brightness, alpha: alpha)

@@ -14,6 +14,9 @@ struct SectionEyebrow: View {
     let title: LocalizedStringKey
     var icon: String? = nil
     var style: Style = .section
+    /// Section d'une fonction Premium : étiquette dorée pendant l'aperçu de la démo
+    /// (`DemoPremiumBadge`), invisible sinon.
+    var isPremiumFeature = false
 
     var body: some View {
         switch style {
@@ -30,6 +33,10 @@ struct SectionEyebrow: View {
                     .foregroundStyle(Color.spinlogPink)
                     .kerning(0.5)
                     .textCase(.uppercase)
+
+                if isPremiumFeature {
+                    DemoPremiumBadge()
+                }
             }
         case .subsection:
             HStack(spacing: 4) {

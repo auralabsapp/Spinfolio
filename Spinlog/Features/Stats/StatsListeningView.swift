@@ -9,7 +9,7 @@ extension StatsView {
     @ViewBuilder
     var listeningStatsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionEyebrow(title: "Tops & Palmarès", icon: "waveform")
+            SectionEyebrow(title: "Tops & Palmarès", icon: "waveform", isPremiumFeature: true)
 
             if !premiumStore.isPremium {
                 PremiumLockedCard(

@@ -25,6 +25,10 @@ nonisolated enum DiscogsConstants {
     static let websiteURL = URL(string: "https://www.discogs.com")!
     /// URL officielle de suppression définitive de compte Discogs (Guideline Apple 5.1.1(v))
     static let accountDeletionURL = websiteURL.appendingPathComponent("users/delete")
+    /// Page d'inscription Discogs. Pas de lien direct vers `login.discogs.com/u/signup?state=…` :
+    /// ce `state` est un jeton de session à usage unique qui expire ; cette page en génère un neuf
+    /// à chaque ouverture avant de rediriger vers le formulaire d'inscription.
+    static let accountCreationURL = websiteURL.appendingPathComponent("users/create")
 
     /// TTL de 6h partagé par tous les caches locaux (collection, wantlist, images...),
     /// conformément à la contrainte de fraîcheur des données de l'API Discogs.

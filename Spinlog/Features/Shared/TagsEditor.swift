@@ -435,7 +435,9 @@ struct TagPill: View {
 }
 
 /// Layout fluide (wrap) pour disposer les pastilles de tags sur plusieurs lignes si besoin.
-struct FlowLayout: Layout {
+/// `nonisolated` : calcul purement géométrique, que SwiftUI peut mener hors du fil principal
+/// (voir `AutoScrollTextWidthKey`).
+nonisolated struct FlowLayout: Layout {
     var spacing: CGFloat = 8
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
