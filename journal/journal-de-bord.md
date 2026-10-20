@@ -7,6 +7,60 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
+## 2026-10-20 — Démo plus parlante, synchro iCloud réglable, plantage à l'écoute corrigé
+
+Journée consacrée aux retours de TestFlight : historique de valeur tenu hors d'iCloud, mode démo
+qui montre enfin ce que le Premium apporte, interrupteur de synchronisation iCloud, création de
+compte Discogs depuis l'app, et traque d'un plantage au lancement d'une écoute sur platine.
+
+### 16:29 — `39e5430` Démo plus parlante, synchro iCloud réglable, création de compte et plantage à l'écoute corrigé
+- **Plantage au lancement d'une écoute** : les couleurs dynamiques (`UIColor { trait in }`)
+  héritaient de l'isolation au fil principal et lisaient le thème dans leur closure, alors que
+  SwiftUI les résout sur son fil de rendu asynchrone à l'apparition animée du mini-lecteur.
+  Elles sont désormais `@Sendable`, thème lu avant ; mêmes précautions pour les `PreferenceKey`,
+  `FlowLayout` et le suivi de défilement des fiches. Piège ajouté aux règles du projet.
+- **Live Activity** : jaquette plafonnée à 2 800 octets, l'activité n'était plus refusée pour
+  dépassement de la limite de 4 Ko. **Stats** : secteurs des camemberts sans arrondi (plantage
+  Charts remonté par TestFlight le 19).
+- **Mode démo** : étiquette dorée « PREMIUM » sur chaque fonction Premium, cote d'exemple
+  signalée et jamais mise en cache, journal d'écoute d'exemple pour remplir palmarès et podiums.
+- **Réglages** : interrupteur « Synchroniser avec iCloud » (Premium, propre à l'appareil),
+  réactivé au passage Premium avec fusion complète ; lien « Pas de compte ? Crée-en un » vers
+  l'inscription Discogs, aussi sur l'écran de connexion.
+- **Abonnement** : forçage développeur séparé de l'abonnement réel, droits expirés ignorés,
+  diagnostic StoreKit hors App Store.
+- Traductions anglaises, tests unitaires, 7 cas ajoutés au cahier de recette.
+- 45 fichiers, +804 / −135.
+
+### 11:24 — `835ce37` Historique de valeur : synchro iCloud désactivée tant que le graphique est masqué
+- Les points d'historique de la valeur de la collection (données Discogs conservées au-delà de
+  6 h) ne sont plus envoyés vers iCloud ni appliqués à la réception, en attendant un accord de
+  Discogs ; code laissé en commentaire, points locaux conservés.
+- 2 fichiers, +29 / −18.
+
+---
+
+## 2026-10-19 — Cote Discogs datée, aperçu Premium de la démo, cote accessible à tous
+
+### 23:01 — `af59b44` Cote et prix d'achat accessibles sans Premium, seule la plus-value reste verrouillée
+- La cote Discogs actuelle s'affiche sans abonnement (ligne partagée `MarketEstimateRow`) et le
+  prix d'achat se saisit sans Premium ; seule la plus-value garde la carte verrouillée. Textes de
+  Réglages, du paywall et de l'aide ajustés ; cahier de recette mis à jour.
+- 14 fichiers, +273 / −151.
+
+### 21:34 — `a538e50` Réglages : aperçu Premium du mode démo signalé
+- Ligne « Aperçu Premium (mode démo) » expliquant que les fonctions Premium sont débloquées
+  pendant la démo ; bouton de démo qui mentionne l'aperçu Premium.
+- 5 fichiers, +62 / −3.
+
+### 21:34 — `01ca1b6` Cote Discogs de plus de 6 h : datée hors ligne au lieu d'être présentée comme actuelle
+- Cote en cache réutilisée telle quelle seulement si elle a moins de 6 h ; plus ancienne, servie
+  hors ligne uniquement et datée (« Cote du … »), conformément aux CGU de l'API Discogs. Règle
+  extraite dans `MarketEstimate.fromCache` et testée.
+- 6 fichiers, +126 / −22.
+
+---
+
 ## 2026-10-18 — Audit complet, mode démo, tests automatiques, fiabilité des données, interface, Swift 6, règles du projet
 
 Journée consacrée à l'aboutissement de l'audit de l'app (branche `audit-fixes`) : préparation de la
