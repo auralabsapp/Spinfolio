@@ -71,9 +71,12 @@ extension CloudSyncEngine {
                 markSessionDirty(id: sessionId)
                 if index % 25 == 24 { await Task.yield() }
             }
-            for dayStamp in existingDayStamps {
-                markCollectionSnapshotDirty(dayStamp: dayStamp)
-            }
+            // Synchro iCloud de l'historique de valeur désactivée tant que le graphique « Évolution de la cote »
+            // est masqué : ces points sont des données Discogs conservées au-delà de 6 h (CGU de l'API), à ne
+            // réactiver qu'avec l'accord de Discogs. Les points déjà enregistrés en local sont conservés.
+            // for dayStamp in existingDayStamps {
+            //     markCollectionSnapshotDirty(dayStamp: dayStamp)
+            // }
             for (index, releaseId) in existingAlertReleaseIds.enumerated() {
                 markWantlistAlertDirty(releaseId: releaseId)
                 if index % 25 == 24 { await Task.yield() }
@@ -257,20 +260,25 @@ extension CloudSyncEngine {
                 customArtistSortOverrides: resolvedOverrides
             )
 
-        case .collectionSnapshot(let dayStamp):
-            guard let snapshot = try? JSONDecoder().decode(SyncedCollectionSnapshot.self, from: payload) else {
-                cloudSyncLogger.error("apply(remoteRecord:) — payload illisible pour un point d'historique de valeur")
-                return
-            }
-            cloudSyncLogger.log("apply(remoteRecord:) point d'historique de valeur \(dayStamp, privacy: .public)")
-            LocalDataStore.shared.applyRemoteCollectionSnapshot(
-                username: activeUsername,
-                date: snapshot.date,
-                currency: snapshot.currency,
-                low: snapshot.low,
-                median: snapshot.median,
-                high: snapshot.high
-            )
+        case .collectionSnapshot:
+            // Synchro iCloud de l'historique de valeur désactivée tant que le graphique « Évolution de la cote »
+            // est masqué : ces points sont des données Discogs conservées au-delà de 6 h (CGU de l'API), à ne
+            // réactiver qu'avec l'accord de Discogs. Les points déjà enregistrés en local sont conservés.
+            // Les points reçus d'un autre appareil sont donc ignorés.
+            // guard let snapshot = try? JSONDecoder().decode(SyncedCollectionSnapshot.self, from: payload) else {
+            //     cloudSyncLogger.error("apply(remoteRecord:) — payload illisible pour un point d'historique de valeur")
+            //     return
+            // }
+            // cloudSyncLogger.log("apply(remoteRecord:) point d'historique de valeur \(dayStamp, privacy: .public)")
+            // LocalDataStore.shared.applyRemoteCollectionSnapshot(
+            //     username: activeUsername,
+            //     date: snapshot.date,
+            //     currency: snapshot.currency,
+            //     low: snapshot.low,
+            //     median: snapshot.median,
+            //     high: snapshot.high
+            // )
+            break
 
         case .wantlistAlert:
             guard let alert = try? JSONDecoder().decode(WantlistAlert.self, from: payload) else {

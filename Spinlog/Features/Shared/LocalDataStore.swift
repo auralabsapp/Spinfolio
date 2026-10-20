@@ -144,7 +144,10 @@ final class LocalDataStore {
             context.insert(snapshot)
         }
         try? context.save()
-        CloudSyncEngine.shared.markCollectionSnapshotDirty(dayStamp: snapshot.dayStamp)
+        // Synchro iCloud de l'historique de valeur désactivée tant que le graphique « Évolution de la cote »
+        // est masqué : ces points sont des données Discogs conservées au-delà de 6 h (CGU de l'API), à ne
+        // réactiver qu'avec l'accord de Discogs. Les points déjà enregistrés en local sont conservés.
+        // CloudSyncEngine.shared.markCollectionSnapshotDirty(dayStamp: snapshot.dayStamp)
     }
 
     /// Point d'historique le plus récent du compte (pour déterminer si un rafraîchissement est
