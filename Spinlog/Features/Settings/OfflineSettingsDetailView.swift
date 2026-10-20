@@ -141,7 +141,8 @@ struct OfflineSettingsDetailView: View {
             } header: {
                 Text("Espace de stockage")
             } footer: {
-                Text("Les pochettes sont conservées sur le disque pour un affichage immédiat hors ligne. Vider le cache libère l'espace sans effacer ta liste d'albums.")
+                // Durée lue dans la constante partagée (`KingfisherConfig`) pour ne pas se désynchroniser.
+                Text("Les pochettes sont conservées sur le disque \(DiscogsConstants.imageDiskRetentionDays) jours au plus après leur téléchargement, pour un affichage immédiat hors ligne : synchronise régulièrement pour les garder. Vider le cache libère l'espace sans effacer ta liste d'albums.")
             }
 
             // MARK: - 4. Fonctionnement

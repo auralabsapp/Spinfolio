@@ -7179,7 +7179,60 @@
         }
       }
     },
+    "Les pochettes sont conservées sur le disque %lld jours au plus après leur téléchargement, pour un affichage immédiat hors ligne : synchronise régulièrement pour les garder. Vider le cache libère l'espace sans effacer ta liste d'albums." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "Album covers are kept on disk for up to %lld day after download, for instant offline display: sync regularly to keep them. Clearing the cache frees up space without erasing your album list."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "Album covers are kept on disk for up to %lld days after download, for instant offline display: sync regularly to keep them. Clearing the cache frees up space without erasing your album list."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "Album covers are kept on disk for up to %lld days after download, for instant offline display: sync regularly to keep them. Clearing the cache frees up space without erasing your album list."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "Les pochettes sont conservées sur le disque %lld jour au plus après leur téléchargement, pour un affichage immédiat hors ligne : synchronise régulièrement pour les garder. Vider le cache libère l'espace sans effacer ta liste d'albums."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "Les pochettes sont conservées sur le disque %lld jours au plus après leur téléchargement, pour un affichage immédiat hors ligne : synchronise régulièrement pour les garder. Vider le cache libère l'espace sans effacer ta liste d'albums."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "Les pochettes sont conservées sur le disque %lld jour au plus après leur téléchargement, pour un affichage immédiat hors ligne : synchronise régulièrement pour les garder. Vider le cache libère l'espace sans effacer ta liste d'albums."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Les pochettes sont conservées sur le disque pour un affichage immédiat hors ligne. Vider le cache libère l'espace sans effacer ta liste d'albums." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
