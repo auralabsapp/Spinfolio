@@ -11,7 +11,15 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 Journée consacrée aux retours de TestFlight : historique de valeur tenu hors d'iCloud, mode démo
 qui montre enfin ce que le Premium apporte, interrupteur de synchronisation iCloud, création de
-compte Discogs depuis l'app, et traque d'un plantage au lancement d'une écoute sur platine.
+compte Discogs depuis l'app, traque d'un plantage au lancement d'une écoute sur platine, puis
+deux finitions (Réglages, Stats).
+
+### 16:47 — `aba4000` Règle de rangement mise en évidence, 5 lignes entières dans Tops & Palmarès
+- Depuis « Modifier » du guide de rangement, la ligne « Règle de rangement dans le meuble » de
+  Réglages prend 2 s la teinte du thème pour être repérée tout de suite.
+- Classements d'écoute des Stats : hauteur du cadre calculée d'après le contenu mesuré, la 5ᵉ
+  ligne n'est plus coupée en passant d'Albums à Artistes (règle testée).
+- 8 fichiers, +85 / −13.
 
 ### 16:29 — `39e5430` Démo plus parlante, synchro iCloud réglable, création de compte et plantage à l'écoute corrigé
 - **Plantage au lancement d'une écoute** : les couleurs dynamiques (`UIColor { trait in }`)
