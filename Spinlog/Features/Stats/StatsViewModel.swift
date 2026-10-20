@@ -214,7 +214,10 @@ final class StatsViewModel {
         isLoadingValuation = true
         collectionValue = try? await DiscogsAPIClient.shared.collectionValue(username: username, credentials: credentials)
         isLoadingValuation = false
-        recordCollectionSnapshotIfNeeded()
+        // Enregistrement quotidien de l'historique de valeur désactivé tant que le graphique
+        // « Évolution de la cote » est masqué : ce sont des données Discogs qu'on n'a pas à garder
+        // au-delà de 6 h (CGU de l'API). À réactiver seulement avec l'accord de Discogs.
+        // recordCollectionSnapshotIfNeeded()
         refreshValueHistoryFromLocalStore()
     }
 

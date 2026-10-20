@@ -6,13 +6,16 @@ import Kingfisher
 enum KingfisherConfig {
     /// Configure Kingfisher pour le chargement et la mise en cache des pochettes d'albums.
     /// Pour supporter le Mode Hors Ligne sans perte de jaquettes sans réseau, le stockage
-    /// disque est conservé sur 30 jours (ou jusqu'à vidage manuel du cache), tandis que le
-    /// cache mémoire utilise la fenêtre de 6 heures.
+    /// disque est conservé `DiscogsConstants.imageDiskRetentionDays` jours après le
+    /// téléchargement (ou jusqu'à vidage manuel du cache), tandis que le cache mémoire utilise la
+    /// fenêtre de 6 heures.
     static func configure() {
         let cache = ImageCache.default
 
-        // Répértoire Library/Caches : 30 jours de persistance pour consultation hors ligne
-        cache.diskStorage.config.expiration = .days(30)
+        // Répertoire Library/Caches. Par défaut, Kingfisher repousse l'expiration d'une image à
+        // chaque lecture (`.cacheTime`) : une pochette consultée régulièrement n'expirait donc
+        // jamais. `.none` (dans `defaultOptions`) fait de cette durée un vrai maximum.
+        cache.diskStorage.config.expiration = .days(DiscogsConstants.imageDiskRetentionDays)
         cache.memoryStorage.config.expiration = .seconds(DiscogsConstants.sixHoursTTL)
 
         // Downloader : injection automatique des headers requis par Discogs
@@ -47,7 +50,8 @@ enum KingfisherConfig {
 
         KingfisherManager.shared.defaultOptions = [
             .requestModifier(modifier),
-            .diskCacheExpiration(.days(30)),
+            .diskCacheExpiration(.days(DiscogsConstants.imageDiskRetentionDays)),
+            .diskCacheAccessExtendingExpiration(.none),
             .memoryCacheExpiration(.seconds(DiscogsConstants.sixHoursTTL)),
             .cacheOriginalImage
         ]

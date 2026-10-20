@@ -247,6 +247,13 @@ final class DiscogsAuthManager: NSObject {
             OfflineSyncQueue.shared.removeActions(for: currentUsername)
             CollectionPreferencesStore.clearAccountData(for: currentUsername)
             OfflineDownloadManager.shared.resetOfflineState()
+            // Pochettes téléchargées pour le mode hors ligne : elles ne sont pas rattachées à un
+            // compte, donc le cache disque entier est vidé.
+            KingfisherConfig.clearDiskCache()
+            // Années et sections des masters Discogs : conservées sans limite jusque-là, elles
+            // repartent aussi (elles seront re-résolues à la demande avec le prochain compte).
+            LocalDataStore.shared.clearAllMasterYears()
+            DiscogsWorkCategoryCache.shared.clearAll()
         }
         logout()
     }

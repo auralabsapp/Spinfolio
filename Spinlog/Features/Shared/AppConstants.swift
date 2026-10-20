@@ -34,6 +34,12 @@ nonisolated enum DiscogsConstants {
     /// conformément à la contrainte de fraîcheur des données de l'API Discogs.
     static let sixHoursTTL: TimeInterval = 6 * 3600
 
+    /// Durée maximale de conservation des pochettes sur le disque, comptée depuis leur
+    /// téléchargement : sans prolongation à la consultation (voir `KingfisherConfig`), sinon une
+    /// pochette souvent consultée ne serait jamais effacée. Le mode hors ligne les retélécharge à
+    /// chaque synchronisation (automatique en Wi-Fi si l'utilisateur l'a activée).
+    static let imageDiskRetentionDays = 7
+
     /// TTL de 24h partagé par les caches d'estimation de cote/taux de change (une seule
     /// actualisation par jour suffit, ces valeurs ne fluctuent pas assez vite pour justifier plus).
     static let oneDayTTL: TimeInterval = 24 * 3600

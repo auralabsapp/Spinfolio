@@ -2,7 +2,7 @@ import SwiftUI
 import Kingfisher
 
 /// Pochette carrée à coins arrondis, avec halo et état de chargement/erreur.
-/// Utilise Kingfisher avec cache disque borné à 6h et headers Discogs.
+/// Utilise Kingfisher (cache disque borné, voir `KingfisherConfig`) et les headers Discogs.
 struct AsyncCoverImage: View {
     let url: String?
     var cornerRadius: CGFloat = 12

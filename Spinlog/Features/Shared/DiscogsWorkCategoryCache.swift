@@ -93,6 +93,15 @@ final class DiscogsWorkCategoryCache {
         }
     }
 
+    /// Efface tous les classements (suppression des données du compte). N'en signale rien à
+    /// iCloud : la zone du compte est supprimée séparément (`CloudSyncEngine.deleteCloudData`).
+    func clearAll() {
+        categoriesByMasterId = [:]
+        pendingWrites = 0
+        hasUnsyncedChanges = false
+        UserDefaults.standard.removeObject(forKey: storageKey)
+    }
+
     private func persist() {
         UserDefaults.standard.set(syncPayload, forKey: storageKey)
     }

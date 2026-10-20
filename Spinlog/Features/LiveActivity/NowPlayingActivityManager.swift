@@ -266,7 +266,9 @@ final class NowPlayingActivityManager {
         if let memoryImage = ImageCache.default.retrieveImageInMemoryCache(forKey: url.cacheKey) {
             return resizeAndCompress(image: memoryImage)
         }
-        if let data = try? ImageCache.default.diskStorage.value(forKey: url.cacheKey) {
+        // `.none` : une lecture directe du disque prolongerait sinon l'expiration de la pochette
+        // (voir `KingfisherConfig`, durée maximale de conservation).
+        if let data = try? ImageCache.default.diskStorage.value(forKey: url.cacheKey, extendingExpiration: .none) {
             if let img = UIImage(data: data) {
                 return resizeAndCompress(image: img)
             }

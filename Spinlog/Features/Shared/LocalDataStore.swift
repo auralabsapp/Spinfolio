@@ -109,6 +109,17 @@ final class LocalDataStore {
         )
     }
 
+    /// Efface toute la table des années de master (elle n'est pas rattachée à un compte). Réservé à
+    /// la suppression des données du compte : pas appelé par `clearAllUserData`, que la sortie du
+    /// mode démo utilise aussi, sinon essayer la démo obligerait à tout re-résoudre via l'API.
+    func clearAllMasterYears() {
+        if let records = try? context.fetch(FetchDescriptor<MasterRecord>()) {
+            for record in records { context.delete(record) }
+        }
+        try? context.save()
+        masterYearsMemoryCache = nil
+    }
+
     /// Restaure en masse une table masterId -> année depuis une sauvegarde, sans écraser une
     /// donnée déjà connue localement plus récemment que la restauration (les deux sont la même
     /// valeur immuable en pratique, mais on n'écrase jamais un enregistrement existant pour éviter
@@ -310,7 +321,7 @@ final class LocalDataStore {
 
     // MARK: - Suppression complète des données utilisateur (Guideline 5.1.1(v))
 
-    /// Supprime l'intégralité des données en cache pour un utilisateur (collection, wantlist, dossiers, métadonnées).
+    /// Supprime l'intégralité des données en cache pour un utilisateur (collection, wantlist, dossiers, métadonnées, historique de valeur) ainsi que les cotes par disque.
     func clearAllUserData(username: String) {
         let colDescriptor = FetchDescriptor<CachedCollectionEntry>(
             predicate: #Predicate<CachedCollectionEntry> { $0.username == username }
@@ -348,6 +359,12 @@ final class LocalDataStore {
         )
         if let snapshots = try? context.fetch(snapshotDescriptor) {
             for snapshot in snapshots { context.delete(snapshot) }
+        }
+
+        // Cotes par disque : elles ne portent que l'identifiant de la release, pas de compte, donc
+        // elles partent toutes. Ce cache est jetable (retéléchargé à la demande).
+        if let prices = try? context.fetch(FetchDescriptor<ReleasePriceSnapshot>()) {
+            for price in prices { context.delete(price) }
         }
 
         try? context.save()
