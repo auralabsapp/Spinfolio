@@ -9,10 +9,14 @@ struct ShelfPlacementView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var preferences = ShelfPreferencesStore.shared
     @State private var premiumStore = PremiumStore.shared
     @State private var authManager = DiscogsAuthManager.shared
     @State private var viewModel = ShelfPlacementViewModel()
+    /// Pulsation du disque central après un toucher (voir `pulseTarget`).
+    @State private var isTargetPulsing = false
+    @State private var pulseResetTask: Task<Void, Never>?
 
     /// Calculés une seule fois à l'ouverture, plutôt qu'à chaque image de rendu comme le ferait
     /// une propriété calculée ordinaire : cette recherche relit et redécode toute la collection
@@ -235,36 +239,26 @@ struct ShelfPlacementView: View {
     /// Colonne centrale : le disque cible à ranger
     private var targetColumn: some View {
         VStack(spacing: 8) {
-            // Badge d'action
+            // Repère d'emplacement : volontairement à plat (ni fond plein, ni ombre), pour ne pas
+            // ressembler à un bouton alors qu'il n'ouvre rien.
             HStack(spacing: 3) {
                 Image(systemName: "arrow.down")
                     .font(.caption2.weight(.bold))
                 Text("ICI")
                     .font(.caption2.weight(.heavy))
             }
-            .foregroundStyle(.white)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3.5)
-            .background(
-                Capsule()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.buttonPinkTop, Color.buttonPinkBottom],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-            )
-            .shadow(color: Color.spinlogPink.opacity(0.35), radius: 5, y: 2)
+            .foregroundStyle(Color.spinlogPink)
+            .scaleEffect(isTargetPulsing && !reduceMotion ? 1.15 : 1)
 
             // Pochette centrale plus grande avec bordure rose
             AsyncCoverImage(url: targetRelease.primaryImageURL, cornerRadius: 10, targetSize: 104)
                 .frame(width: 104, height: 104)
                 .overlay(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .strokeBorder(Color.spinlogPink, lineWidth: 2)
+                        .strokeBorder(Color.spinlogPink, lineWidth: isTargetPulsing ? 4 : 2)
                 )
-                .shadow(color: Color.spinlogPink.opacity(0.25), radius: 8, y: 4)
+                .shadow(color: Color.spinlogPink.opacity(isTargetPulsing ? 0.5 : 0.25), radius: 8, y: 4)
+                .scaleEffect(isTargetPulsing && !reduceMotion ? 1.06 : 1)
 
             // Titre, Artiste et Année
             VStack(spacing: 2) {
@@ -294,6 +288,28 @@ struct ShelfPlacementView: View {
             }
         }
         .frame(maxWidth: .infinity)
+        .contentShape(Rectangle())
+        .onTapGesture(perform: pulseTarget)
+        // Le toucher n'ouvre rien : pour VoiceOver, c'est un simple repère, lu d'un seul bloc.
+        .accessibilityElement(children: .combine)
+    }
+
+    /// Le testeur touche instinctivement le disque central : on confirme que le toucher est
+    /// reconnu (rebond + retour haptique) sans rien ouvrir, puisque ce disque est celui de la
+    /// fiche d'où l'on vient. Avec « Réduire les animations », seule la bordure change.
+    private func pulseTarget() {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        pulseResetTask?.cancel()
+        withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .shelfTargetPulse) {
+            isTargetPulsing = true
+        }
+        pulseResetTask = Task {
+            try? await Task.sleep(for: .milliseconds(220))
+            guard !Task.isCancelled else { return }
+            withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .shelfTargetPulse) {
+                isTargetPulsing = false
+            }
+        }
     }
 
     /// Colonne d'un disque voisin (Gauche ou Droite)

@@ -23,4 +23,8 @@ extension Animation {
     /// Sélection / désélection d'une barre ou d'un secteur des graphiques de Stats : volontairement
     /// brève (les autres barres s'estompent presque instantanément), sans rebond.
     static let chartSelection = Animation.easeOut(duration: 0.15)
+
+    /// Pulsation du disque cible du guide de rangement quand on le touche : rebond court, pour
+    /// montrer que le toucher est reconnu même si l'élément n'ouvre rien.
+    static let shelfTargetPulse = Animation.spring(response: 0.25, dampingFraction: 0.55)
 }
