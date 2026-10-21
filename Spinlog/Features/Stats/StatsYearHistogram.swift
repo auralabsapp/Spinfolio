@@ -29,7 +29,7 @@ struct YearHistogramChart: View {
         // `Chart` est évalué par Charts, hors de ce suivi.
         let selectedYear = kind == .originalYears ? selection.originalYear : selection.additionsYear
         let totalBars = entries.count
-        let hasScroll = totalBars > maxVisibleBars
+        let hasScroll = Self.scrolls(barCount: totalBars, maxVisibleBars: maxVisibleBars)
         let maxCount = entries.map(\.count).max() ?? 0
 
         // Défilement natif du graphique (`chartScrollableAxes`) plutôt qu'un `Chart` large dans un
@@ -59,7 +59,11 @@ struct YearHistogramChart: View {
                 }
             }
         }
-        .chartScrollableAxes(.horizontal)
+        // Défilement activé seulement quand des barres dépassent : un graphique défilable dont tout
+        // le contenu est déjà visible (10 barres pour 10 places, par exemple) a une plage de
+        // défilement nulle, et Charts convertit alors un NaN en entier dans son suivi de
+        // géométrie (« CGFloat value cannot be converted to Int ») — plantage à l'arrivée sur Stats.
+        .chartScrollableAxes(hasScroll ? .horizontal : [])
         // Pour un axe catégoriel, la longueur visible est un nombre de barres.
         .chartXVisibleDomain(length: hasScroll ? maxVisibleBars : max(totalBars, 1))
         .chartOverlay { proxy in
@@ -94,6 +98,11 @@ struct YearHistogramChart: View {
             }
         }
         .frame(height: 160)
+    }
+
+    /// Le graphique ne défile que s'il y a strictement plus de barres que de places visibles.
+    nonisolated static func scrolls(barCount: Int, maxVisibleBars: Int) -> Bool {
+        barCount > maxVisibleBars
     }
 
     /// Borne haute de l'axe vertical : 25 % de marge au-dessus de la plus grande barre, et au moins

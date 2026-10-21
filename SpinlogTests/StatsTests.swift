@@ -19,6 +19,15 @@ struct StatsTests {
         #expect(StatsView.cappedListHeight(contentHeight: 0, rowCount: 0, estimatedRowHeight: 56) == 0)
     }
 
+    /// Régression : 10 barres pour 10 places rendaient le graphique défilable avec une plage de
+    /// défilement nulle, ce qui faisait planter Charts à l'arrivée sur l'onglet Stats.
+    @Test func yearHistogramOnlyScrollsWhenBarsOverflow() {
+        #expect(!YearHistogramChart.scrolls(barCount: 0, maxVisibleBars: 10))
+        #expect(!YearHistogramChart.scrolls(barCount: 5, maxVisibleBars: 10))
+        #expect(!YearHistogramChart.scrolls(barCount: 10, maxVisibleBars: 10))
+        #expect(YearHistogramChart.scrolls(barCount: 11, maxVisibleBars: 10))
+    }
+
     @Test func yAxisAlwaysKeepsHeadroomAboveTallestBar() {
         // Petits effectifs (vue par année) : la marge ne doit plus être tronquée à zéro.
         #expect(YearHistogramChart.yAxisUpperBound(maxCount: 0) == 1)
