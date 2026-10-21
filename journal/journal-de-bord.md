@@ -9,6 +9,28 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-10-21 — Graphiques de Stats fluides, paywall après la connexion
 
+### 19:50 — `b560d74` Lecteur plein écran depuis le mini-lecteur
+- **Apple Music** : toucher le mini-lecteur ouvre une fenêtre plein écran sur le modèle de « Lecture en
+  cours » (pochette en fond flouté, titre, artiste, progression, précédent / stop / suivant, volume
+  système, AirPlay, liste des pistes en feuille), avec une transition zoom depuis le mini-lecteur et
+  une fermeture interactive au glissé. Un bouton disque ramène à la fiche d'origine.
+- **Platine** : petite feuille à la hauteur de son contenu (jaquette, titre, artiste, fiche du disque,
+  « Arrêter l'écoute »).
+- 13 fichiers dont `NowPlaying/` (6 nouveaux) et `NowPlayingAlbumTests`.
+
+### 19:51 — `edf2c38` Listes courtes : rebond et retour de la barre d'onglets
+- Rebond toujours actif en Liste, Mosaïque et Carrousel ; le tirage vers le bas au sommet rétablit tout
+  de suite la barre d'onglets réduite (`expandTabBar`).
+
+### 19:52 — `04f1276` Réglages : aide du suivi de plus-value pour tous
+- « Comment ça fonctionne ? » reste accessible sans Premium, sous la carte d'offre.
+
+### 19:53 — `3dfa799` Position conservée au retour sur une fiche, un master, un label, un artiste, un profil
+- Ces écrans ne se rechargent plus quand ils sont déjà affichés (`loadIfNeeded`) : plus de squelette ni
+  de retour en haut au retour arrière.
+
+- Cas de recette Q11, Q27, Q28, E19, J33, H25 (`c72fd46`).
+
 ### 18:25 — `bd79597` Synchro iCloud sans plantage à l'achat Premium, « All » retiré des choix de dossier, histogrammes par année avec axe vertical lisible
 - **Plantage après achat** (rapport TestFlight, `CKSyncEngine.fetchChanges` appelé en récursion) : le
   premier démarrage de la synchro émet `accountChange`, dont le traitement lançait des `Task`
