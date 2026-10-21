@@ -117,6 +117,8 @@ struct SettingsView: View {
                     .listRowSeparator(.hidden)
                     .id("premiumBanner")
                 }
+                guideSection
+                    .id("guideSection")
                 Group {
                     SettingsAccountSection()
                         .id("accountSection")
@@ -149,7 +151,8 @@ struct SettingsView: View {
             }
             .onChange(of: tabCoordinator.scrollToTopOfSettingsTrigger) {
                 withAnimation {
-                    proxy.scrollTo(premiumStore.hasAccessOutsideDemo ? "accountSection" : "premiumBanner", anchor: .top)
+                    // Le guide ouvre la liste : sans bannière Premium, c'est lui le haut de page.
+                    proxy.scrollTo(premiumStore.hasAccessOutsideDemo ? "guideSection" : "premiumBanner", anchor: .top)
                 }
             }
             .onChange(of: tabCoordinator.scrollToOrganizationSectionTrigger) { _, newValue in
@@ -174,6 +177,26 @@ struct SettingsView: View {
         }
     }
 
+
+    // MARK: - 1bis. Guide
+
+    @ViewBuilder
+    private var guideSection: some View {
+        Section {
+            NavigationLink(value: SettingsDestination.guide) {
+                HStack(spacing: 14) {
+                    SettingsIcon(systemName: "book.fill", backgroundColor: .indigo)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Guide")
+                            .foregroundStyle(.primary)
+                        Text("Découvre les fonctions de l'app")
+                            .font(.caption2)
+                            .foregroundStyle(Color.appSecondaryText)
+                    }
+                }
+            }
+        }
+    }
 
     // MARK: - 2. Collection & Rangement
 

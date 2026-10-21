@@ -11,6 +11,8 @@ enum SettingsDestination: Hashable {
     case purchasePriceHelp
     case offline
     case colorTheme
+    case guide
+    case guideSection(GuideSection)
     #if DEBUG
     case developerOptions
     #endif
@@ -32,6 +34,10 @@ enum SettingsDestination: Hashable {
             OfflineSettingsDetailView()
         case .colorTheme:
             ColorThemeSelectionView()
+        case .guide:
+            GuideView()
+        case .guideSection(let section):
+            GuideSectionView(section: section)
         #if DEBUG
         case .developerOptions:
             DeveloperOptionsView()

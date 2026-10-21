@@ -68,6 +68,86 @@
         }
       }
     },
+    "« Couleur du thème » ouvre les palettes." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "\"Theme Color\" opens the palettes."
+          }
+        }
+      }
+    },
+    "« Estimation de la collection » s'appuie sur l'historique des ventes Discogs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "\"Collection Valuation\" is based on Discogs sales history."
+          }
+        }
+      }
+    },
+    "« Gestion des dossiers » : touche un dossier pour en faire le dossier d'ajout par défaut." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "\"Folder Management\": tap a folder to make it the default folder for new additions."
+          }
+        }
+      }
+    },
+    "« Gestion des tags » : glisse ou maintiens un tag pour le renommer, le fusionner ou le supprimer." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "\"Tag Management\": swipe or press and hold a tag to rename, merge or delete it."
+          }
+        }
+      }
+    },
+    "« Ranger » est une fonction Premium." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "\"Shelve\" is a Premium feature."
+          }
+        }
+      }
+    },
+    "« Se déconnecter » est en bas de Réglages." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "\"Sign Out\" is at the bottom of Settings."
+          }
+        }
+      }
+    },
+    "« Supprimer mon compte… » propose d'effacer les données locales et iCloud, ou de supprimer le compte sur Discogs.com." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "\"Delete My Account…\" lets you erase local and iCloud data, or delete the account on Discogs.com."
+          }
+        }
+      }
+    },
+    "« Toujours demander » te propose le dossier à chaque ajout." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "\"Always Ask\" offers you the folder every time you add a record."
+          }
+        }
+      }
+    },
     "(%@/mois)" : {
       "localizations" : {
         "en" : {
@@ -580,6 +660,7 @@
       }
     },
     "%@ utilise deux champs personnalisés de ta collection Discogs : un pour le prix d'achat, un pour l'état du disque. Chacun est détecté automatiquement par mot-clé dans le nom du champ — « prix », « prix d'achat », « price », « purchase price », « bought for » ou « cost » pour le prix d'achat ; « Media Condition » ou « état du disque » pour l'état (en excluant « Sleeve Condition », qui concerne la pochette)." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2237,6 +2318,7 @@
       }
     },
     "• L'estimation d'une release est recalculée au maximum 1 fois par jour (sauf si tu changes l'état déclaré, qui force un recalcul immédiat)." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2247,6 +2329,7 @@
       }
     },
     "• La conversion de devises utilise des taux en ligne mis à jour toutes les 24h, avec un repli approximatif si hors ligne." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2256,12 +2339,43 @@
         }
       }
     },
+    "• Les devises sont converties avec des taux mis à jour toutes les 24 h, approximatifs hors ligne." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "• Currencies are converted using rates updated every 24 h, approximate when offline."
+          }
+        }
+      }
+    },
+    "• Les prix (cote et prix d'achat) n'incluent jamais les frais de port." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "• Prices (value and purchase price) never include shipping costs."
+          }
+        }
+      }
+    },
     "• Les prix affichés (cote et prix d'achat) n'incluent jamais les frais de port, alors qu'ils font partie de la valeur réelle d'une transaction." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "• Displayed prices (value and purchase price) never include shipping costs, even though they're part of a transaction's real value."
+          }
+        }
+      }
+    },
+    "• Une estimation est recalculée au plus une fois par jour (tout de suite si tu changes l'état déclaré)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "• An estimate is recalculated at most once a day (right away if you change the declared condition)."
           }
         }
       }
@@ -2456,6 +2570,16 @@
         }
       }
     },
+    "À créer sur Discogs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "To create on Discogs"
+          }
+        }
+      }
+    },
     "À DROITE" : {
       "localizations" : {
         "en" : {
@@ -2472,6 +2596,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "LEFT"
+          }
+        }
+      }
+    },
+    "À la fin de cette durée, l'écoute s'arrête sans que tu aies rien à faire." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "When that time is up, listening stops without you doing anything."
           }
         }
       }
@@ -2638,6 +2772,46 @@
         }
       }
     },
+    "Acheté 20 €, cote actuelle 35 €, plus-value de 15 €" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Bought for €20, current value €35, gain of €15"
+          }
+        }
+      }
+    },
+    "Acheté 20 €, état VG+, cote VG+ à 35 € : +15 €." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Bought for €20, condition VG+, VG+ value at €35: +€15."
+          }
+        }
+      }
+    },
+    "Active « Limiter au dossier Discogs » si tes dossiers correspondent à des meubles distincts." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Turn on \"Limit to Discogs Folder\" if your folders match separate shelving units."
+          }
+        }
+      }
+    },
+    "Active « Synchro auto en Wi-Fi » pour la tenir à jour." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Turn on \"Auto-Sync Over Wi-Fi\" to keep it up to date."
+          }
+        }
+      }
+    },
     "Actualisation automatique" : {
       "localizations" : {
         "en" : {
@@ -2668,6 +2842,16 @@
         }
       }
     },
+    "Affichages, tris, filtres et actions. La Wantlist fonctionne de la même façon." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Display modes, sorting, filters and actions. The Wantlist works the same way."
+          }
+        }
+      }
+    },
     "Afficher moins" : {
       "localizations" : {
         "en" : {
@@ -2684,6 +2868,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Show More"
+          }
+        }
+      }
+    },
+    "Agir sur un disque" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Act on a Record"
           }
         }
       }
@@ -2842,6 +3036,16 @@
         }
       }
     },
+    "Ajoute-les d'un coup à ta collection ou à ta wantlist." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Add them all at once to your collection or wantlist."
+          }
+        }
+      }
+    },
     "Ajouter" : {
       "localizations" : {
         "en" : {
@@ -2892,6 +3096,27 @@
         }
       }
     },
+    "Ajouter un disque" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Add a Record"
+          }
+        }
+      }
+    },
+    "Ajouter un disque par la recherche" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Add a Record Using Search"
+          }
+        }
+      }
+    },
     "Ajouter un tag" : {
       "localizations" : {
         "en" : {
@@ -2922,6 +3147,16 @@
         }
       }
     },
+    "Ajuste avec les raccourcis -10 %, -20 % ou -30 %." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Fine-tune with the -10%, -20% or -30% shortcuts."
+          }
+        }
+      }
+    },
     "Ajuster l'ordre artiste par artiste" : {
       "localizations" : {
         "en" : {
@@ -2948,6 +3183,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Album"
+          }
+        }
+      }
+    },
+    "Album du jour" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Album of the Day"
           }
         }
       }
@@ -3094,6 +3339,16 @@
         }
       }
     },
+    "Alertes de prix" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Price Alerts"
+          }
+        }
+      }
+    },
     "Alertes de prix sur la wantlist" : {
       "localizations" : {
         "en" : {
@@ -3171,6 +3426,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Appearance"
+          }
+        }
+      }
+    },
+    "Apparence et couleurs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Appearance and Colors"
           }
         }
       }
@@ -3261,6 +3526,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Article at the end"
+          }
+        }
+      }
+    },
+    "Articles, noms de famille, cas particuliers : tu règles l'ordre artiste par artiste." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Articles, last names, special cases: you set the order artist by artist."
           }
         }
       }
@@ -3667,6 +3942,26 @@
         }
       }
     },
+    "Autorise l'app sur le site Discogs, puis reviens dans Spinlog." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Authorize the app on the Discogs website, then come back to Spinlog."
+          }
+        }
+      }
+    },
+    "Autorise les notifications pour être prévenu app fermée." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Allow notifications to be alerted even when the app is closed."
+          }
+        }
+      }
+    },
     "Autre" : {
       "localizations" : {
         "en" : {
@@ -3703,6 +3998,37 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Other Formats"
+          }
+        }
+      }
+    },
+    "Avec le nom de famille, « Personnaliser le tri des artistes » corrige un cas isolé." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "With last-name sorting on, \"Customize Artist Sorting\" fixes a one-off case."
+          }
+        }
+      }
+    },
+    "Avec le réglage « Toujours demander » (celui de départ), un menu te propose le dossier d'ajout. Si tu as choisi un dossier par défaut, l'ajout est immédiat ; maintiens alors « Collection » pour viser un autre dossier." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "With the \"Always Ask\" setting (the default), a menu lets you pick the folder to add to. If you’ve chosen a default folder, the record is added right away; press and hold \"Collection\" to pick another folder."
+          }
+        }
+      }
+    },
+    "Avec plusieurs tags, seuls les disques qui les portent tous restent affichés." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "With several tags, only records that have all of them stay on screen."
           }
         }
       }
@@ -3814,6 +4140,7 @@
       }
     },
     "Calcul de la cote actuelle" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3869,6 +4196,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "This Month"
+          }
+        }
+      }
+    },
+    "Ce que tu trouves sur la fiche d'un disque, et ce que tu peux y noter." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "What you’ll find on a record’s page, and what you can note there."
           }
         }
       }
@@ -3959,6 +4296,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Some copies have already reached the maximum of %lld tags and couldn't receive this tag."
+          }
+        }
+      }
+    },
+    "Ces lectures ne comptent pas comme des écoutes sur platine." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "These plays don’t count as turntable listens."
+          }
+        }
+      }
+    },
+    "Ces réglages valent pour le meuble, la Collection et la Wantlist." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "These settings apply to the shelf, the Collection and the Wantlist."
           }
         }
       }
@@ -4074,6 +4431,7 @@
       }
     },
     "Champs prix d'achat et état du disque" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4093,12 +4451,52 @@
         }
       }
     },
+    "Chaque écoute alimente le palmarès de Stats (Premium)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Every listen feeds the charts in Stats (Premium)."
+          }
+        }
+      }
+    },
     "Chargement du marché Discogs…" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Loading Discogs marketplace…"
+          }
+        }
+      }
+    },
+    "Cherche par nom ou scanne le code-barres." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Search by name or scan the barcode."
+          }
+        }
+      }
+    },
+    "Chercher et filtrer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Search and Filter"
+          }
+        }
+      }
+    },
+    "Choisir le bon seuil" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Pick the Right Threshold"
           }
         }
       }
@@ -4165,6 +4563,36 @@
         }
       }
     },
+    "Choisir mes champs dans Réglages" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Choose My Fields in Settings"
+          }
+        }
+      }
+    },
+    "Choisis : artiste puis année originale, artiste puis titre, année seule, ou artiste puis année du pressage." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Choose: artist then original year, artist then title, year only, or artist then pressing year."
+          }
+        }
+      }
+    },
+    "Choisis « Album du jour », en petit, moyen ou grand format." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Pick \"Album of the Day\" in small, medium or large size."
+          }
+        }
+      }
+    },
     "Clair" : {
       "localizations" : {
         "en" : {
@@ -4181,6 +4609,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sorted as:"
+          }
+        }
+      }
+    },
+    "Classe tes disques avec tes tags et une note sur 5." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Organize your records with your own tags and a rating out of 5."
           }
         }
       }
@@ -4271,6 +4709,26 @@
         }
       }
     },
+    "Collection et Wantlist" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Collection and Wantlist"
+          }
+        }
+      }
+    },
+    "Collection ou wantlist ?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Collection or Wantlist?"
+          }
+        }
+      }
+    },
     "Collection vide" : {
       "localizations" : {
         "en" : {
@@ -4287,6 +4745,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "How Does It Work?"
+          }
+        }
+      }
+    },
+    "Compare ce que tu as payé à la cote actuelle de ta collection." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Compare what you paid with your collection’s current value."
           }
         }
       }
@@ -4317,6 +4785,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Discogs Account"
+          }
+        }
+      }
+    },
+    "Compte Discogs requis" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Discogs account required"
+          }
+        }
+      }
+    },
+    "Compte et données" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Account and Data"
+          }
+        }
+      }
+    },
+    "Compteurs, derniers ajouts et estimation de la valeur de ta collection." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Counters, recent additions and your collection’s estimated value."
           }
         }
       }
@@ -4481,6 +4979,16 @@
         }
       }
     },
+    "Consulte ton profil, déconnecte-toi ou efface tes données." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "View your profile, sign out or erase your data."
+          }
+        }
+      }
+    },
     "Consulter les annonces sur Discogs.com" : {
       "localizations" : {
         "en" : {
@@ -4517,6 +5025,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Unlike tags, which are local data, these fields are synced with your Discogs account. Changes are saved automatically when you tap outside the field or on the checkmark."
+          }
+        }
+      }
+    },
+    "cote − prix payé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "value − price paid"
           }
         }
       }
@@ -4621,6 +5139,16 @@
         }
       }
     },
+    "Couper la synchro n'efface rien : à la réactivation, tout est fusionné. Elle est coupée pendant la démo." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Turning sync off erases nothing: when you turn it back on, everything is merged. It’s off during the demo."
+          }
+        }
+      }
+    },
     "Crédit" : {
       "localizations" : {
         "en" : {
@@ -4651,6 +5179,17 @@
         }
       }
     },
+    "Crée ton compte sur le site Discogs et confirme ton adresse e-mail." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Create your account on the Discogs website and confirm your email address."
+          }
+        }
+      }
+    },
     "Créer" : {
       "localizations" : {
         "en" : {
@@ -4677,6 +5216,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Create and Add \"%@\" to Selection"
+          }
+        }
+      }
+    },
+    "Créer le champ prix d'achat" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Create the Purchase Price Field"
           }
         }
       }
@@ -4727,6 +5276,189 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hi-Fi Copper & Gold"
+          }
+        }
+      }
+    },
+    "Dans « Modifier », section « Tags de l'exemplaire » : crée ou choisis des tags." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "In \"Edit\", under \"Copy Tags\": create or pick tags."
+          }
+        }
+      }
+    },
+    "Dans « Sorties originales », bascule entre années et décennies." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "In \"Original Releases\", switch between years and decades."
+          }
+        }
+      }
+    },
+    "Dans l'onglet Recherche, touche l'icône de scan de la barre de recherche." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "In the Search tab, tap the scan icon in the search bar."
+          }
+        }
+      }
+    },
+    "Dans l'onglet Recherche, touche l'icône de scan par lot, à côté de celle du scan." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "In the Search tab, tap the batch scan icon, next to the scan icon."
+          }
+        }
+      }
+    },
+    "Dans l'onglet Réglages, section Compte Discogs, touche « Se connecter à Discogs ». Le bouton « Se connecter » des onglets Collection, Wantlist et Stats fait la même chose." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "In the Settings tab, Discogs Account section, tap \"Sign In to Discogs\". The \"Sign In\" button in the Collection, Wantlist and Stats tabs does the same thing."
+          }
+        }
+      }
+    },
+    "Dans l'onglet Stats, touche « Collection » ou « Wantlist » pour aller à la liste." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "In the Stats tab, tap \"Collection\" or \"Wantlist\" to go to the list."
+          }
+        }
+      }
+    },
+    "Dans la Wantlist, glisse une ligne ou maintiens-la : « Définir une alerte prix »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "In the Wantlist, swipe a row or press and hold it: \"Set Price Alert\"."
+          }
+        }
+      }
+    },
+    "Dans Réglages, active « Ignorer les articles (The...) » ou « Trier par nom de famille »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "In Settings, turn on \"Ignore Articles (The...)\" or \"Sort by Last Name\"."
+          }
+        }
+      }
+    },
+    "Dans Réglages, active « Synchroniser avec iCloud »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "In Settings, turn on \"Sync with iCloud\"."
+          }
+        }
+      }
+    },
+    "Dans Réglages, ouvre « Mode hors ligne » puis « Télécharger toute ma collection »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "In Settings, open \"Offline Mode\" then \"Download My Entire Collection\"."
+          }
+        }
+      }
+    },
+    "Dans Réglages, section « Collection & Rangement », touche « Règle de rangement dans le meuble »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "In Settings, under \"Collection & Shelving\", tap \"Shelving Rule\"."
+          }
+        }
+      }
+    },
+    "Dans Réglages, section « Écoute sur platine & Live Activity », choisis la durée maximale." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "In Settings, under \"Turntable Listening & Live Activity\", choose the maximum duration."
+          }
+        }
+      }
+    },
+    "Dans Réglages, section Apparence : « Mode d'affichage » pour clair, sombre ou automatique." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "In Settings, under Appearance: \"Display Mode\" for light, dark or automatic."
+          }
+        }
+      }
+    },
+    "Dans Réglages, section Apple Music, active « Connecter mon compte Apple Music »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "In Settings, under Apple Music, turn on \"Connect My Apple Music Account\"."
+          }
+        }
+      }
+    },
+    "Dans Réglages, section Export : « Exporter la collection en CSV » ou « Déclaration de collection (PDF) »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "In Settings, under Export: \"Export Collection as CSV\" or \"Collection Declaration (PDF)\"."
+          }
+        }
+      }
+    },
+    "Dans Réglages, touche « Pas de compte ? Crée-en un »." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "In Settings, tap \"No account? Create one\"."
+          }
+        }
+      }
+    },
+    "Dans Stats, « Tops & Palmarès » montre le classement et le podium par période." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "In Stats, \"Top Charts\" shows the ranking and the podium by period."
+          }
+        }
+      }
+    },
+    "Dans Stats, ouvre « Investi vs Cote actuelle »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "In Stats, open \"Invested vs Current Value\"."
           }
         }
       }
@@ -4839,6 +5571,26 @@
         }
       }
     },
+    "Découvre les fonctions de l'app" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Discover what the app can do"
+          }
+        }
+      }
+    },
+    "Découvre les fonctions de l'app, section par section. Le guide ne modifie rien : il explique, et te mène là où ça se passe." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Discover what the app can do, section by section. The guide never changes anything: it explains, and takes you to where it happens."
+          }
+        }
+      }
+    },
     "Découvre tes albums et artistes les plus écoutés sur ta platine, tes podiums du mois et de l'année dans Statistiques. Les lectures Apple Music ne sont pas comptées." : {
       "localizations" : {
         "en" : {
@@ -4865,6 +5617,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Set Price Alert"
+          }
+        }
+      }
+    },
+    "Définir une alerte" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Set an Alert"
           }
         }
       }
@@ -4961,6 +5723,27 @@
         }
       }
     },
+    "Depuis la fiche d'un disque, « Collection » l'ajoute à ta collection et « Wantlist » à ta liste d'envies." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "From a record’s page, \"Collection\" adds it to your collection and \"Wantlist\" saves it to the records you want."
+          }
+        }
+      }
+    },
+    "Depuis la fiche, tu peux écouter un titre : extrait de 30 s, ou en entier avec Apple Music (Réglages)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "From the page you can listen to a track: a 30 s preview, or the full track with Apple Music (Settings)."
+          }
+        }
+      }
+    },
     "Dernier album" : {
       "localizations" : {
         "en" : {
@@ -5047,6 +5830,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Size Breakdown"
+          }
+        }
+      }
+    },
+    "Détails" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Details"
+          }
+        }
+      }
+    },
+    "Détecté" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Detected"
           }
         }
       }
@@ -5142,6 +5945,7 @@
       }
     },
     "Discogs n'expose pas de « prix médian » pour une release précise, seulement des suggestions de prix par état du disque (Mint, Near Mint, VG+...). %@ utilise donc l'état renseigné dans le champ état du disque pour sélectionner la suggestion la plus pertinente." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5157,6 +5961,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Discogs doesn't create a \"purchase price\" field by default: it's up to you to create one, once, from the discogs.com website (not from the app)."
+          }
+        }
+      }
+    },
+    "Discogs ne donne pas de « prix médian » pour un disque précis, seulement des suggestions par état. %@ prend celle de l'état déclaré ; sans état, il fait la moyenne de toutes les suggestions : l'estimation est alors moins précise." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Discogs doesn’t provide a \"median price\" for a specific record, only suggestions by condition. %@ uses the one for the declared condition; with no condition, it averages all suggestions, so the estimate is less precise."
           }
         }
       }
@@ -5522,6 +6336,16 @@
         }
       }
     },
+    "Écouter avec Apple Music" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Listen with Apple Music"
+          }
+        }
+      }
+    },
     "Éditer le tri" : {
       "localizations" : {
         "en" : {
@@ -5638,6 +6462,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Placement based on the %@ rule."
+          }
+        }
+      }
+    },
+    "Emporte toute ta collection et ses pochettes, même sans réseau." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Take your whole collection and its covers with you, even without a network."
           }
         }
       }
@@ -5772,6 +6606,16 @@
         }
       }
     },
+    "Ensuite, « Modifier » sur un exemplaire pour saisir son prix." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Then use \"Edit\" on a copy to enter its price."
+          }
+        }
+      }
+    },
     "Erreur" : {
       "localizations" : {
         "en" : {
@@ -5808,6 +6652,27 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Storage Space"
+          }
+        }
+      }
+    },
+    "Essaie toute l'app sans compte Discogs." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Try the whole app without a Discogs account."
+          }
+        }
+      }
+    },
+    "Essayer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Try It"
           }
         }
       }
@@ -5986,6 +6851,17 @@
         }
       }
     },
+    "Explorer avec la collection de démo" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Explore with the Demo Collection"
+          }
+        }
+      }
+    },
     "Explorer avec une collection de démo" : {
       "localizations" : {
         "en" : {
@@ -6068,6 +6944,16 @@
         }
       }
     },
+    "Exporter ta collection" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Export Your Collection"
+          }
+        }
+      }
+    },
     "Fabrication" : {
       "localizations" : {
         "en" : {
@@ -6108,6 +6994,16 @@
         }
       }
     },
+    "Fais défiler : titres, « Photos et vidéos », « Autres informations »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Scroll down: tracks, \"Photos & Videos\", \"Additional Information\"."
+          }
+        }
+      }
+    },
     "Fermer" : {
       "localizations" : {
         "en" : {
@@ -6144,6 +7040,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Close Batch Scan?"
+          }
+        }
+      }
+    },
+    "Fiche d'un disque" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "A Record’s Page"
           }
         }
       }
@@ -6218,12 +7124,42 @@
         }
       }
     },
+    "Fixe le prix maximum que tu veux payer pour un disque de ta wantlist." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Set the maximum price you’re willing to pay for a record on your wantlist."
+          }
+        }
+      }
+    },
     "Fonction Premium, offerte pendant la démo" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Premium feature, free during the demo"
+          }
+        }
+      }
+    },
+    "Fonction Premium. Le guide s'ouvre aussi juste après l'ajout d'un disque à la collection." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Premium feature. The guide also opens right after you add a record to your collection."
+          }
+        }
+      }
+    },
+    "Fonction Premium. Une pastille « ≤ prix » s'affiche ensuite sur la ligne." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Premium feature. A \"≤ price\" badge then appears on the row."
           }
         }
       }
@@ -6371,6 +7307,16 @@
         }
       }
     },
+    "Genres, supports, labels, artistes et années, en graphiques." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Genres, formats, labels, artists and years, as charts."
+          }
+        }
+      }
+    },
     "Gère ton profil Discogs." : {
       "localizations" : {
         "en" : {
@@ -6431,6 +7377,36 @@
         }
       }
     },
+    "Glisse le doigt sur la barre à droite pour sauter à une lettre ou à une année." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Slide your finger along the bar on the right to jump to a letter or a year."
+          }
+        }
+      }
+    },
+    "Glisse une ligne de la Collection et touche « Ranger », ou ouvre « Rangement physique » sur la fiche." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Swipe a Collection row and tap \"Shelve\", or open \"Physical Shelving\" on the record’s page."
+          }
+        }
+      }
+    },
+    "Glisse une ligne, ou maintiens-la, pour écouter, ranger, modifier ou supprimer." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Swipe a row, or press and hold it, to listen, shelve, edit or delete."
+          }
+        }
+      }
+    },
     "Glisse vers la gauche pour modifier ou supprimer un tag." : {
       "localizations" : {
         "en" : {
@@ -6471,6 +7447,26 @@
         }
       }
     },
+    "Graphiques et répartitions" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Charts and Breakdowns"
+          }
+        }
+      }
+    },
+    "Guide" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Guide"
+          }
+        }
+      }
+    },
     "Guide de rangement" : {
       "localizations" : {
         "en" : {
@@ -6507,6 +7503,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Offline: will sync when you're back online"
+          }
+        }
+      }
+    },
+    "Hors ligne, iCloud, thèmes, exports, tags, dossiers et compte." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Offline, iCloud, themes, exports, tags, folders and account."
           }
         }
       }
@@ -6588,6 +7594,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ignore Articles (The...)"
+          }
+        }
+      }
+    },
+    "Il est gratuit et se renouvelle chaque jour à minuit." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "It’s free and refreshes every day at midnight."
           }
         }
       }
@@ -6880,6 +7896,16 @@
         }
       }
     },
+    "Jusqu'à dix tris, dans les deux sens, et une barre pour sauter à une lettre." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Up to ten sort options, in both directions, and a bar to jump to a letter."
+          }
+        }
+      }
+    },
     "juste après" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -6922,6 +7948,37 @@
         }
       }
     },
+    "L'année de sortie originale est retrouvée disque par disque : sur une grande collection, le calcul prend un moment." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The original release year is looked up record by record: on a large collection, it takes a while."
+          }
+        }
+      }
+    },
+    "L'année originale vient du master Discogs ; le pressage peut être une réédition plus récente." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The original year comes from the Discogs master; the pressing may be a more recent reissue."
+          }
+        }
+      }
+    },
+    "L'app demande l'accès à l'appareil photo la première fois, et le scan a besoin d'une connexion réseau." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The app asks for camera access the first time, and scanning needs a network connection."
+          }
+        }
+      }
+    },
     "L'écoute sur platine s'arrête automatiquement après cette durée. En lancer une nouvelle interrompt immédiatement l'album en cours." : {
       "localizations" : {
         "en" : {
@@ -6932,12 +7989,63 @@
         }
       }
     },
+    "L'état du disque" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The record’s condition"
+          }
+        }
+      }
+    },
     "L'export CSV regroupe tous tes albums (tous dossiers confondus) avec leurs métadonnées, tags et notes pour tes tableurs (Excel, Numbers). La déclaration PDF liste la collection avec état et prix d'achat, à présenter par exemple à un assureur." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The CSV export includes all your albums (across all folders) with their metadata, tags, and notes for your spreadsheets (Excel, Numbers). The PDF declaration lists your collection with condition and purchase price, handy to show an insurer, for example."
+          }
+        }
+      }
+    },
+    "L'inscription est gratuite et se fait depuis l'app." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Signing up is free and done from the app."
+          }
+        }
+      }
+    },
+    "La collection, ce sont les disques que tu possèdes ; la wantlist, ceux que tu cherches." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your collection is the records you own; your wantlist is the ones you’re looking for."
+          }
+        }
+      }
+    },
+    "La cote Discogs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The Discogs value"
+          }
+        }
+      }
+    },
+    "La feuille montre la cote récente par état, pour viser juste." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The sheet shows the recent value by condition, so you can aim right."
           }
         }
       }
@@ -6992,6 +8100,16 @@
         }
       }
     },
+    "La plus-value (cote moins prix payé) est une fonction Premium, dans Stats." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Gain (value minus price paid) is a Premium feature, in Stats."
+          }
+        }
+      }
+    },
     "La recherche Discogs nécessite une connexion réseau." : {
       "localizations" : {
         "en" : {
@@ -7008,6 +8126,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Search requires a network connection"
+          }
+        }
+      }
+    },
+    "La synchro auto ne se lance jamais en 4G/5G, et au plus une fois toutes les 6 heures." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Auto-sync never runs over 4G/5G, and at most once every 6 hours."
+          }
+        }
+      }
+    },
+    "La vérification se fait à l'ouverture de l'app et parfois en arrière-plan, pas en temps réel." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The check runs when you open the app and sometimes in the background, not in real time."
           }
         }
       }
@@ -7043,6 +8181,36 @@
         }
       }
     },
+    "Lancer une nouvelle écoute interrompt celle en cours. La fiche compte tes écoutes et garde la date de la dernière." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Starting a new listen stops the current one. The record’s page counts your listens and keeps the date of the last one."
+          }
+        }
+      }
+    },
+    "Le bouton « Disque au hasard », en haut de la Collection, t'en propose un." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The \"Random Record\" button at the top of the Collection picks one for you."
+          }
+        }
+      }
+    },
+    "Le bouton affiche ensuite « En collection » ou « En wantlist »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The button then shows \"In Collection\" or \"In Wantlist\"."
+          }
+        }
+      }
+    },
     "Le calcul automatique de l'emplacement exact de chaque album dans ton meuble est une fonctionnalité réservée aux membres premium." : {
       "localizations" : {
         "en" : {
@@ -7054,6 +8222,7 @@
       }
     },
     "Le champ état du disque existe par défaut sur Discogs ; le champ prix d'achat, en revanche, doit être créé une fois manuellement (voir ci-dessous)." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7073,12 +8242,63 @@
         }
       }
     },
+    "Le CSV inclut métadonnées, tags et notes ; le PDF, l'état et le prix d'achat." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The CSV includes metadata, tags and notes; the PDF, condition and purchase price."
+          }
+        }
+      }
+    },
+    "Le guide compte chaque support à part : vinyles 12, 10 et 7 pouces, CD, cassettes." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The guide counts each format separately: 12-inch, 10-inch and 7-inch vinyl, CDs, cassettes."
+          }
+        }
+      }
+    },
     "Le guide de rangement ne compare qu'au dossier du disque, plutôt qu'à toute la collection" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The Shelving Guide only compares against the record's folder, rather than your entire collection"
+          }
+        }
+      }
+    },
+    "Le guide te donne sa position dans le meuble, entre ses deux voisins." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The guide gives you its position on the shelf, between its two neighbors."
+          }
+        }
+      }
+    },
+    "Le menu « Dossier », dans « ··· », change de dossier." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The \"Folder\" menu, inside \"···\", switches folder."
+          }
+        }
+      }
+    },
+    "Le mode de départ se règle dans Réglages, section Apparence." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The default mode is set in Settings, under Appearance."
           }
         }
       }
@@ -7135,6 +8355,16 @@
         }
       }
     },
+    "Le principe" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "How It Works"
+          }
+        }
+      }
+    },
     "Le tag « %@ » existe déjà dans ta bibliothèque." : {
       "localizations" : {
         "en" : {
@@ -7175,12 +8405,32 @@
         }
       }
     },
+    "Le thème Signature est inclus pour tous ; les 8 autres palettes sont Premium." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The Signature theme is included for everyone; the 8 other palettes are Premium."
+          }
+        }
+      }
+    },
     "Le total investi ne compte que les exemplaires dont le prix d'achat est renseigné." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The total invested only includes copies with a purchase price entered."
+          }
+        }
+      }
+    },
+    "Le tri « Meuble » suit ta règle de rangement (Réglages, section Collection & Rangement)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The \"Shelf\" sort follows your shelving rule (Settings, under Collection & Shelving)."
           }
         }
       }
@@ -7257,6 +8507,26 @@
         }
       }
     },
+    "Les ajouts, les retraits et les notes sont répercutés sur ton compte Discogs. Les tags, eux, restent propres à Spinlog." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Additions, removals and notes are sent to your Discogs account. Tags, on the other hand, stay within Spinlog."
+          }
+        }
+      }
+    },
+    "Les compteurs et la cote demandent une connexion réseau ; le reste fonctionne aussi hors ligne." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Counters and value need a network connection; the rest also works offline."
+          }
+        }
+      }
+    },
     "Les données affichées sont des exemples et les modifications vers Discogs sont désactivées. Les fonctions Premium sont offertes pendant la démo. Connecte ton compte pour retrouver ta propre collection." : {
       "localizations" : {
         "en" : {
@@ -7273,6 +8543,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "All and Uncategorized are Discogs system folders: they can’t be renamed or deleted."
+          }
+        }
+      }
+    },
+    "Les lectures Apple Music ne sont pas comptées." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Apple Music plays aren’t counted."
           }
         }
       }
@@ -7370,6 +8650,27 @@
         }
       }
     },
+    "Les résultats correspondants s'affichent." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The matching results appear."
+          }
+        }
+      }
+    },
+    "Les tags restent dans Spinlog (synchronisés par iCloud avec Premium), pas sur Discogs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tags stay in Spinlog (synced through iCloud with Premium), not on Discogs."
+          }
+        }
+      }
+    },
     "Les tags sont des données locales à l'application et ne sont pas sauvegardés sur Discogs." : {
       "localizations" : {
         "en" : {
@@ -7430,6 +8731,26 @@
         }
       }
     },
+    "Lire une fiche" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Read a Record’s Page"
+          }
+        }
+      }
+    },
+    "Lis les titres en entier depuis une fiche, avec un abonnement Apple Music." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Play full tracks from a record’s page, with an Apple Music subscription."
+          }
+        }
+      }
+    },
     "Liste des pistes" : {
       "localizations" : {
         "en" : {
@@ -7440,12 +8761,32 @@
         }
       }
     },
+    "Liste, mosaïque ou carrousel : choisis ce qui te parle." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "List, mosaic or carousel: pick what suits you."
+          }
+        }
+      }
+    },
     "Listes publiques" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Public Lists"
+          }
+        }
+      }
+    },
+    "Live Activity et arrêt automatique" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Live Activity and Automatic Stop"
           }
         }
       }
@@ -7466,6 +8807,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "My Release Rating"
+          }
+        }
+      }
+    },
+    "Maintiens « Collection » pour choisir un autre dossier." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Press and hold \"Collection\" to pick another folder."
+          }
+        }
+      }
+    },
+    "Maintiens « En collection » pour ajouter un exemplaire." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Press and hold \"In Collection\" to add a copy."
+          }
+        }
+      }
+    },
+    "Maintiens l'écran d'accueil, touche « + » et cherche Spinlog." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Touch and hold the Home Screen, tap \"+\" and search for Spinlog."
           }
         }
       }
@@ -7917,12 +9288,32 @@
         }
       }
     },
+    "Noms d'artistes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Artist Names"
+          }
+        }
+      }
+    },
     "Non classées" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Unsorted"
+          }
+        }
+      }
+    },
+    "Non détecté : cote moyenne" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Not detected: average value"
           }
         }
       }
@@ -7958,12 +9349,32 @@
         }
       }
     },
+    "Note ce que tu as payé et compare avec la cote Discogs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Note what you paid and compare it with the Discogs value."
+          }
+        }
+      }
+    },
     "Note, tags et infos" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rating, Tags & Info"
+          }
+        }
+      }
+    },
+    "Noter une écoute" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Log a Listen"
           }
         }
       }
@@ -8060,6 +9471,16 @@
         }
       }
     },
+    "Onglet Recherche : tape un nom ou touche l'icône de scan." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Search tab: type a name or tap the scan icon."
+          }
+        }
+      }
+    },
     "Options" : {
       "localizations" : {
         "en" : {
@@ -8126,6 +9547,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Where to Shelve Your Album"
+          }
+        }
+      }
+    },
+    "Où ranger un disque" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Where to Shelve a Record"
+          }
+        }
+      }
+    },
+    "Ouvre l'onglet Recherche et tape ta requête. Le sélecteur sous la barre de recherche limite les résultats aux releases, aux artistes ou aux labels." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Open the Search tab and type your query. The selector under the search bar narrows results to releases, artists or labels."
+          }
+        }
+      }
+    },
+    "Ouvre la fiche du disque." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Open the record’s page."
           }
         }
       }
@@ -8236,6 +9689,16 @@
         }
       }
     },
+    "Palmarès d'écoute" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Listening Charts"
+          }
+        }
+      }
+    },
     "Palmarès d'écoute sur platine" : {
       "localizations" : {
         "en" : {
@@ -8262,6 +9725,37 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "By Decade"
+          }
+        }
+      }
+    },
+    "Par défaut, le guide compare avec toute ta collection, tous dossiers confondus." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "By default, the guide compares against your whole collection, all folders combined."
+          }
+        }
+      }
+    },
+    "Par texte, dossier, tag ou support. Les filtres se cumulent." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "By text, folder, tag or format. Filters add up."
+          }
+        }
+      }
+    },
+    "Parcours les onglets : les données sont des exemples." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Browse the tabs: the data is sample data."
           }
         }
       }
@@ -8352,6 +9846,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Not enough data yet."
+          }
+        }
+      }
+    },
+    "Pas encore de compte Discogs ?" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "No Discogs Account Yet?"
           }
         }
       }
@@ -8474,6 +9979,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Go Premium to track purchase price, gains, and your collection's valuation."
+          }
+        }
+      }
+    },
+    "Pendant la démo, toutes les fonctions Premium sont débloquées sans abonnement, et les modifications vers Discogs sont désactivées." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "During the demo, all Premium features are unlocked without a subscription, and changes to Discogs are turned off."
           }
         }
       }
@@ -8625,6 +10141,16 @@
         }
       }
     },
+    "Plus-value" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Gain"
+          }
+        }
+      }
+    },
     "Plus-value de l'exemplaire" : {
       "localizations" : {
         "en" : {
@@ -8651,6 +10177,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Value Gain Hidden"
+          }
+        }
+      }
+    },
+    "Plusieurs exemplaires" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Several Copies"
           }
         }
       }
@@ -8746,6 +10282,27 @@
         }
       }
     },
+    "pour cet état" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "for this condition"
+          }
+        }
+      }
+    },
+    "Pour en sortir, touche « Quitter le mode démo » en bas de Réglages." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "To leave, tap \"Exit Demo Mode\" at the bottom of Settings."
+          }
+        }
+      }
+    },
     "Pour recevoir des alertes même lorsque %@ est fermée, autorise les notifications dans les Réglages de ton iPhone." : {
       "localizations" : {
         "en" : {
@@ -8772,6 +10329,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "First album"
+          }
+        }
+      }
+    },
+    "Premiers pas" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Getting Started"
           }
         }
       }
@@ -8868,6 +10435,16 @@
         }
       }
     },
+    "Prix d'achat et cote" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Purchase Price and Value"
+          }
+        }
+      }
+    },
     "Prix d'achat et état" : {
       "localizations" : {
         "en" : {
@@ -8908,6 +10485,16 @@
         }
       }
     },
+    "Prix payé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Price Paid"
+          }
+        }
+      }
+    },
     "Profil Discogs" : {
       "localizations" : {
         "en" : {
@@ -8924,6 +10511,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pure chronological (Original Year)"
+          }
+        }
+      }
+    },
+    "Quand l'alerte se déclenche" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "When an Alert Triggers"
+          }
+        }
+      }
+    },
+    "Quatre règles, pour classer comme dans ton meuble." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Four rules, so you can sort just like your shelf."
           }
         }
       }
@@ -8967,6 +10574,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Contributor Rank"
+          }
+        }
+      }
+    },
+    "Range ta collection à ta façon, et choisis où atterrissent les nouveaux disques." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Organize your collection your way, and choose where new records land."
+          }
+        }
+      }
+    },
+    "Rangement" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Shelving"
           }
         }
       }
@@ -9052,7 +10679,6 @@
       }
     },
     "Rechercher dans ta collection" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9254,6 +10880,16 @@
         }
       }
     },
+    "Renseigne le prix d'achat de tes exemplaires." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Enter the purchase price of your copies."
+          }
+        }
+      }
+    },
     "Renseigne le prix payé pour chaque album et compare-le à sa cote Discogs en temps réel pour voir si tes albums ont pris de la valeur." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -9301,6 +10937,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Format Breakdown"
+          }
+        }
+      }
+    },
+    "Repère le disque central et ses deux voisins : c'est entre eux qu'il va." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Spot the center record and its two neighbors: that’s where it goes."
           }
         }
       }
@@ -9507,6 +11153,48 @@
         }
       }
     },
+    "Retrouve la place de chaque disque dans ton meuble, selon ta façon de les classer." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Find where each record belongs on your shelf, based on how you sort them."
+          }
+        }
+      }
+    },
+    "Retrouve tes disques dans les onglets Collection et Wantlist." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Find your records in the Collection and Wantlist tabs."
+          }
+        }
+      }
+    },
+    "Retrouve un disque en visant son code-barres." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Find a record by aiming at its barcode."
+          }
+        }
+      }
+    },
+    "Reviens dans Spinlog et connecte-toi." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Come back to Spinlog and sign in."
+          }
+        }
+      }
+    },
     "Revue du scan" : {
       "localizations" : {
         "en" : {
@@ -9543,6 +11231,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Applies to all artist-based sorts (shelf, Collection, Wantlist)"
+          }
+        }
+      }
+    },
+    "Saisis le « Prix maximum » puis touche « Enregistrer »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Enter the \"Maximum price\" then tap \"Save\"."
+          }
+        }
+      }
+    },
+    "Sans connexion, un extrait de 30 s reste disponible." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Without signing in, a 30 s preview is still available."
           }
         }
       }
@@ -9617,12 +11325,44 @@
         }
       }
     },
+    "Scanne plusieurs disques à la suite, chez un disquaire ou en brocante." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Scan several records in a row, at a record shop or a flea market."
+          }
+        }
+      }
+    },
+    "Scanne tes disques l'un après l'autre et vérifie la liste." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Scan your records one after another and check the list."
+          }
+        }
+      }
+    },
     "Scanne un code-barres" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Scan a barcode"
+          }
+        }
+      }
+    },
+    "Scanner un code-barres" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Scan a Barcode"
           }
         }
       }
@@ -9764,6 +11504,7 @@
       }
     },
     "Si aucun état n'est renseigné (ou si l'état déclaré n'a pas de suggestion disponible), %@ calcule une moyenne de toutes les suggestions disponibles pour cette release — l'estimation est alors moins précise, mais reste affichée." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9774,6 +11515,7 @@
       }
     },
     "Si la détection échoue ou que tu préfères un autre champ, choisis-le manuellement dans les sélecteurs ci-dessus." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9839,6 +11581,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Get notified when a record from your wantlist shows up at a good price on the Discogs marketplace (checked when you open the app and occasionally in the background, not in real time)."
+          }
+        }
+      }
+    },
+    "Sois prévenu quand un disque de ta wantlist passe sous ton prix." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Get alerted when a record on your wantlist drops below your price."
           }
         }
       }
@@ -9984,6 +11736,16 @@
         }
       }
     },
+    "Suis ce que tu écoutes, et retrouve un disque du jour sur ton écran d'accueil." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Keep track of what you listen to, and find a daily record on your Home Screen."
+          }
+        }
+      }
+    },
     "Suivi de cote" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -10011,6 +11773,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Format"
+          }
+        }
+      }
+    },
+    "Supports et dossiers" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Formats and Folders"
           }
         }
       }
@@ -10413,6 +12185,26 @@
         }
       }
     },
+    "Sur la fiche d'un disque, ou en glissant une ligne de la Collection : « J'écoute »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "On a record’s page, or by swiping a Collection row: \"I’m Listening\"."
+          }
+        }
+      }
+    },
+    "Sur la fiche, touche « Collection » ou « Wantlist »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "On the record’s page, tap \"Collection\" or \"Wantlist\"."
+          }
+        }
+      }
+    },
     "Sur platine" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -10634,12 +12426,62 @@
         }
       }
     },
+    "Ta collection en chiffres" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your Collection in Numbers"
+          }
+        }
+      }
+    },
+    "Ta collection et ta wantlist se chargent." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your collection and wantlist load."
+          }
+        }
+      }
+    },
     "Ta collection et tes pochettes sont sauvegardées sur ton appareil pour rester accessibles sans connexion réseau." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Your collection and album covers are saved on your device so they stay accessible without a network connection."
+          }
+        }
+      }
+    },
+    "Ta collection vit sur Discogs : Spinlog en est une belle vitrine." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your collection lives on Discogs: Spinlog is a beautiful showcase for it."
+          }
+        }
+      }
+    },
+    "Ta configuration" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your Setup"
+          }
+        }
+      }
+    },
+    "Ta méthode de classement" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your Sorting Method"
           }
         }
       }
@@ -10745,6 +12587,26 @@
         }
       }
     },
+    "Tags et dossiers" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tags and Folders"
+          }
+        }
+      }
+    },
+    "Tags et note" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tags and Rating"
+          }
+        }
+      }
+    },
     "Tags, écoutes sur platine, alertes de prix et préférences suivent ton compte sur tous tes appareils. Couper la synchro n'efface rien : à sa réactivation, les modifications faites entre-temps sont fusionnées avec iCloud." : {
       "localizations" : {
         "en" : {
@@ -10761,6 +12623,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Warm tangerine & sunset"
+          }
+        }
+      }
+    },
+    "Tape dans la barre de recherche, ou touche « ··· » puis « Filtres » pour le tag et le support." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Type in the search bar, or tap \"···\" then \"Filters\" for tag and format."
           }
         }
       }
@@ -10795,6 +12667,16 @@
         }
       }
     },
+    "Te connecter, ajouter tes premiers disques et comprendre collection et wantlist." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Sign in, add your first records and understand collection and wantlist."
+          }
+        }
+      }
+    },
     "Télécharge l'ensemble de ta collection et les pochettes d'albums sur ton appareil pour les consulter partout sans connexion Internet." : {
       "localizations" : {
         "en" : {
@@ -10806,6 +12688,7 @@
       }
     },
     "Télécharge toute ta collection et les pochettes en haute résolution pour consulter ta liste d'albums même sans réseau (brocante, voyage...)." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -10927,6 +12810,46 @@
         }
       }
     },
+    "Tes albums et artistes les plus écoutés sur ta platine." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your most-played albums and artists on your turntable."
+          }
+        }
+      }
+    },
+    "Tes chiffres, tes répartitions, ta plus-value et ton palmarès d'écoute." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your numbers, breakdowns, gain and listening charts."
+          }
+        }
+      }
+    },
+    "Tes tags, écoutes, alertes et préférences suivent ton compte sur tous tes appareils." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your tags, listens, alerts and preferences follow your account on all your devices."
+          }
+        }
+      }
+    },
+    "Thème clair ou sombre, et palettes de couleurs pour toute l'app." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Light or dark theme, and color palettes for the whole app."
+          }
+        }
+      }
+    },
     "Thèmes et palettes de couleurs" : {
       "localizations" : {
         "en" : {
@@ -10968,6 +12891,26 @@
         }
       }
     },
+    "Titres, crédits, photos, vidéos et infos de pressage, au même endroit." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tracks, credits, photos, videos and pressing details, all in one place."
+          }
+        }
+      }
+    },
+    "Ton choix est retenu, séparément pour la Collection et la Wantlist." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your choice is remembered, separately for the Collection and the Wantlist."
+          }
+        }
+      }
+    },
     "Ton compte est géré par Discogs. Pour supprimer définitivement ton compte et l'ensemble de tes données, tu dois finaliser la demande sur le site officiel de Discogs.\n\nTu peux également effacer immédiatement toutes les données stockées par l'application sur cet appareil et synchronisées sur iCloud (tags, historique d'écoute, préférences)." : {
       "localizations" : {
         "en" : {
@@ -10984,6 +12927,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Your account is hosted on Discogs. You can start the permanent deletion of your account or erase local and iCloud-synced data (tags, listening history, preferences)."
+          }
+        }
+      }
+    },
+    "Ton disque en cours reste visible, et l'écoute s'arrête toute seule." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your current record stays visible, and listening stops on its own."
+          }
+        }
+      }
+    },
+    "Ton prix payé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your price paid"
           }
         }
       }
@@ -11018,6 +12981,88 @@
         }
       }
     },
+    "Touche « ··· » en haut à droite, puis « Affichage »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tap \"···\" at the top right, then \"Display\"."
+          }
+        }
+      }
+    },
+    "Touche « ··· » puis « Sélectionner » pour agir sur plusieurs disques à la fois : dossier, tags, suppression." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tap \"···\" then \"Select\" to act on several records at once: folder, tags, deletion."
+          }
+        }
+      }
+    },
+    "Touche « ··· », puis « Tri » : choisis un critère et le sens." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tap \"···\", then \"Sort\": pick a criterion and a direction."
+          }
+        }
+      }
+    },
+    "Touche « Collection » pour l'ajouter à ta collection, ou « Wantlist » pour le garder dans tes envies." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tap \"Collection\" to add it to your collection, or \"Wantlist\" to keep it among the records you want."
+          }
+        }
+      }
+    },
+    "Touche « Explorer avec une collection de démo », dans Réglages ou sur l'écran de connexion d'un onglet." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tap \"Explore with a Demo Collection\", in Settings or on a tab’s sign-in screen."
+          }
+        }
+      }
+    },
+    "Touche « J'écoute » quand tu poses un disque sur ta platine." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tap \"I’m Listening\" when you put a record on your turntable."
+          }
+        }
+      }
+    },
+    "Touche « J'écoute » sur un disque quand tu le poses sur ta platine." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tap \"I’m Listening\" on a record when you put it on your turntable."
+          }
+        }
+      }
+    },
+    "Touche « Modifier » sur un exemplaire : dossier, tags, champs Discogs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tap \"Edit\" on a copy: folder, tags, Discogs fields."
+          }
+        }
+      }
+    },
     "Touche deux fois pour désélectionner." : {
       "localizations" : {
         "en" : {
@@ -11048,6 +13093,36 @@
         }
       }
     },
+    "Touche les étoiles de « Ma note de la release » pour noter." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tap the stars under \"My Release Rating\" to rate."
+          }
+        }
+      }
+    },
+    "Touche ton nom en haut de Réglages pour ouvrir ton profil Discogs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tap your name at the top of Settings to open your Discogs profile."
+          }
+        }
+      }
+    },
+    "Touche un disque pour ouvrir sa fiche." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tap a record to open its page."
+          }
+        }
+      }
+    },
     "Touche un dossier pour en faire le dossier d'ajout par défaut. Glisse vers la gauche pour le renommer ou le supprimer." : {
       "localizations" : {
         "en" : {
@@ -11064,6 +13139,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Tap a folder to make it the default folder for new additions. Touch and hold it to rename or delete it."
+          }
+        }
+      }
+    },
+    "Touche un état dans « Cote moyenne récente par état » : sa cote devient ton prix cible." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tap a condition under \"Recent Average Value by Condition\": its value becomes your target price."
           }
         }
       }
@@ -11114,6 +13199,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Tap a tag to assign it. Touch and hold it to edit or delete it."
+          }
+        }
+      }
+    },
+    "Touche une portion ou une barre : la liste des disques correspondants s'ouvre." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tap a slice or a bar: the matching records open in a list."
           }
         }
       }
@@ -11314,6 +13409,16 @@
         }
       }
     },
+    "Trier et naviguer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Sort and Navigate"
+          }
+        }
+      }
+    },
     "Trier par" : {
       "localizations" : {
         "en" : {
@@ -11334,12 +13439,33 @@
         }
       }
     },
+    "Trois affichages" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Three Display Modes"
+          }
+        }
+      }
+    },
     "Trop de requêtes vers Discogs, réessaie dans quelques instants." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Too many requests to Discogs, try again in a moment."
+          }
+        }
+      }
+    },
+    "Trouve un disque, un artiste ou un label." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Find a record, an artist or a label."
           }
         }
       }
@@ -11444,12 +13570,32 @@
         }
       }
     },
+    "Tu es prévenu dès qu'une annonce est à ton prix ou moins." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "You’re alerted as soon as a listing is at your price or lower."
+          }
+        }
+      }
+    },
     "Tu n'es pas connecté en Wi-Fi. Télécharger toute ta collection et ses pochettes peut consommer une quantité importante de données mobiles." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "You're not connected to Wi-Fi. Downloading your entire collection and its album covers may use a significant amount of mobile data."
+          }
+        }
+      }
+    },
+    "Tu peux posséder un disque en plusieurs exemplaires : maintiens « En collection » pour en ajouter un autre." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "You can own a record in several copies: press and hold \"In Collection\" to add another one."
           }
         }
       }
@@ -11465,11 +13611,33 @@
       }
     },
     "Un champ ne correspond pas ?" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "A Field Doesn't Match?"
+          }
+        }
+      }
+    },
+    "Un compte tout neuf est vide : ajoute tes premiers disques depuis l'onglet Recherche." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "A brand-new account is empty: add your first records from the Search tab."
+          }
+        }
+      }
+    },
+    "Un disque de ta collection tiré au hasard chaque jour, sur ton écran d'accueil." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "A random record from your collection every day, on your Home Screen."
           }
         }
       }
@@ -11536,6 +13704,66 @@
         }
       }
     },
+    "Un exemple" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "An Example"
+          }
+        }
+      }
+    },
+    "Un lot en cours est conservé : une confirmation te protège si tu fermes l'écran par erreur." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "A batch in progress is kept: a confirmation protects you if you close the screen by mistake."
+          }
+        }
+      }
+    },
+    "Un même disque peut exister en plusieurs exemplaires, chacun avec son dossier." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The same record can exist in several copies, each with its own folder."
+          }
+        }
+      }
+    },
+    "Un mini-lecteur apparaît ; touche-le pour ouvrir « Écoute sur platine » et arrêter." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "A mini player appears; tap it to open \"Listening on the turntable\" and stop."
+          }
+        }
+      }
+    },
+    "Un tableur pour tes outils, ou un PDF à présenter à un assureur." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "A spreadsheet for your tools, or a PDF to show an insurer."
+          }
+        }
+      }
+    },
+    "Une seule fois : Réglages, section « Prix d'achat et état », puis associe tes champs Discogs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Just once: Settings, under \"Purchase Price and Condition\", then link your Discogs fields."
+          }
+        }
+      }
+    },
     "URL Discogs" : {
       "comment" : "En-tête de colonne CSV : lien vers la page Discogs de la release",
       "localizations" : {
@@ -11563,6 +13791,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Validate and save this field on Discogs"
+          }
+        }
+      }
+    },
+    "Vérifie l'état exact du disque et les frais de port sur l'annonce Discogs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Check the exact condition of the record and the shipping costs on the Discogs listing."
           }
         }
       }
@@ -11847,12 +14085,33 @@
         }
       }
     },
+    "Vinyles, CD et cassettes se rangent séparément ; les dossiers Discogs, au choix." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Vinyl, CDs and cassettes are shelved separately; Discogs folders are up to you."
+          }
+        }
+      }
+    },
     "Violet Améthyste" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Amethyst Purple"
+          }
+        }
+      }
+    },
+    "Vise le code-barres au dos du disque." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Aim at the barcode on the back of the record."
           }
         }
       }
@@ -11943,6 +14202,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Empty Wantlist"
+          }
+        }
+      }
+    },
+    "Widget « Album du jour »" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "\"Album of the Day\" Widget"
           }
         }
       }
