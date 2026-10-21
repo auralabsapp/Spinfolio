@@ -7,12 +7,46 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
-## 2026-10-20 — Démo plus parlante, synchro iCloud réglable, plantage à l'écoute corrigé
+## 2026-10-21 — Graphiques de Stats fluides, paywall après la connexion
+
+### 14:10 — `d36490c` Stats : graphiques fluides et titre en haut, paywall après la connexion, bannière Premium et barre de titre
+- **Stats** : sélections et feuilles de tous les graphiques (histogrammes par année, camemberts
+  genre/support/label, classement des artistes) isolées dans un objet observable lu seulement par
+  le graphique touché, au lieu d'états qui ré-évaluaient toute la page. Les autres parts s'estompent
+  immédiatement, la sélection se remet à zéro dès que la feuille commence à se fermer (détection
+  du début de fermeture, le `Binding` n'arrivant qu'à la fin de l'animation), un second toucher
+  désélectionne, et les listes de disques sont calculées hors du fil principal.
+- **Camemberts** : un composant commun remplace trois copies du même code (fichier des graphiques
+  de 786 à 350 lignes) ; la feuille « support » ne remet à zéro que la part qui l'a ouverte.
+- **Titre en haut** : toute ouverture de feuille, et la sélection d'une part de camembert, fait
+  défiler le titre du graphique en haut de l'écran.
+- **Paywall** : présenté une fois l'utilisateur connecté (compte ou démo), plus avant l'écran de
+  connexion ; la bannière Premium de Réglages et le paywall tiennent aussi compte du forçage
+  développeur.
+- **Barre de navigation** : apparence du titre serif appliquée une seule fois par barre (piste du
+  grand titre qui ne se réduit pas sur iPhone 13 mini sous iOS 26.6, non reproduite).
+- 20 fichiers, +1 220 / −963.
+
+---
+
+## 2026-10-20 — Démo plus parlante, synchro iCloud réglable, plantage à l'écoute corrigé, données Discogs allégées
 
 Journée consacrée aux retours de TestFlight : historique de valeur tenu hors d'iCloud, mode démo
 qui montre enfin ce que le Premium apporte, interrupteur de synchronisation iCloud, création de
 compte Discogs depuis l'app, traque d'un plantage au lancement d'une écoute sur platine, puis
 deux finitions (Réglages, Stats).
+
+### 23:42 — `f8e830a` Mode hors ligne : la durée de conservation des pochettes est expliquée
+- La note sous « Pochettes en cache » annonce que les pochettes sont gardées 7 jours au plus après
+  leur téléchargement (durée lue dans `DiscogsConstants`, pluriel français et anglais).
+- 4 fichiers, +56 / −2.
+
+### 23:26 — `a5b48ce` Données Discogs : pochettes 7 jours au plus, historique de valeur arrêté, suppression de compte complète
+- Historique de valeur : l'enregistrement quotidien est désactivé tant que le graphique « Évolution
+  de la cote » est masqué ; pochettes conservées 7 jours au plus sans prolongation à la
+  consultation ; « Supprimer mes données » efface aussi les cotes par disque, le cache d'images,
+  les années de master et les catégories d'œuvres.
+- 11 fichiers, +60 / −10.
 
 ### 16:47 — `aba4000` Règle de rangement mise en évidence, 5 lignes entières dans Tops & Palmarès
 - Depuis « Modifier » du guide de rangement, la ligne « Règle de rangement dans le meuble » de
