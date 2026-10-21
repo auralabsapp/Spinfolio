@@ -9,6 +9,15 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-10-21 — Graphiques de Stats fluides, paywall après la connexion
 
+### 14:58 — `1a89f07` Connexion annulée sans erreur ; page de collection tolérante aux exemplaires illisibles
+- **Connexion** : fermer la fenêtre Discogs ou toucher « Annuler » n'affiche plus de message
+  d'erreur rouge (seule l'annulation est ignorée, les vraies pannes restent signalées).
+- **Collection** : un exemplaire illisible dans une page Discogs est ignoré (et compté dans les logs)
+  au lieu de vider l'onglet avec « Les données n'ont pas pu être lues » ; note, date d'ajout et
+  dossier deviennent facultatifs. Cause exacte non confirmée, à vérifier sur TestFlight.
+- Tests unitaires et cas de recette A24 et B42.
+- 8 fichiers, +103 / −7.
+
 ### 14:10 — `d36490c` Stats : graphiques fluides et titre en haut, paywall après la connexion, bannière Premium et barre de titre
 - **Stats** : sélections et feuilles de tous les graphiques (histogrammes par année, camemberts
   genre/support/label, classement des artistes) isolées dans un objet observable lu seulement par
