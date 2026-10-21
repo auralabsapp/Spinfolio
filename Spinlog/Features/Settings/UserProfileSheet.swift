@@ -19,6 +19,7 @@ struct UserProfileSheet: View {
     @State private var viewModel = UserProfileViewModel()
     @State private var safariTarget: SafariTarget?
     @State private var showingDeleteAccountConfirmation = false
+    @State private var showingLogoutConfirmation = false
 
     var body: some View {
         content
@@ -28,6 +29,15 @@ struct UserProfileSheet: View {
             .task { await viewModel.load(username: username) }
             .sheet(item: $safariTarget) { target in
                 SafariView(url: target.url)
+            }
+            .confirmationDialog("Se déconnecter", isPresented: $showingLogoutConfirmation, titleVisibility: .visible) {
+                Button("Se déconnecter", role: .destructive) {
+                    DiscogsAuthManager.shared.logout()
+                    dismiss()
+                }
+                Button("Annuler", role: .cancel) {}
+            } message: {
+                Text("Veux-tu vraiment te déconnecter de ton compte Discogs ?")
             }
             .confirmationDialog(
                 "Supprimer le compte Discogs",
@@ -117,6 +127,21 @@ struct UserProfileSheet: View {
                         }
                         .appleMusicGroupedCard()
                     }
+
+                    // Déconnexion, au-dessus de la suppression de compte
+                    Button {
+                        showingLogoutConfirmation = true
+                    } label: {
+                        HStack {
+                            Spacer()
+                            Text("Se déconnecter")
+                                .font(.subheadline.bold())
+                            Spacer()
+                        }
+                        .padding(.vertical, 14)
+                    }
+                    .buttonStyle(.plain)
+                    .appleMusicGroupedCard()
 
                     // Bouton de suppression de compte (Guideline Apple 5.1.1(v))
                     VStack(alignment: .leading, spacing: 8) {
