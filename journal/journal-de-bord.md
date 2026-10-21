@@ -9,6 +9,13 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-10-21 — Graphiques de Stats fluides, paywall après la connexion
 
+### 16:55 — `fe4527b` Guide de rangement : le disque central réagit au toucher, repère « ICI » à plat
+- Toucher la pochette centrale ou « ICI » la fait rebondir (bordure rose épaissie, ombre renforcée)
+  avec un léger retour haptique, sans rien ouvrir ; avec « Réduire les animations », seule la
+  bordure change. Le repère « ICI » devient un texte rose à plat pour ne plus ressembler à un
+  bouton ; VoiceOver lit la colonne centrale d'un bloc. Cas de recette J31.
+- 5 fichiers.
+
 ### 16:50 — `94c3f5e` Profil Discogs : bouton Se déconnecter au-dessus de Supprimer mon compte
 - Le profil Discogs (Réglages) propose « Se déconnecter », avec la même confirmation que dans
   les Réglages ; il ferme le profil et ramène à l'écran de connexion, sans effacer les données du
