@@ -120,10 +120,17 @@ struct LibraryListView<Item: SortableLibraryItem>: View {
         .listRowSeparatorTint(Color.appSeparator)
         .listSectionSpacing(.compact)
         .environment(\.defaultMinListHeaderHeight, 0)
-        // Sans ça, une liste filtrée courte (qui tient entièrement à l'écran) garde le rebond
-        // élastique habituel et peut être tirée vers le bas sur une distance excessive, bien
-        // au-delà de son contenu réel.
-        .scrollBounceBehavior(.basedOnSize)
+        // Rebond toujours actif, même quand la liste est courte et tient entièrement à l'écran :
+        // la barre d'onglets réduite par un défilement (voir `tabBarMinimizeBehavior`) ne revient
+        // à sa taille normale que par un geste vers le bas, impossible sinon sur une liste courte.
+        .scrollBounceBehavior(.always)
+        // Tirage vers le bas au sommet : la barre d'onglets réduite revient tout de suite (voir
+        // `TabNavigationCoordinator.expandTabBar()`), sans attendre la détection d'iOS.
+        .onScrollGeometryChange(for: Bool.self) { @Sendable geo in
+            geo.contentOffset.y + geo.contentInsets.top < -TabBarPullThreshold.distance
+        } action: { _, isPulled in
+            if isPulled { TabNavigationCoordinator.shared.expandTabBar() }
+        }
         // Le défileur système partage le même liseré que `SectionIndexBar` sur le bord droit :
         // sans ça, sa barre grise native s'affiche en permanence superposée aux jetons de notre
         // propre barre de navigation rapide.

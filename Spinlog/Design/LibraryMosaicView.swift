@@ -104,6 +104,15 @@ struct LibraryMosaicView<Item: SortableLibraryItem>: View {
             .padding(.top, 4)
             .padding(.bottom, 24)
         }
+        // Rebond toujours actif, même sur une grille courte : voir `LibraryListView`.
+        .scrollBounceBehavior(.always)
+        // Tirage vers le bas au sommet : la barre d'onglets réduite revient tout de suite (voir
+        // `TabNavigationCoordinator.expandTabBar()`), sans attendre la détection d'iOS.
+        .onScrollGeometryChange(for: Bool.self) { @Sendable geo in
+            geo.contentOffset.y + geo.contentInsets.top < -TabBarPullThreshold.distance
+        } action: { _, isPulled in
+            if isPulled { TabNavigationCoordinator.shared.expandTabBar() }
+        }
         .coordinateSpace(name: sectionsCoordinateSpace)
     }
 

@@ -510,6 +510,8 @@ struct WantlistView: View {
                                 // `alignment: .top` : voir le même commentaire dans `CollectionView`.
                                 .frame(minHeight: geo.size.height, alignment: .top)
                             }
+                            // Rebond toujours actif : voir `LibraryListView`.
+                            .scrollBounceBehavior(.always)
                         }
                     case .grid:
                         wantlistViewGrid
