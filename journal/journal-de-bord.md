@@ -9,6 +9,12 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-10-21 — Graphiques de Stats fluides, paywall après la connexion
 
+### 16:50 — `94c3f5e` Profil Discogs : bouton Se déconnecter au-dessus de Supprimer mon compte
+- Le profil Discogs (Réglages) propose « Se déconnecter », avec la même confirmation que dans
+  les Réglages ; il ferme le profil et ramène à l'écran de connexion, sans effacer les données du
+  compte (retrouvées à la reconnexion). Cas de recette A25.
+- 4 fichiers.
+
 ### 14:58 — `1a89f07` Connexion annulée sans erreur ; page de collection tolérante aux exemplaires illisibles
 - **Connexion** : fermer la fenêtre Discogs ou toucher « Annuler » n'affiche plus de message
   d'erreur rouge (seule l'annulation est ignorée, les vraies pannes restent signalées).
