@@ -1,4 +1,7 @@
 import Foundation
+import OSLog
+
+nonisolated private let collectionDecodingLogger = Logger(subsystem: "com.auralabs.Spinlog", category: "CollectionDecoding")
 
 /// Un dossier de la collection d'un utilisateur (ex: "All", "Vinyle", ...).
 struct CollectionFolder: Codable, Identifiable, Sendable {
@@ -90,9 +93,10 @@ struct CollectionItem: Codable, Identifiable, Sendable {
     nonisolated init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         releaseId = try container.decode(Int.self, forKey: .releaseId)
-        folderId = try container.decode(Int.self, forKey: .folderId)
-        rating = try container.decode(Int.self, forKey: .rating)
-        dateAdded = try container.decode(String.self, forKey: .dateAdded)
+        // Champs secondaires tolérants : leur absence ne doit pas faire perdre l'exemplaire.
+        folderId = try container.decodeIfPresent(Int.self, forKey: .folderId) ?? DiscogsConstants.allFolderId
+        rating = try container.decodeIfPresent(Int.self, forKey: .rating) ?? 0
+        dateAdded = try container.decodeIfPresent(String.self, forKey: .dateAdded) ?? ""
         basicInformation = try container.decode(BasicInformation.self, forKey: .basicInformation)
         instanceId = try container.decode(Int.self, forKey: .instanceId)
         notes = try container.decodeIfPresent([CollectionFieldValue].self, forKey: .notes) ?? []
@@ -162,9 +166,27 @@ struct CollectionFieldValue: Codable, Sendable {
 
 /// `nonisolated` : une page (jusqu'à 100 exemplaires) est décodée hors du fil principal, voir
 /// `DiscogsAPIClient.collectionItems`.
+///
+/// Un exemplaire illisible est ignoré (et compté dans les logs) plutôt que de faire échouer toute
+/// la page : sinon un seul enregistrement atypique vidait l'onglet Collection avec une erreur de
+/// décodage, alors que les autres exemplaires étaient parfaitement valides.
 nonisolated struct CollectionReleasesResponse: Decodable, Sendable {
     let pagination: Pagination
     let releases: [CollectionItem]
+
+    private enum CodingKeys: String, CodingKey {
+        case pagination, releases
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        pagination = try container.decode(Pagination.self, forKey: .pagination)
+        let lossy = try container.decodeIfPresent(LossyArray<CollectionItem>.self, forKey: .releases)
+        releases = lossy?.elements ?? []
+        if let dropped = lossy?.droppedCount, dropped > 0 {
+            collectionDecodingLogger.error("Page de collection : \(dropped, privacy: .public) exemplaire(s) illisible(s) ignoré(s).")
+        }
+    }
 }
 
 /// Définition d'un champ personnalisé de collection, tel que créé par l'utilisateur

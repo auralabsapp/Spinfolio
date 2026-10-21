@@ -63,17 +63,19 @@ enum PersistedStoreDecoding {
 }
 
 /// Tableau JSON dont les éléments illisibles sont ignorés au lieu de faire échouer le décodage.
-private struct LossyArray<Element: Decodable>: Decodable {
+/// `nonisolated` et non privé : réutilisé pour décoder hors du fil principal les pages de
+/// collection reçues de Discogs (`CollectionReleasesResponse`).
+nonisolated struct LossyArray<Element: Decodable>: Decodable {
     let elements: [Element]
     let droppedCount: Int
 
     /// Consomme un élément sans le lire, pour avancer après un élément illisible (quel que soit
     /// son type JSON : objet, chaîne, nombre…).
     private struct Skipped: Decodable {
-        init(from decoder: Decoder) throws {}
+        nonisolated init(from decoder: Decoder) throws {}
     }
 
-    init(from decoder: Decoder) throws {
+    nonisolated init(from decoder: Decoder) throws {
         var container = try decoder.unkeyedContainer()
         var elements: [Element] = []
         var dropped = 0

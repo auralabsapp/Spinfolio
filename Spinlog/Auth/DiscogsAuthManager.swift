@@ -126,8 +126,17 @@ final class DiscogsAuthManager: NSObject {
             Task { await OfflineSyncQueue.shared.processQueue() }
             await fetchUserProfileIfNeeded(force: true)
         } catch {
+            // Fenêtre de connexion fermée (ou « Annuler ») par l'utilisateur : un choix, pas une
+            // erreur — rien à afficher, il peut simplement retoucher « Se connecter ».
+            guard !Self.isUserCancellation(error) else { return }
             lastError = error.localizedDescription
         }
+    }
+
+    /// Vrai si l'utilisateur a lui-même interrompu la connexion (fermeture de la fenêtre
+    /// d'autorisation, bouton « Annuler » de la demande d'accès à discogs.com).
+    nonisolated static func isUserCancellation(_ error: Error) -> Bool {
+        (error as? ASWebAuthenticationSessionError)?.code == .canceledLogin
     }
 
     /// Ouvre une session de démonstration sur la collection d'exemple (voir `DemoMode`).
