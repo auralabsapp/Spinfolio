@@ -389,12 +389,13 @@ struct SettingsView: View {
                     title: "Suivi de plus-value",
                     message: "Passe premium pour comparer ton investissement à la cote actuelle et suivre ta plus-value."
                 )
-            } else {
-                NavigationLink(value: SettingsDestination.purchasePriceHelp) {
-                    HStack(spacing: 14) {
-                        SettingsIcon(systemName: "questionmark.circle.fill", backgroundColor: .mint)
-                        Text("Comment ça fonctionne ?")
-                    }
+            }
+            // Accessible à tous, abonnés ou non : cette aide explique quoi saisir dans le prix
+            // d'achat et l'état de la pochette, des champs que chacun remplit même sans Premium.
+            NavigationLink(value: SettingsDestination.purchasePriceHelp) {
+                HStack(spacing: 14) {
+                    SettingsIcon(systemName: "questionmark.circle.fill", backgroundColor: .mint)
+                    Text("Comment ça fonctionne ?")
                 }
             }
         } header: {
