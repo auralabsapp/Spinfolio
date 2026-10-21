@@ -405,6 +405,16 @@ final class ArtistDetailViewModel {
     /// dans la collection ou la wantlist locale, qui crédite l'artiste par son identifiant :
     /// la page reste consultable pour tout artiste dont l'utilisateur possède ou recherche un
     /// disque, au lieu d'un écran d'erreur.
+    /// Chargement à l'apparition de la vue. Au retour d'un écran poussé depuis celui-ci, les données
+    /// sont déjà affichées : on ne repasse PAS par l'état « chargement », qui remplacerait le
+    /// contenu défilant par le squelette et ferait perdre la position de lecture (même règle que
+    /// `ReleaseDetailViewModel.loadIfNeeded`). Le rafraîchissement d'Apple Music et du réseau a ses
+    /// propres déclencheurs (voir `refreshAfterReturningToForeground`)..
+    func loadIfNeeded(artistId: Int) async {
+        guard self.artistId != artistId || artistName == nil || errorMessage != nil else { return }
+        await load(artistId: artistId)
+    }
+
     func load(artistId: Int) async {
         self.artistId = artistId
         isLoading = true

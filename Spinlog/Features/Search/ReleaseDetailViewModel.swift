@@ -12,6 +12,20 @@ final class ReleaseDetailViewModel {
     private(set) var isOfflineFallback = false
     var averageColor: UIColor?
 
+    /// Chargement à l'apparition de la vue. Au retour d'un écran poussé depuis la fiche (master,
+    /// label, artiste…), la release est déjà affichée : on ne repasse PAS par l'état « chargement »,
+    /// qui remplacerait le contenu défilant par le squelette et ferait perdre la position de
+    /// lecture. Seuls les statuts « en collection / en wantlist » sont rafraîchis, en silence.
+    func loadIfNeeded(releaseId: Int, actions: ReleaseActions) async {
+        guard release?.id == releaseId, errorMessage == nil, !isOfflineFallback else {
+            await load(releaseId: releaseId, actions: actions)
+            return
+        }
+        async let collectionCheck: Void = actions.checkIfInCollection(releaseId: releaseId)
+        async let wantlistCheck: Void = actions.checkIfInWantlist(releaseId: releaseId)
+        _ = await (collectionCheck, wantlistCheck)
+    }
+
     /// Charge la release et, en parallèle, l'état "en collection"/"en wantlist" via `actions`
     /// (déjà propriétaire de cette logique — voir `ReleaseActions`), sans attendre la fin du
     /// chargement de la release pour afficher la vue.

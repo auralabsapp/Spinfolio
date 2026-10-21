@@ -23,7 +23,7 @@ struct MasterDetailView: View {
             .navigationTitle(viewModel.master?.title ?? "")
             .navigationBarTitleDisplayMode(.inline)
             .disablesContentPopGesture()
-            .task { await viewModel.load(masterId: masterId) }
+            .task { await viewModel.loadIfNeeded(masterId: masterId) }
     }
 
     @ViewBuilder

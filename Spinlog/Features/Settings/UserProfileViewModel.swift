@@ -18,6 +18,15 @@ final class UserProfileViewModel {
     private(set) var isLoading = true
     private(set) var errorMessage: String?
 
+    /// Chargement à l'apparition de la vue. Au retour d'un écran poussé depuis celui-ci, les données
+    /// sont déjà affichées : on ne repasse PAS par l'état « chargement », qui remplacerait le
+    /// contenu défilant par le squelette et ferait perdre la position de lecture (même règle que
+    /// `ReleaseDetailViewModel.loadIfNeeded`).
+    func loadIfNeeded(username: String) async {
+        guard profile?.username != username || errorMessage != nil else { return }
+        await load(username: username)
+    }
+
     func load(username: String) async {
         isLoading = true
         errorMessage = nil

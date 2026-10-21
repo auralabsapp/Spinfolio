@@ -155,7 +155,7 @@ struct ReleaseDetailView: View {
                     viewModel.averageColor = cached
                 }
             }
-            .task { await viewModel.load(releaseId: releaseId, actions: actions) }
+            .task { await viewModel.loadIfNeeded(releaseId: releaseId, actions: actions) }
     }
 
     private func triggerListeningLog() {

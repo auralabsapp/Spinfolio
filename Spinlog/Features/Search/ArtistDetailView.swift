@@ -89,7 +89,7 @@ struct ArtistDetailView: View {
                     }
                 }
             }
-            .task { await viewModel.load(artistId: artistId) }
+            .task { await viewModel.loadIfNeeded(artistId: artistId) }
             // Retour depuis les Réglages iOS après avoir accordé l'accès à Apple Music.
             .onChange(of: scenePhase) { _, phase in
                 guard phase == .active else { return }

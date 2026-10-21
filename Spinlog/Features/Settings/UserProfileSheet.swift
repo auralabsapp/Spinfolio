@@ -26,7 +26,7 @@ struct UserProfileSheet: View {
             .background(Color.appBackground.ignoresSafeArea())
             .navigationTitle("Profil Discogs")
             .navigationBarTitleDisplayMode(.inline)
-            .task { await viewModel.load(username: username) }
+            .task { await viewModel.loadIfNeeded(username: username) }
             .sheet(item: $safariTarget) { target in
                 SafariView(url: target.url)
             }

@@ -16,7 +16,7 @@ struct LabelDetailView: View {
             .navigationTitle(viewModel.label?.name ?? "")
             .navigationBarTitleDisplayMode(.inline)
             .disablesContentPopGesture()
-            .task { await viewModel.load(labelId: labelId) }
+            .task { await viewModel.loadIfNeeded(labelId: labelId) }
             // Seul des 4 écrans de détail (Release/Artist/Master/Label) à ne pas s'enregistrer
             // auprès de `TabNavigationCoordinator` : sa déduplication de navigation (ex: ne pas
             // repousser la même destination si elle est déjà au sommet de la pile) ne fonctionnait
