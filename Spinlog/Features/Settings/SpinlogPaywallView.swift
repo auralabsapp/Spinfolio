@@ -22,75 +22,6 @@ private var goldHeaderGradient: LinearGradient {
     )
 }
 
-/// Description d'une fonctionnalité premium (icône, couleur, titre, résumé) — même contenu que
-/// `PremiumFeaturesSheet`, avec la charte Or Hifi / Ambre Collector.
-private struct PaywallFeatureInfo: Identifiable {
-    let id = UUID()
-    let icon: String
-    let color: Color
-    // `LocalizedStringResource` : les libellés sont extraits dans le catalogue et traduits
-    // (en `String`, ils s'affichaient toujours en français).
-    let title: LocalizedStringResource
-    let description: LocalizedStringResource
-}
-
-private let paywallFeatures: [PaywallFeatureInfo] = [
-    PaywallFeatureInfo(
-        icon: "banknote.fill",
-        color: .green,
-        title: "Suivi de plus-value",
-        description: "Compare le prix payé pour chaque album à sa cote Discogs : plus-value de chaque exemplaire et de toute ta collection dans Statistiques."
-    ),
-    PaywallFeatureInfo(
-        icon: "icloud.fill",
-        color: .cyan,
-        title: "Synchronisation iCloud",
-        description: "Synchronise tags, journal d'écoute sur platine, préférences et personnalisations de tri entre tous tes appareils connectés au même compte."
-    ),
-    PaywallFeatureInfo(
-        icon: "rectangle.stack.badge.plus",
-        color: .blue,
-        title: "Scan par lot",
-        description: "Scanne plusieurs codes-barres à la suite (brocante, disquaire) et ajoute-les en une fois à ta collection ou ta wantlist."
-    ),
-    PaywallFeatureInfo(
-        icon: "bell.fill",
-        color: .orange,
-        title: "Alertes de prix sur la wantlist",
-        description: "Sois averti quand un disque de ta wantlist apparaît à bon prix sur le marketplace Discogs (vérification à l'ouverture de l'app et occasionnellement en arrière-plan, pas en temps réel)."
-    ),
-    PaywallFeatureInfo(
-        icon: "arrow.down.circle.fill",
-        color: .teal,
-        title: "Mode hors ligne",
-        description: "Télécharge toute ta collection et les pochettes en haute résolution pour fouiner en brocante sans aucun réseau."
-    ),
-    PaywallFeatureInfo(
-        icon: "books.vertical.fill",
-        color: .purple,
-        title: "Où ranger son album",
-        description: "Retrouve instantanément où ranger un album dans ton meuble, avec ses voisins immédiats selon ton tri personnalisé."
-    ),
-    PaywallFeatureInfo(
-        icon: "waveform",
-        color: goldWarm,
-        title: "Palmarès d'écoute sur platine",
-        description: "Découvre tes albums et artistes les plus écoutés sur ta platine, tes podiums du mois et de l'année dans Statistiques. Les lectures Apple Music ne sont pas comptées."
-    ),
-    PaywallFeatureInfo(
-        icon: "paintpalette.fill",
-        color: goldAccent,
-        title: "Thèmes et palettes de couleurs",
-        description: "Personnalise l'ambiance visuelle de l'app selon tes goûts avec 8 palettes exclusives (Bleu Cobalt, Vert Émeraude, Orange Crépuscule, Rouge Rubis, Violet Améthyste, Cuivre & Or...)."
-    ),
-    PaywallFeatureInfo(
-        icon: "square.and.arrow.up.fill",
-        color: .mint,
-        title: "Export CSV & PDF",
-        description: "Exporte toute ta discothèque au format tableur (Excel, Numbers, Sheets) avec métadonnées, notes et tags, ou en PDF avec état et prix d'achat."
-    )
-]
-
 /// Fenêtre d'incitation à l'abonnement Spinlog Premium (Paywall), basée sur `SubscriptionStoreView`
 /// (StoreKit) pour bénéficier des mécanismes natifs d'achat/restauration/mentions légales, avec
 /// notre contenu marketing (bannière, liste de fonctionnalités) au-dessus des forfaits.
@@ -114,7 +45,7 @@ struct SpinlogPaywallView: View {
     }
 
     private var initialFeaturesCount: Int {
-        isIPad ? paywallFeatures.count : 4
+        isIPad ? PremiumFeatureCatalog.all.count : 4
     }
 
     var body: some View {
@@ -198,7 +129,7 @@ struct SpinlogPaywallView: View {
             .padding(.top, 4)
 
             VStack(alignment: .leading, spacing: 10) {
-                let visibleFeatures = (showsAllFeatures || isIPad) ? paywallFeatures : Array(paywallFeatures.prefix(initialFeaturesCount))
+                let visibleFeatures = (showsAllFeatures || isIPad) ? PremiumFeatureCatalog.all : Array(PremiumFeatureCatalog.all.prefix(initialFeaturesCount))
 
                 VStack(spacing: 0) {
                     ForEach(Array(visibleFeatures.enumerated()), id: \.element.id) { index, feature in
@@ -211,7 +142,7 @@ struct SpinlogPaywallView: View {
                 .padding(.vertical, 4)
                 .appleMusicGroupedCard()
 
-                if !showsAllFeatures && visibleFeatures.count < paywallFeatures.count {
+                if !showsAllFeatures && visibleFeatures.count < PremiumFeatureCatalog.all.count {
                     Button {
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
@@ -223,7 +154,7 @@ struct SpinlogPaywallView: View {
                                 .font(.system(size: 13, weight: .bold))
                                 .foregroundStyle(Color.goldText)
 
-                            Text("et \(paywallFeatures.count - visibleFeatures.count) fonctionnalités supplémentaires")
+                            Text("et \(PremiumFeatureCatalog.all.count - visibleFeatures.count) fonctionnalités supplémentaires")
                                 .font(.subheadline.weight(.medium))
                                 .foregroundStyle(Color.goldText)
                         }
@@ -241,9 +172,9 @@ struct SpinlogPaywallView: View {
 
     // MARK: - Ligne de fonctionnalité
 
-    private func featureRow(_ feature: PaywallFeatureInfo) -> some View {
+    private func featureRow(_ feature: PremiumFeatureInfo) -> some View {
         HStack(alignment: .top, spacing: 14) {
-            SettingsIcon(systemName: feature.icon, backgroundColor: feature.color)
+            SettingsIcon(systemName: feature.icon, backgroundColor: feature.paywallColor ?? feature.color)
             VStack(alignment: .leading, spacing: 3) {
                 Text(feature.title)
                     .font(.subheadline.weight(.semibold))
