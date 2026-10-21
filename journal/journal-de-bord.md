@@ -9,6 +9,18 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-10-21 — Graphiques de Stats fluides, paywall après la connexion
 
+### 18:25 — `bd79597` Synchro iCloud sans plantage à l'achat Premium, « All » retiré des choix de dossier, histogrammes par année avec axe vertical lisible
+- **Plantage après achat** (rapport TestFlight, `CKSyncEngine.fetchChanges` appelé en récursion) : le
+  premier démarrage de la synchro émet `accountChange`, dont le traitement lançait des `Task`
+  héritant du contexte du rappel ; `fetchChanges`/`sendChanges` partent maintenant d'une tâche
+  détachée sur l'acteur principal (`detachedOnMainActor`).
+- **Dossiers** : « All », simple vue agrégée de Discogs, n'est plus proposé pour changer le dossier
+  d'un exemplaire ni dans les menus d'ajout de la fiche d'un disque.
+- **Stats** : marge de l'échelle verticale corrigée pour les petits effectifs (vue par année) et
+  graphique à défilement natif, avec axe vertical fixe et valeurs entières visibles.
+- Tests unitaires et cas de recette M26, J32, I26.
+- 11 fichiers.
+
 ### 16:55 — `fe4527b` Guide de rangement : le disque central réagit au toucher, repère « ICI » à plat
 - Toucher la pochette centrale ou « ICI » la fait rebondir (bordure rose épaissie, ombre renforcée)
   avec un léger retour haptique, sans rien ouvrir ; avec « Réduire les animations », seule la
