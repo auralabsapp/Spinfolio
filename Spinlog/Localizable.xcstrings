@@ -563,6 +563,22 @@
         }
       }
     },
+    "%@ sur %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "%1$@ of %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ sur %2$@"
+          }
+        }
+      }
+    },
     "%@ utilise deux champs personnalisés de ta collection Discogs : un pour le prix d'achat, un pour l'état du disque. Chacun est détecté automatiquement par mot-clé dans le nom du champ — « prix », « prix d'achat », « price », « purchase price », « bought for » ou « cost » pour le prix d'achat ; « Media Condition » ou « état du disque » pour l'état (en excluant « Sleeve Condition », qui concerne la pochette)." : {
       "localizations" : {
         "en" : {
@@ -600,6 +616,7 @@
       }
     },
     "%@, %@, lecture sur Apple Music. %@ sur %@. Touche pour ouvrir l'album." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -615,7 +632,24 @@
         }
       }
     },
+    "%@, %@, lecture sur Apple Music. %@ sur %@. Touche pour ouvrir le lecteur." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "%1$@, %2$@, playing on Apple Music. %3$@ of %4$@. Tap to open the player."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@, lecture sur Apple Music. %3$@ sur %4$@. Touche pour ouvrir le lecteur."
+          }
+        }
+      }
+    },
     "%@, %@, lecture sur Apple Music. Touche pour ouvrir l'album." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -631,7 +665,24 @@
         }
       }
     },
+    "%@, %@, lecture sur Apple Music. Touche pour ouvrir le lecteur." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "%1$@, %2$@, playing on Apple Music. Tap to open the player."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@, lecture sur Apple Music. Touche pour ouvrir le lecteur."
+          }
+        }
+      }
+    },
     "%@, %@. Écoute en cours sur la platine. Touche pour ouvrir l'album." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -643,6 +694,22 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@, %2$@. Écoute en cours sur la platine. Touche pour ouvrir l'album."
+          }
+        }
+      }
+    },
+    "%@, %@. Écoute en cours sur la platine. Touche pour ouvrir le lecteur." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "%1$@, %2$@. Listening on the turntable. Tap to open the player."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@. Écoute en cours sur la platine. Touche pour ouvrir le lecteur."
           }
         }
       }
@@ -664,11 +731,22 @@
       }
     },
     "%@. Écoute en cours sur la platine. Touche pour ouvrir l'album." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "%@. Listening on the turntable. Tap to open the album."
+          }
+        }
+      }
+    },
+    "%@. Écoute en cours sur la platine. Touche pour ouvrir le lecteur." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "%@. Listening on the turntable. Tap to open the player."
           }
         }
       }
@@ -2188,6 +2266,16 @@
         }
       }
     },
+    "−%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "−%@"
+          }
+        }
+      }
+    },
     "≤ %@" : {
       "localizations" : {
         "en" : {
@@ -3153,6 +3241,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Stop Listening on the Turntable"
+          }
+        }
+      }
+    },
+    "Arrêter la lecture" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Stop Playback"
           }
         }
       }
@@ -6030,6 +6128,16 @@
         }
       }
     },
+    "Fermer le lecteur" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Close Player"
+          }
+        }
+      }
+    },
     "Fermer le scan par lot ?" : {
       "localizations" : {
         "en" : {
@@ -6844,6 +6952,26 @@
         }
       }
     },
+    "La liste des pistes est indisponible hors ligne." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The track list isn't available offline."
+          }
+        }
+      }
+    },
+    "La liste des pistes n'a pas pu être chargée." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The track list couldn't be loaded."
+          }
+        }
+      }
+    },
     "La photo et la biographie de l'artiste viennent d'Apple Music. Autorise %@ à y accéder dans les Réglages." : {
       "localizations" : {
         "en" : {
@@ -7298,6 +7426,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Play %@ on Apple Music"
+          }
+        }
+      }
+    },
+    "Liste des pistes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Track List"
           }
         }
       }
@@ -8456,6 +8594,37 @@
         }
       }
     },
+    "Piste précédente" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Previous Track"
+          }
+        }
+      }
+    },
+    "Piste suivante" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Next Track"
+          }
+        }
+      }
+    },
+    "Plus d'options" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "More Options"
+          }
+        }
+      }
+    },
     "Plus-value de l'exemplaire" : {
       "localizations" : {
         "en" : {
@@ -8542,6 +8711,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Position on the Shelf"
+          }
+        }
+      }
+    },
+    "Position dans le morceau" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Position in Track"
           }
         }
       }
@@ -11704,6 +11883,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "View this release's details"
+          }
+        }
+      }
+    },
+    "Voir la fiche du disque" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "View Record Details"
           }
         }
       }

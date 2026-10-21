@@ -11,6 +11,9 @@ struct RootTabView: View {
     @State private var authManager = DiscogsAuthManager.shared
     @State private var premiumStore = PremiumStore.shared
     @State private var showingLaunchPaywall = false
+    /// Relie le mini-lecteur (source) et la fenêtre de lecture (destination) pour que celle-ci
+    /// semble sortir du mini-lecteur à l'ouverture et y rentrer à la fermeture.
+    @Namespace private var nowPlayingNamespace
     // Force la création de ces singletons dès le lancement de l'app plutôt qu'à la première
     // visite de leur onglet : leurs observateurs NotificationCenter (ajout/retrait déclenchés
     // depuis une fiche release) doivent déjà exister quel que soit l'onglet ouvert en premier,
@@ -69,12 +72,12 @@ struct RootTabView: View {
         // Réduit la barre d'onglets à l'icône de l'onglet actif quand on scrolle vers le bas
         // dans le contenu (liste Collection, Wantlist...), et la restaure dès qu'on remonte —
         // comportement standard iOS 26 (Musique, Podcasts...).
-        .tabBarMinimizeBehavior(.onScrollDown)
+        .modifier(TabBarMinimizeModifier())
         // Mini-lecteur audio : au-dessus de la barre quand elle est normale, inline entre l'icône
         // de l'onglet courant et l'icône de recherche quand elle est réduite (comportement natif
         // identique à Musique). `MiniPlayerBar` adapte sa présentation via `tabViewBottomAccessoryPlacement`.
         .tabViewBottomAccessory(isEnabled: MiniPlayerBar.isActive) {
-            MiniPlayerBar()
+            MiniPlayerBar(transitionNamespace: nowPlayingNamespace)
         }
         // Bulle de confirmation ajout/retrait collection/wantlist (voir `LibraryMembershipStore`) :
         // overlay global plutôt que posé sur chaque écran, puisque l'action peut partir de
@@ -90,6 +93,12 @@ struct RootTabView: View {
         }
         .fullScreenCover(isPresented: $showingLaunchPaywall) {
             SpinlogPaywallView()
+        }
+        // Posée sur un fond neutre : deux `fullScreenCover` sur la même vue (paywall et lecteur)
+        // se disputeraient la présentation. Dans un modificateur à part : lire la présentation ici
+        // ferait recalculer tout le `TabView` à chaque ouverture et fermeture de la fenêtre.
+        .background {
+            Color.clear.modifier(NowPlayingCoverModifier(namespace: nowPlayingNamespace))
         }
         // Présenté une fois l'utilisateur connecté (compte Discogs ou démo), jamais avant l'écran
         // de connexion : un nouvel utilisateur voyait l'offre avant même de savoir ce qu'est l'app.
@@ -182,6 +191,47 @@ enum LaunchPaywallSchedule {
     }
 }
 
+/// Applique `tabBarMinimizeBehavior` selon `TabNavigationCoordinator.tabBarMinimizeBehavior`.
+/// Lu ici, et non dans `RootTabView.body`, pour que seul ce modificateur soit recalculé quand le
+/// comportement bascule (voir `TabNavigationCoordinator.expandTabBar()`).
+private struct TabBarMinimizeModifier: ViewModifier {
+    private let coordinator = TabNavigationCoordinator.shared
+
+    func body(content: Content) -> some View {
+        content.tabBarMinimizeBehavior(coordinator.tabBarMinimizeBehavior)
+    }
+}
+
+/// Présente la fenêtre de lecture ouverte depuis le mini-lecteur. Lit `nowPlayingPresentation` ici, et non dans
+/// `RootTabView.body`, pour que seule cette petite vue soit recalculée quand la fenêtre s'ouvre
+/// ou se ferme : le `TabView` racine (onglets, mini-lecteur) restait sinon à reconstruire pile au
+/// moment où la fenêtre découvre le mini-lecteur, d'où une saccade.
+private struct NowPlayingCoverModifier: ViewModifier {
+    let namespace: Namespace.ID
+    @Bindable private var coordinator = TabNavigationCoordinator.shared
+
+    /// Une seule présentation à la fois, mais deux formes : plein écran pour Apple Music, petite
+    /// feuille pour la platine. Chaque liaison ne renvoie la valeur que pour sa propre source.
+    private func binding(for source: NowPlayingPresentation.Source) -> Binding<NowPlayingPresentation?> {
+        Binding(
+            get: { coordinator.nowPlayingPresentation.flatMap { $0.source == source ? $0 : nil } },
+            set: { if $0 == nil, coordinator.nowPlayingPresentation?.source == source { coordinator.nowPlayingPresentation = nil } }
+        )
+    }
+
+    func body(content: Content) -> some View {
+        content
+            .fullScreenCover(item: binding(for: .appleMusic)) { _ in
+                NowPlayingFullScreenView()
+                    // Zoom depuis le mini-lecteur ; la fermeture au glissé (interactive) est celle du système.
+                    .navigationTransition(.zoom(sourceID: MiniPlayerBar.transitionSourceID, in: namespace))
+            }
+            .sheet(item: binding(for: .turntable)) { _ in
+                NowPlayingTurntableSheet()
+            }
+    }
+}
+
 enum AppTab: Hashable {
     case collection
     case wantlist
@@ -196,6 +246,12 @@ final class TabNavigationCoordinator {
     static let shared = TabNavigationCoordinator()
 
     var selectedTab: AppTab = .collection
+    /// Réduction de la barre d'onglets au défilement : `.onScrollDown` en temps normal,
+    /// brièvement `.never` quand `expandTabBar()` force son retour.
+    private(set) var tabBarMinimizeBehavior: TabBarMinimizeBehavior = .onScrollDown
+    private var tabBarRestoreTask: Task<Void, Never>?
+    /// Fenêtre de lecture plein écran ouverte depuis le mini-lecteur (`nil` : fermée).
+    var nowPlayingPresentation: NowPlayingPresentation?
     var collectionPath = NavigationPath()
     var wantlistPath = NavigationPath()
     var searchPath = NavigationPath()
@@ -239,6 +295,25 @@ final class TabNavigationCoordinator {
         if currentTopDestination[selectedTab] == destination {
             currentTopDestination[selectedTab] = nil
         }
+    }
+
+    /// Rend tout de suite sa taille normale à la barre d'onglets réduite. iOS ne la rétablit que
+    /// sur un défilement vers le haut, détecté avec retard quand c'est un simple tirage en
+    /// rebond au sommet d'une liste courte : on bascule donc un instant sur `.never` (qui la
+    /// rétablit), puis on remet le comportement normal.
+    func expandTabBar() {
+        guard tabBarRestoreTask == nil else { return }
+        tabBarMinimizeBehavior = .never
+        tabBarRestoreTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(450))
+            tabBarMinimizeBehavior = .onScrollDown
+            tabBarRestoreTask = nil
+        }
+    }
+
+    func presentNowPlaying(_ source: NowPlayingPresentation.Source) {
+        guard nowPlayingPresentation == nil else { return }
+        nowPlayingPresentation = NowPlayingPresentation(source: source)
     }
 
     /// Revient instantanément sur la vue (Release ou Master) où la lecture a été lancée

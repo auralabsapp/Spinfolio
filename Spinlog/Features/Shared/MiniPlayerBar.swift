@@ -6,9 +6,14 @@ import SwiftUI
 ///   (pochette, titre/artiste, position/durée, barre de progression tactile).
 /// - `.inline` (barre d'onglets réduite au swipe up) : version compacte intégrée dans la pilule réduite,
 ///   entre l'icône de l'onglet courant à gauche et l'icône de recherche à droite.
-/// Un appui sur le mini-lecteur ramène immédiatement l'utilisateur sur la vue (Release ou Master)
-/// d'où la lecture a été lancée.
+/// Un appui sur le mini-lecteur ouvre la fenêtre de lecture plein écran (`NowPlayingFullScreenView`),
+/// d'où l'on peut rejoindre la vue (Release ou Master) où la lecture a été lancée.
 struct MiniPlayerBar: View {
+    /// Identifiant de la source de la transition zoom vers `NowPlayingFullScreenView`.
+    static let transitionSourceID = "nowPlayingMiniPlayer"
+
+    let transitionNamespace: Namespace.ID
+
     @State private var service = AppleMusicPlaybackService.shared
     private var activityManager = NowPlayingActivityManager.shared
     @State private var coordinator = TabNavigationCoordinator.shared
@@ -46,19 +51,23 @@ struct MiniPlayerBar: View {
     }
 
     var body: some View {
-        if let item = service.currentItem, service.isPlaying {
-            if accessoryPlacement == .inline {
-                compactAppleMusicPlayerView(item: item)
-            } else {
-                appleMusicPlayerView(item: item)
-            }
-        } else if let releaseId = activityManager.activeReleaseId, activityManager.isAnyPlaying {
-            if accessoryPlacement == .inline {
-                compactTurntablePlayerView(releaseId: releaseId)
-            } else {
-                turntablePlayerView(releaseId: releaseId)
+        Group {
+            if let item = service.currentItem, service.isPlaying {
+                if accessoryPlacement == .inline {
+                    compactAppleMusicPlayerView(item: item)
+                } else {
+                    appleMusicPlayerView(item: item)
+                }
+            } else if let releaseId = activityManager.activeReleaseId, activityManager.isAnyPlaying {
+                if accessoryPlacement == .inline {
+                    compactTurntablePlayerView(releaseId: releaseId)
+                } else {
+                    turntablePlayerView(releaseId: releaseId)
+                }
             }
         }
+        // Source de la transition zoom : la fenêtre de lecture sort de ce mini-lecteur et y rentre.
+        .matchedTransitionSource(id: Self.transitionSourceID, in: transitionNamespace)
     }
 
     // MARK: - Présentation compacte (barre d'onglets réduite)
@@ -93,7 +102,7 @@ struct MiniPlayerBar: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(item.trackTitle), \(item.artistName), lecture sur Apple Music. Touche pour ouvrir l'album.")
+            .accessibilityLabel("\(item.trackTitle), \(item.artistName), lecture sur Apple Music. Touche pour ouvrir le lecteur.")
             .accessibilityAddTraits(.isButton)
 
             Button {
@@ -114,7 +123,7 @@ struct MiniPlayerBar: View {
         .contentShape(Rectangle())
         .onTapGesture {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            coordinator.returnToPlayingItem(item)
+            coordinator.presentNowPlaying(.appleMusic)
         }
     }
 
@@ -148,7 +157,7 @@ struct MiniPlayerBar: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(activityManager.activeAlbumTitle ?? ""). Écoute en cours sur la platine. Touche pour ouvrir l'album.")
+            .accessibilityLabel("\(activityManager.activeAlbumTitle ?? ""). Écoute en cours sur la platine. Touche pour ouvrir le lecteur.")
             .accessibilityAddTraits(.isButton)
 
             Button {
@@ -171,7 +180,7 @@ struct MiniPlayerBar: View {
         .contentShape(Rectangle())
         .onTapGesture {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            coordinator.returnToRelease(releaseId: releaseId, coverURL: activityManager.activeCoverURL)
+            coordinator.presentNowPlaying(.turntable)
         }
     }
 
@@ -221,7 +230,7 @@ struct MiniPlayerBar: View {
                             }
                         }
                         .accessibilityElement(children: .ignore)
-                        .accessibilityLabel("\(item.trackTitle), \(item.artistName), lecture sur Apple Music. \(formatTime(effectiveTime)) sur \(formatTime(service.totalDuration)). Touche pour ouvrir l'album.")
+                        .accessibilityLabel("\(item.trackTitle), \(item.artistName), lecture sur Apple Music. \(formatTime(effectiveTime)) sur \(formatTime(service.totalDuration)). Touche pour ouvrir le lecteur.")
                         .accessibilityAddTraits(.isButton)
 
                         // 4. Bouton Stop à droite (cercle rose Spinlog avec icône stop.fill), identique au mode platine
@@ -252,7 +261,7 @@ struct MiniPlayerBar: View {
                     .contentShape(Rectangle())
                     .onTapGesture {
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        coordinator.returnToPlayingItem(item)
+                        coordinator.presentNowPlaying(.appleMusic)
                     }
 
                     // 5. Barre de progression tactile alignée sur le bord inférieur (ne décale pas le contenu)
@@ -366,7 +375,7 @@ struct MiniPlayerBar: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(activityManager.activeAlbumTitle ?? ""), \(activityManager.activeArtistName ?? ""). Écoute en cours sur la platine. Touche pour ouvrir l'album.")
+                .accessibilityLabel("\(activityManager.activeAlbumTitle ?? ""), \(activityManager.activeArtistName ?? ""). Écoute en cours sur la platine. Touche pour ouvrir le lecteur.")
                 .accessibilityAddTraits(.isButton)
 
                 // 3. Bouton Stop à droite (cercle rose Spinlog avec icône stop.fill)
@@ -398,7 +407,7 @@ struct MiniPlayerBar: View {
             .contentShape(Rectangle())
             .onTapGesture {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                coordinator.returnToRelease(releaseId: releaseId, coverURL: activityManager.activeCoverURL)
+                coordinator.presentNowPlaying(.turntable)
             }
         .transition(
             .asymmetric(
