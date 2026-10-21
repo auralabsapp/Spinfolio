@@ -32,61 +32,77 @@ struct YearHistogramChart: View {
         let hasScroll = totalBars > maxVisibleBars
         let maxCount = entries.map(\.count).max() ?? 0
 
-        GeometryReader { containerGeo in
-            let availableWidth = containerGeo.size.width
-            let stepWidth = availableWidth / CGFloat(maxVisibleBars)
-            let chartWidth = hasScroll ? stepWidth * CGFloat(totalBars) : availableWidth
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                Chart(entries, id: \.year) { entry in
-                    BarMark(
-                        x: .value("Année", String(entry.year)),
-                        y: .value(valueLabel, entry.count)
-                    )
-                    .foregroundStyle(barStyle(isDimmed: selectedYear != nil && selectedYear != String(entry.year)))
-                    .cornerRadius(5)
-                    .accessibilityHidden(true)
-                    .annotation(position: .top, spacing: 4) {
-                        annotationBadge(isSelected: selectedYear == String(entry.year), count: entry.count)
-                    }
-                }
-                .chartYScale(domain: 0...(max(1, Int(Double(maxCount) * 1.25))))
-                .chartOverlay { proxy in
-                    GeometryReader { geometry in
-                        Rectangle()
-                            .fill(Color.clear)
-                            .contentShape(Rectangle())
-                            .chartSelectionAccessibility(
-                                label: accessibilityTitle,
-                                entries: entries.map {
-                                    ChartAccessibilityEntry(id: String($0.year), name: String($0.year), valueText: valueText($0.count))
-                                }
-                            ) { yearText in
-                                if let year = Int(yearText) {
-                                    onSelect(year, yearText)
-                                }
-                            }
-                            .onTapGesture { location in
-                                guard let plotFrame = proxy.plotFrame else { return }
-                                let relativeX = location.x - geometry[plotFrame].origin.x
-                                guard let tappedYear: String = proxy.value(atX: relativeX),
-                                      let entry = entries.first(where: { String($0.year) == tappedYear }) else { return }
-                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-
-                                // Second toucher sur la barre déjà ouverte : on referme tout.
-                                if selectedYear == tappedYear && selection.yearData != nil {
-                                    selection.deselect()
-                                } else {
-                                    onSelect(entry.year, tappedYear)
-                                }
-                            }
-                    }
-                }
-                .frame(width: chartWidth, height: 160)
+        // Défilement natif du graphique (`chartScrollableAxes`) plutôt qu'un `Chart` large dans un
+        // `ScrollView` : l'axe vertical reste alors fixé à gauche pendant le défilement. Dans
+        // l'ancien montage, ses graduations défilaient avec les barres (et se retrouvaient hors
+        // écran, au bord droit du graphique), donc l'échelle n'était jamais lisible.
+        Chart(entries, id: \.year) { entry in
+            BarMark(
+                x: .value("Année", String(entry.year)),
+                y: .value(valueLabel, entry.count)
+            )
+            .foregroundStyle(barStyle(isDimmed: selectedYear != nil && selectedYear != String(entry.year)))
+            .cornerRadius(5)
+            .accessibilityHidden(true)
+            .annotation(position: .top, spacing: 4) {
+                annotationBadge(isSelected: selectedYear == String(entry.year), count: entry.count)
             }
-            .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
+        }
+        .chartYScale(domain: 0...Self.yAxisUpperBound(maxCount: maxCount))
+        .chartYAxis {
+            AxisMarks(position: .leading, values: .automatic(desiredCount: 4)) { value in
+                // Effectifs entiers uniquement : pas de graduation « 1,5 disque ».
+                if value.as(Int.self) != nil {
+                    AxisGridLine()
+                    AxisValueLabel()
+                        .font(.caption2)
+                }
+            }
+        }
+        .chartScrollableAxes(.horizontal)
+        // Pour un axe catégoriel, la longueur visible est un nombre de barres.
+        .chartXVisibleDomain(length: hasScroll ? maxVisibleBars : max(totalBars, 1))
+        .chartOverlay { proxy in
+            GeometryReader { geometry in
+                Rectangle()
+                    .fill(Color.clear)
+                    .contentShape(Rectangle())
+                    .chartSelectionAccessibility(
+                        label: accessibilityTitle,
+                        entries: entries.map {
+                            ChartAccessibilityEntry(id: String($0.year), name: String($0.year), valueText: valueText($0.count))
+                        }
+                    ) { yearText in
+                        if let year = Int(yearText) {
+                            onSelect(year, yearText)
+                        }
+                    }
+                    .onTapGesture { location in
+                        guard let plotFrame = proxy.plotFrame else { return }
+                        let relativeX = location.x - geometry[plotFrame].origin.x
+                        guard let tappedYear: String = proxy.value(atX: relativeX),
+                              let entry = entries.first(where: { String($0.year) == tappedYear }) else { return }
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+
+                        // Second toucher sur la barre déjà ouverte : on referme tout.
+                        if selectedYear == tappedYear && selection.yearData != nil {
+                            selection.deselect()
+                        } else {
+                            onSelect(entry.year, tappedYear)
+                        }
+                    }
+            }
         }
         .frame(height: 160)
+    }
+
+    /// Borne haute de l'axe vertical : 25 % de marge au-dessus de la plus grande barre, et au moins
+    /// une unité. Un simple `Int(max × 1,25)` tronquait la marge à zéro pour les petits effectifs
+    /// (max 1 → 1, max 2 → 2) : en vue par année, où chaque année compte souvent 1 ou 2 disques,
+    /// la plus haute barre touchait le haut du graphique, ce qui faussait l'échelle (toutes les
+    /// barres à 1 paraissaient « pleines ») et coupait la pastille de la barre sélectionnée.
+    nonisolated static func yAxisUpperBound(maxCount: Int) -> Int {
+        max(maxCount + 1, Int((Double(maxCount) * 1.25).rounded(.up)))
     }
 
     private func barStyle(isDimmed: Bool) -> LinearGradient {

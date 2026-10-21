@@ -19,6 +19,17 @@ struct StatsTests {
         #expect(StatsView.cappedListHeight(contentHeight: 0, rowCount: 0, estimatedRowHeight: 56) == 0)
     }
 
+    @Test func yAxisAlwaysKeepsHeadroomAboveTallestBar() {
+        // Petits effectifs (vue par année) : la marge ne doit plus être tronquée à zéro.
+        #expect(YearHistogramChart.yAxisUpperBound(maxCount: 0) == 1)
+        #expect(YearHistogramChart.yAxisUpperBound(maxCount: 1) == 2)
+        #expect(YearHistogramChart.yAxisUpperBound(maxCount: 2) == 3)
+        #expect(YearHistogramChart.yAxisUpperBound(maxCount: 4) == 5)
+        // Grands effectifs (vue par décennie) : 25 % de marge, arrondis au-dessus.
+        #expect(YearHistogramChart.yAxisUpperBound(maxCount: 100) == 125)
+        #expect(YearHistogramChart.yAxisUpperBound(maxCount: 41) == 52)
+    }
+
     private static var nextId = 9_000
 
     private func item(title: String, added: String) throws -> CollectionItem {

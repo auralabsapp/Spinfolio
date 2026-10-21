@@ -378,7 +378,9 @@ final class CloudSyncEngine: CKSyncEngineDelegate {
     /// redondant (un seul envoi couvre déjà tous les changements en attente).
     func scheduleSend() {
         guard pendingSendTask == nil, let syncEngine else { return }
-        pendingSendTask = Task {
+        // Détachée (voir `detachedOnMainActor`) : lancée aussi depuis `handleEvent`, via
+        // `hydrateActiveZone`.
+        pendingSendTask = detachedOnMainActor { [self] in
             var didFail = false
             hadRecordLevelFailureInLastSend = false
             do {

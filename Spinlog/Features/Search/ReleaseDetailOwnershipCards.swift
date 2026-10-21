@@ -61,9 +61,11 @@ struct MyItemCard: View {
         return value.isEmpty ? nil : value
     }
 
+    /// Dossiers où ranger un exemplaire : « All » est une vue agrégée de Discogs, pas un dossier.
     private var effectiveFolders: [CollectionFolder] {
-        if !actions.folders.isEmpty {
-            return actions.folders
+        let targetFolders = actions.folders.filter { $0.id != DiscogsConstants.allFolderId }
+        if !targetFolders.isEmpty {
+            return targetFolders
         }
         return [CollectionFolder(id: DiscogsConstants.uncategorizedFolderId, name: "Uncategorized", count: 0)]
     }

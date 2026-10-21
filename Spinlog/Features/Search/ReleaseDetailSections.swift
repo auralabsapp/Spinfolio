@@ -73,9 +73,11 @@ struct ReleaseQuickActionsBar: View {
         return CollectionPreferencesStore.isAlwaysAsk(for: username)
     }
 
+    /// Dossiers où ranger un exemplaire : « All » est une vue agrégée de Discogs, pas un dossier.
     private var effectiveFolders: [CollectionFolder] {
-        if !actions.folders.isEmpty {
-            return actions.folders
+        let targetFolders = actions.folders.filter { $0.id != DiscogsConstants.allFolderId }
+        if !targetFolders.isEmpty {
+            return targetFolders
         }
         return [CollectionFolder(id: DiscogsConstants.uncategorizedFolderId, name: "Uncategorized", count: 0)]
     }
@@ -251,8 +253,8 @@ struct ReleaseQuickActionsBar: View {
                 }
                 .buttonStyle(.plain)
                 .contextMenu {
-                    if actions.folders.count > 1 {
-                        ForEach(actions.folders) { folder in
+                    if effectiveFolders.count > 1 {
+                        ForEach(effectiveFolders) { folder in
                             Button(folder.name) {
                                 Task {
                                     await actions.addToCollection(

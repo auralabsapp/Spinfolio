@@ -2,6 +2,15 @@ import Foundation
 import CloudKit
 import OSLog
 
+/// Lance du travail asynchrone sur l'acteur principal SANS hériter du contexte de la tâche
+/// appelante. `CKSyncEngine` interdit d'appeler `fetchChanges()` / `sendChanges()` depuis ses
+/// propres rappels (`handleEvent`) : une `Task` ordinaire y hérite de ce contexte et fait arrêter
+/// l'app (« cannot guarantee serial delegate callbacks if you recurse »).
+@discardableResult
+func detachedOnMainActor(_ operation: @escaping @MainActor @Sendable () async -> Void) -> Task<Void, Never> {
+    Task.detached(operation: operation)
+}
+
 extension CloudSyncEngine {
     // MARK: - Rapatriement (première synchro / changement de compte actif)
 
@@ -50,7 +59,10 @@ extension CloudSyncEngine {
         // suppressions — voir plus bas). Une fois cette fusion faite EN LOCAL, la poussée qui
         // suit envoie déjà l'état fusionné, quel que soit l'ordre d'activation entre les deux
         // appareils.
-        Task {
+        // Détachée (voir `detachedOnMainActor`) : `hydrateActiveZone` est appelé depuis
+        // `handleEvent` (événement `accountChange`, émis dès le premier démarrage du moteur, donc
+        // juste après l'achat Premium).
+        detachedOnMainActor { [self] in
             await performFetchChanges()
 
             let existingInstanceIds = TagStore.shared.allTaggedInstanceIds()
@@ -114,7 +126,8 @@ extension CloudSyncEngine {
     /// adapté aux déclencheurs premier plan (`hydrateActiveZone`, retour au premier plan), où
     /// personne n'a besoin d'attendre le résultat.
     func fetchLatestChanges() {
-        Task {
+        // Détachée pour la même raison que dans `hydrateActiveZone`.
+        detachedOnMainActor { [self] in
             await performFetchChanges()
         }
     }

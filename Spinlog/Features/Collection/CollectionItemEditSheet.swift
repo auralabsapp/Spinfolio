@@ -108,7 +108,9 @@ struct CollectionItemEditSheet: View {
                                     .foregroundStyle(.primary)
                                 Spacer()
                                 Picker("", selection: $selectedFolderId) {
-                                    ForEach(folders) { folder in
+                                    // « All » est une vue agrégée de Discogs, pas un dossier où ranger un
+                                    // exemplaire (même règle que le menu de déplacement de la Collection).
+                                    ForEach(folders.filter { $0.id != DiscogsConstants.allFolderId }) { folder in
                                         Text(folder.name).tag(folder.id)
                                     }
                                 }
