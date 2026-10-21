@@ -104,8 +104,9 @@ struct SettingsView: View {
     private var settingsList: some View {
         ScrollViewReader { proxy in
             List {
-                // `hasSubscription` : l'offre reste proposée pendant l'aperçu Premium de la démo.
-                if !premiumStore.hasSubscription {
+                // `hasAccessOutsideDemo` (abonnement réel, ou forçage développeur en Debug) :
+                // l'offre reste proposée pendant l'aperçu Premium de la démo.
+                if !premiumStore.hasAccessOutsideDemo {
                     Section {
                         SettingsPremiumHeroBanner {
                             showingPremiumFeaturesSheet = true
@@ -148,7 +149,7 @@ struct SettingsView: View {
             }
             .onChange(of: tabCoordinator.scrollToTopOfSettingsTrigger) {
                 withAnimation {
-                    proxy.scrollTo(premiumStore.hasSubscription ? "accountSection" : "premiumBanner", anchor: .top)
+                    proxy.scrollTo(premiumStore.hasAccessOutsideDemo ? "accountSection" : "premiumBanner", anchor: .top)
                 }
             }
             .onChange(of: tabCoordinator.scrollToOrganizationSectionTrigger) { _, newValue in

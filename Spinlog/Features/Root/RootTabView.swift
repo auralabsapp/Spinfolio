@@ -11,7 +11,6 @@ struct RootTabView: View {
     @State private var authManager = DiscogsAuthManager.shared
     @State private var premiumStore = PremiumStore.shared
     @State private var showingLaunchPaywall = false
-    @State private var hasCheckedLaunchPaywall = false
     // Force la création de ces singletons dès le lancement de l'app plutôt qu'à la première
     // visite de leur onglet : leurs observateurs NotificationCenter (ajout/retrait déclenchés
     // depuis une fiche release) doivent déjà exister quel que soit l'onglet ouvert en premier,
@@ -92,15 +91,21 @@ struct RootTabView: View {
         .fullScreenCover(isPresented: $showingLaunchPaywall) {
             SpinlogPaywallView()
         }
-        .task {
-            guard !hasCheckedLaunchPaywall else { return }
-            hasCheckedLaunchPaywall = true
+        // Présenté une fois l'utilisateur connecté (compte Discogs ou démo), jamais avant l'écran
+        // de connexion : un nouvel utilisateur voyait l'offre avant même de savoir ce qu'est l'app.
+        // Relancé à la connexion (`isAuthenticated` change) ; la limite hebdomadaire évite de la
+        // représenter ensuite.
+        .task(id: authManager.isAuthenticated) {
             // Abonnement réel : l'aperçu Premium de la démo ne dispense pas de voir l'offre.
-            if !premiumStore.hasSubscription && LaunchPaywallSchedule.isDue() && !Self.isUITestLaunch {
-                try? await Task.sleep(nanoseconds: 350_000_000)
-                showingLaunchPaywall = true
-                LaunchPaywallSchedule.markShown()
-            }
+            guard LaunchPaywallSchedule.shouldPresent(
+                isAuthenticated: authManager.isAuthenticated,
+                hasSubscription: premiumStore.hasAccessOutsideDemo
+            ), !Self.isUITestLaunch else { return }
+            try? await Task.sleep(nanoseconds: 350_000_000)
+            // Déconnexion pendant l'attente : plus de raison d'afficher l'offre.
+            guard !Task.isCancelled, authManager.isAuthenticated else { return }
+            showingLaunchPaywall = true
+            LaunchPaywallSchedule.markShown()
         }
         .task(id: authManager.isAuthenticated) {
             await refreshWidgetSnapshotIfNeeded()
@@ -146,13 +151,25 @@ struct RootTabView: View {
     }
 }
 
-/// Fréquence du paywall présenté au lancement : au premier lancement, puis au plus une fois par
-/// semaine. L'afficher à chaque ouverture lassait les utilisateurs gratuits (et un paywall
+/// Fréquence du paywall présenté après la connexion : dès la première connexion, puis au plus une
+/// fois par semaine. L'afficher à chaque ouverture lassait les utilisateurs gratuits (et un paywall
 /// systématique est un motif courant de remarque en App Review) ; l'offre reste accessible à
 /// tout moment depuis Réglages et les fonctions Premium verrouillées.
 enum LaunchPaywallSchedule {
     private static let lastShownKey = "launchPaywallLastShownAt"
     private static let minimumInterval: TimeInterval = 7 * 24 * 3600
+
+    /// Règle de présentation : seulement une fois connecté (compte ou démo), sans abonnement réel,
+    /// et si la dernière présentation remonte à plus d'une semaine.
+    /// `hasSubscription` : accès Premium hors aperçu de la démo (`PremiumStore.hasAccessOutsideDemo`).
+    static func shouldPresent(
+        isAuthenticated: Bool,
+        hasSubscription: Bool,
+        now: Date = Date(),
+        defaults: UserDefaults = .standard
+    ) -> Bool {
+        isAuthenticated && !hasSubscription && isDue(now: now, defaults: defaults)
+    }
 
     static func isDue(now: Date = Date(), defaults: UserDefaults = .standard) -> Bool {
         let lastShown = defaults.double(forKey: lastShownKey)

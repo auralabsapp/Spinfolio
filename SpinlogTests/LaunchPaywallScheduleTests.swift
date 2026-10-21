@@ -36,4 +36,29 @@ struct LaunchPaywallScheduleTests {
             #expect(LaunchPaywallSchedule.isDue(now: shownAt.addingTimeInterval(7 * 24 * 3600), defaults: defaults))
         }
     }
+
+    @Test func neverPresentedBeforeSignIn() {
+        withDefaults { defaults in
+            // Premier lancement, offre due, mais personne n'est connecté : pas de paywall avant
+            // l'écran de connexion.
+            #expect(!LaunchPaywallSchedule.shouldPresent(isAuthenticated: false, hasSubscription: false, defaults: defaults))
+        }
+    }
+
+    @Test func presentedRightAfterFirstSignIn() {
+        withDefaults { defaults in
+            #expect(LaunchPaywallSchedule.shouldPresent(isAuthenticated: true, hasSubscription: false, defaults: defaults))
+        }
+    }
+
+    @Test func skippedForSubscribersAndWithinTheWeek() {
+        withDefaults { defaults in
+            #expect(!LaunchPaywallSchedule.shouldPresent(isAuthenticated: true, hasSubscription: true, defaults: defaults))
+            let shownAt = Date()
+            LaunchPaywallSchedule.markShown(now: shownAt, defaults: defaults)
+            #expect(!LaunchPaywallSchedule.shouldPresent(
+                isAuthenticated: true, hasSubscription: false, now: shownAt.addingTimeInterval(3600), defaults: defaults
+            ))
+        }
+    }
 }

@@ -610,12 +610,15 @@ final class StatsViewModel {
     }
 
     /// Retourne la liste des disques d'un artiste donné (même regroupement que le classement).
-    func items(forArtist artistName: String) -> [CollectionItem] {
-        allCollectionItems.filter {
-            ArtistShelfSortHelper.cleanDiscogsSuffix($0.basicInformation.artistNames) == artistName
-        }.sorted { item1, item2 in
-            item1.basicInformation.title.localizedStandardCompare(item2.basicInformation.title) == .orderedAscending
-        }
+    /// Calculée hors du fil principal, comme les listes des histogrammes : le filtre nettoie le
+    /// nom d'artiste de chaque disque de la collection.
+    func items(forArtist artistName: String) async -> [CollectionItem] {
+        let source = allCollectionItems
+        return await Task.detached(priority: .userInitiated) {
+            Self.sortedByTitle(source.filter {
+                ArtistShelfSortHelper.cleanDiscogsSuffix($0.basicInformation.artistNames) == artistName
+            })
+        }.value
     }
 
     // MARK: - Résolution & Histogramme des Années Originales (Master Years)
@@ -729,8 +732,8 @@ final class StatsViewModel {
 
     /// Année originale résolue pour un exemplaire, à partir du cache courant des masters
     /// (même règle que `computeOriginalYears`) : master year si connue, sinon année de pressage.
-    private func resolvedOriginalYear(for item: CollectionItem) -> Int? {
-        if let masterId = item.basicInformation.masterId, masterId > 0, let cachedYear = masterYearsCache[masterId], cachedYear > 0 {
+    nonisolated private static func resolvedOriginalYear(for item: CollectionItem, masterYears: [Int: Int]) -> Int? {
+        if let masterId = item.basicInformation.masterId, masterId > 0, let cachedYear = masterYears[masterId], cachedYear > 0 {
             return cachedYear
         } else if let releaseYear = item.basicInformation.year, releaseYear > 0 {
             return releaseYear
@@ -738,12 +741,21 @@ final class StatsViewModel {
         return nil
     }
 
+    nonisolated private static func sortedByTitle(_ items: [CollectionItem]) -> [CollectionItem] {
+        items.sorted { item1, item2 in
+            item1.basicInformation.title.localizedStandardCompare(item2.basicInformation.title) == .orderedAscending
+        }
+    }
+
     /// Retourne la liste des disques de la collection sortis à une année originale donnée.
-    func items(forOriginalYear year: Int) -> [CollectionItem] {
-        allCollectionItems.filter { resolvedOriginalYear(for: $0) == year }
-            .sorted { item1, item2 in
-                item1.basicInformation.title.localizedStandardCompare(item2.basicInformation.title) == .orderedAscending
-            }
+    /// Filtre et tri de toute la collection : calculés hors du fil principal, pour ne pas retarder
+    /// l'affichage de la sélection au toucher d'une barre.
+    func items(forOriginalYear year: Int) async -> [CollectionItem] {
+        let source = allCollectionItems
+        let masterYears = masterYearsCache
+        return await Task.detached(priority: .userInitiated) {
+            Self.sortedByTitle(source.filter { Self.resolvedOriginalYear(for: $0, masterYears: masterYears) == year })
+        }.value
     }
 
     /// Répartition de `originalYearsDistribution` regroupée par décennie (1990 → 1990-1999),
@@ -758,31 +770,40 @@ final class StatsViewModel {
     }
 
     /// Retourne la liste des disques de la collection sortis durant une décennie donnée (ex. 1990 → 1990-1999).
-    func items(forOriginalDecade decade: Int) -> [CollectionItem] {
-        allCollectionItems.filter { item in
-            guard let year = resolvedOriginalYear(for: item) else { return false }
-            return year >= decade && year < decade + 10
-        }.sorted { item1, item2 in
-            item1.basicInformation.title.localizedStandardCompare(item2.basicInformation.title) == .orderedAscending
-        }
+    func items(forOriginalDecade decade: Int) async -> [CollectionItem] {
+        let source = allCollectionItems
+        let masterYears = masterYearsCache
+        return await Task.detached(priority: .userInitiated) {
+            Self.sortedByTitle(source.filter { item in
+                guard let year = Self.resolvedOriginalYear(for: item, masterYears: masterYears) else { return false }
+                return year >= decade && year < decade + 10
+            })
+        }.value
     }
 
     /// Retourne la liste des disques de la collection ajoutés durant une année donnée,
     /// triés du plus récent au plus ancien par date d'ajout.
-    func items(forYear year: Int) -> [CollectionItem] {
+    func items(forYear year: Int) async -> [CollectionItem] {
         // Pas de repli réseau/cache ici si `allCollectionItems` est encore vide : cette méthode
         // n'est appelée qu'au tap d'une barre de l'histogramme "Exemplaires ajoutés par année",
         // qui ne peut lui-même s'afficher qu'une fois `allCollectionItems` déjà peuplé.
         let source = allCollectionItems
-        return source.filter { item in
-            guard let date = item.dateAddedDate else { return false }
-            return Calendar.current.component(.year, from: date) == year
-        }.sorted { item1, item2 in
-            let d1 = item1.dateAddedDate ?? .distantPast
-            let d2 = item2.dateAddedDate ?? .distantPast
-            if d1 != d2 { return d1 > d2 }
-            return item1.basicInformation.title.localizedStandardCompare(item2.basicInformation.title) == .orderedAscending
+        return await Task.detached(priority: .userInitiated) {
+            Self.itemsAdded(in: year, from: source)
+        }.value
+    }
+
+    /// Date d'ajout lue une seule fois par disque (et non à chaque comparaison du tri).
+    nonisolated static func itemsAdded(in year: Int, from source: [CollectionItem]) -> [CollectionItem] {
+        let calendar = Calendar.current
+        let dated: [(item: CollectionItem, date: Date)] = source.compactMap { item in
+            guard let date = item.dateAddedDate, calendar.component(.year, from: date) == year else { return nil }
+            return (item, date)
         }
+        return dated.sorted { first, second in
+            if first.date != second.date { return first.date > second.date }
+            return first.item.basicInformation.title.localizedStandardCompare(second.item.basicInformation.title) == .orderedAscending
+        }.map(\.item)
     }
 
     /// Regroupe les dates d'ajout par année, triées par années décroissantes.

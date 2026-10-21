@@ -6,14 +6,36 @@ import UIKit
 /// configure directement le `UINavigationBar` du `UINavigationController` qui héberge cet écran —
 /// même principe que `DisableContentPopGesture`.
 private struct SerifNavigationTitleConfigurator: UIViewControllerRepresentable {
+    /// Dernière configuration appliquée. Réécrire les apparences d'une barre de navigation à
+    /// chaque mise à jour de la vue (ce qui arrivait pendant le défilement de la Collection)
+    /// peut, sur certaines versions d'iOS 26, la faire repasser en grand titre et rompre son
+    /// suivi du défilement : on n'applique donc qu'une fois par barre, et de nouveau seulement si
+    /// la taille de texte change (la police du titre en dépend).
+    final class Coordinator {
+        weak var configuredBar: UINavigationBar?
+        var configuredDynamicTypeSize: DynamicTypeSize?
+    }
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
     func makeUIViewController(context: Context) -> UIViewController {
         UIViewController()
     }
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+        let coordinator = context.coordinator
+        let dynamicTypeSize = dynamicTypeSize
         DispatchQueue.main.async {
             guard let navigationBar = uiViewController.navigationController?.navigationBar else { return }
+            guard coordinator.configuredBar !== navigationBar
+                || coordinator.configuredDynamicTypeSize != dynamicTypeSize else { return }
             Self.applySerifLargeTitle(to: navigationBar)
+            coordinator.configuredBar = navigationBar
+            coordinator.configuredDynamicTypeSize = dynamicTypeSize
         }
     }
 

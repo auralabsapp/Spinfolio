@@ -19,4 +19,8 @@ extension Animation {
     /// Apparition/effacement de la surbrillance d'un réglage vers lequel on vient d'être envoyé
     /// (fondu de couleur, sans mouvement : compatible avec Réduire les animations).
     static let settingsRowHighlight = Animation.easeInOut(duration: 0.35)
+
+    /// Sélection / désélection d'une barre ou d'un secteur des graphiques de Stats : volontairement
+    /// brève (les autres barres s'estompent presque instantanément), sans rebond.
+    static let chartSelection = Animation.easeOut(duration: 0.15)
 }

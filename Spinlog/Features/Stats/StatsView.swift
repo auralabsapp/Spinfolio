@@ -88,18 +88,10 @@ struct StatsView: View {
     @State var viewModel = StatsViewModel()
     @State var authManager = DiscogsAuthManager.shared
     @State var premiumStore = PremiumStore.shared
-    @State var selectedAdditionsYear: String?
-    @State var selectedOriginalYear: String?
-    @State var selectedYearData: YearReleasesSheetData?
-    @State var selectedGenreName: String?
-    @State var selectedAngle: Double?
-    @State var selectedGenreData: GenreReleasesSheetData?
-    @State var selectedArtistData: ArtistReleasesSheetData?
-    @State var selectedMediaFormatName: String?
-    @State var selectedMediaFormatAngle: Double?
-    @State var selectedMediaFormatData: MediaFormatReleasesSheetData?
-    @State var selectedLabelName: String?
-    @State var selectedLabelAngle: Double?
+    /// Sélections et feuilles de tous les graphiques (histogrammes, camemberts, artistes) : objet
+    /// observable lu uniquement par les graphiques concernés, pas par le corps de cette vue (voir
+    /// `StatsChartSelection`).
+    @State var chartSelection = StatsChartSelection()
     @State var podiumPeriod: PodiumPeriod = .yearly
     @State var topEntityKind: TopEntityKind = .albums
     /// Hauteurs mesurées des classements d'écoute (voir `cappedListHeight`).
@@ -109,10 +101,6 @@ struct StatsView: View {
     @State var originalYearsGranularity: OriginalYearsGranularity = .decade
 
     let maxVisibleBars = 10
-
-    var maxAdditionsCount: Int {
-        viewModel.additionsPerYear.map(\.count).max() ?? 0
-    }
 
     /// Répartition des années originales à afficher, selon la granularité choisie : les deux
     /// partagent le même type `(year: Int, count: Int)` pour que le graphique et sa logique de
@@ -124,10 +112,6 @@ struct StatsView: View {
         case .decade:
             return viewModel.originalYearsDistributionByDecade.map { (year: $0.decade, count: $0.count) }
         }
-    }
-
-    var maxOriginalYearsCount: Int {
-        currentOriginalYearsDistribution.map(\.count).max() ?? 0
     }
 
     var body: some View {
@@ -188,10 +172,10 @@ struct StatsView: View {
                         recentAdditionsSection
                         additionsHistogramSection(scrollProxy: scrollProxy)
                         originalYearsHistogramSection(scrollProxy: scrollProxy)
-                        topArtistsSection
-                        genreDistributionSection
-                        mediaFormatDistributionSection
-                        labelDistributionSection
+                        topArtistsSection(scrollProxy: scrollProxy)
+                        genreDistributionSection(scrollProxy: scrollProxy)
+                        mediaFormatDistributionSection(scrollProxy: scrollProxy)
+                        labelDistributionSection(scrollProxy: scrollProxy)
                         valuationSection
                         // `valueHistorySection` volontairement masquée pour l'instant (pas encore
                         // jugée pertinente) : la mécanique de suivi/synchro continue de tourner
@@ -204,44 +188,12 @@ struct StatsView: View {
                     .padding()
                     // Marge inférieure augmentée quand la bottom sheet est ouverte pour garantir que
                     // le titre du graphique puisse défiler librement jusqu'au bord supérieur de l'écran.
-                    .padding(.bottom, (selectedYearData != nil || selectedGenreData != nil || selectedArtistData != nil || selectedMediaFormatData != nil) ? 420 : 0)
+                    .modifier(StatsSheetBottomInset(selection: chartSelection))
                 }
                 .onChange(of: TabNavigationCoordinator.shared.scrollToTopOfStatsTrigger) {
                     withAnimation { scrollProxy.scrollTo(Self.scrollTopAnchor, anchor: .top) }
                 }
-                .sheet(item: $selectedYearData, onDismiss: {
-                    withAnimation(.easeInOut(duration: 0.25)) {
-                        selectedAdditionsYear = nil
-                        selectedOriginalYear = nil
-                    }
-                }) { data in
-                    YearReleasesSheetView(data: data)
-                        .presentationDetents([.medium, .large])
-                        .presentationDragIndicator(.visible)
-                        .presentationBackgroundInteraction(.enabled(upThrough: .medium))
-                }
-                .sheet(item: $selectedGenreData, onDismiss: {
-                    withAnimation(.easeInOut(duration: 0.25)) {
-                        selectedGenreName = nil
-                    }
-                }) { data in
-                    GenreReleasesSheetView(data: data)
-                        .presentationDetents([.medium, .large])
-                        .presentationDragIndicator(.visible)
-                        .presentationBackgroundInteraction(.enabled(upThrough: .medium))
-                }
-                .sheet(item: $selectedArtistData) { data in
-                    ArtistReleasesSheetView(data: data)
-                        .presentationDetents([.medium, .large])
-                        .presentationDragIndicator(.visible)
-                        .presentationBackgroundInteraction(.enabled(upThrough: .medium))
-                }
-                .sheet(item: $selectedMediaFormatData) { data in
-                    MediaFormatReleasesSheetView(data: data)
-                        .presentationDetents([.medium, .large])
-                        .presentationDragIndicator(.visible)
-                        .presentationBackgroundInteraction(.enabled(upThrough: .medium))
-                }
+                .modifier(StatsSheetsModifier(selection: chartSelection))
             }
         }
     }
