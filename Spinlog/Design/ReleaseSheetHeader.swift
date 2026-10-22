@@ -8,11 +8,16 @@ struct ReleaseSheetHeader: View {
     let title: String
     let artist: String
     var pills: [String] = []
+    /// Affiche une petite cloche sur la jaquette (une alerte est active sur ce disque) ; elle
+    /// balance une fois quelques instants après l'ouverture.
+    var showsAlertBell: Bool = false
     /// Reçoit la couleur moyenne de la pochette dès qu'elle est chargée (pour teinter le fond de la
     /// feuille, voir `releaseTintedBackground`).
     var onAverageColorLoaded: ((UIColor) -> Void)? = nil
 
     private static let coverSize: CGFloat = 112
+
+    @State private var bellBounce = 0
 
     var body: some View {
         VStack(spacing: 12) {
@@ -23,6 +28,22 @@ struct ReleaseSheetHeader: View {
                 onAverageColorLoaded: onAverageColorLoaded
             )
             .frame(width: Self.coverSize, height: Self.coverSize)
+            .overlay(alignment: .topTrailing) {
+                if showsAlertBell {
+                    Image(systemName: "bell.fill")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.white)
+                        .symbolEffect(.bounce, options: .nonRepeating, value: bellBounce)
+                        .frame(width: 28, height: 28)
+                        .background(Color.spinlogPink, in: Circle())
+                        .overlay(Circle().strokeBorder(Color.appBackground, lineWidth: 2.5))
+                        .offset(x: 10, y: -10)
+                        .task {
+                            try? await Task.sleep(for: .milliseconds(700))
+                            bellBounce += 1
+                        }
+                }
+            }
             .shadow(color: .black.opacity(0.22), radius: 6, x: 0, y: 3)
             .shadow(color: .black.opacity(0.30), radius: 18, x: 0, y: 10)
             .accessibilityHidden(true)

@@ -11,11 +11,22 @@ struct WantlistAlertSheet: View {
     /// séparée, qui peut ouvrir une page vide (voir `SafariViewRequest`).
     @State private var safariRequest: SafariViewRequest?
     @FocusState private var isTargetPriceFocused: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// Sélection du champ de prix : permet de ramener le curseur en fin de montant à chaque prise de
     /// focus (voir `placeCursorAtEnd`).
     @State private var priceSelection: TextSelection?
     /// Couleur moyenne de la pochette, pour teinter le fond (voir `releaseTintedBackground`).
     @State private var coverTint: UIColor?
+    /// Passe à vrai une seule fois, juste après la fin du chargement du marché : déclenche l'entrée
+    /// en séquence des tuiles, de la jauge et des pastilles (jamais réarmé).
+    @State private var marketRevealed = false
+    /// Montant affiché pendant le « défilement » des chiffres après l'application d'une pastille ;
+    /// `nil` hors de ce court moment (le champ de saisie reprend alors la main).
+    @State private var rollingPrice: String?
+    /// Léger gonflement du grand montant quand une pastille l'applique.
+    @State private var isPriceBumped = false
+    /// Lueur verte brève quand le seuil saisi rejoint l'annonce la moins chère.
+    @State private var showsReachedFlash = false
 
     private var existingAlert: WantlistAlert? {
         viewModel.existingAlert(for: item)
@@ -36,6 +47,8 @@ struct WantlistAlertSheet: View {
         }
     }
 
+    private static let thresholdSectionID = "thresholdSection"
+
     private func dismissKeyboard() {
         UIApplication.shared.connectedScenes
             .compactMap { ($0 as? UIWindowScene)?.windows }
@@ -46,6 +59,7 @@ struct WantlistAlertSheet: View {
 
     var body: some View {
         NavigationStack {
+            ScrollViewReader { proxy in
             Form {
                 albumHeaderSection
                 alertSettingsSection
@@ -57,6 +71,22 @@ struct WantlistAlertSheet: View {
                 if existingAlert != nil {
                     deleteSection
                 }
+            }
+            // Au focus du prix maximum, le titre « Mon seuil d'alerte » remonte en haut de l'écran :
+            // champ, jauge et pastilles restent ainsi visibles au-dessus du clavier. Le léger délai
+            // laisse le clavier apparaître, sans quoi le `Form` n'a pas encore la marge pour défiler.
+            .onChange(of: isTargetPriceFocused) { _, isFocused in
+                guard isFocused else { return }
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(250))
+                    guard isTargetPriceFocused else { return }
+                    withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.35)) {
+                        // Pas `.top` : le haut du défilement passe sous la barre de navigation, qui
+                        // masquerait le titre de section situé juste au-dessus de cette ligne.
+                        proxy.scrollTo(Self.thresholdSectionID, anchor: UnitPoint(x: 0.5, y: 0.24))
+                    }
+                }
+            }
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
@@ -106,6 +136,18 @@ struct WantlistAlertSheet: View {
                     .disabled(viewModel.targetPrice == nil || viewModel.targetPrice! <= 0 || viewModel.isSaving)
                 }
             }
+            .onChange(of: viewModel.isLoading) { _, isLoading in
+                guard !isLoading, !marketRevealed else { return }
+                // Légèrement différé : l'état de départ (masqué) doit d'abord être affiché.
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(40))
+                    marketRevealed = true
+                }
+            }
+            .onChange(of: isTargetReached) { old, new in
+                guard old == false, new == true else { return }
+                celebrateReachedTarget()
+            }
             .task {
                 viewModel.setupInitialValues(for: item)
                 await viewModel.loadMarketData(for: item)
@@ -141,6 +183,7 @@ struct WantlistAlertSheet: View {
                     title: item.basicInformation.title,
                     artist: item.basicInformation.artistNames,
                     pills: headerPills,
+                    showsAlertBell: existingAlert != nil,
                     onAverageColorLoaded: { coverTint = $0 }
                 )
             }
@@ -177,6 +220,7 @@ struct WantlistAlertSheet: View {
                             value: Text("\(stats.numForSale ?? 0)"),
                             icon: "cart"
                         )
+                        .shelfEntrance(isVisible: marketRevealed, offset: CGSize(width: 0, height: 18), delay: 0)
                         marketTile(
                             title: "Annonce la moins chère",
                             value: viewModel.convertedLowestPrice.map { Text($0.formatted(.currency(code: viewModel.currency))) }
@@ -187,6 +231,7 @@ struct WantlistAlertSheet: View {
                             // c'est là qu'on voit l'annonce dont il est question.
                             action: { safariRequest = SafariViewRequest(url: marketplaceURL) }
                         )
+                        .shelfEntrance(isVisible: marketRevealed, offset: CGSize(width: 0, height: 18), delay: 0.12)
                     }
                 } else {
                     Text("Données de marché non disponibles.")
@@ -198,7 +243,6 @@ struct WantlistAlertSheet: View {
         }
     }
 
-    @ViewBuilder
     private func marketTile(
         title: LocalizedStringKey,
         value: Text,
@@ -206,42 +250,7 @@ struct WantlistAlertSheet: View {
         highlighted: Bool = false,
         action: (() -> Void)? = nil
     ) -> some View {
-        let tile = VStack(spacing: 6) {
-            Label(title, systemImage: icon)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(Color.appSecondaryText)
-            value
-                .font(.title3.weight(.bold))
-                .monospacedDigit()
-                .foregroundStyle(highlighted ? Color.spinlogPink : Color.primary)
-                .minimumScaleFactor(0.7)
-                .lineLimit(1)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 14)
-        .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay(alignment: .topTrailing) {
-            if action != nil {
-                // Indique que la tuile s'ouvre (comme les lignes qui renvoient vers Discogs).
-                Image(systemName: "arrow.up.right")
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(Color.appTertiaryText)
-                    .padding(10)
-            }
-        }
-
-        if let action {
-            Button {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                action()
-            } label: {
-                tile.contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-            }
-            .buttonStyle(.plain)
-            .accessibilityHint("Ouvre les annonces sur Discogs.com")
-        } else {
-            tile.accessibilityElement(children: .combine)
-        }
+        MarketTile(title: title, value: value, icon: icon, highlighted: highlighted, action: action)
     }
 
     private var priceSuggestionsSection: some View {
@@ -257,11 +266,17 @@ struct WantlistAlertSheet: View {
                             SkeletonBlock(cornerRadius: 22, width: 92, height: 50)
                         }
                     }
-                    ForEach(viewModel.suggestions, id: \.condition) { suggestion in
+                    ForEach(Array(viewModel.suggestions.enumerated()), id: \.element.condition) { index, suggestion in
                         priceChip(
                             title: suggestion.condition,
                             price: suggestion.price,
                             isSelected: isTargetPrice(suggestion.price)
+                        )
+                        // Pastilles en cascade, après les tuiles et la jauge.
+                        .shelfEntrance(
+                            isVisible: marketRevealed,
+                            offset: CGSize(width: 28, height: 0),
+                            delay: 0.3 + 0.07 * Double(index)
                         )
                     }
                 }
@@ -284,6 +299,8 @@ struct WantlistAlertSheet: View {
             footer: Text("L'alerte se déclenche dès qu'un exemplaire à ce prix ou moins est détecté, lors d'une vérification (à l'ouverture de l'app ou occasionnellement en arrière-plan) — pas nécessairement en temps réel. L'état exact du disque et les frais de port seront à vérifier sur l'annonce Discogs.")
         ) {
             VStack(spacing: 4) {
+                // Cible du défilement au focus (voir `scrollTo`) : une ligne courte s'aligne de façon
+                // prévisible, contrairement à toute la section, trop haute pour se caler correctement.
                 Text("Prix maximum")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Color.appSecondaryText)
@@ -300,16 +317,32 @@ struct WantlistAlertSheet: View {
                         .hidden()
                         .accessibilityHidden(true)
 
-                    TextField("0,00", text: $viewModel.targetPriceString, selection: $priceSelection)
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.center)
-                        .font(.system(size: 44, weight: .bold, design: .rounded))
-                        .monospacedDigit()
-                        .foregroundStyle(Color.spinlogPink)
-                        .minimumScaleFactor(0.6)
-                        .frame(maxWidth: 190)
-                        .focused($isTargetPriceFocused)
-                        .accessibilityLabel("Prix maximum")
+                    ZStack {
+                        TextField("0,00", text: $viewModel.targetPriceString, selection: $priceSelection)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.center)
+                            .font(.system(size: 44, weight: .bold, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundStyle(Color.spinlogPink)
+                            .minimumScaleFactor(0.6)
+                            .focused($isTargetPriceFocused)
+                            .accessibilityLabel("Prix maximum")
+                            // Masqué le temps du défilement des chiffres, qu'un `TextField` ne sait pas animer.
+                            .opacity(rollingPrice == nil ? 1 : 0)
+                            .allowsHitTesting(rollingPrice == nil)
+
+                        if let rollingPrice {
+                            Text(rollingPrice)
+                                .font(.system(size: 44, weight: .bold, design: .rounded))
+                                .monospacedDigit()
+                                .foregroundStyle(Color.spinlogPink)
+                                .minimumScaleFactor(0.6)
+                                .contentTransition(.numericText(value: Double(rollingPrice.replacingOccurrences(of: ",", with: ".")) ?? 0))
+                                .accessibilityHidden(true)
+                        }
+                    }
+                    .frame(maxWidth: 190)
+                    .scaleEffect(isPriceBumped ? 1.07 : 1)
 
                     Text(viewModel.currencySymbol)
                         .font(.system(size: 28, weight: .semibold, design: .rounded))
@@ -321,6 +354,30 @@ struct WantlistAlertSheet: View {
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity)
             .background(Color.spinlogPink.opacity(0.08), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            // Halo rose qui respire tant que le champ a le focus : on voit où l'on tape.
+            .background {
+                if isTargetPriceFocused {
+                    BreathingGlow(cornerRadius: 16, blurRadius: 12, minOpacity: 0.10, maxOpacity: 0.32)
+                        .transition(.opacity)
+                }
+            }
+            // Lueur verte brève quand le seuil rejoint l'annonce la moins chère.
+            .background {
+                if showsReachedFlash {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Color.gainPositive)
+                        .opacity(0.35)
+                        .blur(radius: 14)
+                        .padding(-4)
+                        .transition(.opacity)
+                }
+            }
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(Color.spinlogPink.opacity(isTargetPriceFocused ? 0.55 : 0), lineWidth: 1.5)
+            )
+            .animation(.easeInOut(duration: 0.25), value: isTargetPriceFocused)
+            .animation(.easeInOut(duration: 0.3), value: showsReachedFlash)
             .contentShape(Rectangle())
             .onTapGesture { isTargetPriceFocused = true }
             // Curseur toujours à la fin du montant, où que l'on touche : pour corriger un prix déjà
@@ -328,6 +385,7 @@ struct WantlistAlertSheet: View {
             .onChange(of: isTargetPriceFocused) { _, isFocused in
                 if isFocused { placeCursorAtEnd() }
             }
+            .id(Self.thresholdSectionID)
             .listRowBackground(Color.clear)
 
             // Juste sous le champ : elle réagit à la saisie et reste visible au-dessus du clavier
@@ -339,7 +397,8 @@ struct WantlistAlertSheet: View {
             } else if let target = viewModel.targetPrice, target > 0, viewModel.currentStats != nil {
                 PriceAlertGauge(
                     model: PriceAlertGaugeModel(target: target, lowest: viewModel.convertedLowestPrice),
-                    currency: viewModel.currency
+                    currency: viewModel.currency,
+                    isRevealed: marketRevealed
                 )
                 .padding(.vertical, 4)
                 .listRowBackground(Color.clear)
@@ -395,29 +454,52 @@ struct WantlistAlertSheet: View {
         }
     }
 
-    /// Pastille de prix (raccourci en pourcentage ou cote par état) : touche pour l'appliquer comme seuil.
+    /// Pastille de prix (voir `PriceChip`) : applique ce montant comme seuil.
     private func priceChip(title: String, price: Double, isSelected: Bool) -> some View {
-        Button {
-            UISelectionFeedbackGenerator().selectionChanged()
-            viewModel.applySuggestion(price: price)
-        } label: {
-            VStack(spacing: 2) {
-                Text(title)
-                    .font(.caption.bold())
-                Text(price.formatted(.currency(code: viewModel.currency)))
-                    .font(.caption.weight(.semibold))
-                    .monospacedDigit()
-            }
-            .foregroundStyle(isSelected ? Color.white : Color.primary)
-            .frame(maxWidth: .infinity)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(
-                Capsule().fill(isSelected ? Color.spinlogPink : Color.spinlogPink.opacity(0.1))
-            )
-            .overlay(Capsule().strokeBorder(Color.spinlogPink.opacity(isSelected ? 0 : 0.25), lineWidth: 1))
+        PriceChip(title: title, price: price, currency: viewModel.currency, isSelected: isSelected) {
+            applyPrice(price)
         }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    /// Applique un montant venu d'une pastille : les chiffres du grand prix « roulent » de l'ancien
+    /// montant au nouveau, avec un léger gonflement. Avec « Réduire les animations », il change d'un coup.
+    private func applyPrice(_ price: Double) {
+        UISelectionFeedbackGenerator().selectionChanged()
+        guard !reduceMotion else {
+            viewModel.applySuggestion(price: price)
+            return
+        }
+        let previous = viewModel.targetPriceString.isEmpty ? "0.00" : viewModel.targetPriceString
+        rollingPrice = previous
+        viewModel.applySuggestion(price: price)
+        let updated = viewModel.targetPriceString
+        withAnimation(.snappy(duration: 0.55)) {
+            rollingPrice = updated
+            isPriceBumped = true
+        }
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(220))
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) { isPriceBumped = false }
+            try? await Task.sleep(for: .milliseconds(450))
+            rollingPrice = nil
+        }
+    }
+
+    /// `nil` tant que la comparaison n'est pas possible (pas de prix saisi, marché non chargé) ;
+    /// sinon vrai si une annonce est déjà au seuil ou en dessous. Sert à détecter le franchissement.
+    private var isTargetReached: Bool? {
+        guard let target = viewModel.targetPrice, target > 0, !viewModel.isLoading, viewModel.currentStats != nil else { return nil }
+        return PriceAlertGaugeModel(target: target, lowest: viewModel.convertedLowestPrice).isReached
+    }
+
+    /// Le seuil vient de rejoindre l'annonce la moins chère : retour haptique de succès et lueur verte brève.
+    private func celebrateReachedTarget() {
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        guard !reduceMotion else { return }
+        showsReachedFlash = true
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(1300))
+            showsReachedFlash = false
+        }
     }
 }

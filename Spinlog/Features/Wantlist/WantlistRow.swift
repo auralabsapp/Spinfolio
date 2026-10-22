@@ -13,6 +13,8 @@ struct WantlistRow: View {
 
     private var info: BasicInformation { item.basicInformation }
     private var alertStore = WantlistAlertStore.shared
+    /// Compteur qui déclenche le rebond de la cloche au toucher.
+    @State private var bellBounce = 0
 
     private var alert: WantlistAlert? {
         alertStore.alert(for: item.id)
@@ -69,15 +71,18 @@ struct WantlistRow: View {
 
             if let onAlertTap, !isSelecting {
                 Button {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    bellBounce += 1
                     onAlertTap()
                 } label: {
                     Image(systemName: isTriggered ? "bell.badge.fill" : (hasActiveAlert ? "bell.fill" : "bell"))
+                        .symbolEffect(.bounce, options: .nonRepeating, value: bellBounce)
                         .font(.system(size: 16))
                         .foregroundStyle(isTriggered ? Color.green : (hasActiveAlert ? Color.spinlogPink : Color.appTertiaryText))
                         .padding(8)
                         .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(AlertBellButtonStyle())
                 .accessibilityLabel(
                     isTriggered
                         ? "Alerte de prix déclenchée : offre trouvée pour \(info.title)"

@@ -278,6 +278,7 @@ struct WantlistView: View {
                 let alert = alertStore.alert(for: item.id)
                 return AnyView(
                     Button {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         requestAlertSheet(for: item)
                     } label: {
                         HStack(spacing: 6) {
@@ -293,7 +294,7 @@ struct WantlistView: View {
                             in: Capsule()
                         )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(AlertBellButtonStyle(shape: AnyShape(Capsule())))
                 )
             }
         )

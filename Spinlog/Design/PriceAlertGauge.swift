@@ -39,6 +39,11 @@ nonisolated struct PriceAlertGaugeModel: Equatable {
 struct PriceAlertGauge: View {
     let model: PriceAlertGaugeModel
     let currency: String
+    /// Faux tant que la feuille n'a pas fini son entrée : les repères partent alors de la gauche et
+    /// glissent jusqu'à leur place (voir `WantlistAlertSheet`). Vrai par défaut (aperçus, tests).
+    var isRevealed: Bool = true
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private static let trackHeight: CGFloat = 8
 
@@ -46,7 +51,8 @@ struct PriceAlertGauge: View {
         VStack(alignment: .leading, spacing: 10) {
             GeometryReader { geo in
                 let width = geo.size.width
-                let targetX = width * model.position(of: model.target)
+                let reveal: CGFloat = (isRevealed || reduceMotion) ? 1 : 0
+                let targetX = width * model.position(of: model.target) * reveal
                 ZStack(alignment: .leading) {
                     Capsule().fill(Color.primary.opacity(0.10))
                     Capsule()
@@ -58,10 +64,17 @@ struct PriceAlertGauge: View {
 
                     if let lowest = model.lowest {
                         marker(color: model.isReached ? Color.gainPositive : Color.primary)
-                            .position(x: width * model.position(of: lowest), y: Self.trackHeight / 2)
+                            // Petit rebond quand le seuil rejoint l'annonce la moins chère.
+                            .scaleEffect(model.isReached && !reduceMotion ? 1.35 : 1)
+                            .animation(reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.35), value: model.isReached)
+                            .position(x: width * model.position(of: lowest) * reveal, y: Self.trackHeight / 2)
                     }
                 }
                 .frame(height: Self.trackHeight)
+                // Les repères glissent d'une saisie à l'autre au lieu de sauter, et se mettent en
+                // place à l'entrée de la feuille.
+                .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.78), value: model)
+                .animation(reduceMotion ? nil : .smooth(duration: 0.9).delay(0.3), value: isRevealed)
             }
             .frame(height: 18)
 
