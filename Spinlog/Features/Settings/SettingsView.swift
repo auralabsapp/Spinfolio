@@ -18,6 +18,8 @@ struct SettingsView: View {
     @State private var showingDeleteAccountConfirmation = false
     @State private var showingDeleteAccountWebsite = false
     @State private var isShelfRuleHighlighted = false
+    /// Ligne « Prix d'achat » ou « Champ état du disque » mise en évidence à l'arrivée depuis « Mon exemplaire ».
+    @State private var highlightedSettingsField: SettingsFieldHighlight?
 
     // Export CSV/PDF de la collection (appels réseau délégués à ce ViewModel)
     @State private var exportViewModel = CollectionExportViewModel()
@@ -130,6 +132,7 @@ struct SettingsView: View {
                     SettingsAppleMusicSection()
                     gainTrackingSection
                     purchasePriceSection
+                        .id("purchasePriceSection")
                     SettingsOfflineSection()
                     SettingsICloudSyncSection()
                     exportSection
@@ -172,6 +175,23 @@ struct SettingsView: View {
                     withAnimation(.settingsRowHighlight) { isShelfRuleHighlighted = true }
                     try? await Task.sleep(for: .seconds(2))
                     withAnimation(.settingsRowHighlight) { isShelfRuleHighlighted = false }
+                }
+            }
+            // `initial: true` : à la toute première visite de Réglages, l'onglet n'existe pas encore
+            // quand la demande est émise (contenu des onglets créé à la demande) — le changement du
+            // déclencheur passe alors inaperçu. La demande en attente est donc aussi lue à l'apparition.
+            .onChange(of: tabCoordinator.scrollToPurchasePriceSectionTrigger, initial: true) { _, _ in
+                guard let field = tabCoordinator.consumePendingSettingsFieldHighlight() else { return }
+                Task { @MainActor in
+                    // Même enchaînement que pour la règle de rangement : attendre la fin de la
+                    // fermeture de la feuille et du changement d'onglet, centrer la section, puis
+                    // mettre la ligne en évidence 2 s.
+                    try? await Task.sleep(for: .milliseconds(450))
+                    withAnimation { proxy.scrollTo("purchasePriceSection", anchor: UnitPoint(x: 0.5, y: 0.2)) }
+                    try? await Task.sleep(for: .milliseconds(350))
+                    withAnimation(.settingsRowHighlight) { highlightedSettingsField = field }
+                    try? await Task.sleep(for: .seconds(2))
+                    withAnimation(.settingsRowHighlight) { highlightedSettingsField = nil }
                 }
             }
         }
@@ -318,6 +338,16 @@ struct SettingsView: View {
         }
     }
 
+    /// Fond de ligne par défaut, teinté le temps de la mise en évidence d'un champ (voir
+    /// `scrollToPurchasePriceSectionTrigger`), comme la règle de rangement.
+    private func settingsFieldRowBackground(_ field: SettingsFieldHighlight) -> some View {
+        ZStack {
+            Color(uiColor: .secondarySystemGroupedBackground)
+            // Même teinte que le nom et la pastille du champ dans « Mon exemplaire ».
+            field.tint.opacity(highlightedSettingsField == field ? 0.2 : 0)
+        }
+    }
+
     // MARK: - 2bis. Prix d'achat et état (gratuit)
 
     /// Réglages gratuits : le prix d'achat est un champ personnalisé Discogs que chacun peut
@@ -349,6 +379,7 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.menu)
                 .tint(Color.spinlogPink)
+                .listRowBackground(settingsFieldRowBackground(.purchasePrice))
 
                 Picker(selection: Binding(
                     get: { mediaConditionFieldId ?? -1 },
@@ -372,6 +403,7 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.menu)
                 .tint(Color.spinlogPink)
+                .listRowBackground(settingsFieldRowBackground(.mediaCondition))
 
                 Picker(selection: Binding(
                     get: { defaultCurrency },

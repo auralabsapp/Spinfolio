@@ -144,8 +144,10 @@ struct WantlistView: View {
                 bulkActionsBar
             }
             .sheet(item: $itemForAlert) { item in
+                // Plein hauteur d'emblée, comme « Mon exemplaire » : la feuille est longue (en-tête,
+                // saisie, marché, jauge, pastilles) et un cran moyen coupait la saisie du prix.
                 WantlistAlertSheet(item: item)
-                    .presentationDetents([.medium, .large])
+                    .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
             }
             .onChange(of: tabCoordinator.pendingWantlistAlertReleaseId, initial: true) {

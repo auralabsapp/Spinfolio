@@ -3390,6 +3390,16 @@
         }
       }
     },
+    "Annonce la moins chère" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Cheapest Listing"
+          }
+        }
+      }
+    },
     "Annuler" : {
       "localizations" : {
         "en" : {
@@ -3872,6 +3882,16 @@
         }
       }
     },
+    "Aucune annonce en vente pour l'instant." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "No listings for sale right now."
+          }
+        }
+      }
+    },
     "Aucune archive locale complète" : {
       "localizations" : {
         "en" : {
@@ -3908,6 +3928,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No listings"
+          }
+        }
+      }
+    },
+    "Aucune offre en vente pour l'instant." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "No offers for sale right now."
           }
         }
       }
@@ -5019,12 +5050,44 @@
         }
       }
     },
+    "Contrairement aux tags qui sont des données locales, ces champs sont synchronisés avec ton compte Discogs. La validation s'effectue automatiquement avec le bouton « OK » du clavier ou en touchant en dehors du champ." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Unlike tags, which are local data, these fields are synced with your Discogs account. They are saved automatically when you tap the keyboard’s “OK” button or tap outside the field."
+          }
+        }
+      }
+    },
+    "Contrairement aux tags qui sont des données locales, ces champs sont synchronisés avec ton compte Discogs. La validation s'effectue automatiquement avec le bouton « OK » du clavier, en touchant en dehors du champ, ou avec la coche qui apparaît à côté du champ modifié." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Unlike tags, which are local data, these fields are synced with your Discogs account. They are saved automatically with the keyboard’s “OK” button, by tapping outside the field, or with the checkmark that appears next to a modified field."
+          }
+        }
+      }
+    },
     "Contrairement aux tags qui sont des données locales, ces champs sont synchronisés avec ton compte Discogs. La validation s'effectue automatiquement en cliquant en dehors du champ ou sur la coche." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Unlike tags, which are local data, these fields are synced with your Discogs account. Changes are saved automatically when you tap outside the field or on the checkmark."
+          }
+        }
+      }
+    },
+    "Cote" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Value"
           }
         }
       }
@@ -6557,6 +6620,7 @@
       }
     },
     "En vente actuellement" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -6703,6 +6767,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Price Estimate by Condition"
+          }
+        }
+      }
+    },
+    "Estimations d'après les ventes passées, pas des offres en cours. Touche un état pour appliquer sa cote comme prix cible." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Estimates based on past sales, not current listings. Tap a condition to apply its value as your target price."
           }
         }
       }
@@ -7608,6 +7682,32 @@
         }
       }
     },
+    "Il manque %@ (%@) pour atteindre ton seuil." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "%1$@ (%2$@) short of your threshold."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Il manque %1$@ (%2$@) pour atteindre ton seuil."
+          }
+        }
+      }
+    },
+    "Il manque %@ pour atteindre ton seuil." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "%@ short of your threshold."
+          }
+        }
+      }
+    },
     "Images" : {
       "localizations" : {
         "en" : {
@@ -7934,6 +8034,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "The purchase couldn’t be verified with the App Store."
+          }
+        }
+      }
+    },
+    "L'alerte se base sur l'annonce la moins chère en vente, tous états confondus. Les cotes par état ci-dessous sont des estimations tirées de ventes passées : elles peuvent être plus basses sans qu'aucune offre n'existe à ce prix." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The alert is based on the cheapest listing for sale, whatever its condition. The per-condition values below are estimates from past sales: they can be lower even though no listing exists at that price."
           }
         }
       }
@@ -9167,6 +9277,16 @@
         }
       }
     },
+    "Mon seuil" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "My threshold"
+          }
+        }
+      }
+    },
     "Mon seuil d'alerte" : {
       "localizations" : {
         "en" : {
@@ -9561,6 +9681,16 @@
         }
       }
     },
+    "Ouvre ce réglage dans Réglages" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Opens this setting in Settings"
+          }
+        }
+      }
+    },
     "Ouvre l'onglet Recherche et tape ta requête. Le sélecteur sous la barre de recherche limite les résultats aux releases, aux artistes ou aux labels." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -9599,6 +9729,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Open the actions menu to show an item's records."
+          }
+        }
+      }
+    },
+    "Ouvre les annonces sur Discogs.com" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Opens the listings on Discogs.com"
           }
         }
       }
@@ -9983,6 +10123,16 @@
         }
       }
     },
+    "Payé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Paid"
+          }
+        }
+      }
+    },
     "Pendant la démo, toutes les fonctions Premium sont débloquées sans abonnement, et les modifications vers Discogs sont désactivées." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -10126,6 +10276,17 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Next Track"
+          }
+        }
+      }
+    },
+    "Plus bas en ligne" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Lowest online"
           }
         }
       }
@@ -10466,6 +10627,7 @@
       }
     },
     "Prix le plus bas en ligne" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -11499,6 +11661,27 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Direction"
+          }
+        }
+      }
+    },
+    "Seuil atteint : une annonce est déjà à ce prix ou moins." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Threshold reached: a listing is already at this price or lower."
+          }
+        }
+      }
+    },
+    "Seuil atteint : une offre est déjà à ce prix ou moins." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Threshold reached: an offer is already at this price or lower."
           }
         }
       }
@@ -13154,6 +13337,7 @@
       }
     },
     "Touche un état pour appliquer automatiquement sa cote comme prix cible." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -13781,6 +13965,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Invalid Discogs URL."
+          }
+        }
+      }
+    },
+    "Utilisé pour la plus-value" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Used for gain calculation"
           }
         }
       }

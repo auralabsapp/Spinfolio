@@ -27,6 +27,8 @@ struct CollectionItemEditSheet: View {
     @State private var savingFieldIds: Set<Int> = []
     @State private var justSavedFieldIds: Set<Int> = []
     @State private var selectedFolderId: Int
+    /// Couleur moyenne de la pochette, pour teinter le fond (voir `releaseTintedBackground`).
+    @State private var coverTint: UIColor?
     @State private var isDeleting = false
     @State private var errorMessage: String?
     @State private var showingDeleteConfirmation = false
@@ -170,6 +172,10 @@ struct CollectionItemEditSheet: View {
                                             Task {
                                                 await saveField(field, value: fieldValues[field.id] ?? "")
                                             }
+                                        },
+                                        gainRole: gainFieldRole(for: field),
+                                        onGainFieldTap: gainFieldRole(for: field).map { role in
+                                            { openGainFieldSetting(role) }
                                         }
                                     )
                                     if index < fields.count - 1 {
@@ -182,7 +188,7 @@ struct CollectionItemEditSheet: View {
                         }
 
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Contrairement aux tags qui sont des données locales, ces champs sont synchronisés avec ton compte Discogs. La validation s'effectue automatiquement en cliquant en dehors du champ ou sur la coche.")
+                            Text("Contrairement aux tags qui sont des données locales, ces champs sont synchronisés avec ton compte Discogs. La validation s'effectue automatiquement avec le bouton « OK » du clavier, en touchant en dehors du champ, ou avec la coche qui apparaît à côté du champ modifié.")
                                 .font(.footnote)
                                 .foregroundStyle(Color.appSecondaryText)
 
@@ -227,7 +233,7 @@ struct CollectionItemEditSheet: View {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                     }
             )
-            .background(Color.appBackground)
+            .releaseTintedBackground(coverTint)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 // Titre posé en `.principal` plutôt que via `.navigationTitle` : ce placement est
@@ -403,39 +409,15 @@ struct CollectionItemEditSheet: View {
                         .padding(.vertical, 20)
                         .appleMusicGroupedCard()
                 } else if let purchasePriceInDisplayCurrency, let marketEstimateInDisplayCurrency {
-                    VStack(spacing: 0) {
-                        HStack {
-                            Text("Prix d'achat")
-                                .font(.subheadline)
-                            Spacer()
-                            Text(purchasePriceInDisplayCurrency.formatted(.currency(code: displayCurrency)))
-                                .font(.subheadline.weight(.semibold))
-                                .monospacedDigit()
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-
-                        Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 14)
-
+                    VStack(spacing: 10) {
+                        GainSummaryTiles(
+                            summary: GainSummary(purchase: purchasePriceInDisplayCurrency, estimate: marketEstimateInDisplayCurrency),
+                            currency: displayCurrency
+                        )
+                        // La cote reste une ligne à part : elle ouvre le Marketplace Discogs.
                         marketEstimateButton(price: marketEstimateInDisplayCurrency)
-
-                        Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 14)
-
-                        let gain = marketEstimateInDisplayCurrency - purchasePriceInDisplayCurrency
-                        let percent = purchasePriceInDisplayCurrency > 0 ? gain / purchasePriceInDisplayCurrency : 0
-                        HStack {
-                            Text("Plus-value latente")
-                                .font(.subheadline.weight(.semibold))
-                            Spacer()
-                            Text("\(gain >= 0 ? "+" : "")\(gain.formatted(.currency(code: displayCurrency).precision(.fractionLength(0)))) (\(percent.formatted(.percent.precision(.fractionLength(0)).sign(strategy: .always()))))")
-                                .font(.subheadline.weight(.bold))
-                                .foregroundStyle(gain >= 0 ? Color.gainPositive : Color.gainNegative)
-                                .monospacedDigit()
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
+                            .appleMusicGroupedCard()
                     }
-                    .appleMusicGroupedCard()
                 } else {
                     Text(networkMonitor.isConnected ? "Cote actuelle indisponible pour le moment." : "Cote actuelle indisponible hors ligne.")
                         .font(.subheadline)
@@ -480,25 +462,40 @@ struct CollectionItemEditSheet: View {
         .accessibilityHint("Ouvre le Marketplace Discogs pour cette release")
     }
 
+    /// Rôle du champ dans le calcul de la plus-value, d'après les champs choisis dans Réglages.
+    private func gainFieldRole(for field: CollectionField) -> SettingsFieldHighlight? {
+        guard let username = DiscogsAuthManager.shared.username else { return nil }
+        if field.id == CollectionPreferencesStore.purchasePriceFieldId(for: username) { return .purchasePrice }
+        if field.id == CollectionPreferencesStore.mediaConditionFieldId(for: username) { return .mediaCondition }
+        return nil
+    }
+
+    /// Renvoie vers le réglage du champ, mis en évidence à l'arrivée (même mécanisme que « Modifier »
+    /// dans le guide de rangement).
+    private func openGainFieldSetting(_ role: SettingsFieldHighlight) {
+        dismiss()
+        TabNavigationCoordinator.shared.openSettingsAtPurchaseField(role)
+    }
+
     private var discRow: some View {
-        HStack(spacing: 12) {
-            AsyncCoverImage(url: item.basicInformation.thumb ?? item.basicInformation.coverImage, cornerRadius: 8)
-                .frame(width: 54, height: 54)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
-                )
-                .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)
-                .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 10)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(item.basicInformation.title)
-                    .font(.body.bold())
-                Text(item.basicInformation.artistNames)
-                    .font(.subheadline)
-                    .foregroundStyle(Color.appSecondaryText)
-            }
-            Spacer(minLength: 0)
+        ReleaseSheetHeader(
+            coverURL: item.basicInformation.coverImage ?? item.basicInformation.thumb,
+            title: item.basicInformation.title,
+            artist: item.basicInformation.artistNames,
+            pills: headerPills,
+            onAverageColorLoaded: { coverTint = $0 }
+        )
+    }
+
+    /// Année, format et dossier de l'exemplaire, en pastilles sous le titre.
+    private var headerPills: [String] {
+        var pills: [String] = []
+        if let year = item.basicInformation.year, year > 0 { pills.append(String(year)) }
+        if let format = item.basicInformation.formats?.first?.name, !format.isEmpty { pills.append(format) }
+        if let folder = folders.first(where: { $0.id == selectedFolderId }), folder.id != DiscogsConstants.allFolderId {
+            pills.append(folder.name)
         }
+        return pills
     }
 
     private func binding(for field: CollectionField) -> Binding<String> {

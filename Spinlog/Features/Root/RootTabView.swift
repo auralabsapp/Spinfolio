@@ -263,6 +263,9 @@ final class TabNavigationCoordinator {
     var scrollToTopOfSearchTrigger = 0
     var scrollToTopOfSettingsTrigger = 0
     var scrollToOrganizationSectionTrigger = 0
+    var scrollToPurchasePriceSectionTrigger = 0
+    /// Champ à mettre en évidence à l'arrivée dans Réglages (voir `openSettingsAtPurchaseField`).
+    private(set) var pendingSettingsFieldHighlight: SettingsFieldHighlight?
 
     /// Nouveau tap sur l'onglet déjà actif : revient à la racine si une fiche est ouverte,
     /// sinon remonte tout en haut de l'onglet (comportement standard iOS).
@@ -406,6 +409,22 @@ final class TabNavigationCoordinator {
         settingsPath = NavigationPath()
         selectedTab = .settings
         scrollToOrganizationSectionTrigger += 1
+    }
+
+    /// Ouvre Réglages positionné sur la section « Prix d'achat et état », avec la ligne du champ
+    /// demandé mise en évidence (depuis la pastille « Utilisé pour la plus-value » de « Mon exemplaire »).
+    func openSettingsAtPurchaseField(_ field: SettingsFieldHighlight) {
+        settingsPath = NavigationPath()
+        selectedTab = .settings
+        pendingSettingsFieldHighlight = field
+        scrollToPurchasePriceSectionTrigger += 1
+    }
+
+    /// Lit puis efface le champ à mettre en évidence : une demande n'est traitée qu'une fois, que
+    /// Réglages l'ait vue arriver (changement du déclencheur) ou la découvre à son apparition.
+    func consumePendingSettingsFieldHighlight() -> SettingsFieldHighlight? {
+        defer { pendingSettingsFieldHighlight = nil }
+        return pendingSettingsFieldHighlight
     }
 
     /// Navigation profonde vers une release précise (lien `spinlog://release/{id}` ouvert depuis

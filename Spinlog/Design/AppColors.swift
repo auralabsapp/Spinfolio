@@ -137,6 +137,21 @@ extension Color {
             : UIColor(red: 0.12, green: 0.52, blue: 0.22, alpha: 1.0)
     })
 
+    /// Orange soutenu du champ « prix d'achat » (nom, pastille « Utilisé pour la plus-value » et ligne
+    /// de Réglages). Voisin de `gainFieldCondition`, qui s'en distingue par un orange plus brûlé.
+    static let gainFieldPurchase = Color(uiColor: UIColor { @Sendable trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(red: 1.0, green: 0.62, blue: 0.20, alpha: 1.0)
+            : UIColor(red: 0.88, green: 0.45, blue: 0.04, alpha: 1.0)
+    })
+
+    /// Orange brûlé du champ « état du disque » : même famille que `gainFieldPurchase`, plus profond.
+    static let gainFieldCondition = Color(uiColor: UIColor { @Sendable trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(red: 0.96, green: 0.46, blue: 0.18, alpha: 1.0)
+            : UIColor(red: 0.72, green: 0.28, blue: 0.04, alpha: 1.0)
+    })
+
     /// Rouge contrasté et lisible pour le texte de moins-value (corail lumineux en mode sombre, soutenu en mode clair).
     static let gainNegative = Color(uiColor: UIColor { @Sendable trait in
         trait.userInterfaceStyle == .dark
