@@ -114,6 +114,11 @@ struct LibraryCarouselView<Item: SortableLibraryItem>: View {
     // analytiquement — voir `animatedScroll` pour la raison de ce choix.
     @State private var scrollPosition = ScrollPosition(idType: Int.self)
     @State private var displayItemId: Int?
+    /// Cran haptique léger à chaque changement de pochette centrée, uniquement quand c'est le doigt
+    /// (ou son élan) qui fait défiler : voir `tickIfScrollingByHand`.
+    @State private var scrollHaptics = UISelectionFeedbackGenerator()
+    @State private var isScrollingByHand = false
+    @State private var lastScrollTickDate = Date.distantPast
     @State private var hasSetInitialPosition = false
     // Pas de valeur par défaut devinée (ex: 390x600) : tant que la vraie taille n'a pas été
     // mesurée par le `GeometryReader` ci-dessous, `trySetInitialPosition()` ne fixe pas encore
@@ -208,6 +213,13 @@ struct LibraryCarouselView<Item: SortableLibraryItem>: View {
             // la bonne pochette, puisque la limite plafonnait le défilement avant la cible demandée.
             .scrollTargetBehavior(.viewAligned(limitBehavior: .never))
             .scrollPosition($scrollPosition, anchor: .center)
+            // Défilement manuel (doigt posé, ou élan qui suit) : seul cas où l'on déclenche des
+            // crans. Un saut programmé (barre A-Z, disque au hasard) passe par la phase `.animating`
+            // et ne doit pas faire « ronronner » le téléphone à chaque pochette traversée.
+            .onScrollPhaseChange { _, newPhase in
+                isScrollingByHand = (newPhase == .interacting || newPhase == .decelerating)
+                if newPhase == .interacting { scrollHaptics.prepare() }
+            }
 
             // Barre de navigation rapide inférieure (Scrubber horizontal A-Z / Années)
             if indexEntries.count > 1 {
@@ -248,6 +260,7 @@ struct LibraryCarouselView<Item: SortableLibraryItem>: View {
         }
         .onChange(of: scrollPosition) { _, newValue in
             if let newId = newValue.viewID(type: Int.self) {
+                if newId != displayItemId { tickIfScrollingByHand() }
                 displayItemId = newId
             }
         }
@@ -255,6 +268,18 @@ struct LibraryCarouselView<Item: SortableLibraryItem>: View {
             guard let newTrigger else { return }
             animatedScroll(to: newTrigger.id, isRandom: true)
         }
+    }
+
+    /// Petit cran haptique au passage d'une pochette sous le centre, limité à un toutes les 50 ms :
+    /// lors d'un balayage rapide des dizaines de pochettes défilent par seconde, et un cran
+    /// pour chacune deviendrait un bourdonnement continu plutôt qu'un cliquet lisible.
+    private func tickIfScrollingByHand() {
+        guard isScrollingByHand else { return }
+        let now = Date()
+        guard now.timeIntervalSince(lastScrollTickDate) >= 0.05 else { return }
+        lastScrollTickDate = now
+        scrollHaptics.selectionChanged()
+        scrollHaptics.prepare()
     }
 
     /// Fixe la position de défilement initiale (1er album) une seule fois, et seulement après

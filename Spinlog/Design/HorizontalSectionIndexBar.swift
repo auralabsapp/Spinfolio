@@ -26,6 +26,12 @@ struct HorizontalSectionIndexBar: View {
             // ça, un tri avec beaucoup de jetons distincts (A-Z complet) dépassait la largeur de
             // l'écran, chaque jeton gardant son minimum de 20pt quel que soit leur nombre.
             let itemWidth = entries.isEmpty ? 20 : min(20, width / CGFloat(entries.count))
+            // Quand les jetons tiennent à 20 pt chacun, la rangée est plus étroite que la barre et se
+            // centre : le doigt doit être mesuré dans CETTE rangée (décalage `rowInset`), pas dans la
+            // largeur entière de la barre — sinon la lettre choisie dérivait de plus en plus par
+            // rapport au doigt en s'éloignant du centre.
+            let rowWidth = itemWidth * CGFloat(entries.count)
+            let rowInset = max((width - rowWidth) / 2, 0)
 
             HStack(spacing: 0) {
                 ForEach(entries, id: \.token) { entry in
@@ -60,7 +66,7 @@ struct HorizontalSectionIndexBar: View {
                     .onChanged { value in
                         isDragging = true
                         touchX = value.location.x
-                        select(at: value.location.x, in: width)
+                        select(at: value.location.x - rowInset, in: rowWidth)
                     }
                     .onEnded { _ in
                         isDragging = false

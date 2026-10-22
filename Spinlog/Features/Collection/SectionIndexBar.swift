@@ -12,6 +12,8 @@ struct SectionIndexBar: View {
     let onSelect: (String) -> Void
 
     @State private var activeToken: String?
+    /// Cran haptique à chaque changement de lettre pendant le glissé, comme `HorizontalSectionIndexBar`.
+    @State private var selectionFeedback = UISelectionFeedbackGenerator()
     /// Hauteur disponible figée à la première mesure. Sous un grand titre de navigation, la zone
     /// disponible sous la barre s'agrandit progressivement pendant le défilement (le grand titre
     /// se réduit) : sans ce gel, la barre se redessinait à chaque image sur cette zone changeante
@@ -83,6 +85,8 @@ struct SectionIndexBar: View {
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { value in
+                        // Moteur haptique préchauffé dès le doigt posé : le premier cran n'est pas en retard.
+                        if activeToken == nil { selectionFeedback.prepare() }
                         touchY = value.location.y
                         select(at: value.location.y, in: geometry.size.height)
                     }
@@ -147,6 +151,8 @@ struct SectionIndexBar: View {
         let entry = entries[boundedIndex]
         if entry.token != activeToken {
             activeToken = entry.token
+            selectionFeedback.selectionChanged()
+            selectionFeedback.prepare()
             onSelect(entry.sectionKey)
         }
     }
