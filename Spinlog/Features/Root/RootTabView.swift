@@ -263,6 +263,9 @@ final class TabNavigationCoordinator {
     var scrollToTopOfSearchTrigger = 0
     var scrollToTopOfSettingsTrigger = 0
     var scrollToOrganizationSectionTrigger = 0
+    /// Demande de positionnement sur « Collection & Rangement » pas encore traitée (voir
+    /// `openSettingsAtOrganizationSection` et `consumePendingOrganizationScroll`).
+    private(set) var hasPendingOrganizationScroll = false
     var scrollToPurchasePriceSectionTrigger = 0
     /// Champ à mettre en évidence à l'arrivée dans Réglages (voir `openSettingsAtPurchaseField`).
     private(set) var pendingSettingsFieldHighlight: SettingsFieldHighlight?
@@ -408,7 +411,15 @@ final class TabNavigationCoordinator {
         // Section de la racine de Réglages : un sous-écran resté ouvert la masquerait.
         settingsPath = NavigationPath()
         selectedTab = .settings
+        hasPendingOrganizationScroll = true
         scrollToOrganizationSectionTrigger += 1
+    }
+
+    /// Lit puis efface la demande : traitée une seule fois, que Réglages l'ait vue arriver (changement
+    /// du déclencheur) ou la découvre à son apparition (toute première visite de l'onglet).
+    func consumePendingOrganizationScroll() -> Bool {
+        defer { hasPendingOrganizationScroll = false }
+        return hasPendingOrganizationScroll
     }
 
     /// Ouvre Réglages positionné sur la section « Prix d'achat et état », avec la ligne du champ

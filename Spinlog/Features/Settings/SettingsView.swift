@@ -158,8 +158,10 @@ struct SettingsView: View {
                     proxy.scrollTo(premiumStore.hasAccessOutsideDemo ? "guideSection" : "premiumBanner", anchor: .top)
                 }
             }
-            .onChange(of: tabCoordinator.scrollToOrganizationSectionTrigger) { _, newValue in
-                guard newValue > 0 else { return }
+            // `initial: true` : voir le commentaire du déclencheur « Prix d'achat » plus bas — à la toute
+            // première visite de Réglages, le changement du déclencheur passe inaperçu.
+            .onChange(of: tabCoordinator.scrollToOrganizationSectionTrigger, initial: true) { _, _ in
+                guard tabCoordinator.consumePendingOrganizationScroll() else { return }
                 Task { @MainActor in
                     // Délai plus généreux que `scrollSettleDelay` : ce déclenchement arrive en
                     // même temps que la fermeture de la sheet "Guide de rangement" et le
