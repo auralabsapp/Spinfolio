@@ -268,6 +268,9 @@ struct ListeningLogCard: View {
                 Image(systemName: "opticaldisc.fill")
                     .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(isPlayingThisRelease ? Color.white : Color.spinlogPink)
+                    // Le disque tourne à 33 tours/min tant que l'écoute dure (comme dans la feuille
+                    // d'écoute) ; seule l'icône tourne, pas son fond.
+                    .continuousRotation(isActive: isPlayingThisRelease)
                     .frame(width: 40, height: 40)
                     .background(isPlayingThisRelease ? Color.spinlogPink : Color.spinlogPinkBadge, in: Circle())
             }
@@ -292,52 +295,62 @@ struct ListeningLogCard: View {
 
             Spacer(minLength: 8)
 
-            // Si écoute en cours : pilule "Écoute en cours"
-            // Sinon : nombre d'écoutes et date de dernière écoute sur 2 lignes
-            if isPlayingThisRelease {
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(Color.spinlogPink)
-                        .frame(width: 7, height: 7)
-                    Text("Écoute en cours")
-                        .font(.caption.bold())
-                        .foregroundStyle(Color.spinlogPink)
+            // À droite : la pastille « Écoute en cours » (point qui pulse) pendant une écoute, et
+            // toujours le compteur, qui s'incrémente en direct au démarrage d'une écoute. La date de
+            // dernière écoute n'a de sens que hors écoute.
+            VStack(alignment: .trailing, spacing: 4) {
+                if isPlayingThisRelease {
+                    HStack(spacing: 6) {
+                        ListeningPulseDot()
+                        Text("Écoute en cours")
+                            .font(.caption.bold())
+                            .foregroundStyle(Color.spinlogPink)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color.spinlogPink.opacity(0.12), in: Capsule())
+                    .transition(.opacity.combined(with: .scale))
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(Color.spinlogPink.opacity(0.12), in: Capsule())
-                .transition(.opacity.combined(with: .scale))
-            } else {
-                VStack(alignment: .trailing, spacing: 2) {
-                    if playCount > 0 {
-                        Text("Écouté \(playCount) fois")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(Color.primary)
-                            .lineLimit(1)
 
-                        if let relativeText = relativeLastListeningText {
-                            Text("Dernière écoute : \(relativeText)")
-                                .font(.caption)
-                                .foregroundStyle(Color.appSecondaryText)
-                                .lineLimit(1)
-                        }
-                    } else {
-                        Text("Jamais écouté")
-                            .font(.subheadline.weight(.medium))
+                if playCount > 0 {
+                    Text("Écouté \(playCount) fois")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color.primary)
+                        .lineLimit(1)
+                        // Le chiffre défile quand le compteur augmente (voir `.animation` plus bas).
+                        .contentTransition(.numericText(value: Double(playCount)))
+
+                    if !isPlayingThisRelease, let relativeText = relativeLastListeningText {
+                        Text("Dernière écoute : \(relativeText)")
+                            .font(.caption)
                             .foregroundStyle(Color.appSecondaryText)
                             .lineLimit(1)
-                        Text("Touche le disque quand tu l'écoutes")
-                            .font(.caption2)
-                            .foregroundStyle(Color.appTertiaryText)
-                            .lineLimit(1)
                     }
+                } else if !isPlayingThisRelease {
+                    Text("Jamais écouté")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(Color.appSecondaryText)
+                        .lineLimit(1)
+                    Text("Touche le disque quand tu l'écoutes")
+                        .font(.caption2)
+                        .foregroundStyle(Color.appTertiaryText)
+                        .lineLimit(1)
                 }
-                .transition(.opacity.combined(with: .move(edge: .trailing)))
             }
         }
         .padding(14)
         .appleMusicGroupedCard()
+        // Halo qui respire derrière la carte pendant l'écoute.
+        .background {
+            if isPlayingThisRelease {
+                // Halo plus léger que celui du guide de rangement : derrière une carte de texte, un halo
+                // trop soutenu assombrit le fond et fait perdre du contraste aux libellés.
+                BreathingGlow(blurRadius: 18, minOpacity: 0.06, maxOpacity: 0.17)
+                    .transition(.opacity)
+            }
+        }
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: isPlayingThisRelease)
+        .animation(.snappy, value: playCount)
     }
 }
 

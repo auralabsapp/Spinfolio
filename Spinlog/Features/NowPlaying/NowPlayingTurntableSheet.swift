@@ -17,14 +17,10 @@ struct NowPlayingTurntableSheet: View {
     /// Hauteur mesurée du contenu, utilisée comme seul cran de la feuille.
     @State private var contentHeight: CGFloat = 420
 
-    private static let coverSize: CGFloat = 220
-
     var body: some View {
         VStack(spacing: 18) {
-            AsyncCoverImage(url: lastCoverURL, cornerRadius: 14, targetSize: Self.coverSize)
-                .frame(width: Self.coverSize, height: Self.coverSize)
-                .shadow(color: .black.opacity(0.25), radius: 14, y: 8)
-                .accessibilityHidden(true)
+            // Pochette entière devant un disque dont l'étiquette tourne (voir `SpinningRecordArtwork`).
+            SpinningRecordArtwork(coverURL: lastCoverURL)
 
             // Même disposition que la fenêtre Apple Music : titre et artiste à gauche, accès à la
             // fiche du disque à droite.

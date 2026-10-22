@@ -16,6 +16,16 @@ struct ShelfPlacementView: View {
     @State private var viewModel = ShelfPlacementViewModel()
     /// Pulsation du disque central après un toucher (voir `pulseTarget`).
     @State private var isTargetPulsing = false
+    /// Passe à vrai une seule fois, juste après le premier affichage : déclenche les animations
+    /// d'entrée (compteur, jauge, disques). Jamais réarmé, pour que revenir d'une fiche ouverte
+    /// depuis un disque repère ne les rejoue pas.
+    @State private var hasAppeared = false
+    /// Position affichée dans le compteur : part de 0 et rejoint la vraie position à l'entrée.
+    @State private var displayedPosition = 0
+    /// Légère pulsation continue du repère « ICI ».
+    @State private var isBadgeBeating = false
+    /// Respiration lente et permanente de la pochette cible, lancée une fois les disques en place.
+    @State private var isCoverBreathing = false
     @State private var pulseResetTask: Task<Void, Never>?
 
     /// Calculés une seule fois à l'ouverture, plutôt qu'à chaque image de rendu comme le ferait
@@ -104,6 +114,7 @@ struct ShelfPlacementView: View {
             }
             .onAppear {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                playEntranceIfNeeded()
 
                 Task {
                     await viewModel.prefetchMasterYearIfNeeded(
@@ -150,9 +161,12 @@ struct ShelfPlacementView: View {
     private var positionOverviewCard: some View {
         VStack(spacing: 12) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text("N° \(neighbors.positionIndex)")
+                Text("N° \(displayedPosition)")
                     .font(.system(size: 26, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
+                    .monospacedDigit()
+                    // Le chiffre défile de 0 jusqu'à la position du disque à l'ouverture.
+                    .contentTransition(.numericText(value: Double(displayedPosition)))
 
                 Text(positionSubheadline)
                     .font(.subheadline.weight(.medium))
@@ -166,7 +180,10 @@ struct ShelfPlacementView: View {
             // Jauge de progression horizontale
             if neighbors.totalCount > 1 {
                 GeometryReader { geo in
-                    let ratio = CGFloat(neighbors.positionIndex - 1) / CGFloat(max(neighbors.totalCount - 1, 1))
+                    // La jauge se remplit en même temps que le compteur monte.
+                    let ratio = hasAppeared
+                        ? CGFloat(neighbors.positionIndex - 1) / CGFloat(max(neighbors.totalCount - 1, 1))
+                        : 0
                     let width = geo.size.width
 
                     ZStack(alignment: .leading) {
@@ -183,6 +200,7 @@ struct ShelfPlacementView: View {
                                 )
                             )
                             .frame(width: max(width * ratio, 6), height: 5)
+                            .animation(reduceMotion ? nil : .smooth(duration: 0.9), value: hasAppeared)
                     }
                 }
                 .frame(height: 5)
@@ -204,31 +222,39 @@ struct ShelfPlacementView: View {
     private var horizontalTriptychSection: some View {
         HStack(alignment: .top, spacing: 8) {
             // Disque précédent (Gauche) ou début
-            if let prev = neighbors.previous {
-                neighborColumn(release: prev, isLeft: true)
-            } else {
-                edgeColumn(
-                    title: "Début du meuble",
-                    subtitle: "Premier album",
-                    icon: "arrow.left.to.line.compact",
-                    color: .blue
-                )
+            Group {
+                if let prev = neighbors.previous {
+                    neighborColumn(release: prev, isLeft: true)
+                } else {
+                    edgeColumn(
+                        title: "Début du meuble",
+                        subtitle: "Premier album",
+                        icon: "arrow.left.to.line.compact",
+                        color: .blue
+                    )
+                }
             }
+            // Les voisins arrivent d'abord, de chaque côté.
+            .shelfEntrance(isVisible: hasAppeared, offset: CGSize(width: -44, height: 0), delay: 0.15)
 
-            // Disque cible (Centre - surélevé et agrandi)
+            // Disque cible (Centre - surélevé et agrandi) : il descend entre ses voisins en dernier.
             targetColumn
+                .shelfEntrance(isVisible: hasAppeared, offset: CGSize(width: 0, height: -46), delay: 0.5, startScale: 0.88)
 
             // Disque suivant (Droite) ou fin
-            if let next = neighbors.next {
-                neighborColumn(release: next, isLeft: false)
-            } else {
-                edgeColumn(
-                    title: "Fin du meuble",
-                    subtitle: "Dernier album",
-                    icon: "arrow.right.to.line.compact",
-                    color: .purple
-                )
+            Group {
+                if let next = neighbors.next {
+                    neighborColumn(release: next, isLeft: false)
+                } else {
+                    edgeColumn(
+                        title: "Fin du meuble",
+                        subtitle: "Dernier album",
+                        icon: "arrow.right.to.line.compact",
+                        color: .purple
+                    )
+                }
             }
+            .shelfEntrance(isVisible: hasAppeared, offset: CGSize(width: 44, height: 0), delay: 0.15)
         }
         .padding(.vertical, 14)
         .padding(.horizontal, 10)
@@ -236,62 +262,50 @@ struct ShelfPlacementView: View {
         .appleMusicGroupedCard()
     }
 
-    /// Colonne centrale : le disque cible à ranger
+    /// Colonne centrale : le disque cible à ranger (voir `ShelfTargetColumn`).
     private var targetColumn: some View {
-        VStack(spacing: 8) {
-            // Repère d'emplacement : volontairement à plat (ni fond plein, ni ombre), pour ne pas
-            // ressembler à un bouton alors qu'il n'ouvre rien.
-            HStack(spacing: 3) {
-                Image(systemName: "arrow.down")
-                    .font(.caption2.weight(.bold))
-                Text("ICI")
-                    .font(.caption2.weight(.heavy))
+        ShelfTargetColumn(
+            release: targetRelease,
+            yearText: targetYearText,
+            isPulsing: isTargetPulsing,
+            isCoverBreathing: isCoverBreathing,
+            isBadgeBeating: isBadgeBeating,
+            onTap: pulseTarget
+        )
+    }
+
+    /// Année affichée sous le titre du disque cible, selon la règle de classement active.
+    private var targetYearText: String? {
+        guard let year = targetRelease.effectiveShelfYear(useOriginalYear: preferences.sortStrategy.usesMasterYear), year > 0 else { return nil }
+        return String(year)
+    }
+
+    /// Lance l'entrée une seule fois : compteur qui monte, jauge qui se remplit, disques qui arrivent,
+    /// puis battement discret du repère « ICI ». Légèrement différé pour que l'état de départ
+    /// (masqué, compteur à 0) soit d'abord affiché. Avec « Réduire les animations », tout est direct.
+    private func playEntranceIfNeeded() {
+        guard !hasAppeared else { return }
+        guard !reduceMotion else {
+            displayedPosition = neighbors.positionIndex
+            hasAppeared = true
+            return
+        }
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(60))
+            hasAppeared = true
+            withAnimation(.smooth(duration: 0.9)) {
+                displayedPosition = neighbors.positionIndex
             }
-            .foregroundStyle(Color.spinlogPink)
-            .scaleEffect(isTargetPulsing && !reduceMotion ? 1.15 : 1)
-
-            // Pochette centrale plus grande avec bordure rose
-            AsyncCoverImage(url: targetRelease.primaryImageURL, cornerRadius: 10, targetSize: 104)
-                .frame(width: 104, height: 104)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .strokeBorder(Color.spinlogPink, lineWidth: isTargetPulsing ? 4 : 2)
-                )
-                .shadow(color: Color.spinlogPink.opacity(isTargetPulsing ? 0.5 : 0.25), radius: 8, y: 4)
-                .scaleEffect(isTargetPulsing && !reduceMotion ? 1.06 : 1)
-
-            // Titre, Artiste et Année
-            VStack(spacing: 2) {
-                Text(targetRelease.title)
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.primary)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                if !targetRelease.artistNames.isEmpty {
-                    Text(targetRelease.artistNames)
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(Color.spinlogPink)
-                        .multilineTextAlignment(.center)
-                        .lineLimit(1)
-                }
-
-                if let effYear = targetRelease.effectiveShelfYear(useOriginalYear: preferences.sortStrategy.usesMasterYear), effYear > 0 {
-                    Text(String(effYear))
-                        .font(.system(.caption2, design: .rounded, weight: .bold))
-                        .foregroundStyle(Color.appSecondaryText)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 1.5)
-                        .background(Color.primary.opacity(0.06), in: Capsule())
-                }
+            // Une fois les disques en place : la pochette se met à respirer lentement, en continu
+            // (grossit puis reprend sa taille), et le repère « ICI » à battre discrètement.
+            try? await Task.sleep(for: .milliseconds(1100))
+            withAnimation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true)) {
+                isCoverBreathing = true
+            }
+            withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
+                isBadgeBeating = true
             }
         }
-        .frame(maxWidth: .infinity)
-        .contentShape(Rectangle())
-        .onTapGesture(perform: pulseTarget)
-        // Le toucher n'ouvre rien : pour VoiceOver, c'est un simple repère, lu d'un seul bloc.
-        .accessibilityElement(children: .combine)
     }
 
     /// Le testeur touche instinctivement le disque central : on confirme que le toucher est
