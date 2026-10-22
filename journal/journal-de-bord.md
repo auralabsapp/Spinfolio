@@ -7,6 +7,22 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
+## 2026-10-22 — « Mon exemplaire » et « Alerte de prix »
+
+### 12:30 — `c9cc6e6` « Mon exemplaire » et « Alerte de prix » embellis ; pastille « Utilisé pour la plus-value »
+- **Les deux feuilles** : en-tête commun (jaquette en grand avec halo, titre, artiste, pastilles
+  d'année, de format et de dossier) et fond teinté de la couleur de la pochette.
+- **Mon exemplaire** : pastilles Payé / Cote / Plus-value en vert ou rouge (Premium) ; sous les champs
+  choisis pour le calcul, une pastille orange « Utilisé pour la plus-value » ouvre Réglages sur la
+  ligne concernée, mise en surbrillance, y compris à la toute première visite de Réglages.
+- **Alerte de prix** : ouverture en pleine hauteur, grand prix maximum centré (focus au premier
+  toucher, curseur en fin de montant), tuiles de marché, jauge seuil / annonce la moins chère,
+  pastilles de prix, squelettes de chargement, tuile « Annonce la moins chère » vers Discogs.
+- Tests `PriceSheetModelsTests` et cas de recette H26, H27, E20.
+- 16 fichiers.
+
+---
+
 ## 2026-10-21 — Graphiques de Stats fluides, paywall après la connexion
 
 ### 19:50 — `b560d74` Lecteur plein écran depuis le mini-lecteur
