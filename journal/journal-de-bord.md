@@ -9,6 +9,22 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-10-22 — « Mon exemplaire » et « Alerte de prix »
 
+### 17:35 — `ce2c710` Animations : disque qui tourne, guide de rangement vivant
+- **Feuille d'écoute sur platine** : jaquette entière devant un disque noir dont l'étiquette tourne à
+  33 tours/min (jamais de jaquette recadrée).
+- **Carte « Mes écoutes sur platine »** : icône disque qui tourne, point qui pulse, halo discret,
+  compteur qui défile au démarrage.
+- **Guide de rangement** : compteur et jauge qui montent, disques qui arrivent en séquence, pochette
+  cible qui respire lentement, halo et repère « ICI » ; colonne cible extraite en `ShelfTargetColumn`.
+- Tout est neutralisé avec « Réduire les animations ».
+
+### 17:36 — `da359e6` Retours haptiques du carrousel et de la barre A-Z ; barre horizontale alignée
+- Cran léger à chaque pochette centrée du carrousel (au doigt, un toutes les 50 ms au plus) et à
+  chaque lettre de la barre verticale (Liste, Mosaïque).
+- Barre A-Z horizontale du carrousel : le doigt est mesuré dans la rangée de lettres centrée, plus de
+  décalage vers les bords.
+- Cas de recette I27, J34, B43, B44, B45.
+
 ### 12:30 — `c9cc6e6` « Mon exemplaire » et « Alerte de prix » embellis ; pastille « Utilisé pour la plus-value »
 - **Les deux feuilles** : en-tête commun (jaquette en grand avec halo, titre, artiste, pastilles
   d'année, de format et de dossier) et fond teinté de la couleur de la pochette.
