@@ -7,7 +7,33 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
+## 2026-10-23 — Cloche d'alerte de la Wantlist
+
+### 12:29 — `45746c5` Cloche d'alerte sur la jaquette, suppression d'alerte avec confirmation
+- **Carrousel de la Wantlist** : la cloche est posée sur la jaquette (en bas à droite) à la place de la
+  capsule sous la jaquette ; son disque suit le thème (clair en thème clair, sombre en thème sombre,
+  jeton `coverBellDisc`).
+- **Feuille « Alerte de prix »** : cloche sur la jaquette, grise sans alerte, rose si elle est active,
+  verte si elle est déclenchée (pleine dans les trois cas), comme dans la liste.
+- **Vert unique** : les alertes déclenchées utilisent le vert « Seuil atteint » (`gainPositive`) partout
+  dans la Wantlist.
+- **Suppression** : le bouton « Supprimer cette alerte » passe sous le champ du seuil, avec une
+  confirmation avant d'effacer ; traductions anglaises ajoutées.
+- Composants `CoverAlertBellButton` et `DeleteAlertButton` ; cas de recette E20 à E24.
+- 12 fichiers.
+
+---
+
 ## 2026-10-22 — « Mon exemplaire » et « Alerte de prix »
+
+### 17:56 — `a890d61` Feuille « Alerte de prix » animée ; retour visuel de la cloche de la Wantlist
+- **Feuille d'alerte** : prix qui défile, halo de focus, lueur verte quand le seuil rejoint
+  l'annonce la moins chère, tuiles et pastilles en cascade, jauge animée, cloche d'en-tête qui rebondit ;
+  au focus du prix maximum, le titre « Mon seuil d'alerte » remonte sous la barre de navigation.
+- **Cloche de la Wantlist** (liste, carrousel) : pastille rose et rebond au toucher, retour haptique
+  léger ; sans changement d'échelle avec « Réduire les animations ».
+- Extraction de `PriceChip`, `MarketTile` et `AlertBellButtonStyle` ; cas de recette E21, E22, E23.
+- 14 fichiers.
 
 ### 17:35 — `ce2c710` Animations : disque qui tourne, guide de rangement vivant
 - **Feuille d'écoute sur platine** : jaquette entière devant un disque noir dont l'étiquette tourne à
