@@ -14,13 +14,16 @@ struct NowPlayingTurntableSheet: View {
     @State private var lastArtist = ""
     @State private var lastCoverURL: String?
     @State private var lastReleaseId: Int?
+    /// Support de l'album (vinyle ou CD), qui décide du disque dessiné derrière la pochette.
+    @State private var lastMedia: PhysicalMedia = .vinyl
     /// Hauteur mesurée du contenu, utilisée comme seul cran de la feuille.
     @State private var contentHeight: CGFloat = 420
 
     var body: some View {
         VStack(spacing: 18) {
-            // Pochette entière devant un disque dont l'étiquette tourne (voir `SpinningRecordArtwork`).
-            SpinningRecordArtwork(coverURL: lastCoverURL)
+            // Pochette entière devant un disque qui tourne : vinyle à étiquette ou CD argenté, selon le
+            // support de l'album (voir `SpinningRecordArtwork`).
+            SpinningRecordArtwork(coverURL: lastCoverURL, media: lastMedia, title: lastTitle, artist: lastArtist)
 
             // Même disposition que la fenêtre Apple Music : titre et artiste à gauche, accès à la
             // fiche du disque à droite.
@@ -98,5 +101,16 @@ struct NowPlayingTurntableSheet: View {
         lastArtist = activityManager.activeArtistName ?? ""
         lastCoverURL = activityManager.activeCoverURL
         lastReleaseId = activityManager.activeReleaseId
+        lastMedia = Self.media(forReleaseId: activityManager.activeReleaseId)
+    }
+
+    /// Support d'après les formats déjà connus localement (collection, sinon wantlist) ; vinyle par
+    /// défaut quand le disque n'y est pas, comme avant l'ajout du CD.
+    private static func media(forReleaseId releaseId: Int?) -> PhysicalMedia {
+        guard let releaseId, let username = DiscogsAuthManager.shared.username else { return .vinyl }
+        let store = LocalDataStore.shared
+        let formats = store.getCollectionItems(username: username, releaseId: releaseId).first?.basicInformation.formats
+            ?? store.getWantlistItem(username: username, releaseId: releaseId)?.basicInformation.formats
+        return PhysicalMedia.from(formatNames: (formats ?? []).map(\.name))
     }
 }
