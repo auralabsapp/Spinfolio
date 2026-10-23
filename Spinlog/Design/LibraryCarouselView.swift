@@ -106,6 +106,9 @@ struct LibraryCarouselView<Item: SortableLibraryItem>: View {
     /// Contenu des actions rapides sous les infos (masquées en mode sélection, transition et
     /// espacement gérés ici, communs aux deux écrans).
     var quickActions: (Item) -> AnyView = { _ in AnyView(EmptyView()) }
+    /// Contenu posé en bas à droite de la jaquette (ex : cloche d'alerte de la Wantlist), masqué en
+    /// mode sélection. Placé hors du lien de navigation de la jaquette : son toucher ne l'ouvre pas.
+    var coverOverlay: (Item) -> AnyView = { _ in AnyView(EmptyView()) }
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -366,6 +369,11 @@ struct LibraryCarouselView<Item: SortableLibraryItem>: View {
                 .accessibilityIdentifier("libraryItem-\(item.releaseId)")
                 .allowsHitTesting(!isSelecting)
                 .accessibilityHidden(isSelecting)
+
+                if !isSelecting {
+                    coverOverlay(item)
+                        .frame(width: size, height: size, alignment: .bottomTrailing)
+                }
 
                 if isSelecting {
                     Color.clear

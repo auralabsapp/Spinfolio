@@ -7,6 +7,7 @@ struct WantlistAlertSheet: View {
     @State private var viewModel = WantlistAlertViewModel()
 
     @State private var showPermissionAlert = false
+    @State private var showingDeleteConfirmation = false
     /// Page à ouvrir : présentée via `fullScreenCover(item:)`, jamais un `Bool` avec une URL
     /// séparée, qui peut ouvrir une page vide (voir `SafariViewRequest`).
     @State private var safariRequest: SafariViewRequest?
@@ -68,9 +69,6 @@ struct WantlistAlertSheet: View {
                     priceSuggestionsSection
                 }
                 viewListingsSection
-                if existingAlert != nil {
-                    deleteSection
-                }
             }
             // Au focus du prix maximum, le titre « Mon seuil d'alerte » remonte en haut de l'écran :
             // champ, jauge et pastilles restent ainsi visibles au-dessus du clavier. Le léger délai
@@ -155,6 +153,14 @@ struct WantlistAlertSheet: View {
             .fullScreenCover(item: $safariRequest) { request in
                 SafariView(url: request.url)
             }
+            .confirmationDialog("Supprimer cette alerte ?", isPresented: $showingDeleteConfirmation, titleVisibility: .visible) {
+                Button("Supprimer cette alerte", role: .destructive) {
+                    viewModel.deleteAlert(for: item)
+                    dismiss()
+                }
+            } message: {
+                Text("Tu ne seras plus prévenu pour ce disque.")
+            }
             .alert("Notifications désactivées", isPresented: $showPermissionAlert) {
                 Button("Ouvrir Réglages") {
                     if let url = URL(string: UIApplication.openSettingsURLString) {
@@ -183,7 +189,7 @@ struct WantlistAlertSheet: View {
                     title: item.basicInformation.title,
                     artist: item.basicInformation.artistNames,
                     pills: headerPills,
-                    showsAlertBell: existingAlert != nil,
+                    alertBell: existingAlert.map { $0.isTriggered ? .triggered : .active } ?? AlertBellState.none,
                     onAverageColorLoaded: { coverTint = $0 }
                 )
             }
@@ -419,6 +425,11 @@ struct WantlistAlertSheet: View {
                 .padding(.vertical, 4)
                 .listRowBackground(Color.clear)
             }
+
+            // Sous le champ du seuil, pour ne pas avoir à défiler jusqu'en bas de la feuille.
+            if existingAlert != nil {
+                DeleteAlertButton { showingDeleteConfirmation = true }
+            }
         }
     }
 
@@ -431,22 +442,6 @@ struct WantlistAlertSheet: View {
                     Spacer()
                     Label("Consulter les annonces sur Discogs.com", systemImage: "arrow.up.right.square")
                         .font(.subheadline.bold())
-                    Spacer()
-                }
-            }
-            .listRowBackground(Color.clear)
-        }
-    }
-
-    private var deleteSection: some View {
-        Section {
-            Button(role: .destructive) {
-                viewModel.deleteAlert(for: item)
-                dismiss()
-            } label: {
-                HStack {
-                    Spacer()
-                    Text("Supprimer cette alerte")
                     Spacer()
                 }
             }

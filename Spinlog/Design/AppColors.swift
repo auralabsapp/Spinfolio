@@ -137,6 +137,14 @@ extension Color {
             : UIColor(red: 0.12, green: 0.52, blue: 0.22, alpha: 1.0)
     })
 
+    /// Disque sous une cloche d'alerte posée sur une jaquette : clair en thème clair, sombre en thème
+    /// sombre, pour que les couleurs de la cloche (qui s'éclaircissent en sombre) restent lisibles.
+    static let coverBellDisc = Color(uiColor: UIColor { @Sendable trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(white: 0.08, alpha: 0.82)
+            : UIColor(white: 1.0, alpha: 0.9)
+    })
+
     /// Orange soutenu du champ « prix d'achat » (nom, pastille « Utilisé pour la plus-value » et ligne
     /// de Réglages). Voisin de `gainFieldCondition`, qui s'en distingue par un orange plus brûlé.
     static let gainFieldPurchase = Color(uiColor: UIColor { @Sendable trait in

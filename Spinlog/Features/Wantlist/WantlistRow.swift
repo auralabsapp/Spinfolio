@@ -78,7 +78,7 @@ struct WantlistRow: View {
                     Image(systemName: isTriggered ? "bell.badge.fill" : (hasActiveAlert ? "bell.fill" : "bell"))
                         .symbolEffect(.bounce, options: .nonRepeating, value: bellBounce)
                         .font(.system(size: 16))
-                        .foregroundStyle(isTriggered ? Color.green : (hasActiveAlert ? Color.spinlogPink : Color.appTertiaryText))
+                        .foregroundStyle(isTriggered ? Color.gainPositive : (hasActiveAlert ? Color.spinlogPink : Color.appTertiaryText))
                         .padding(8)
                         .contentShape(Rectangle())
                 }

@@ -3300,6 +3300,7 @@
       }
     },
     "Alerte active" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5675,6 +5676,7 @@
       }
     },
     "Définir alerte prix" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -12212,6 +12214,16 @@
         }
       }
     },
+    "Supprimer cette alerte ?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Delete this alert?"
+          }
+        }
+      }
+    },
     "Supprimer de la bibliothèque" : {
       "localizations" : {
         "en" : {
@@ -13770,6 +13782,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "You're not connected to Wi-Fi. Downloading your entire collection and its album covers may use a significant amount of mobile data."
+          }
+        }
+      }
+    },
+    "Tu ne seras plus prévenu pour ce disque." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "You won't be notified about this record anymore."
           }
         }
       }

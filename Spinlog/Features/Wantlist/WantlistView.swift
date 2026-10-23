@@ -264,37 +264,25 @@ struct WantlistView: View {
                         Text("≤ \(alert.targetPrice.formatted(.currency(code: alert.currency)))")
                             .font(isRegularDisplay ? .footnote.bold() : .caption2.bold())
                     }
-                    .foregroundStyle(alert.isTriggered ? .green : Color.spinlogPink)
+                    .foregroundStyle(alert.isTriggered ? Color.gainPositive : Color.spinlogPink)
                     .padding(.horizontal, isRegularDisplay ? 10 : 8)
                     .padding(.vertical, isRegularDisplay ? 4 : 3)
                     .background(
-                        alert.isTriggered ? Color.green.opacity(0.12) : Color.spinlogPinkBadge,
+                        alert.isTriggered ? Color.gainPositive.opacity(0.12) : Color.spinlogPinkBadge,
                         in: Capsule()
                     )
                     .padding(.top, 2)
                 )
             },
-            quickActions: { item in
-                let alert = alertStore.alert(for: item.id)
-                return AnyView(
-                    Button {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            coverOverlay: { item in
+                AnyView(
+                    CoverAlertBellButton(
+                        title: item.basicInformation.title,
+                        alert: alertStore.alert(for: item.id),
+                        isRegularDisplay: isRegularDisplay
+                    ) {
                         requestAlertSheet(for: item)
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: alert != nil ? (alert?.isTriggered == true ? "bell.badge.fill" : "bell.fill") : "bell")
-                            Text(alert != nil ? "Alerte active" : "Définir alerte prix")
-                        }
-                        .font(isRegularDisplay ? .subheadline.weight(.semibold) : .footnote.weight(.semibold))
-                        .foregroundStyle(alert != nil ? (alert?.isTriggered == true ? .green : Color.spinlogPink) : Color.primary)
-                        .padding(.horizontal, isRegularDisplay ? 18 : 14)
-                        .padding(.vertical, isRegularDisplay ? 10 : 8)
-                        .background(
-                            alert != nil ? (alert?.isTriggered == true ? Color.green.opacity(0.12) : Color.spinlogPinkBadge) : Color.primary.opacity(0.06),
-                            in: Capsule()
-                        )
                     }
-                    .buttonStyle(AlertBellButtonStyle(shape: AnyShape(Capsule())))
                 )
             }
         )
@@ -322,7 +310,7 @@ struct WantlistView: View {
                             if let alert {
                                 Image(systemName: alert.isTriggered ? "bell.badge.fill" : "bell.fill")
                                     .font(.coverCornerBadge)
-                                    .foregroundStyle(alert.isTriggered ? .green : Color.spinlogPink)
+                                    .foregroundStyle(alert.isTriggered ? Color.gainPositive : Color.spinlogPink)
                                     .padding(4)
                                     .background(.ultraThinMaterial, in: Circle())
                                     .padding(4)

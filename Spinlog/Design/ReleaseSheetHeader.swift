@@ -3,14 +3,35 @@ import SwiftUI
 /// En-tête commun des feuilles consacrées à un disque (« Mon exemplaire », « Alerte de prix ») :
 /// jaquette en grand avec un halo de sa couleur moyenne, titre, artiste et pastilles de contexte
 /// (année, format, dossier…).
+/// État d'une alerte de prix, tel que la cloche le montre : grise sans alerte, rose si elle est
+/// active, verte si elle est déclenchée (comme la cloche des lignes de la Wantlist).
+enum AlertBellState {
+    case none, active, triggered
+
+    var symbolName: String {
+        switch self {
+        case .none, .active: "bell.fill"
+        case .triggered: "bell.badge.fill"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .none: Color.appTertiaryText
+        case .active: Color.spinlogPink
+        case .triggered: Color.gainPositive
+        }
+    }
+}
+
 struct ReleaseSheetHeader: View {
     let coverURL: String?
     let title: String
     let artist: String
     var pills: [String] = []
-    /// Affiche une petite cloche sur la jaquette (une alerte est active sur ce disque) ; elle
-    /// balance une fois quelques instants après l'ouverture.
-    var showsAlertBell: Bool = false
+    /// État de la cloche d'alerte posée sur la jaquette (`nil` : pas de cloche). Mêmes couleurs que
+    /// la cloche de la liste Wantlist ; elle balance une fois quelques instants après l'ouverture.
+    var alertBell: AlertBellState? = nil
     /// Reçoit la couleur moyenne de la pochette dès qu'elle est chargée (pour teinter le fond de la
     /// feuille, voir `releaseTintedBackground`).
     var onAverageColorLoaded: ((UIColor) -> Void)? = nil
@@ -29,13 +50,13 @@ struct ReleaseSheetHeader: View {
             )
             .frame(width: Self.coverSize, height: Self.coverSize)
             .overlay(alignment: .topTrailing) {
-                if showsAlertBell {
-                    Image(systemName: "bell.fill")
+                if let alertBell {
+                    Image(systemName: alertBell.symbolName)
                         .font(.caption.weight(.bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(alertBell.color)
                         .symbolEffect(.bounce, options: .nonRepeating, value: bellBounce)
                         .frame(width: 28, height: 28)
-                        .background(Color.spinlogPink, in: Circle())
+                        .background(Color.coverBellDisc, in: Circle())
                         .overlay(Circle().strokeBorder(Color.appBackground, lineWidth: 2.5))
                         .offset(x: 10, y: -10)
                         .task {
