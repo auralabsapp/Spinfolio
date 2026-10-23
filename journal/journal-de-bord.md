@@ -7,7 +7,59 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
-## 2026-10-23 — Cloche d'alerte de la Wantlist
+## 2026-10-24 — Écoute sur platine : CD et cassette ; Réglages affiné
+
+### 00:25 — `ef98f41` Réglages : la personnalisation du tri par artiste passe dans Organisation
+- **Rangement** ne garde que la règle du meuble et « Limiter au dossier Discogs ».
+- **Organisation** : tags et dossiers, puis section « Personnalisation du tri par artiste » (articles,
+  nom de famille, tri personnalisé).
+- Résumé de la ligne d'accueil, résultats de recherche et étape du guide mis à jour ; recette J35.
+- 7 fichiers, +94 / −54.
+
+### 00:18 — `97e9366` Écoute sur platine : le visuel suit le support (CD, cassette)
+- **CD** : pochette entière devant un disque argenté sans impression, reflet irisé qui tourne, trou
+  central transparent.
+- **Cassette** : cassette en paysage derrière la pochette carrée, coque teintée de la couleur moyenne
+  de la pochette, titre et artiste écrits à la main sur l'étiquette, bobines à dents qui tournent et
+  ruban qui passe d'une bobine à l'autre.
+- Support déduit des formats Discogs (`PhysicalMedia`, le premier support reconnu l'emporte) ; vinyle
+  par défaut. Tests `PhysicalMediaTests`, recette Q29.
+- 8 fichiers, +447 / −19.
+
+---
+
+## 2026-10-23 — Cloche d'alerte, interface plus vivante, grades et Réglages en pages
+
+### 23:36 — `ba95d11` Grades et badges, confirmation d'effacement en deux étapes, Réglages en pages avec recherche
+- **Grades** : deux parcours (disques distincts, écoutes sur platine hors Apple Music), 7 grades chacun,
+  jamais rétrogradés ; badges animés, page « Mes grades » avec dates d'obtention, badges près du nom
+  dans Réglages ; dates historiques réelles pour les grades attribués en silence et carte « Bienvenue ! »
+  pour le plus haut grade de départ ; célébration au franchissement d'un palier ; synchro iCloud fusionnée.
+- **Effacement des données** : « Effacer les données de l'app… » ouvre une feuille en grand qui liste les
+  pertes avec leurs quantités et demande de retaper le nom d'utilisateur (suite à une perte d'historique
+  d'écoute) ; clavier géré.
+- **Réglages** : écran d'accueil par groupes (Ma collection, Écoute, Synchronisation, Aide &
+  personnalisation) et sous-pages, recherche d'un réglage (casse, accents, mots-clés FR/EN), liens
+  profonds redirigés, textes du guide mis à jour.
+- Tests `GradeRulesTests`, `GradeStoreTests`, `EraseAccountDataConfirmationTests`, `SettingsSearchTests` ;
+  recette U1–U11, A26, J35–J37.
+- 36 fichiers, +3 719 / −591.
+
+### 16:11 — `b9c7c18` Guide : la fiche « Plus-value » mène à « Comment ça fonctionne ? »
+- Nouveau champ `explanationPage` sur `GuideEntry`, poussé dans la pile de Réglages (page accessible
+  sans Premium) ; boutons « Essayer » et « Comment ça fonctionne ? » côte à côte. Recette T27.
+- 6 fichiers, +35 / −4.
+
+### 14:24 — `88177dd` Interface plus vivante, appui long du carrousel, Statistiques à jour
+- **Fiche disque** : « pop » du bouton, coche et pulsation de la jaquette avec haptique à l'ajout, choc
+  léger au retrait ; sections qui arrivent en cascade.
+- **Listes** : un disque retiré s'efface en fondu ; pastille « À jour » après le tirage pour actualiser ;
+  états vides illustrés (disque qui tourne).
+- **Statistiques** : compteurs qui défilent, graphiques qui se dessinent à la première apparition ;
+  « Derniers ajouts », compteurs et répartitions suivent ajouts, retraits et déplacements.
+- **Carrousel** : appui long sur la jaquette (menu d'actions, retrait avec confirmation).
+- Tests `LibraryFeedbackEventTests`, `RecentAdditionsLogicTests` ; recette H28, B46–B49, H29, I28, I29.
+- 28 fichiers, +678 / −67.
 
 ### 12:29 — `45746c5` Cloche d'alerte sur la jaquette, suppression d'alerte avec confirmation
 - **Carrousel de la Wantlist** : la cloche est posée sur la jaquette (en bas à droite) à la place de la
