@@ -135,7 +135,7 @@ struct LibraryListView<Item: SortableLibraryItem>: View {
         // sans ça, sa barre grise native s'affiche en permanence superposée aux jetons de notre
         // propre barre de navigation rapide.
         .scrollIndicators(.hidden)
-        .refreshable {
+        .libraryRefreshable {
             await onRefresh()
         }
         .safeAreaInset(edge: .trailing) {

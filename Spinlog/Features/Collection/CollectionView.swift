@@ -479,6 +479,51 @@ struct CollectionView: View {
                         .accessibilityLabel("Modifier la note et les commentaires")
                     }
                 )
+            },
+            contextMenuContent: { item in collectionContextMenu(for: item) }
+        )
+    }
+
+    /// Menu de l'appui long sur une pochette (mosaïque, carrousel) : mêmes actions que le balayage de
+    /// la liste, qui n'existe pas hors `List` sur iOS 26 — voir `LibraryListView`.
+    private func collectionContextMenu(for item: CollectionItem) -> AnyView {
+        AnyView(
+            Group {
+                if activityManager.isPlaying(releaseId: item.releaseId) {
+                    Button {
+                        stopListening(for: item)
+                    } label: {
+                        Label("Arrêter l'écoute", systemImage: "stop.fill")
+                    }
+                } else {
+                    Button {
+                        triggerListeningLog(for: item)
+                    } label: {
+                        Label("J'écoute ce disque sur la platine", systemImage: "opticaldisc.fill")
+                    }
+                }
+
+                Button {
+                    if !premiumStore.isPremium {
+                        showingPremiumSheet = true
+                    } else {
+                        shelfTargetRelease = Release(from: item)
+                    }
+                } label: {
+                    Label("Où ranger", systemImage: "books.vertical.fill")
+                }
+
+                Button {
+                    editingItem = item
+                } label: {
+                    Label("Modifier la note / notes", systemImage: "pencil")
+                }
+
+                Button(role: .destructive) {
+                    itemPendingDeletion = item
+                } label: {
+                    Label("Supprimer de la collection", systemImage: "trash")
+                }
             }
         )
     }
@@ -687,16 +732,16 @@ struct CollectionView: View {
                 }
                     .frame(maxWidth: .infinity, minHeight: 400)
             }
-            .refreshable {
+            .libraryRefreshable {
                 await viewModel.refresh()
             }
         } else if viewModel.items.isEmpty && !viewModel.isLoading {
             ScrollView {
-                ContentUnavailableView {
-                    Label("Collection vide", systemImage: "square.stack")
-                } description: {
-                    Text("Ajoute des disques depuis la recherche ou le scan.")
-                } actions: {
+                LibraryEmptyState(
+                    title: "Collection vide",
+                    message: "Ajoute des disques depuis la recherche ou le scan.",
+                    symbol: "square.stack.fill"
+                ) {
                     Button("Rechercher un disque") {
                         TabNavigationCoordinator.shared.selectedTab = .search
                     }
@@ -704,7 +749,7 @@ struct CollectionView: View {
                 }
                 .frame(maxWidth: .infinity, minHeight: 400)
             }
-            .refreshable {
+            .libraryRefreshable {
                 await viewModel.refresh()
             }
         } else if viewModel.sections.isEmpty && !isShowingSkeleton {
@@ -839,47 +884,7 @@ struct CollectionView: View {
                                         }
                                 )
                             },
-                            contextMenuContent: { item in
-                                AnyView(
-                                    Group {
-                                        if activityManager.isPlaying(releaseId: item.releaseId) {
-                                            Button {
-                                                stopListening(for: item)
-                                            } label: {
-                                                Label("Arrêter l'écoute", systemImage: "stop.fill")
-                                            }
-                                        } else {
-                                            Button {
-                                                triggerListeningLog(for: item)
-                                            } label: {
-                                                Label("J'écoute ce disque sur la platine", systemImage: "opticaldisc.fill")
-                                            }
-                                        }
-
-                                        Button {
-                                            if !premiumStore.isPremium {
-                                                showingPremiumSheet = true
-                                            } else {
-                                                shelfTargetRelease = Release(from: item)
-                                            }
-                                        } label: {
-                                            Label("Où ranger", systemImage: "books.vertical.fill")
-                                        }
-
-                                        Button {
-                                            editingItem = item
-                                        } label: {
-                                            Label("Modifier la note / notes", systemImage: "pencil")
-                                        }
-
-                                        Button(role: .destructive) {
-                                            itemPendingDeletion = item
-                                        } label: {
-                                            Label("Supprimer de la collection", systemImage: "trash")
-                                        }
-                                    }
-                                )
-                            }
+                            contextMenuContent: { item in collectionContextMenu(for: item) }
                         )
                         // Attachée directement à la vue qui défile (ici, en grille), ancrée en
                         // bas : voir `SectionIndexBar.measuredHeight` pour la raison (la zone

@@ -24,7 +24,12 @@ struct YearHistogramChart: View {
     /// Toucher (ou action VoiceOver) sur une barre non sélectionnée : année, texte de la barre.
     let onSelect: (Int, String) -> Void
 
+    /// Les barres montent depuis zéro la première fois que le graphique est visible à l'écran.
+    @State private var isRevealed = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
+        let revealed = isRevealed || reduceMotion
         // Lue ici, dans le corps (suivi d'observation), puis passée aux marques : le contenu du
         // `Chart` est évalué par Charts, hors de ce suivi.
         let selectedYear = kind == .originalYears ? selection.originalYear : selection.additionsYear
@@ -39,7 +44,7 @@ struct YearHistogramChart: View {
         Chart(entries, id: \.year) { entry in
             BarMark(
                 x: .value("Année", String(entry.year)),
-                y: .value(valueLabel, entry.count)
+                y: .value(valueLabel, revealed ? entry.count : 0)
             )
             .foregroundStyle(barStyle(isDimmed: selectedYear != nil && selectedYear != String(entry.year)))
             .cornerRadius(5)
@@ -98,6 +103,10 @@ struct YearHistogramChart: View {
             }
         }
         .frame(height: 160)
+        .animation(.easeOut(duration: 0.8), value: revealed)
+        .onScrollVisibilityChange(threshold: 0.3) { visible in
+            if visible { isRevealed = true }
+        }
     }
 
     /// Le graphique ne défile que s'il y a strictement plus de barres que de places visibles.

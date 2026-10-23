@@ -196,6 +196,9 @@ struct StatCounterCard: View {
     let title: LocalizedStringResource
     let value: String
     var subtitle: String? = nil
+    /// Si renseigné, le nombre défile de 0 à cette valeur à l'apparition (voir `CountUpText`) ; `value`
+    /// ne sert alors qu'au libellé d'accessibilité.
+    var animatedCount: Int? = nil
     let systemImage: String
     let tint: Color
     var action: (() -> Void)? = nil
@@ -233,9 +236,16 @@ struct StatCounterCard: View {
                 }
             }
 
-            Text(value)
-                .font(.title.bold())
-                .monospacedDigit()
+            Group {
+                if animatedCount != nil {
+                    CountUpText(target: animatedCount)
+                        .accessibilityLabel(value)
+                } else {
+                    Text(value)
+                }
+            }
+            .font(.title.bold())
+            .monospacedDigit()
 
             // Toujours rendu (même vide) plutôt qu'un `if let` conditionnel : tant que le
             // compteur d'une carte n'est pas encore chargé (ex: Collection, souvent plus lente

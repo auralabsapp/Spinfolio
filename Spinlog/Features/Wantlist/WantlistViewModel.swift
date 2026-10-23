@@ -117,6 +117,8 @@ final class WantlistViewModel {
     /// Vrai pendant le calcul détaché des sections : voir `CollectionViewModel.isComputingSections`.
     private(set) var isComputingSections = false
     private let sectionsEngine = LibrarySectionsEngine<WantlistItem>()
+    /// Armé juste avant un retrait : le prochain calcul de sections s'applique avec animation.
+    private var animatesNextSectionsUpdate = false
 
     /// Tri + regroupement de la wantlist, délégués à `LibrarySectionsEngine` (partagé avec
     /// `CollectionViewModel`, voir son commentaire détaillé). Le tri `.shelf` est exclu du
@@ -130,8 +132,16 @@ final class WantlistViewModel {
             synchronous: !selectedTags.isEmpty,
             willStartAsync: { [weak self] in self?.isComputingSections = true },
             apply: { [weak self] result in
-                self?.sections = result
-                self?.isComputingSections = false
+                guard let self else { return }
+                // Les sections sont recalculées hors du fil principal, donc après le `withAnimation`
+                // de l'appelant : ce drapeau fait animer le retrait au moment où il s'applique.
+                if animatesNextSectionsUpdate, !UIAccessibility.isReduceMotionEnabled {
+                    withAnimation(.libraryRowRemoval) { sections = result }
+                } else {
+                    sections = result
+                }
+                animatesNextSectionsUpdate = false
+                isComputingSections = false
             }
         )
     }
@@ -185,6 +195,7 @@ final class WantlistViewModel {
     }
 
     private func handleWantlistItemRemoved(releaseId: Int) {
+        animatesNextSectionsUpdate = true
         withAnimation(.easeInOut(duration: 0.2)) {
             items.removeAll { $0.id == releaseId }
         }
@@ -344,6 +355,7 @@ final class WantlistViewModel {
         }
 
         // Optimistic UI : suppression immédiate de l'UI et du cache local
+        animatesNextSectionsUpdate = true
         items.removeAll { $0.id == item.id }
         localStore.removeWantlistItem(username: username, releaseId: item.id)
         LibraryMembershipStore.shared.markRemovedFromWantlist(item.id)

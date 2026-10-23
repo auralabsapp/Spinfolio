@@ -39,6 +39,10 @@ struct StatsPieChart<Detail: View>: View {
 
     private static var spring: Animation { .spring(response: 0.35, dampingFraction: 0.85) }
 
+    /// L'anneau apparaît en grossissant la première fois qu'il est visible à l'écran.
+    @State private var isRevealed = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         // Lue ici, dans le corps (suivi d'observation), puis passée aux marques : le contenu du
         // `Chart` est évalué par Charts, hors de ce suivi.
@@ -63,6 +67,9 @@ struct StatsPieChart<Detail: View>: View {
                 }
                 .chartAngleSelection(value: $pie.angle)
                 .frame(height: 230)
+                .opacity(isRevealed || reduceMotion ? 1 : 0)
+                .scaleEffect(isRevealed || reduceMotion ? 1 : 0.88)
+                .animation(.spring(response: 0.7, dampingFraction: 0.8), value: isRevealed)
                 .chartOverlay { _ in
                     GeometryReader { geo in
                         Rectangle()
@@ -95,6 +102,9 @@ struct StatsPieChart<Detail: View>: View {
         .padding(.horizontal, 10)
         .padding(.vertical, verticalPadding)
         .appleMusicGroupedCard()
+        .onScrollVisibilityChange(threshold: 0.3) { visible in
+            if visible { isRevealed = true }
+        }
         .onChange(of: pie.angle) { _, newAngle in
             if let newAngle {
                 select(fromAngle: newAngle)

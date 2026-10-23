@@ -265,6 +265,7 @@ struct StatsView: View {
                 title: "Collection",
                 value: viewModel.totalCollectionCount.map(String.init) ?? "–",
                 subtitle: viewModel.totalCollectionCount.map { $0 == 1 ? String(localized: "album") : String(localized: "albums") },
+                animatedCount: viewModel.totalCollectionCount,
                 systemImage: "square.stack.fill",
                 tint: Color.spinlogPink
             ) {
@@ -274,6 +275,7 @@ struct StatsView: View {
                 title: "Wantlist",
                 value: viewModel.totalWantlistCount.map(String.init) ?? "–",
                 subtitle: viewModel.totalWantlistCount.map { $0 == 1 ? String(localized: "album") : String(localized: "albums") },
+                animatedCount: viewModel.totalWantlistCount,
                 systemImage: "heart.fill",
                 tint: Color.spinlogPink
             ) {
@@ -283,6 +285,7 @@ struct StatsView: View {
                 title: "Artistes",
                 value: viewModel.uniqueArtistsCount.map(String.init) ?? "–",
                 subtitle: viewModel.uniqueArtistsCount.map { $0 == 1 ? String(localized: "artiste") : String(localized: "artistes") },
+                animatedCount: viewModel.uniqueArtistsCount,
                 systemImage: "person.2.fill",
                 tint: Color.spinlogPink
             )

@@ -27,8 +27,71 @@ final class StatsViewModel {
                 MainActor.assumeIsolated {
                     self?.recomputeListeningStats()
                 }
+            },
+            addLibraryObserver(for: .collectionItemAdded, payloadKey: "item") { [weak self] (item: CollectionItem) in
+                self?.handleCollectionItemAdded(item)
+            },
+            addLibraryObserver(for: .collectionItemRemoved) { [weak self] notification in
+                guard let self, let releaseId = notification.userInfo?["releaseId"] as? Int else { return }
+                self.handleCollectionItemRemoved(releaseId: releaseId, instanceId: notification.userInfo?["instanceId"] as? Int)
+            },
+            addLibraryObserver(for: .collectionInstanceReplaced) { [weak self] notification in
+                guard let self,
+                      let oldId = notification.userInfo?["oldInstanceId"] as? Int,
+                      let newItem = notification.userInfo?["newItem"] as? CollectionItem else { return }
+                self.handleCollectionInstanceReplaced(oldInstanceId: oldId, newItem: newItem)
             }
         ]
+    }
+
+    /// Exemplaires retirés pendant la session : Discogs peut encore les renvoyer quelques instants
+    /// dans la liste des derniers ajouts, ils sont écartés de la réponse (voir `loadCounters`).
+    private var locallyRemovedInstanceIds: Set<Int> = []
+
+    // MARK: - Suivi des changements faits ailleurs dans l'app
+
+    private func handleCollectionItemAdded(_ item: CollectionItem) {
+        locallyRemovedInstanceIds.remove(item.instanceId)
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+            recentAdditions = RecentAdditionsLogic.inserting(item, into: recentAdditions)
+        }
+        if let total = totalCollectionCount { totalCollectionCount = total + 1 }
+        if !allCollectionItems.isEmpty, !allCollectionItems.contains(where: { $0.instanceId == item.instanceId }) {
+            applyCollectionItems([item] + allCollectionItems)
+        }
+    }
+
+    private func handleCollectionItemRemoved(releaseId: Int, instanceId: Int?) {
+        let removedFromAll = allCollectionItems.count
+            - RecentAdditionsLogic.removing(releaseId: releaseId, instanceId: instanceId, from: allCollectionItems).count
+        let removedFromRecent = recentAdditions.count
+            - RecentAdditionsLogic.removing(releaseId: releaseId, instanceId: instanceId, from: recentAdditions).count
+        let removedCount = max(removedFromAll, removedFromRecent)
+        // Sans instance précise (retrait de tous les exemplaires), on retient ceux qu'on connaît.
+        if let instanceId {
+            locallyRemovedInstanceIds.insert(instanceId)
+        } else {
+            locallyRemovedInstanceIds.formUnion(
+                (allCollectionItems + recentAdditions).filter { $0.releaseId == releaseId }.map(\.instanceId)
+            )
+        }
+        if removedFromAll > 0 {
+            applyCollectionItems(RecentAdditionsLogic.removing(releaseId: releaseId, instanceId: instanceId, from: allCollectionItems))
+        }
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+            let remaining = RecentAdditionsLogic.removing(releaseId: releaseId, instanceId: instanceId, from: recentAdditions)
+            recentAdditions = RecentAdditionsLogic.refilled(remaining, from: allCollectionItems)
+        }
+        if removedCount > 0, let total = totalCollectionCount {
+            totalCollectionCount = max(0, total - removedCount)
+        }
+    }
+
+    private func handleCollectionInstanceReplaced(oldInstanceId: Int, newItem: CollectionItem) {
+        recentAdditions = RecentAdditionsLogic.replacing(oldInstanceId: oldInstanceId, with: newItem, in: recentAdditions)
+        if allCollectionItems.contains(where: { $0.instanceId == oldInstanceId }) {
+            applyCollectionItems(RecentAdditionsLogic.replacing(oldInstanceId: oldInstanceId, with: newItem, in: allCollectionItems))
+        }
     }
 
     deinit {
@@ -190,7 +253,7 @@ final class StatsViewModel {
             // Même animation que les autres sections de l'écran (répartitions, classements…) au
             // passage du squelette aux vraies pochettes, plutôt qu'un remplacement instantané.
             withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
-                recentAdditions = recentResponse.releases
+                recentAdditions = recentResponse.releases.filter { !locallyRemovedInstanceIds.contains($0.instanceId) }
             }
         } catch {
             // Sans réseau (ou erreur transitoire), on retombe sur le cache local pour les 2

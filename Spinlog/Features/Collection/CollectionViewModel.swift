@@ -234,7 +234,11 @@ final class CollectionViewModel {
         recomputeSections()
     }
 
+    /// Armé juste avant un retrait : le prochain calcul de sections s'applique avec animation.
+    private var animatesNextSectionsUpdate = false
+
     private func handleCollectionItemRemoved(releaseId: Int, instanceId: Int?) {
+        animatesNextSectionsUpdate = true
         collectionDebugLogger.log("RECV collectionItemRemoved release=\(releaseId) instance=\(instanceId ?? -1) itemsCountBefore=\(self.items.count)")
         withAnimation(.easeInOut(duration: 0.2)) {
             if let instanceId {
@@ -349,8 +353,15 @@ final class CollectionViewModel {
             synchronous: !selectedTags.isEmpty,
             willStartAsync: { [weak self] in self?.isComputingSections = true },
             apply: { [weak self] result in
-                self?.sections = result
-                self?.isComputingSections = false
+                guard let self else { return }
+                // Voir `WantlistViewModel` : le recalcul est asynchrone, donc le retrait est animé ici.
+                if animatesNextSectionsUpdate, !UIAccessibility.isReduceMotionEnabled {
+                    withAnimation(.libraryRowRemoval) { sections = result }
+                } else {
+                    sections = result
+                }
+                animatesNextSectionsUpdate = false
+                isComputingSections = false
             }
         )
     }
@@ -748,6 +759,7 @@ final class CollectionViewModel {
         }
 
         // Optimistic UI : retrait immédiat de la vue locale et du cache SwiftData
+        animatesNextSectionsUpdate = true
         items.removeAll { $0.id == item.id }
         localStore.removeCollectionItem(username: username, folderId: item.folderId, instanceId: item.instanceId)
         localStore.removeCollectionItem(username: username, folderId: DiscogsConstants.allFolderId, instanceId: item.instanceId)

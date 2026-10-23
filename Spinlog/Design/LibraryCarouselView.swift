@@ -109,6 +109,9 @@ struct LibraryCarouselView<Item: SortableLibraryItem>: View {
     /// Contenu posé en bas à droite de la jaquette (ex : cloche d'alerte de la Wantlist), masqué en
     /// mode sélection. Placé hors du lien de navigation de la jaquette : son toucher ne l'ouvre pas.
     var coverOverlay: (Item) -> AnyView = { _ in AnyView(EmptyView()) }
+    /// Menu de l'appui long sur la jaquette (mêmes actions que le balayage de la liste et le menu de
+    /// la mosaïque : le carrousel n'a pas de balayage). Vide : pas de menu.
+    var contextMenuContent: (Item) -> AnyView = { _ in AnyView(EmptyView()) }
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -369,6 +372,7 @@ struct LibraryCarouselView<Item: SortableLibraryItem>: View {
                 .accessibilityIdentifier("libraryItem-\(item.releaseId)")
                 .allowsHitTesting(!isSelecting)
                 .accessibilityHidden(isSelecting)
+                .contextMenu(isSelecting ? nil : ContextMenu { contextMenuContent(item) })
 
                 if !isSelecting {
                     coverOverlay(item)

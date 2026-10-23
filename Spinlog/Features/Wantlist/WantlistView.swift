@@ -284,6 +284,40 @@ struct WantlistView: View {
                         requestAlertSheet(for: item)
                     }
                 )
+            },
+            contextMenuContent: { item in wantlistCarouselContextMenu(for: item) }
+        )
+    }
+
+    /// Menu de l'appui long sur une pochette du carrousel : mêmes actions que le balayage de la liste
+    /// (qui n'existe pas hors `List` sur iOS 26). Retrait et passage en collection sont masqués quand
+    /// les données sont périmées hors ligne, comme les balayages.
+    private func wantlistCarouselContextMenu(for item: WantlistItem) -> AnyView {
+        let alert = alertStore.alert(for: item.id)
+        return AnyView(
+            Group {
+                Button {
+                    requestAlertSheet(for: item)
+                } label: {
+                    Label(
+                        alert != nil ? "Modifier l'alerte prix" : "Définir une alerte prix",
+                        systemImage: alert != nil ? "bell.badge.fill" : "bell"
+                    )
+                }
+
+                if !viewModel.isOfflineAndStale {
+                    Button {
+                        Task { await viewModel.beginMoveToCollection(item) }
+                    } label: {
+                        Label("Vers la collection", systemImage: "square.stack.fill")
+                    }
+
+                    Button(role: .destructive) {
+                        itemPendingDeletion = item
+                    } label: {
+                        Label("Supprimer de la wantlist", systemImage: "trash")
+                    }
+                }
             }
         )
     }
@@ -438,16 +472,16 @@ struct WantlistView: View {
                 }
                     .frame(maxWidth: .infinity, minHeight: 400)
             }
-            .refreshable {
+            .libraryRefreshable {
                 await viewModel.refresh()
             }
         } else if viewModel.items.isEmpty && !viewModel.isLoading {
             ScrollView {
-                ContentUnavailableView {
-                    Label("Wantlist vide", systemImage: "heart")
-                } description: {
-                    Text("Ajoute des disques que tu recherches depuis la recherche ou le scan.")
-                } actions: {
+                LibraryEmptyState(
+                    title: "Wantlist vide",
+                    message: "Ajoute des disques que tu recherches depuis la recherche ou le scan.",
+                    symbol: "heart.fill"
+                ) {
                     Button("Rechercher un disque") {
                         TabNavigationCoordinator.shared.selectedTab = .search
                     }
@@ -455,7 +489,7 @@ struct WantlistView: View {
                 }
                 .frame(maxWidth: .infinity, minHeight: 400)
             }
-            .refreshable {
+            .libraryRefreshable {
                 await viewModel.refresh()
             }
         } else if viewModel.sections.isEmpty && !isShowingSkeleton {

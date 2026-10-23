@@ -40,6 +40,11 @@ struct ReleaseDetailView: View {
     @State private var showingPremiumSheet = false
     @State private var imageViewerRequest: ImageViewerRequest?
     @State private var scrollOffsetY: CGFloat = 0
+    /// Déclenche le léger « pop » de la jaquette après un ajout à la collection ou à la wantlist.
+    @State private var heroPop = 0
+    /// Passe à vrai une fois la fiche chargée : les sections arrivent alors en cascade (une seule
+    /// fois, pas à chaque retour sur l'écran).
+    @State private var sectionsRevealed = false
 
     private var infoBackgroundColor: Color {
         if let averageColor = viewModel.averageColor {
@@ -156,6 +161,20 @@ struct ReleaseDetailView: View {
                 }
             }
             .task { await viewModel.loadIfNeeded(releaseId: releaseId, actions: actions) }
+            .onChange(of: viewModel.release?.id, initial: true) { _, loadedId in
+                if loadedId != nil { sectionsRevealed = true }
+            }
+            // Retour au geste de l'utilisateur : succès à l'ajout (+ « pop » de la jaquette), choc léger
+            // au retrait. Les changements d'état dus au simple chargement n'émettent aucun événement.
+            .onChange(of: actions.lastFeedbackEvent) { _, event in
+                guard let event else { return }
+                if event.kind.isAddition {
+                    UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    heroPop += 1
+                } else {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                }
+            }
     }
 
     private func triggerListeningLog() {
@@ -247,6 +266,7 @@ struct ReleaseDetailView: View {
                                     handleShowShelfPlacement(for: release)
                                 }
                             )
+                            .releaseSectionEntrance(sectionsRevealed, index: 0)
 
                             // 1.1 Guide de rangement : confirmation immédiate après ajout à la collection
                             if actions.justAddedReleaseId == releaseId {
@@ -267,6 +287,7 @@ struct ReleaseDetailView: View {
                                         handleShowShelfPlacement(for: Release(from: item))
                                     }
                                 )
+                                .releaseSectionEntrance(sectionsRevealed, index: 1)
                             }
 
                             // 2bis. Emplacement physique dans le meuble : section à part entière
@@ -281,6 +302,7 @@ struct ReleaseDetailView: View {
                                     SectionEyebrow(title: "Rangement physique", icon: "books.vertical.fill")
                                     shelfPlacementRow(for: commonInstanceFolderRelease)
                                 }
+                                .releaseSectionEntrance(sectionsRevealed, index: 2)
                             }
 
                             // 2ter. Journal d'écoute (disponible pour toute release)
@@ -296,6 +318,7 @@ struct ReleaseDetailView: View {
                                     }
                                 )
                             }
+                            .releaseSectionEntrance(sectionsRevealed, index: 3)
 
                             // 2quater. Note personnelle de la release (partagée par Discogs entre tous les exemplaires)
                             if actions.isInCollection && !actions.collectionInstances.isEmpty {
@@ -306,6 +329,7 @@ struct ReleaseDetailView: View {
                                         Task { await actions.updateReleaseRating(newRating) }
                                     }
                                 )
+                                .releaseSectionEntrance(sectionsRevealed, index: 4)
                             }
 
                             // 3. Section "Infos Discogs sur la release" : regroupe toutes les
@@ -771,6 +795,7 @@ struct ReleaseDetailView: View {
                 .aspectRatio(1, contentMode: .fill)
                 .frame(width: width, height: height + pullDown, alignment: .top)
                 .scaleEffect(1.0 + easedProgress * 0.10) // Empêche les bords blanchis par le flou
+                .libraryPop(trigger: heroPop, peak: 1.04)
                 .blur(radius: blurRadius)
                 .clipped()
             }
@@ -789,6 +814,13 @@ struct ReleaseDetailView: View {
         .accessibilityAddTraits(.isButton)
     }
 
+}
+
+private extension View {
+    /// Entrée en cascade des sections de la fiche : chacune arrive un peu après la précédente.
+    func releaseSectionEntrance(_ revealed: Bool, index: Int) -> some View {
+        shelfEntrance(isVisible: revealed, offset: CGSize(width: 0, height: 18), delay: 0.07 * Double(index))
+    }
 }
 
 #Preview {

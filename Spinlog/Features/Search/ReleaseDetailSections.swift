@@ -67,6 +67,9 @@ struct ReleaseQuickActionsBar: View {
     @State private var showDeleteAllConfirmation = false
     @State private var showSingleDeleteConfirmation = false
     @State private var showWantlistDeleteConfirmation = false
+    /// Compteurs qui déclenchent le « pop » des boutons après un ajout (voir `libraryPop`).
+    @State private var collectionPop = 0
+    @State private var wantlistPop = 0
 
     private var isAlwaysAsk: Bool {
         guard let username = authManager.username else { return false }
@@ -96,6 +99,7 @@ struct ReleaseQuickActionsBar: View {
         HStack(spacing: 6) {
             Image(systemName: actions.isInCollection ? "checkmark" : "plus")
                 .font(.subheadline.bold())
+                .contentTransition(.symbolEffect(.replace))
             Text(collectionButtonTitle)
                 .font(.subheadline.weight(.semibold))
                 .lineLimit(1)
@@ -116,6 +120,7 @@ struct ReleaseQuickActionsBar: View {
             }
         )
         .contentShape(Capsule())
+        .libraryPop(trigger: collectionPop)
     }
 
     var body: some View {
@@ -280,6 +285,7 @@ struct ReleaseQuickActionsBar: View {
                 HStack(spacing: 6) {
                     Image(systemName: actions.isInWantlist ? "checkmark" : "heart.fill")
                         .font(.subheadline.bold())
+                        .contentTransition(.symbolEffect(.replace))
                     Text(actions.isInWantlist ? "En wantlist" : "Wantlist")
                         .font(.subheadline.weight(.semibold))
                         .lineLimit(1)
@@ -300,12 +306,21 @@ struct ReleaseQuickActionsBar: View {
                     }
                 )
                 .contentShape(Capsule())
+                .libraryPop(trigger: wantlistPop)
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("releaseWantlistButton")
         }
         .animation(.easeInOut(duration: 0.15), value: actions.isInCollection)
         .animation(.easeInOut(duration: 0.15), value: actions.isInWantlist)
+        .onChange(of: actions.lastFeedbackEvent) { _, event in
+            guard let event, event.kind.isAddition else { return }
+            if event.kind == .addedToCollection {
+                collectionPop += 1
+            } else {
+                wantlistPop += 1
+            }
+        }
         .task {
             await actions.loadFoldersIfNeeded()
         }

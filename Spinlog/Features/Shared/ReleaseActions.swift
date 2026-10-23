@@ -18,6 +18,10 @@ final class ReleaseActions {
     /// Statut wantlist : modifiable instantanément en UI optimiste.
     private(set) var isInWantlist = false
 
+    /// Dernier ajout/retrait fait par l'utilisateur (voir `LibraryFeedbackEvent`) : l'écran s'en sert
+    /// pour le retour haptique et visuel.
+    private(set) var lastFeedbackEvent: LibraryFeedbackEvent?
+
     /// ID de la release venant d'être ajoutée avec succès à la collection (pour proposer le guide de rangement)
     var justAddedReleaseId: Int? = nil
 
@@ -374,6 +378,7 @@ final class ReleaseActions {
             isInCollection = true
             justAddedReleaseId = releaseId
         }
+        lastFeedbackEvent = LibraryFeedbackEvent(.addedToCollection)
 
         let folderId: Int
         if let targetFolderId {
@@ -521,6 +526,9 @@ final class ReleaseActions {
             if collectionInstances.isEmpty && justAddedReleaseId == releaseId {
                 justAddedReleaseId = nil
             }
+        }
+        if collectionInstances.isEmpty {
+            lastFeedbackEvent = LibraryFeedbackEvent(.removedFromCollection)
         }
 
         localStore.removeCollectionItem(username: username, folderId: targetFolderId, instanceId: targetInstanceId)
@@ -708,6 +716,7 @@ final class ReleaseActions {
                 justAddedReleaseId = nil
             }
         }
+        lastFeedbackEvent = LibraryFeedbackEvent(.removedFromCollection)
 
         localStore.removeCollectionItems(username: username, releaseId: releaseId)
         LibraryMembershipStore.shared.notifyCollectionItemRemoved(releaseId: releaseId)
@@ -833,6 +842,7 @@ final class ReleaseActions {
         withAnimation(.easeInOut(duration: 0.2)) {
             isInWantlist = true
         }
+        lastFeedbackEvent = LibraryFeedbackEvent(.addedToWantlist)
 
         if let release {
             let item = WantlistItem(
@@ -905,6 +915,7 @@ final class ReleaseActions {
         withAnimation(.easeInOut(duration: 0.2)) {
             isInWantlist = false
         }
+        lastFeedbackEvent = LibraryFeedbackEvent(.removedFromWantlist)
         localStore.removeWantlistItem(username: username, releaseId: releaseId)
         LibraryMembershipStore.shared.notifyWantlistItemRemoved(releaseId: releaseId)
 

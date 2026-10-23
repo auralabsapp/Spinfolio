@@ -11,6 +11,9 @@
         }
       }
     },
+    "–" : {
+
+    },
     "—" : {
       "localizations" : {
         "en" : {
@@ -2596,6 +2599,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "LEFT"
+          }
+        }
+      }
+    },
+    "À jour" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Up to date"
           }
         }
       }
@@ -12250,6 +12263,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remove From Collection?"
+          }
+        }
+      }
+    },
+    "Supprimer de la wantlist" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Remove from wantlist"
           }
         }
       }

@@ -24,6 +24,10 @@ extension Animation {
     /// brève (les autres barres s'estompent presque instantanément), sans rebond.
     static let chartSelection = Animation.easeOut(duration: 0.15)
 
+    /// Une ligne ou une pochette retirée d'une liste (Collection, Wantlist) s'efface en douceur au lieu
+    /// de disparaître d'un coup.
+    static let libraryRowRemoval = Animation.easeInOut(duration: 0.28)
+
     /// Pulsation du disque cible du guide de rangement quand on le touche : rebond court, pour
     /// montrer que le toucher est reconnu même si l'élément n'ouvre rien.
     static let shelfTargetPulse = Animation.spring(response: 0.25, dampingFraction: 0.55)

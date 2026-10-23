@@ -18,7 +18,12 @@ struct TopArtistsChart: View {
     /// Toucher (ou action VoiceOver) sur une barre non sélectionnée.
     let onSelect: (String) -> Void
 
+    /// Les barres s'allongent depuis zéro la première fois que le graphique est visible à l'écran.
+    @State private var isRevealed = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
+        let revealed = isRevealed || reduceMotion
         // Lue ici, dans le corps (suivi d'observation), puis passée aux marques : le contenu du
         // `Chart` est évalué par Charts, hors de ce suivi.
         let selectedArtist = selection.topArtist
@@ -30,7 +35,7 @@ struct TopArtistsChart: View {
         ScrollView(.vertical, showsIndicators: true) {
             Chart(entries, id: \.name) { entry in
                 BarMark(
-                    x: .value("Albums", entry.count),
+                    x: .value("Albums", revealed ? entry.count : 0),
                     y: .value("Artiste", entry.name)
                 )
                 .foregroundStyle(barStyle(isDimmed: selectedArtist != nil && selectedArtist != entry.name))
@@ -52,6 +57,7 @@ struct TopArtistsChart: View {
                 }
             }
             .frame(height: fullHeight)
+            .animation(.easeOut(duration: 0.8), value: revealed)
             .chartOverlay { proxy in
                 GeometryReader { geo in
                     Rectangle()
@@ -86,6 +92,9 @@ struct TopArtistsChart: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
         .appleMusicGroupedCard()
+        .onScrollVisibilityChange(threshold: 0.3) { visible in
+            if visible { isRevealed = true }
+        }
     }
 
     /// Les barres sont horizontales : le dégradé suit le sens gauche→droite, donc la longueur
