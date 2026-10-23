@@ -134,7 +134,7 @@ struct SettingsView: View {
             NavigationLink(value: SettingsDestination.organization) {
                 SettingsHubRow(
                     icon: "tag.fill", color: .orange, title: "Organisation",
-                    subtitle: String(localized: "Tags et dossiers Discogs")
+                    subtitle: String(localized: "Tags, dossiers et tri par artiste")
                 )
             }
             NavigationLink(value: SettingsDestination.shelving) {

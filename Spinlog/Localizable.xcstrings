@@ -5763,7 +5763,18 @@
         }
       }
     },
+    "Dans Réglages > Organisation, active « Ignorer les articles (The...) » ou « Trier par nom de famille »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "In Settings > Organization, turn on “Ignore Articles (The...)” or “Sort by Last Name”."
+          }
+        }
+      }
+    },
     "Dans Réglages > Rangement, active « Ignorer les articles (The...) » ou « Trier par nom de famille »." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -10883,6 +10894,16 @@
         }
       }
     },
+    "Personnalisation du tri par artiste" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Artist Sort Customization"
+          }
+        }
+      }
+    },
     "Personnalisé" : {
       "localizations" : {
         "en" : {
@@ -13621,6 +13642,7 @@
       }
     },
     "Tags et dossiers Discogs" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -13636,6 +13658,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Tags and Rating"
+          }
+        }
+      }
+    },
+    "Tags, dossiers et tri par artiste" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tags, folders and artist sort"
           }
         }
       }

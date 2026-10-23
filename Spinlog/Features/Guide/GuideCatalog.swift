@@ -336,7 +336,7 @@ enum GuideCatalog {
             title: "Noms d'artistes",
             summary: "Articles, noms de famille, cas particuliers : tu règles l'ordre artiste par artiste.",
             steps: [
-                "Dans Réglages > Rangement, active « Ignorer les articles (The...) » ou « Trier par nom de famille ».",
+                "Dans Réglages > Organisation, active « Ignorer les articles (The...) » ou « Trier par nom de famille ».",
                 "Avec le nom de famille, « Personnaliser le tri des artistes » corrige un cas isolé."
             ],
             tip: "Ces réglages valent pour le meuble, la Collection et la Wantlist.",

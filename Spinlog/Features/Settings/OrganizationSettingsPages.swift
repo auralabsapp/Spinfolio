@@ -1,10 +1,12 @@
 import SwiftUI
 
-/// Page « Organisation » de Réglages : les tags et les dossiers Discogs (dont le dossier d'ajout par
-/// défaut). Les règles de rangement du meuble ont leur propre page (`ShelvingSettingsPage`).
+/// Page « Organisation » de Réglages : les tags, les dossiers Discogs (dont le dossier d'ajout par
+/// défaut) et la personnalisation du tri par artiste. Les règles de rangement du meuble ont leur
+/// propre page (`ShelvingSettingsPage`).
 struct OrganizationSettingsPage: View {
     @State private var tagStore = TagStore.shared
     @State private var authManager = DiscogsAuthManager.shared
+    @State private var shelfPreferences = ShelfPreferencesStore.shared
     @State private var defaultFolderId: Int = CollectionPreferencesStore.alwaysAskFolderId
 
     var body: some View {
@@ -36,6 +38,56 @@ struct OrganizationSettingsPage: View {
                 SectionEyebrow(title: "Organisation", icon: "tag.fill")
             } footer: {
                 Text("Personnalise tes tags et tes dossiers Discogs, dont le dossier d'enregistrement par défaut.")
+            }
+
+            Section {
+                Toggle(isOn: $shelfPreferences.ignoreArticles) {
+                    HStack(spacing: 14) {
+                        SettingsIcon(systemName: "text.quote", backgroundColor: .teal)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Ignorer les articles (The...)")
+                                .foregroundStyle(.primary)
+                            Text("Ex : « Beatles, The » si actif, sinon « The Beatles »")
+                                .font(.caption2)
+                                .foregroundStyle(Color.appSecondaryText)
+                        }
+                    }
+                }
+                .tint(Color.spinlogPink)
+
+                Toggle(isOn: $shelfPreferences.sortByLastName) {
+                    HStack(spacing: 14) {
+                        SettingsIcon(systemName: "person.text.rectangle", backgroundColor: .purple)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Trier par nom de famille")
+                                .foregroundStyle(.primary)
+                            Text("S'applique à tous les tris par artiste (meuble, Collection, Wantlist)")
+                                .font(.caption2)
+                                .foregroundStyle(Color.appSecondaryText)
+                        }
+                    }
+                }
+                .tint(Color.spinlogPink)
+
+                if shelfPreferences.sortByLastName {
+                    NavigationLink(value: SettingsDestination.artistSort) {
+                        HStack(spacing: 14) {
+                            SettingsIcon(systemName: "slider.horizontal.3", backgroundColor: .pink)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Personnaliser le tri des artistes")
+                                    .foregroundStyle(.primary)
+                                let count = shelfPreferences.customArtistSortOverrides.count
+                                Text(count > 0 ? "\(count) artistes personnalisés" : "Ajuster l'ordre artiste par artiste")
+                                    .font(.caption2)
+                                    .foregroundStyle(Color.appSecondaryText)
+                            }
+                        }
+                    }
+                }
+            } header: {
+                SectionEyebrow(title: "Personnalisation du tri par artiste", icon: "person.text.rectangle")
+            } footer: {
+                Text("Ces réglages valent pour le meuble, la Collection et la Wantlist.")
             }
         }
         .task { loadDefaultFolder() }
@@ -97,34 +149,6 @@ struct ShelvingSettingsPage: View {
                     }
                 )
 
-                Toggle(isOn: $shelfPreferences.ignoreArticles) {
-                    HStack(spacing: 14) {
-                        SettingsIcon(systemName: "text.quote", backgroundColor: .teal)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Ignorer les articles (The...)")
-                                .foregroundStyle(.primary)
-                            Text("Ex : « Beatles, The » si actif, sinon « The Beatles »")
-                                .font(.caption2)
-                                .foregroundStyle(Color.appSecondaryText)
-                        }
-                    }
-                }
-                .tint(Color.spinlogPink)
-
-                Toggle(isOn: $shelfPreferences.sortByLastName) {
-                    HStack(spacing: 14) {
-                        SettingsIcon(systemName: "person.text.rectangle", backgroundColor: .purple)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Trier par nom de famille")
-                                .foregroundStyle(.primary)
-                            Text("S'applique à tous les tris par artiste (meuble, Collection, Wantlist)")
-                                .font(.caption2)
-                                .foregroundStyle(Color.appSecondaryText)
-                        }
-                    }
-                }
-                .tint(Color.spinlogPink)
-
                 Toggle(isOn: $shelfPreferences.restrictToSameFolder) {
                     HStack(spacing: 14) {
                         SettingsIcon(systemName: "square.stack.3d.up.fill", backgroundColor: .orange)
@@ -138,22 +162,6 @@ struct ShelvingSettingsPage: View {
                     }
                 }
                 .tint(Color.spinlogPink)
-
-                if shelfPreferences.sortByLastName {
-                    NavigationLink(value: SettingsDestination.artistSort) {
-                        HStack(spacing: 14) {
-                            SettingsIcon(systemName: "slider.horizontal.3", backgroundColor: .pink)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Personnaliser le tri des artistes")
-                                    .foregroundStyle(.primary)
-                                let count = shelfPreferences.customArtistSortOverrides.count
-                                Text(count > 0 ? "\(count) artistes personnalisés" : "Ajuster l'ordre artiste par artiste")
-                                    .font(.caption2)
-                                    .foregroundStyle(Color.appSecondaryText)
-                            }
-                        }
-                    }
-                }
             } header: {
                 SectionEyebrow(title: "Rangement", icon: "books.vertical.fill")
             } footer: {
