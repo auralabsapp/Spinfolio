@@ -7,7 +7,17 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
-## 2026-10-24 — Écoute sur platine : CD et cassette ; Réglages affiné
+## 2026-10-24 — Écoute sur platine : CD, cassette, bras de lecture ; Réglages affiné
+
+### 00:54 — `a3feb91` Écoute sur platine : bras de lecture, démarrage et arrêt progressifs ; scan par lot et recherche plus vivants
+- **Feuille d'écoute** : bras de lecture pour le vinyle (se pose au début du disque, se relève à l'arrêt) ;
+  le disque, le CD ou les bobines accélèrent au démarrage et ralentissent jusqu'à l'immobilité
+  (`SpinProfile`), la feuille se ferme après l'arrêt en douceur ; le ruban de la cassette suit les bobines.
+- **Scan par lot** : coins de visée qui respirent, éclair vert, haptique de succès, rebond du compteur
+  et pastille du disque reconnu.
+- **Recherche** : le texte d'invite du champ tourne toutes les 3 s parmi quelques suggestions.
+- Recettes Q30, G23 et G24 ; tests `SpinProfileTests`.
+- 13 fichiers, +611 / −78.
 
 ### 00:25 — `ef98f41` Réglages : la personnalisation du tri par artiste passe dans Organisation
 - **Rangement** ne garde que la règle du meuble et « Limiter au dossier Discogs ».
