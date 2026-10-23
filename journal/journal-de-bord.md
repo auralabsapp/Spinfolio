@@ -9,6 +9,10 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-10-24 — Écoute sur platine : CD, cassette, bras de lecture ; Réglages affiné
 
+### 00:59 — `bce8905` Bras de lecture : angle posé porté à 20°
+- La tête de lecture se pose un peu plus vers l'intérieur du disque (15° → 20°).
+- 1 fichier, +2 / −2.
+
 ### 00:54 — `a3feb91` Écoute sur platine : bras de lecture, démarrage et arrêt progressifs ; scan par lot et recherche plus vivants
 - **Feuille d'écoute** : bras de lecture pour le vinyle (se pose au début du disque, se relève à l'arrêt) ;
   le disque, le CD ou les bobines accélèrent au démarrage et ralentissent jusqu'à l'immobilité
