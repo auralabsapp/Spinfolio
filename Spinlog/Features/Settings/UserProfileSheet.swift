@@ -19,6 +19,7 @@ struct UserProfileSheet: View {
     @State private var viewModel = UserProfileViewModel()
     @State private var safariTarget: SafariTarget?
     @State private var showingDeleteAccountConfirmation = false
+    @State private var showingEraseDataSheet = false
     @State private var showingLogoutConfirmation = false
 
     var body: some View {
@@ -29,6 +30,10 @@ struct UserProfileSheet: View {
             .task { await viewModel.loadIfNeeded(username: username) }
             .sheet(item: $safariTarget) { target in
                 SafariView(url: target.url)
+            }
+            .eraseAccountDataSheet(isPresented: $showingEraseDataSheet) {
+                DiscogsAuthManager.shared.deleteLocalAccountData()
+                dismiss()
             }
             .confirmationDialog("Se déconnecter", isPresented: $showingLogoutConfirmation, titleVisibility: .visible) {
                 Button("Se déconnecter", role: .destructive) {
@@ -47,13 +52,12 @@ struct UserProfileSheet: View {
                 Button("Supprimer le compte sur Discogs.com", role: .destructive) {
                     safariTarget = SafariTarget(url: DiscogsConstants.accountDeletionURL)
                 }
-                Button("Effacer les données locales & iCloud et se déconnecter", role: .destructive) {
-                    DiscogsAuthManager.shared.deleteLocalAccountData()
-                    dismiss()
+                Button("Effacer les données de l'app…", role: .destructive) {
+                    showingEraseDataSheet = true
                 }
                 Button("Annuler", role: .cancel) {}
             } message: {
-                Text("Ton compte est géré par Discogs. Pour supprimer définitivement ton compte et l'ensemble de tes données, tu dois finaliser la demande sur le site officiel de Discogs.\n\nTu peux également effacer immédiatement toutes les données stockées par l'application sur cet appareil et synchronisées sur iCloud (tags, historique d'écoute, préférences).")
+                Text("Ton compte est géré par Discogs. Pour supprimer définitivement ton compte et l'ensemble de tes données, tu dois finaliser la demande sur le site officiel de Discogs.\n\nTu peux aussi effacer les données de l'app (historique d'écoute, tags, alertes, préférences), sur cet appareil et sur iCloud. C'est irréversible : tu devras le confirmer à l'étape suivante.")
             }
     }
 

@@ -30,6 +30,17 @@ enum SettingsDestination: Hashable {
     case colorTheme
     case guide
     case guideSection(GuideSection)
+    case grades
+    // Pages de l'écran d'accueil de Réglages (une par sujet, voir `SettingsView`).
+    case organization
+    case shelving
+    case gainTracking
+    case export
+    case listening
+    case iCloud
+    case offlineLocked
+    case appearance
+    case about
     #if DEBUG
     case developerOptions
     #endif
@@ -55,6 +66,26 @@ enum SettingsDestination: Hashable {
             GuideView()
         case .guideSection(let section):
             GuideSectionView(section: section)
+        case .grades:
+            GradesView()
+        case .organization:
+            OrganizationSettingsPage()
+        case .shelving:
+            ShelvingSettingsPage()
+        case .gainTracking:
+            GainTrackingSettingsPage()
+        case .export:
+            ExportSettingsPage()
+        case .listening:
+            ListeningSettingsPage()
+        case .iCloud:
+            ICloudSettingsPage()
+        case .offlineLocked:
+            OfflineLockedSettingsPage()
+        case .appearance:
+            AppearanceSettingsPage()
+        case .about:
+            AboutSettingsPage()
         #if DEBUG
         case .developerOptions:
             DeveloperOptionsView()

@@ -37,6 +37,9 @@ nonisolated enum SyncedRecordKind: Equatable {
     /// réinitialisée à la déconnexion — voir `DiscogsAuthManager.logout()`), ces réglages sont
     /// propres au compte Discogs et doivent se retrouver à la reconnexion ou sur un autre appareil.
     case appPreferences
+    /// Grades franchis et leur date (voir `GradeStore`) : un seul enregistrement singleton par
+    /// compte, toujours fusionné (jamais remplacé) puisqu'un grade ne se perd pas.
+    case grades
 
     private static let tagPrefix = "tags_"
     private static let sessionPrefix = "session_"
@@ -47,12 +50,15 @@ nonisolated enum SyncedRecordKind: Equatable {
     private static let standaloneTagsRecordName = "standaloneTags"
     private static let discogsWorkCategoriesRecordName = "discogsWorkCategories"
     private static let appPreferencesRecordName = "appPreferences"
+    private static let gradesRecordName = "grades"
 
     /// Toujours fusionné avec la version distante (jamais remplacé) : exclu de la règle « la
     /// modification la plus récente l'emporte » (voir `CloudSyncModificationLog`).
     var isAlwaysMerged: Bool {
-        if case .discogsWorkCategories = self { return true }
-        return false
+        switch self {
+        case .discogsWorkCategories, .grades: return true
+        default: return false
+        }
     }
 
     var recordName: String {
@@ -66,6 +72,7 @@ nonisolated enum SyncedRecordKind: Equatable {
         case .standaloneTags: return Self.standaloneTagsRecordName
         case .discogsWorkCategories: return Self.discogsWorkCategoriesRecordName
         case .appPreferences: return Self.appPreferencesRecordName
+        case .grades: return Self.gradesRecordName
         }
     }
 
@@ -80,6 +87,7 @@ nonisolated enum SyncedRecordKind: Equatable {
         case .standaloneTags: return "StandaloneTags"
         case .discogsWorkCategories: return "DiscogsWorkCategories"
         case .appPreferences: return "AppPreferences"
+        case .grades: return "Grades"
         }
     }
 
@@ -103,6 +111,7 @@ nonisolated enum SyncedRecordKind: Equatable {
         if recordName == standaloneTagsRecordName { return .standaloneTags }
         if recordName == discogsWorkCategoriesRecordName { return .discogsWorkCategories }
         if recordName == appPreferencesRecordName { return .appPreferences }
+        if recordName == gradesRecordName { return .grades }
         return nil
     }
 }

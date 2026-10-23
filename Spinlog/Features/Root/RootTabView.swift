@@ -119,7 +119,9 @@ struct RootTabView: View {
         .task(id: authManager.isAuthenticated) {
             await refreshWidgetSnapshotIfNeeded()
             autoSyncOfflineIfNeeded()
+            GradeEvaluator.shared.start()
         }
+        .overlay { GradeCelebrationHost() }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 themeManager.revertToDefaultIfNeeded(isPremium: PremiumStore.shared.isPremium)
@@ -127,6 +129,7 @@ struct RootTabView: View {
                     await refreshWidgetSnapshotIfNeeded()
                 }
                 autoSyncOfflineIfNeeded()
+                GradeEvaluator.shared.evaluateIfDue()
             }
         }
     }
@@ -405,11 +408,20 @@ final class TabNavigationCoordinator {
         pendingWantlistAlertReleaseId = releaseId
     }
 
-    /// Ouvre Réglages directement positionné sur la section "Collection & Rangement" (ex: depuis
-    /// "Modifier" dans la méthode de classement du guide de rangement), plutôt qu'en haut de la liste.
-    func openSettingsAtOrganizationSection() {
-        // Section de la racine de Réglages : un sous-écran resté ouvert la masquerait.
+    /// Ouvre « Mes grades » dans Réglages (depuis la célébration d'un grade) : pile ramenée à la
+    /// racine d'abord, pour ne pas empiler la page sur un sous-écran resté ouvert.
+    func openGrades() {
         settingsPath = NavigationPath()
+        settingsPath.append(SettingsDestination.grades)
+        selectedTab = .settings
+    }
+
+    /// Ouvre la page « Rangement » de Réglages, règle de rangement mise en évidence (depuis « Modifier »
+    /// dans la méthode de classement du guide de rangement).
+    func openSettingsAtOrganizationSection() {
+        // Pile ramenée à la racine d'abord, pour ne pas empiler la page sur un sous-écran resté ouvert.
+        settingsPath = NavigationPath()
+        settingsPath.append(SettingsDestination.shelving)
         selectedTab = .settings
         hasPendingOrganizationScroll = true
         scrollToOrganizationSectionTrigger += 1
@@ -422,10 +434,11 @@ final class TabNavigationCoordinator {
         return hasPendingOrganizationScroll
     }
 
-    /// Ouvre Réglages positionné sur la section « Prix d'achat et état », avec la ligne du champ
-    /// demandé mise en évidence (depuis la pastille « Utilisé pour la plus-value » de « Mon exemplaire »).
+    /// Ouvre la page « Suivi de plus-value » de Réglages, avec la ligne du champ demandé mise en
+    /// évidence (depuis la pastille « Utilisé pour la plus-value » de « Mon exemplaire »).
     func openSettingsAtPurchaseField(_ field: SettingsFieldHighlight) {
         settingsPath = NavigationPath()
+        settingsPath.append(SettingsDestination.gainTracking)
         selectedTab = .settings
         pendingSettingsFieldHighlight = field
         scrollToPurchasePriceSectionTrigger += 1

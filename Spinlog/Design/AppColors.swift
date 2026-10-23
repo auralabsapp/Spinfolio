@@ -126,6 +126,24 @@ extension Color {
             ? UIColor(red: 0.88, green: 0.52, blue: 0.12, alpha: 1.0)
             : UIColor(red: 0.62, green: 0.34, blue: 0.04, alpha: 1.0)
     })
+    /// Teinte du anneau d'un badge de grade, du plus modeste au plus haut : l'or n'apparaît qu'au
+    /// dernier grade, comme signe distinctif. Fixes (identiques en clair et sombre) : ce sont des
+    /// ornements, jamais du texte.
+    static func gradeTier(_ tier: Int) -> Color {
+        switch tier {
+        case 0: Color(red: 0.55, green: 0.62, blue: 0.70)
+        case 1: Color(red: 0.20, green: 0.66, blue: 0.62)
+        case 2: Color(red: 0.25, green: 0.52, blue: 0.90)
+        case 3: Color(red: 0.55, green: 0.38, blue: 0.88)
+        case 4: Color(red: 0.86, green: 0.30, blue: 0.60)
+        case 5: Color(red: 0.92, green: 0.45, blue: 0.22)
+        default: goldLight
+        }
+    }
+
+    /// Étiquette du disque du parcours « Écoute » (celle du parcours « Collection » est `spinlogPink`).
+    static let gradeListeningLabel = Color(red: 0.25, green: 0.52, blue: 0.90)
+
     static var goldButtonGradient: LinearGradient {
         LinearGradient(colors: [goldLight, goldWarm], startPoint: .topLeading, endPoint: .bottomTrailing)
     }

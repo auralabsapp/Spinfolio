@@ -71,6 +71,7 @@ final class DiscogsAuthManager: NSObject {
         // qu'ils chargent tout de suite les bonnes données plutôt que de démarrer à vide.
         TagStore.shared.setActiveUsername(self.username)
         ListeningLogStore.shared.setActiveUsername(self.username)
+        GradeStore.shared.setActiveUsername(self.username)
         // Jamais de synchro iCloud pour la démo : rien à conserver, et l'appareil d'un testeur
         // ne doit pas recevoir de zone CloudKit à ce nom.
         CloudSyncEngine.shared.setActiveUsername(isDemoMode ? nil : self.username)
@@ -119,6 +120,7 @@ final class DiscogsAuthManager: NSObject {
             // a déjà été utilisé sur cet appareil, ses données sont restaurées immédiatement.
             TagStore.shared.setActiveUsername(username)
             ListeningLogStore.shared.setActiveUsername(username)
+            GradeStore.shared.setActiveUsername(username)
             CloudSyncEngine.shared.setActiveUsername(username)
             WantlistAlertStore.shared.setActiveUsername(username)
             // Rejoue les actions hors ligne laissées en attente par ce compte lors d'une
@@ -152,6 +154,7 @@ final class DiscogsAuthManager: NSObject {
         isAuthenticated = true
         TagStore.shared.setActiveUsername(username)
         ListeningLogStore.shared.setActiveUsername(username)
+        GradeStore.shared.setActiveUsername(username)
         ListeningLogStore.shared.seedDemoSessions(DemoServer.exampleListeningSessions())
         WantlistAlertStore.shared.setActiveUsername(username)
     }
@@ -170,6 +173,7 @@ final class DiscogsAuthManager: NSObject {
         // disque, prêtes à être restaurées si ce compte se reconnecte plus tard).
         TagStore.shared.setActiveUsername(nil)
         ListeningLogStore.shared.setActiveUsername(nil)
+        GradeStore.shared.setActiveUsername(nil)
         CloudSyncEngine.shared.setActiveUsername(nil)
         WantlistAlertStore.shared.setActiveUsername(nil)
         // Idem pour Collection/Wantlist/Recherche : ces vues restent montées en permanence dans
@@ -252,6 +256,7 @@ final class DiscogsAuthManager: NSObject {
             LocalDataStore.shared.clearAllUserData(username: currentUsername)
             TagStore.shared.clearAccountData(for: currentUsername)
             ListeningLogStore.shared.clearAccountData(for: currentUsername)
+            GradeStore.shared.clearAccountData(for: currentUsername)
             WantlistAlertStore.shared.clearAccountData(for: currentUsername)
             OfflineSyncQueue.shared.removeActions(for: currentUsername)
             CollectionPreferencesStore.clearAccountData(for: currentUsername)

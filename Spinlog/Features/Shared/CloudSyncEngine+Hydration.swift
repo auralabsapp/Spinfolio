@@ -98,6 +98,7 @@ extension CloudSyncEngine {
             markStandaloneTagsDirty()
             markDiscogsWorkCategoriesDirty()
             markAppPreferencesDirty()
+            markGradesDirty()
             // Marqué tout de suite, sans attendre la confirmation réseau : les changements sont
             // déjà enregistrés dans l'état persisté du moteur (`state.add` dans `markDirty`), qui
             // les redélivrera lui-même même si cet envoi immédiat échoue (ex: throttling).
@@ -337,6 +338,16 @@ extension CloudSyncEngine {
                 appearance: AppTheme(rawValue: prefs.appearance) ?? AppearancePreferencesStore.shared.appearance,
                 maxListeningDuration: prefs.maxListeningDuration
             )
+
+        case .grades:
+            guard let remoteGrades = try? JSONDecoder().decode(SyncedGrades.self, from: payload) else {
+                cloudSyncLogger.error("apply(remoteRecord:) — payload illisible pour les grades")
+                return
+            }
+            // Toujours fusionné, quel que soit `allowMerge` : un grade acquis ne se perd pas, la date
+            // la plus ancienne l'emporte (voir `GradeRules.merge`).
+            cloudSyncLogger.log("apply(remoteRecord:) grades — remote=\(remoteGrades.unlocks.count)")
+            GradeStore.shared.applyRemote(remoteGrades)
         }
     }
 
@@ -421,6 +432,9 @@ extension CloudSyncEngine {
                 maxListeningDuration: AppearancePreferencesStore.shared.maxListeningDuration
             )
             return try? JSONEncoder().encode(prefs)
+
+        case .grades:
+            return try? JSONEncoder().encode(GradeStore.shared.syncPayload)
         }
     }
 }

@@ -95,7 +95,7 @@ enum GuideCatalog {
                 "Touche « ··· », puis « Tri » : choisis un critère et le sens.",
                 "Glisse le doigt sur la barre à droite pour sauter à une lettre ou à une année."
             ],
-            tip: "Le tri « Meuble » suit ta règle de rangement (Réglages, section Collection & Rangement).",
+            tip: "Le tri « Meuble » suit ta règle de rangement (Réglages > Rangement).",
             destination: .tab(.collection)
         ),
         GuideEntry(
@@ -138,7 +138,7 @@ enum GuideCatalog {
                 "Touche un disque pour ouvrir sa fiche.",
                 "Fais défiler : titres, « Photos et vidéos », « Autres informations »."
             ],
-            tip: "Depuis la fiche, tu peux écouter un titre : extrait de 30 s, ou en entier avec Apple Music (Réglages)."
+            tip: "Depuis la fiche, tu peux écouter un titre : extrait de 30 s, ou en entier avec Apple Music (Réglages > Écoute et Apple Music)."
         ),
         GuideEntry(
             id: "copies",
@@ -172,7 +172,7 @@ enum GuideCatalog {
             title: "Prix d'achat et cote",
             summary: "Note ce que tu as payé et compare avec la cote Discogs.",
             steps: [
-                "Une seule fois : Réglages, section « Prix d'achat et état », puis associe tes champs Discogs.",
+                "Une seule fois : Réglages > Suivi de plus-value, puis associe tes champs Discogs.",
                 "Ensuite, « Modifier » sur un exemplaire pour saisir son prix."
             ],
             tip: "La plus-value (cote moins prix payé) est une fonction Premium, dans Stats.",
@@ -266,7 +266,7 @@ enum GuideCatalog {
             title: "Live Activity et arrêt automatique",
             summary: "Ton disque en cours reste visible, et l'écoute s'arrête toute seule.",
             steps: [
-                "Dans Réglages, section « Écoute sur platine & Live Activity », choisis la durée maximale.",
+                "Dans Réglages, ouvre « Écoute et Apple Music » et choisis la durée maximale.",
                 "À la fin de cette durée, l'écoute s'arrête sans que tu aies rien à faire."
             ],
             tip: "Chaque écoute alimente le palmarès de Stats (Premium).",
@@ -279,7 +279,7 @@ enum GuideCatalog {
             title: "Écouter avec Apple Music",
             summary: "Lis les titres en entier depuis une fiche, avec un abonnement Apple Music.",
             steps: [
-                "Dans Réglages, section Apple Music, active « Connecter mon compte Apple Music ».",
+                "Dans Réglages, ouvre « Écoute et Apple Music » et active « Connecter mon compte Apple Music ».",
                 "Sans connexion, un extrait de 30 s reste disponible."
             ],
             tip: "Ces lectures ne comptent pas comme des écoutes sur platine.",
@@ -323,7 +323,7 @@ enum GuideCatalog {
             title: "Ta méthode de classement",
             summary: "Quatre règles, pour classer comme dans ton meuble.",
             steps: [
-                "Dans Réglages, section « Collection & Rangement », touche « Règle de rangement dans le meuble ».",
+                "Dans Réglages, ouvre « Rangement », puis touche « Règle de rangement dans le meuble ».",
                 "Choisis : artiste puis année originale, artiste puis titre, année seule, ou artiste puis année du pressage."
             ],
             tip: "L'année originale vient du master Discogs ; le pressage peut être une réédition plus récente.",
@@ -336,7 +336,7 @@ enum GuideCatalog {
             title: "Noms d'artistes",
             summary: "Articles, noms de famille, cas particuliers : tu règles l'ordre artiste par artiste.",
             steps: [
-                "Dans Réglages, active « Ignorer les articles (The...) » ou « Trier par nom de famille ».",
+                "Dans Réglages > Rangement, active « Ignorer les articles (The...) » ou « Trier par nom de famille ».",
                 "Avec le nom de famille, « Personnaliser le tri des artistes » corrige un cas isolé."
             ],
             tip: "Ces réglages valent pour le meuble, la Collection et la Wantlist.",
@@ -413,7 +413,7 @@ enum GuideCatalog {
             title: "Mode hors ligne",
             summary: "Emporte toute ta collection et ses pochettes, même sans réseau.",
             steps: [
-                "Dans Réglages, ouvre « Mode hors ligne » puis « Télécharger toute ma collection ».",
+                "Dans Réglages > Synchronisation, ouvre « Données hors ligne » puis « Télécharger toute ma collection ».",
                 "Active « Synchro auto en Wi-Fi » pour la tenir à jour."
             ],
             tip: "La synchro auto ne se lance jamais en 4G/5G, et au plus une fois toutes les 6 heures.",
@@ -427,7 +427,7 @@ enum GuideCatalog {
             title: "Synchronisation iCloud",
             summary: "Tes tags, écoutes, alertes et préférences suivent ton compte sur tous tes appareils.",
             steps: [
-                "Dans Réglages, active « Synchroniser avec iCloud »."
+                "Dans Réglages > Synchronisation, ouvre « Synchronisation iCloud » et active « Synchroniser avec iCloud »."
             ],
             tip: "Couper la synchro n'efface rien : à la réactivation, tout est fusionné. Elle est coupée pendant la démo.",
             access: .premium,
@@ -440,7 +440,7 @@ enum GuideCatalog {
             title: "Apparence et couleurs",
             summary: "Thème clair ou sombre, et palettes de couleurs pour toute l'app.",
             steps: [
-                "Dans Réglages, section Apparence : « Mode d'affichage » pour clair, sombre ou automatique.",
+                "Dans Réglages > Aide & personnalisation, ouvre « Apparence » : « Mode d'affichage » pour clair, sombre ou automatique.",
                 "« Couleur du thème » ouvre les palettes."
             ],
             tip: "Le thème Signature est inclus pour tous ; les 8 autres palettes sont Premium.",
@@ -453,7 +453,7 @@ enum GuideCatalog {
             title: "Exporter ta collection",
             summary: "Un tableur pour tes outils, ou un PDF à présenter à un assureur.",
             steps: [
-                "Dans Réglages, section Export : « Exporter la collection en CSV » ou « Déclaration de collection (PDF) »."
+                "Dans Réglages > Ma collection, ouvre « Export » : « Exporter la collection en CSV » ou « Déclaration de collection (PDF) »."
             ],
             tip: "Le CSV inclut métadonnées, tags et notes ; le PDF, l'état et le prix d'achat.",
             access: .premium,

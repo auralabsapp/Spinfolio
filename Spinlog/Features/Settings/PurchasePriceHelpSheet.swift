@@ -167,8 +167,8 @@ struct PurchasePriceHelpSheet: View {
 
             if !setup.isComplete {
                 Button {
-                    // Réglages est la racine de cette pile : les sélecteurs de champs s'y trouvent.
-                    TabNavigationCoordinator.shared.settingsPath = NavigationPath()
+                    // Les sélecteurs de champs sont dans la page « Suivi de plus-value » de Réglages.
+                    TabNavigationCoordinator.shared.settingsPath = NavigationPath([SettingsDestination.gainTracking])
                 } label: {
                     Label("Choisir mes champs dans Réglages", systemImage: "gearshape")
                         .font(.subheadline.weight(.semibold))

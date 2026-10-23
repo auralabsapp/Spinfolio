@@ -373,6 +373,18 @@ final class CloudSyncEngine: CKSyncEngineDelegate {
         markDirty(.appPreferences)
     }
 
+    /// Le premier rapatriement iCloud du compte actif n'a pas encore eu lieu sur cet appareil : des
+    /// grades (et l'accueil) déjà faits ailleurs peuvent encore arriver. Faux sans synchro iCloud.
+    var isAwaitingFirstHydration: Bool {
+        guard syncEngine != nil, let activeUsername else { return false }
+        return !UserDefaults.standard.bool(forKey: Self.hydratedFlagKeyPrefix + activeUsername)
+    }
+
+    /// Signale qu'un grade a été franchi (ou que l'appareil en sait plus que iCloud) : voir `GradeStore`.
+    func markGradesDirty() {
+        markDirty(.grades)
+    }
+
     /// Regroupe plusieurs signalements rapprochés en un seul envoi : CKSyncEngine ne doit pas
     /// recevoir plusieurs appels concurrents à `sendChanges()`, et ce serait de toute façon
     /// redondant (un seul envoi couvre déjà tous les changements en attente).

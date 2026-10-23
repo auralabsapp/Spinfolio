@@ -66,8 +66,14 @@ struct SettingsAccountSection: View {
                         }
 
                         Spacer()
+
+                        GradeInlineBadges()
                     }
                     .padding(.vertical, 4)
+                }
+
+                NavigationLink(value: SettingsDestination.grades) {
+                    GradeSummaryRow()
                 }
 
             } else {

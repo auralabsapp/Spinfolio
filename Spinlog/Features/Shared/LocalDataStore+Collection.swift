@@ -130,6 +130,11 @@ extension LocalDataStore {
 
         try? context.save()
 
+        // Collection complète et fraîche en cache : moment où les grades peuvent être recomptés.
+        if folderId == DiscogsConstants.allFolderId {
+            GradeEvaluator.shared.evaluateCollection()
+        }
+
         // Le dossier "All" (agrégat complet) est le reflet fidèle de toute la collection.
         // Si folderId est "All", on met à jour le widget avec ces items.
         // Si folderId n'est pas "All" mais que le widget est vide ou incomplet, on l'alimente avec le maximum de disques disponibles.
