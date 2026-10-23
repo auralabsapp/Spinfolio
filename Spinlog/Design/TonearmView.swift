@@ -16,9 +16,9 @@ struct TonearmView: View {
     /// Distance du pivot au haut de la vue.
     private static let pivotY: CGFloat = 15
     /// Rotation (sens horaire) qui amène la tête au début du disque, sur les premiers sillons près du
-    /// bord (à ~77 pt du centre pour un disque de 90 pt de rayon) : un angle plus grand la ferait
+    /// bord (à ~72 pt du centre pour un disque de 90 pt de rayon) : un angle plus grand la ferait
     /// glisser vers l'étiquette, comme en fin de face.
-    static let playAngle: Double = 15
+    static let playAngle: Double = 20
 
     var body: some View {
         ZStack(alignment: .topLeading) {
