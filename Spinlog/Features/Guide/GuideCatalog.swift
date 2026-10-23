@@ -224,7 +224,8 @@ enum GuideCatalog {
             ],
             tip: "Le total investi ne compte que les exemplaires dont le prix d'achat est renseigné.",
             access: .premium,
-            destination: .tab(.stats)
+            destination: .tab(.stats),
+            explanationPage: .purchasePriceHelp
         ),
         GuideEntry(
             id: "ranking",

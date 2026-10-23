@@ -44,8 +44,12 @@ struct GuideEntryCard: View {
                 accessBadge
             }
 
-            if let destination = entry.destination {
-                tryButton(destination)
+            if entry.destination != nil || entry.explanationPage != nil {
+                // Côte à côte quand ça tient, l'un sous l'autre aux grandes tailles de texte.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 8) { actionButtons }
+                    VStack(alignment: .leading, spacing: 8) { actionButtons }
+                }
             }
 
             if entry.hasDetails {
@@ -111,6 +115,27 @@ struct GuideEntryCard: View {
                 .foregroundStyle(Color.appSecondaryText)
         }
         .tint(Color.appSecondaryText)
+    }
+
+    @ViewBuilder
+    private var actionButtons: some View {
+        if let destination = entry.destination {
+            tryButton(destination)
+        }
+        if let page = entry.explanationPage {
+            explanationLink(page)
+        }
+    }
+
+    /// Mène à la page d'explication complète (la même que depuis Réglages), poussée dans la pile.
+    private func explanationLink(_ page: SettingsDestination) -> some View {
+        NavigationLink(value: page) {
+            Label("Comment ça fonctionne ?", systemImage: "questionmark.circle")
+                .font(.subheadline.weight(.semibold))
+        }
+        .buttonStyle(.bordered)
+        .tint(Color.spinlogPink)
+        .accessibilityHint(Text(entry.title))
     }
 
     private func tryButton(_ destination: GuideDestination) -> some View {

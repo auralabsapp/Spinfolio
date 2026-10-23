@@ -186,6 +186,10 @@ struct GuideEntry: Identifiable {
     var tip: LocalizedStringResource? = nil
     var access: GuideAccess = .free
     var destination: GuideDestination? = nil
+    /// Page d'explication complète poussée dans la pile de Réglages (où vit le guide), pour les
+    /// fonctions dont une fiche ne peut pas tout dire (ex. suivi de plus-value). Jamais réservée au
+    /// Premium : comprendre une fonction ne demande pas d'abonnement.
+    var explanationPage: SettingsDestination? = nil
 
     var hasDetails: Bool {
         !steps.isEmpty || tip != nil
