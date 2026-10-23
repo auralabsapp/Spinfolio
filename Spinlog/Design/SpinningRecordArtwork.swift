@@ -6,6 +6,10 @@ import SwiftUI
 /// recadrage circulaire. Les sillons et le reflet ne tournent pas (sur un vrai disque, le reflet de
 /// la lumière reste fixe), seule l'étiquette matérialise la rotation. Décoratif : masqué à VoiceOver.
 ///
+/// Le support démarre en accélérant et, quand `isPlaying` passe à faux, ralentit jusqu'à l'arrêt
+/// (voir `SpinProfile`). Un vinyle a de plus son bras de lecture, qui se pose sur le disque au
+/// démarrage et se relève à l'arrêt (voir `TonearmView`).
+///
 /// Pour un CD, même principe — la pochette entière devant le disque — mais le disque est argenté,
 /// sans rien d'imprimé dessus (un CD n'a pas de pochette collée) : c'est son reflet irisé qui tourne.
 /// Pour une cassette, c'est la cassette (voir `CassetteView`), teintée de la couleur de la pochette,
@@ -16,13 +20,18 @@ struct SpinningRecordArtwork: View {
     /// Titre et artiste, écrits sur l'étiquette d'une cassette (ignorés pour les autres supports).
     var title: String? = nil
     var artist: String? = nil
-    /// Tours par minute : 33⅓ pour un 33 tours.
-    var rpm: Double = RecordSpin.rpm33
+    /// Faux dès que l'écoute s'arrête : le bras se relève et le support ralentit jusqu'à l'immobilité.
+    var isPlaying: Bool = true
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var rotation: Double = 0
     /// Couleur moyenne de la pochette, qui teinte la coque d'une cassette.
     @State private var coverTint: UIColor?
+    /// Instants de démarrage et d'arrêt du support (voir `profile`).
+    @State private var spinStart = Date.timeIntervalSinceReferenceDate
+    @State private var spinStop: TimeInterval?
+    /// Support définitivement immobile : la `TimelineView` cesse de redessiner.
+    @State private var isFrozen = false
+    @State private var isArmDown = false
 
     private static let sleeveSize: CGFloat = 190
     /// Part du disque qui dépasse de la pochette (le reste est caché derrière elle).
@@ -47,13 +56,83 @@ struct SpinningRecordArtwork: View {
         Self.sleeveSize - mediaWidth * (1 - Self.discReveal)
     }
 
+    /// Vitesse de croisière en degrés par seconde : 33⅓ tours/minute pour un disque, les bobines d'une
+    /// cassette un peu plus vite.
+    private var cruisingSpeed: Double {
+        media == .cassette ? CassetteView.reelDegreesPerSecond : 200
+    }
+
+    private var profile: SpinProfile {
+        SpinProfile(omega: cruisingSpeed, startTime: spinStart, stopTime: spinStop)
+    }
+
+    /// Angle du support à cet instant ; fixe avec « Réduire les animations ».
+    private func angle(at date: Date) -> Double {
+        reduceMotion ? 0 : profile.angle(at: date.timeIntervalSinceReferenceDate)
+    }
+
+    private var isTimelinePaused: Bool { reduceMotion || isFrozen }
+
     var body: some View {
+        artwork
+            // Place du pivot du bras, à droite du disque : un vinyle seulement.
+            .padding(.trailing, media == .vinyl ? TonearmView.width : 0)
+            .overlay(alignment: .topTrailing) {
+                if media == .vinyl {
+                    TonearmView(isDown: isArmDown)
+                }
+            }
+            .accessibilityHidden(true)
+            .onAppear {
+                spinStart = Date.timeIntervalSinceReferenceDate
+                // Couleur déjà connue (fiche ouverte avant) : la coque est teintée dès la première image.
+                if coverTint == nil, let coverURL {
+                    coverTint = ReleaseColorCache.shared.color(forURL: coverURL)
+                }
+                // Sans animations, le bras est posé d'emblée.
+                if reduceMotion { isArmDown = true }
+            }
+            .task {
+                // Le disque démarre tout de suite ; le bras se pose un instant plus tard, quand il a pris de la vitesse.
+                try? await Task.sleep(for: .milliseconds(450))
+                guard isPlaying, !isArmDown else { return }
+                isArmDown = true
+                UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+            }
+            .onChange(of: isPlaying) { _, playing in
+                if !playing { stopSpinning() }
+            }
+    }
+
+    /// Le bras se relève et le support ralentit jusqu'à l'arrêt, puis la `TimelineView` est mise en pause.
+    private func stopSpinning() {
+        guard spinStop == nil else { return }
+        spinStop = Date.timeIntervalSinceReferenceDate
+        isArmDown = false
+        if media == .vinyl { UIImpactFeedbackGenerator(style: .light).impactOccurred() }
+        let settleSeconds = profile.stopDuration + 0.2
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(settleSeconds))
+            isFrozen = true
+        }
+    }
+
+    private var artwork: some View {
         ZStack(alignment: .leading) {
             Group {
                 switch media {
                 case .vinyl: disc
                 case .cd: compactDisc
-                case .cassette: CassetteView(tint: coverTint, width: mediaWidth, title: title, artist: artist)
+                case .cassette:
+                    TimelineView(.animation(paused: isTimelinePaused)) { timeline in
+                        CassetteView(
+                            tint: coverTint,
+                            width: mediaWidth,
+                            title: title,
+                            artist: artist,
+                            angle: angle(at: timeline.date)
+                        )
+                    }
                 }
             }
             .offset(x: discOffsetFromSleeveLeading)
@@ -70,14 +149,6 @@ struct SpinningRecordArtwork: View {
             .shadow(color: .black.opacity(0.30), radius: 10, x: 4, y: 4)
         }
         .frame(width: discOffsetFromSleeveLeading + mediaWidth, height: Self.sleeveSize, alignment: .leading)
-        .accessibilityHidden(true)
-        .onAppear {
-            // Couleur déjà connue (fiche ouverte avant) : la coque est teintée dès la première image.
-            if coverTint == nil, let coverURL {
-                coverTint = ReleaseColorCache.shared.color(forURL: coverURL)
-            }
-            startSpinning()
-        }
     }
 
     // MARK: - Disque
@@ -107,9 +178,11 @@ struct SpinningRecordArtwork: View {
                 ))
                 .blendMode(.plusLighter)
 
-            // Étiquette : la seule partie qui tourne.
-            label(size: labelSize)
-                .rotationEffect(.degrees(rotation))
+            // Étiquette : la seule partie qui tourne (seule elle est redessinée à chaque image).
+            TimelineView(.animation(paused: isTimelinePaused)) { timeline in
+                label(size: labelSize)
+                    .rotationEffect(.degrees(angle(at: timeline.date)))
+            }
 
             // Trou central.
             Circle()
@@ -127,20 +200,26 @@ struct SpinningRecordArtwork: View {
     private var compactDisc: some View {
         let diameter = discDiameter
         return ZStack {
-            // Corps : l'irisation tourne, l'ombre et les anneaux restent fixes.
+            // Ombre fixe, sous le corps.
             Circle()
-                .fill(AngularGradient(
-                    colors: [
-                        Color(white: 0.93), Color(red: 0.78, green: 0.90, blue: 0.96),
-                        Color(white: 0.80), Color(red: 0.96, green: 0.80, blue: 0.90),
-                        Color(white: 0.94), Color(red: 0.98, green: 0.94, blue: 0.76),
-                        Color(white: 0.78), Color(red: 0.80, green: 0.96, blue: 0.86),
-                        Color(white: 0.93)
-                    ],
-                    center: .center
-                ))
-                .rotationEffect(.degrees(rotation))
+                .fill(Color(white: 0.85))
                 .shadow(color: .black.opacity(0.30), radius: 8, x: 2, y: 3)
+
+            // Corps : seule l'irisation tourne ; les anneaux restent fixes.
+            TimelineView(.animation(paused: isTimelinePaused)) { timeline in
+                Circle()
+                    .fill(AngularGradient(
+                        colors: [
+                            Color(white: 0.93), Color(red: 0.78, green: 0.90, blue: 0.96),
+                            Color(white: 0.80), Color(red: 0.96, green: 0.80, blue: 0.90),
+                            Color(white: 0.94), Color(red: 0.98, green: 0.94, blue: 0.76),
+                            Color(white: 0.78), Color(red: 0.80, green: 0.96, blue: 0.86),
+                            Color(white: 0.93)
+                        ],
+                        center: .center
+                    ))
+                    .rotationEffect(.degrees(angle(at: timeline.date)))
+            }
 
             // Zone de lecture : fin anneau plus sombre entre le moyeu et le bord.
             Circle()
@@ -175,18 +254,6 @@ struct SpinningRecordArtwork: View {
             .frame(width: size, height: size)
             .clipShape(Circle())
             .overlay(Circle().strokeBorder(Color.black.opacity(0.35), lineWidth: 1))
-    }
-
-    // MARK: - Rotation
-
-    /// Animation linéaire répétée, portée par le moteur de rendu : pas de recalcul SwiftUI à chaque
-    /// image. Désactivée avec « Réduire les animations » (disque fixe).
-    private func startSpinning() {
-        guard !reduceMotion, rotation == 0 else { return }
-        let period = 60.0 / rpm
-        withAnimation(.linear(duration: period).repeatForever(autoreverses: false)) {
-            rotation = 360
-        }
     }
 }
 

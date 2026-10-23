@@ -4,8 +4,8 @@ import SwiftUI
 /// teintée de la couleur moyenne de la pochette, étiquette vierge, fenêtre avec deux bobines à moyeu
 /// dentelé qui tournent et un ruban qui passe peu à peu d'une bobine à l'autre (la bobine pleine se
 /// vide, l'autre grossit) — le détail qui fait reconnaître une cassette au premier regard. Le titre et
-/// l'artiste sont écrits à la main sur l'étiquette. Décoratif.
-/// Sans « Réduire les animations », tout est fixe.
+/// l'artiste sont écrits à la main sur l'étiquette. Décoratif. Le mouvement vient de `angle` : sans
+/// « Réduire les animations », l'appelant le laisse à zéro et tout est fixe.
 struct CassetteView: View {
     /// Couleur moyenne de la pochette (ou `nil` : coque gris fumé).
     let tint: UIColor?
@@ -16,14 +16,29 @@ struct CassetteView: View {
     var title: String? = nil
     var artist: String? = nil
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var reelAngle: Double = 0
-    /// Répartition du ruban : 0 = tout sur la bobine de gauche, 1 = tout sur celle de droite.
-    @State private var tapeProgress: Double = 0.2
+    /// Angle cumulé des bobines en degrés, fourni par le mouvement du support (voir `SpinProfile`) :
+    /// les bobines tournent, ralentissent et s'arrêtent avec lui, et le ruban avance avec elles.
+    var angle: Double = 0
 
     private var height: CGFloat { width * 0.64 }
-    /// Tours par minute des bobines : assez vif pour qu'on voie les dents tourner.
-    private static let reelRPM: Double = 40
+    /// Vitesse de croisière des bobines (40 tours/minute, assez vif pour qu'on voie les dents tourner),
+    /// en degrés par seconde.
+    nonisolated static let reelDegreesPerSecond: Double = 240
+    /// Durée, à vitesse de croisière, du passage du ruban d'une bobine à l'autre.
+    private nonisolated static let tapeLegSeconds: Double = 90
+
+    /// Répartition du ruban selon l'angle des bobines : 0,2 = presque tout à gauche, 0,85 = presque
+    /// tout à droite, aller-retour d'une bobine à l'autre sans saut. Calculée à partir de l'angle (et
+    /// non d'une animation propre) pour que le ruban s'arrête quand les bobines s'arrêtent.
+    nonisolated static func tapeProgress(forAngle angle: Double) -> Double {
+        let cycle = reelDegreesPerSecond * tapeLegSeconds * 2
+        let phase = angle / cycle
+        let fraction = phase - phase.rounded(.down)
+        let triangle = 1 - abs(2 * fraction - 1)
+        return 0.2 + 0.65 * triangle
+    }
+
+    private var tapeProgress: Double { Self.tapeProgress(forAngle: angle) }
     private static let tapeColor = Color(red: 0.40, green: 0.25, blue: 0.15)
 
     /// Teinte de la coque d'après la couleur de la pochette : saturation et luminosité bornées, pour
@@ -62,7 +77,6 @@ struct CassetteView: View {
             screws
         }
         .frame(width: width, height: height)
-        .onAppear(perform: startMoving)
     }
 
     // MARK: - Étiquette (titre et artiste écrits au stylo, ou vierge sans texte)
@@ -163,7 +177,7 @@ struct CassetteView: View {
             Circle().fill(Color(white: 0.92)).frame(width: radius * 0.5, height: radius * 0.5)
         }
         .frame(width: radius * 2, height: radius * 2)
-        .rotationEffect(.degrees(reelAngle))
+        .rotationEffect(.degrees(angle))
     }
 
     // MARK: - Bas de coque et vis
@@ -190,20 +204,6 @@ struct CassetteView: View {
                         y: (index < 2 ? -1 : 1) * height * 0.43
                     )
             }
-        }
-    }
-
-    // MARK: - Mouvement
-
-    /// Deux animations linéaires répétées, portées par le moteur de rendu : les bobines tournent, et
-    /// le ruban va et vient très lentement d'une bobine à l'autre (aller-retour : pas de saut).
-    private func startMoving() {
-        guard !reduceMotion, reelAngle == 0 else { return }
-        withAnimation(.linear(duration: 60.0 / Self.reelRPM).repeatForever(autoreverses: false)) {
-            reelAngle = 360
-        }
-        withAnimation(.linear(duration: 90).repeatForever(autoreverses: true)) {
-            tapeProgress = 0.85
         }
     }
 }

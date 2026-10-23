@@ -9,6 +9,8 @@ struct SearchView: View {
     @State private var showingPremiumSheet = false
     @FocusState private var isSearchFieldFocused: Bool
     @State private var searchDebounceTask: Task<Void, Never>?
+    @State private var suggestionIndex = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var activityManager = NowPlayingActivityManager.shared
     private var membership = LibraryMembershipStore.shared
@@ -69,10 +71,39 @@ struct SearchView: View {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(Color.appSecondaryText)
 
-            TextField("Artiste, disque, label, code-barre…", text: $viewModel.query)
+            // Le texte d'invite tourne parmi quelques suggestions : il est dessiné en surimpression
+            // (un `prompt` ne s'anime pas), le champ garde l'invite d'origine pour VoiceOver.
+            TextField("", text: $viewModel.query)
                 .textFieldStyle(.plain)
                 .submitLabel(.search)
                 .focused($isSearchFieldFocused)
+                .accessibilityLabel("Artiste, disque, label, code-barre…")
+                .overlay(alignment: .leading) {
+                    if viewModel.query.isEmpty {
+                        SearchSuggestion(index: suggestionIndex)
+                            .foregroundStyle(Color.appTertiaryText)
+                            .lineLimit(1)
+                            .id(suggestionIndex)
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .bottom).combined(with: .opacity),
+                                removal: .move(edge: .top).combined(with: .opacity)
+                            ))
+                            .allowsHitTesting(false)
+                            .accessibilityHidden(true)
+                    }
+                }
+                .clipped()
+                .task(id: viewModel.query.isEmpty && !isSearchFieldFocused) {
+                    // Rotation seulement quand le champ est vide et au repos, et sans « Réduire les animations ».
+                    guard viewModel.query.isEmpty, !isSearchFieldFocused, !reduceMotion else { return }
+                    while !Task.isCancelled {
+                        try? await Task.sleep(for: .seconds(3))
+                        guard !Task.isCancelled else { return }
+                        withAnimation(.easeInOut(duration: 0.4)) {
+                            suggestionIndex = (suggestionIndex + 1) % SearchSuggestion.count
+                        }
+                    }
+                }
 
             if !viewModel.query.isEmpty {
                 Button {
@@ -322,5 +353,23 @@ struct SearchView: View {
 #Preview {
     NavigationStack {
         SearchView()
+    }
+}
+
+/// Texte d'invite du champ de recherche, tournant parmi quelques suggestions (la première est
+/// l'invite d'origine).
+private struct SearchSuggestion: View {
+    static let count = 5
+
+    let index: Int
+
+    var body: some View {
+        switch index {
+        case 1: Text("Cherche un artiste…")
+        case 2: Text("Cherche un album…")
+        case 3: Text("Cherche un label…")
+        case 4: Text("Tape un code-barres…")
+        default: Text("Artiste, disque, label, code-barre…")
+        }
     }
 }

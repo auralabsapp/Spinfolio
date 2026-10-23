@@ -14,6 +14,13 @@ struct BatchScanView: View {
     @State private var networkMonitor = NetworkMonitor.shared
     @State private var premiumStore = PremiumStore.shared
     @State private var showingCloseConfirmation = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// Retour visuel d'un code reconnu : éclair vert, rebond du compteur et pastille du disque trouvé.
+    @State private var flashTrigger = 0
+    @State private var isCounterPulsed = false
+    @State private var lastScannedCode: String?
+    @State private var recentFound: SearchResult?
+    @State private var recentFoundHideTask: Task<Void, Never>?
 
     private enum Phase {
         case scanning
@@ -125,7 +132,9 @@ struct BatchScanView: View {
             CameraScannerGate {
                 BarcodeScannerRepresentable(
                     onScan: { code in
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        UINotificationFeedbackGenerator().notificationOccurred(.success)
+                        lastScannedCode = code
+                        flashTrigger += 1
                         viewModel.scan(code: code)
                     },
                     onError: { _ in },
@@ -134,14 +143,43 @@ struct BatchScanView: View {
                 .ignoresSafeArea()
             }
 
-            scanCounterText
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-                .background(.black.opacity(0.6), in: Capsule())
-                .padding(.bottom, 32)
-                .animation(.spring(response: 0.3, dampingFraction: 0.8), value: viewModel.items.count)
+            BatchScanViewfinder()
+                .frame(maxHeight: .infinity)
+
+            BatchScanRecognitionFlash(trigger: flashTrigger)
+
+            VStack(spacing: 10) {
+                if let recentFound {
+                    BatchScanFoundChip(result: recentFound)
+                        .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.8)))
+                }
+                scanCounterText
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(.black.opacity(0.6), in: Capsule())
+                    .scaleEffect(isCounterPulsed ? 1.12 : 1)
+            }
+            .padding(.bottom, 32)
+            .animation(.spring(response: 0.3, dampingFraction: 0.8), value: viewModel.items.count)
+            .animation(.spring(response: 0.35, dampingFraction: 0.8), value: recentFound?.id)
+        }
+        .onChange(of: flashTrigger) {
+            guard !reduceMotion else { return }
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) { isCounterPulsed = true }
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7).delay(0.15)) { isCounterPulsed = false }
+        }
+        // Le disque reconnu s'affiche un instant, puis disparaît (il reste dans la revue du scan).
+        .onChange(of: scannedItemStatus) { _, status in
+            guard case let .found(result) = status else { return }
+            recentFound = result
+            recentFoundHideTask?.cancel()
+            recentFoundHideTask = Task {
+                try? await Task.sleep(for: .seconds(2.2))
+                guard !Task.isCancelled else { return }
+                recentFound = nil
+            }
         }
         .onAppear {
             UIApplication.shared.isIdleTimerDisabled = true
@@ -149,6 +187,11 @@ struct BatchScanView: View {
         .onDisappear {
             UIApplication.shared.isIdleTimerDisabled = false
         }
+    }
+
+    /// Statut du dernier code scanné pendant cette session (pas des codes restaurés d'un brouillon).
+    private var scannedItemStatus: BatchScanItemStatus? {
+        viewModel.items.first { $0.code == lastScannedCode }?.status
     }
 
     private var scanCounterText: Text {

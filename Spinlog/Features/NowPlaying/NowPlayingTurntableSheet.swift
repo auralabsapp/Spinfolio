@@ -16,6 +16,10 @@ struct NowPlayingTurntableSheet: View {
     @State private var lastReleaseId: Int?
     /// Support de l'album (vinyle ou CD), qui décide du disque dessiné derrière la pochette.
     @State private var lastMedia: PhysicalMedia = .vinyl
+    /// Faux dès que l'écoute s'arrête : le disque ralentit et le bras se relève avant la fermeture.
+    @State private var isPlayingVisual = true
+    @State private var isClosing = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// Hauteur mesurée du contenu, utilisée comme seul cran de la feuille.
     @State private var contentHeight: CGFloat = 420
 
@@ -23,7 +27,13 @@ struct NowPlayingTurntableSheet: View {
         VStack(spacing: 18) {
             // Pochette entière devant un disque qui tourne : vinyle à étiquette ou CD argenté, selon le
             // support de l'album (voir `SpinningRecordArtwork`).
-            SpinningRecordArtwork(coverURL: lastCoverURL, media: lastMedia, title: lastTitle, artist: lastArtist)
+            SpinningRecordArtwork(
+                coverURL: lastCoverURL,
+                media: lastMedia,
+                title: lastTitle,
+                artist: lastArtist,
+                isPlaying: isPlayingVisual
+            )
 
             // Même disposition que la fenêtre Apple Music : titre et artiste à gauche, accès à la
             // fiche du disque à droite.
@@ -66,8 +76,10 @@ struct NowPlayingTurntableSheet: View {
             Button {
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                 Task {
+                    // L'écoute s'arrête tout de suite (Live Activity, journal) ; la feuille reste le temps
+                    // que le disque ralentisse et que le bras se relève.
                     await activityManager.endCurrentActivity()
-                    dismiss()
+                    closeGracefully()
                 }
             } label: {
                 Label("Arrêter l'écoute", systemImage: "stop.fill")
@@ -79,6 +91,7 @@ struct NowPlayingTurntableSheet: View {
             .buttonBorderShape(.capsule)
             .tint(Color.spinlogPink)
             .padding(.top, 4)
+            .disabled(isClosing)
         }
         .padding(.horizontal, 28)
         .padding(.top, 36)
@@ -88,11 +101,23 @@ struct NowPlayingTurntableSheet: View {
         .onAppear(perform: rememberCurrentAlbum)
         .onChange(of: activityManager.activeAlbumTitle) { rememberCurrentAlbum() }
         .onChange(of: activityManager.activeReleaseId) { _, id in
-            // Écoute terminée ailleurs (Live Activity, autre écran) : plus rien à afficher.
-            if id == nil { dismiss() }
+            // Écoute terminée ailleurs (Live Activity, autre écran) : même arrêt en douceur.
+            if id == nil { closeGracefully() }
         }
         .presentationDetents([.height(contentHeight)])
         .presentationDragIndicator(.visible)
+    }
+
+    /// Fait ralentir le disque et relever le bras, puis ferme la feuille. Sans animations, elle se ferme
+    /// presque aussitôt.
+    private func closeGracefully() {
+        guard !isClosing else { return }
+        isClosing = true
+        isPlayingVisual = false
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(reduceMotion ? 150 : 2100))
+            dismiss()
+        }
     }
 
     private func rememberCurrentAlbum() {

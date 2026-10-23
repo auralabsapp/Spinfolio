@@ -4819,6 +4819,36 @@
         }
       }
     },
+    "Cherche un album…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Search for an album…"
+          }
+        }
+      }
+    },
+    "Cherche un artiste…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Search for an artist…"
+          }
+        }
+      }
+    },
+    "Cherche un label…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Search for a label…"
+          }
+        }
+      }
+    },
     "Chercher et filtrer" : {
       "localizations" : {
         "en" : {
@@ -13698,6 +13728,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Type in the search bar, or tap \"···\" then \"Filters\" for tag and format."
+          }
+        }
+      }
+    },
+    "Tape un code-barres…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Type a barcode…"
           }
         }
       }
