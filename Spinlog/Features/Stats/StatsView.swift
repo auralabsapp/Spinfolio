@@ -143,58 +143,54 @@ struct StatsView: View {
 
     @ViewBuilder
     var content: some View {
-        if !authManager.isAuthenticated {
-            LoginPromptView(message: String(localized: "Connecte-toi à Discogs pour voir tes statistiques."))
-        } else {
-            // Le squelette de chargement et le contenu réel partagent le même
-            // `ScrollViewReader`/`ScrollView` (seul le contenu du `VStack` change selon
-            // `isLoadingOverview`) : les reconstruire séparément détruisait et recréait toute la
-            // hiérarchie de défilement à chaque bascule, ce qui faisait disparaître puis
-            // réapparaître le grand titre de navigation au moment où le squelette laissait place
-            // au contenu réel.
-            ScrollViewReader { scrollProxy in
-                ScrollView {
-                    Color.clear.frame(height: 0).id(Self.scrollTopAnchor)
-                    VStack(alignment: .leading, spacing: 24) {
-                        if viewModel.isLoadingOverview {
-                            statsSkeletonContent
-                        } else {
-                        // Les compteurs et la cote de marché nécessitent le réseau et affichent
-                        // déjà leur propre état indisponible ("–", "Estimation indisponible") :
-                        // on ne bloque donc plus tout l'écran derrière `viewModel.errorMessage`,
-                        // alors que la plupart des autres sections viennent du cache local et
-                        // fonctionnent très bien hors ligne.
-                        if !networkMonitor.isConnected {
-                            OfflineBannerView(customMessage: String(localized: "Certaines statistiques (compteurs, cote de marché) nécessitent une connexion réseau"))
-                        }
-
-                        countersRow
-                        recentAdditionsSection
-                        additionsHistogramSection(scrollProxy: scrollProxy)
-                        originalYearsHistogramSection(scrollProxy: scrollProxy)
-                        topArtistsSection(scrollProxy: scrollProxy)
-                        genreDistributionSection(scrollProxy: scrollProxy)
-                        mediaFormatDistributionSection(scrollProxy: scrollProxy)
-                        labelDistributionSection(scrollProxy: scrollProxy)
-                        valuationSection
-                        // `valueHistorySection` volontairement masquée pour l'instant (pas encore
-                        // jugée pertinente) : la mécanique de suivi/synchro continue de tourner
-                        // en arrière-plan (voir `recordCollectionSnapshotIfNeeded`), prête à être
-                        // réaffichée plus tard sans rien reconstruire.
-                        investedVsValueSection
-                        listeningStatsSection
-                        }
+        // Le squelette de chargement et le contenu réel partagent le même
+        // `ScrollViewReader`/`ScrollView` (seul le contenu du `VStack` change selon
+        // `isLoadingOverview`) : les reconstruire séparément détruisait et recréait toute la
+        // hiérarchie de défilement à chaque bascule, ce qui faisait disparaître puis
+        // réapparaître le grand titre de navigation au moment où le squelette laissait place
+        // au contenu réel.
+        ScrollViewReader { scrollProxy in
+            ScrollView {
+                Color.clear.frame(height: 0).id(Self.scrollTopAnchor)
+                VStack(alignment: .leading, spacing: 24) {
+                    if viewModel.isLoadingOverview {
+                        statsSkeletonContent
+                    } else {
+                    // Les compteurs et la cote de marché nécessitent le réseau et affichent
+                    // déjà leur propre état indisponible ("–", "Estimation indisponible") :
+                    // on ne bloque donc plus tout l'écran derrière `viewModel.errorMessage`,
+                    // alors que la plupart des autres sections viennent du cache local et
+                    // fonctionnent très bien hors ligne.
+                    if !networkMonitor.isConnected {
+                        OfflineBannerView(customMessage: String(localized: "Certaines statistiques (compteurs, cote de marché) nécessitent une connexion réseau"))
                     }
-                    .padding()
-                    // Marge inférieure augmentée quand la bottom sheet est ouverte pour garantir que
-                    // le titre du graphique puisse défiler librement jusqu'au bord supérieur de l'écran.
-                    .modifier(StatsSheetBottomInset(selection: chartSelection))
+
+                    countersRow
+                    recentAdditionsSection
+                    additionsHistogramSection(scrollProxy: scrollProxy)
+                    originalYearsHistogramSection(scrollProxy: scrollProxy)
+                    topArtistsSection(scrollProxy: scrollProxy)
+                    genreDistributionSection(scrollProxy: scrollProxy)
+                    mediaFormatDistributionSection(scrollProxy: scrollProxy)
+                    labelDistributionSection(scrollProxy: scrollProxy)
+                    valuationSection
+                    // `valueHistorySection` volontairement masquée pour l'instant (pas encore
+                    // jugée pertinente) : la mécanique de suivi/synchro continue de tourner
+                    // en arrière-plan (voir `recordCollectionSnapshotIfNeeded`), prête à être
+                    // réaffichée plus tard sans rien reconstruire.
+                    investedVsValueSection
+                    listeningStatsSection
+                    }
                 }
-                .onChange(of: TabNavigationCoordinator.shared.scrollToTopOfStatsTrigger) {
-                    withAnimation { scrollProxy.scrollTo(Self.scrollTopAnchor, anchor: .top) }
-                }
-                .modifier(StatsSheetsModifier(selection: chartSelection))
+                .padding()
+                // Marge inférieure augmentée quand la bottom sheet est ouverte pour garantir que
+                // le titre du graphique puisse défiler librement jusqu'au bord supérieur de l'écran.
+                .modifier(StatsSheetBottomInset(selection: chartSelection))
             }
+            .onChange(of: TabNavigationCoordinator.shared.scrollToTopOfStatsTrigger) {
+                withAnimation { scrollProxy.scrollTo(Self.scrollTopAnchor, anchor: .top) }
+            }
+            .modifier(StatsSheetsModifier(selection: chartSelection))
         }
     }
 

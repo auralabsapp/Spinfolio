@@ -5300,6 +5300,7 @@
       }
     },
     "Connecte-toi à Discogs" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5339,7 +5340,18 @@
         }
       }
     },
+    "Connecte-toi à Discogs pour retrouver ta collection, ta wantlist et tes statistiques." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Sign in to Discogs to get back your collection, your wantlist and your stats."
+          }
+        }
+      }
+    },
     "Connecte-toi à Discogs pour voir et gérer ta collection." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5350,6 +5362,7 @@
       }
     },
     "Connecte-toi à Discogs pour voir ta wantlist." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5360,6 +5373,7 @@
       }
     },
     "Connecte-toi à Discogs pour voir tes statistiques." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -13632,6 +13646,16 @@
         }
       }
     },
+    "Ta collection, à portée de main" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your collection, at your fingertips"
+          }
+        }
+      }
+    },
     "Ta configuration" : {
       "localizations" : {
         "en" : {
@@ -13658,6 +13682,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Your Discogs session has expired. Sign in again in Settings."
+          }
+        }
+      }
+    },
+    "Ta wantlist, toujours avec toi" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your wantlist, always with you"
           }
         }
       }
@@ -14033,6 +14067,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Your records stay on Discogs: only data specific to the app is erased. You'll be signed out."
+          }
+        }
+      }
+    },
+    "Tes écoutes, au rythme du sillon" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your listening, one groove at a time"
           }
         }
       }

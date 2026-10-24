@@ -124,6 +124,20 @@ struct RootTabView: View {
             GradeEvaluator.shared.start()
         }
         .overlay { GradeCelebrationHost() }
+        // Écran d'accueil à part, par-dessus tout (barre d'onglets comprise) tant qu'il n'y a ni compte
+        // Discogs ni démo. Les onglets restent en place dessous : se connecter ou se déconnecter ne les
+        // recrée pas.
+        .overlay {
+            if !authManager.isAuthenticated {
+                WelcomeView()
+                    // Le `.tint` du `TabView` ne s'étend pas à cet overlay : sans lui, « Se connecter » passe au bleu système.
+                    .tint(themeManager.currentTheme.primaryColor)
+                    // Les onglets recouverts ne doivent pas rester accessibles à VoiceOver.
+                    .accessibilityAddTraits(.isModal)
+                    .transition(.opacity)
+            }
+        }
+        .animation(UIAccessibility.isReduceMotionEnabled ? nil : .easeInOut(duration: 0.4), value: authManager.isAuthenticated)
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 themeManager.revertToDefaultIfNeeded(isPremium: PremiumStore.shared.isPremium)

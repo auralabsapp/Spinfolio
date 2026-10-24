@@ -456,9 +456,7 @@ struct WantlistView: View {
 
     @ViewBuilder
     private var content: some View {
-        if !authManager.isAuthenticated {
-            LoginPromptView(message: String(localized: "Connecte-toi à Discogs pour voir ta wantlist."))
-        } else if let error = viewModel.errorMessage, viewModel.items.isEmpty {
+        if let error = viewModel.errorMessage, viewModel.items.isEmpty {
             ScrollView {
                 ContentUnavailableView {
                     Label("Erreur", systemImage: "exclamationmark.triangle")

@@ -110,7 +110,7 @@ final class DemoModeUITests: XCTestCase {
         XCTAssertTrue(exitButton.waitForExistence(timeout: 5))
         exitButton.tap()
 
-        openTab("Collection")
+        // L'écran d'accueil prend tout l'écran (barre d'onglets comprise) : plus d'onglet à ouvrir.
         XCTAssertTrue(app.buttons["Explorer avec une collection de démo"].waitForExistence(timeout: 10))
     }
 }
