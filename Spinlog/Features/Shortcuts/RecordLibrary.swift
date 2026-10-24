@@ -25,6 +25,12 @@ enum RecordLibrary {
 
     // MARK: - Règles pures (testées dans `RecordLibraryTests`)
 
+    /// Une écoute sur platine ne se démarre que pour un disque possédé : un raccourci enregistré peut
+    /// garder la référence d'un disque retiré de la collection depuis.
+    nonisolated static func isOwned(releaseId: Int, in records: [RecordEntity]) -> Bool {
+        records.contains { $0.id == releaseId }
+    }
+
     nonisolated static func uniqueRecords(from items: [CollectionItem]) -> [RecordEntity] {
         var seen = Set<Int>()
         return items.compactMap { item in

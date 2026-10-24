@@ -40,6 +40,7 @@ nonisolated struct RecordEntityQuery: EntityStringQuery {
 nonisolated enum RecordIntentError: Error, CustomLocalizedStringResourceConvertible {
     case notSignedIn
     case emptyLibrary
+    case notInCollection
 
     var localizedStringResource: LocalizedStringResource {
         switch self {
@@ -47,6 +48,8 @@ nonisolated enum RecordIntentError: Error, CustomLocalizedStringResourceConverti
             "Connecte-toi à ton compte Discogs dans \(AppInfo.name) pour utiliser ce raccourci."
         case .emptyLibrary:
             "Aucun disque disponible : ouvre ta collection dans \(AppInfo.name) une première fois."
+        case .notInCollection:
+            "Ce disque n'est pas dans ta collection : une écoute sur platine ne se démarre que pour un disque que tu possèdes."
         }
     }
 }

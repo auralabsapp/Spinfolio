@@ -30,6 +30,16 @@ struct RecordLibraryTests {
         #expect(records.first?.coverURL == "https://example.com/1.jpg")
     }
 
+    @Test func listeningRequiresTheRecordToBeInTheCollection() {
+        let records = [
+            RecordEntity(id: 1, title: "Kind of Blue", artist: "Miles Davis", coverURL: nil),
+            RecordEntity(id: 2, title: "Blue Train", artist: "John Coltrane", coverURL: nil)
+        ]
+        #expect(RecordLibrary.isOwned(releaseId: 2, in: records))
+        #expect(!RecordLibrary.isOwned(releaseId: 3, in: records))
+        #expect(!RecordLibrary.isOwned(releaseId: 1, in: []))
+    }
+
     @Test func searchMatchesTitleAndArtistWordsIgnoringCaseAndAccents() {
         let records = [
             RecordEntity(id: 1, title: "Kind of Blue", artist: "Miles Davis", coverURL: nil),

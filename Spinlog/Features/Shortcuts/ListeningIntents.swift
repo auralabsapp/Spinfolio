@@ -25,6 +25,9 @@ struct StartListeningIntent: LiveActivityIntent {
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
         guard DiscogsAuthManager.shared.username != nil else { throw RecordIntentError.notSignedIn }
+        guard RecordLibrary.isOwned(releaseId: record.id, in: try await RecordLibrary.records()) else {
+            throw RecordIntentError.notInCollection
+        }
         NowPlayingActivityManager.shared.startListening(
             releaseId: record.id,
             albumTitle: record.title,

@@ -305,20 +305,23 @@ struct ReleaseDetailView: View {
                                 .releaseSectionEntrance(sectionsRevealed, index: 2)
                             }
 
-                            // 2ter. Journal d'écoute (disponible pour toute release)
-                            VStack(alignment: .leading, spacing: 12) {
-                                SectionEyebrow(title: "Mes écoutes sur platine", icon: "opticaldisc.fill")
-                                ListeningLogCard(
-                                    releaseId: releaseId,
-                                    onLogListening: {
-                                        triggerListeningLog()
-                                    },
-                                    onStopListening: {
-                                        stopListeningSession()
-                                    }
-                                )
+                            // 2ter. Journal d'écoute : réservé aux disques possédés (on n'écoute pas, sur sa
+                            // platine, un disque qu'on n'a pas).
+                            if actions.isInCollection {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    SectionEyebrow(title: "Mes écoutes sur platine", icon: "opticaldisc.fill")
+                                    ListeningLogCard(
+                                        releaseId: releaseId,
+                                        onLogListening: {
+                                            triggerListeningLog()
+                                        },
+                                        onStopListening: {
+                                            stopListeningSession()
+                                        }
+                                    )
+                                }
+                                .releaseSectionEntrance(sectionsRevealed, index: 3)
                             }
-                            .releaseSectionEntrance(sectionsRevealed, index: 3)
 
                             // 2quater. Note personnelle de la release (partagée par Discogs entre tous les exemplaires)
                             if actions.isInCollection && !actions.collectionInstances.isEmpty {

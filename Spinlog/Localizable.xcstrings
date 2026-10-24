@@ -4548,6 +4548,16 @@
         }
       }
     },
+    "Ce disque n'est pas dans ta collection : une écoute sur platine ne se démarre que pour un disque que tu possèdes." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "This record isn’t in your collection: a turntable listening can only be started for a record you own."
+          }
+        }
+      }
+    },
     "Ce document liste l'ensemble des albums de la collection à la date d'export ci-dessus, à titre de justificatif (par exemple auprès d'un assureur). Les montants indiqués proviennent des informations renseignées manuellement dans l'application et des cotes publiques Discogs : ils ne constituent pas une expertise officielle." : {
       "localizations" : {
         "en" : {
