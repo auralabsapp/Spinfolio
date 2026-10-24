@@ -299,29 +299,54 @@ struct SettingsAppleMusicSection: View {
             Toggle(isOn: $appleMusicAccount.isConnected) {
                 HStack(spacing: 14) {
                     SettingsIcon(systemName: "music.note", backgroundColor: .pink)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Connecter mon compte Apple Music")
-                            .foregroundStyle(.primary)
-                        if appleMusicAccount.isChecking {
-                            Text("Connexion en cours...")
-                                .font(.caption2)
-                                .foregroundStyle(Color.appSecondaryText)
-                        }
-                    }
+                    Text("Connecter mon compte Apple Music")
+                        .foregroundStyle(.primary)
                 }
             }
             .tint(Color.spinlogPink)
 
-            if appleMusicAccount.isConnected && appleMusicAccount.isAuthorized && !appleMusicAccount.hasActiveSubscription {
-                Text("Autorisation accordée, mais aucun abonnement Apple Music actif détecté sur ce compte.")
-                    .font(.footnote)
-                    .foregroundStyle(Color.appSecondaryText)
+            if appleMusicAccount.status != .disconnected {
+                statusRow(appleMusicAccount.status)
             }
         } header: {
             SectionEyebrow(title: "Apple Music", icon: "music.note")
         } footer: {
             Text("Permet de lire les titres en entier depuis une fiche album avec un abonnement Apple Music actif. Sans connexion, un extrait de 30 s reste disponible. Ces lectures ne comptent pas comme des écoutes sur platine.")
         }
+        // L'état du compte apparaît et change en fondu.
+        .animatesSettingsChanges(value: appleMusicAccount.status)
+        // L'abonnement a pu changer depuis la dernière vérification (souscription dans l'app Musique).
+        .task { await appleMusicAccount.refreshStatus() }
+    }
+
+    /// Icône + texte (jamais la couleur seule) : l'abonnement est actif ou non, ou en cours de vérification.
+    @ViewBuilder
+    private func statusRow(_ status: AppleMusicAccountStatus) -> some View {
+        HStack(spacing: 8) {
+            switch status {
+            case .disconnected:
+                EmptyView()
+            case .checking:
+                ProgressView()
+                    .controlSize(.small)
+                Text("Vérification de l'abonnement…")
+            case .denied:
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+                Text("Accès à Apple Music refusé : autorise-le pour \(AppInfo.name) dans les réglages de l'iPhone.")
+            case .noSubscription:
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+                Text("Aucun abonnement Apple Music actif : seuls les extraits de 30 s sont lus.")
+            case .active:
+                Image(systemName: "checkmark.seal.fill")
+                    .foregroundStyle(Color.gainPositive)
+                Text("Abonnement Apple Music actif : lecture complète des titres.")
+            }
+        }
+        .font(.footnote)
+        .foregroundStyle(Color.appSecondaryText)
+        .accessibilityElement(children: .combine)
     }
 }
 

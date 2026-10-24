@@ -2998,12 +2998,32 @@
         }
       }
     },
+    "Abonnement Apple Music actif : lecture complète des titres." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Active Apple Music subscription: full-length playback."
+          }
+        }
+      }
+    },
     "Accès à Apple Music désactivé" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Apple Music Access Disabled"
+          }
+        }
+      }
+    },
+    "Accès à Apple Music refusé : autorise-le pour %@ dans les réglages de l'iPhone." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Apple Music access denied: allow it for %@ in the iPhone settings."
           }
         }
       }
@@ -4029,6 +4049,16 @@
         }
       }
     },
+    "Aucun abonnement Apple Music actif : seuls les extraits de 30 s sont lus." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "No active Apple Music subscription: only 30-second previews are played."
+          }
+        }
+      }
+    },
     "Aucun album n'a été trouvé dans ta collection pour l'export." : {
       "localizations" : {
         "en" : {
@@ -4281,6 +4311,7 @@
       }
     },
     "Autorisation accordée, mais aucun abonnement Apple Music actif détecté sur ce compte." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5389,6 +5420,7 @@
       }
     },
     "Connexion en cours..." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -15079,6 +15111,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Validate and save this field on Discogs"
+          }
+        }
+      }
+    },
+    "Vérification de l'abonnement…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Checking subscription…"
           }
         }
       }
