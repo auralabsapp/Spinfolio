@@ -91,6 +91,8 @@ struct RootTabView: View {
                     .padding(.bottom, MiniPlayerBar.isActive ? 150 : 95)
             }
         }
+        // Pochette qui part vers l'onglet de l'ajout.
+        .overlay { LibraryAddFlightOverlay(flight: membershipStore.activeFlight) }
         .fullScreenCover(isPresented: $showingLaunchPaywall) {
             SpinlogPaywallView()
         }

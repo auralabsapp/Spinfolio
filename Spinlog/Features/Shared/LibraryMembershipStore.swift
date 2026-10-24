@@ -67,6 +67,8 @@ final class LibraryMembershipStore {
     private(set) var boxes: [Int: ReleaseMembershipBox] = [:]
 
     private(set) var activeToast: LibraryToastKind?
+    /// Pochette en train de « voler » vers l'onglet de l'ajout (voir `LibraryAddFlightOverlay`).
+    private(set) var activeFlight: LibraryAddFlight?
     /// La bulle affichée concerne une action mise en file hors ligne : elle l'indique sur une
     /// deuxième ligne (au lieu d'une alerte à fermer après chaque ajout ou retrait hors ligne).
     private(set) var activeToastIsQueuedOffline = false
@@ -92,6 +94,18 @@ final class LibraryMembershipStore {
             withAnimation(.easeOut(duration: 0.25)) {
                 activeToast = nil
             }
+        }
+    }
+
+    /// Lance le vol d'une pochette vers la barre d'onglets. Ignoré tant qu'un vol est en cours : un
+    /// ajout par lot (scan) n'enchaîne pas des dizaines de pochettes.
+    private func launchFlight(coverURL: String?, destination: LibraryAddFlight.Destination) {
+        guard activeFlight == nil else { return }
+        let flight = LibraryAddFlight(coverURL: coverURL, destination: destination)
+        activeFlight = flight
+        Task {
+            try? await Task.sleep(for: .milliseconds(1300))
+            if activeFlight == flight { activeFlight = nil }
         }
     }
 
@@ -172,6 +186,7 @@ final class LibraryMembershipStore {
         membershipDebugLogger.log("POST collectionItemAdded release=\(item.releaseId) instance=\(item.instanceId) folder=\(item.folderId)")
         markInCollection(item.releaseId)
         presentToast(.collectionAdded)
+        launchFlight(coverURL: item.basicInformation.coverImage ?? item.basicInformation.thumb, destination: .collection)
         NotificationCenter.default.post(
             name: .collectionItemAdded,
             object: nil,
@@ -217,6 +232,7 @@ final class LibraryMembershipStore {
         membershipDebugLogger.log("POST wantlistItemAdded release=\(item.id)")
         markInWantlist(item.id)
         presentToast(.wantlistAdded)
+        launchFlight(coverURL: item.basicInformation.coverImage ?? item.basicInformation.thumb, destination: .wantlist)
         NotificationCenter.default.post(
             name: .wantlistItemAdded,
             object: nil,
