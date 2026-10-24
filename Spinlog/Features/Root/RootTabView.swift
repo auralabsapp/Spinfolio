@@ -40,6 +40,10 @@ struct RootTabView: View {
                 NavigationStack(path: $coordinator.collectionPath) {
                     CollectionView()
                 }
+                // Pile recréée à la connexion ou à la sortie de démo : la barre de navigation, mise en place
+                // pendant que l'écran d'accueil la recouvrait, gardait un grand titre « Collection » coupé
+                // jusqu'à un changement d'onglet.
+                .id(authManager.isAuthenticated)
             }
 
             Tab("Wantlist", systemImage: "heart", value: .wantlist) {
@@ -66,6 +70,18 @@ struct RootTabView: View {
                 }
             }
         }
+        // Démo : pastille flottante en haut à droite, juste sous la barre de navigation (52 pt sous le bas
+        // de la barre d'état), qui ne déplace rien : un bandeau posé dans la zone sûre se superposait aux
+        // boutons de la barre de navigation. Toujours visible, y compris sur les fiches.
+        .overlay(alignment: .topTrailing) {
+            if authManager.isDemoMode {
+                DemoModePill()
+                    .padding(.top, 52)
+                    .padding(.trailing, 16)
+                    .transition(.scale(scale: 0.8, anchor: .topTrailing).combined(with: .opacity))
+            }
+        }
+        .animation(UIAccessibility.isReduceMotionEnabled ? nil : .spring(response: 0.4, dampingFraction: 0.8), value: authManager.isDemoMode)
         .tint(themeManager.currentTheme.primaryColor)
         .environment(themeManager)
         .preferredColorScheme(appearancePreferences.appearance.colorScheme)
@@ -124,6 +140,13 @@ struct RootTabView: View {
             GradeEvaluator.shared.start()
         }
         .overlay { GradeCelebrationHost() }
+        // Chaque entrée en démo repart de la racine de Collection, quel que soit l'onglet ou la fiche où
+        // l'on se trouvait en la quittant.
+        .onChange(of: authManager.isAuthenticated) { _, isAuthenticated in
+            if isAuthenticated && authManager.isDemoMode {
+                coordinator.showCollectionRoot()
+            }
+        }
         // Écran d'accueil à part, par-dessus tout (barre d'onglets comprise) tant qu'il n'y a ni compte
         // Discogs ni démo. Les onglets restent en place dessous : se connecter ou se déconnecter ne les
         // recrée pas.
@@ -288,6 +311,16 @@ final class TabNavigationCoordinator {
     var scrollToPurchasePriceSectionTrigger = 0
     /// Champ à mettre en évidence à l'arrivée dans Réglages (voir `openSettingsAtPurchaseField`).
     private(set) var pendingSettingsFieldHighlight: SettingsFieldHighlight?
+
+    /// Revient à la racine de Collection et vide les piles de navigation des autres onglets.
+    func showCollectionRoot() {
+        selectedTab = .collection
+        collectionPath = NavigationPath()
+        wantlistPath = NavigationPath()
+        statsPath = NavigationPath()
+        searchPath = NavigationPath()
+        settingsPath = NavigationPath()
+    }
 
     /// Nouveau tap sur l'onglet déjà actif : revient à la racine si une fiche est ouverte,
     /// sinon remonte tout en haut de l'onglet (comportement standard iOS).

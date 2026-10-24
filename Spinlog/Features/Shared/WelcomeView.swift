@@ -142,8 +142,10 @@ struct WelcomeView: View {
 
     // MARK: - Accroches
 
-    /// Une accroche à la fois, qui glisse vers le haut pour laisser la place à la suivante. Masquée
-    /// à VoiceOver (le message fixe dessous porte l'information, sans texte qui change tout seul).
+    /// Une accroche à la fois, qui se fond et glisse de quelques points pour laisser la place à la
+    /// suivante. Le glissement reste volontairement court et la zone a de la marge : un déplacement
+    /// d'une hauteur de texte sortait de la zone et recouvrait le nom de l'app. Masquée à VoiceOver (le
+    /// message fixe dessous porte l'information, sans texte qui change tout seul).
     private var taglineView: some View {
         Text(Self.taglines[taglineIndex])
             .id(taglineIndex)
@@ -154,11 +156,11 @@ struct WelcomeView: View {
                 reduceMotion
                     ? .opacity
                     : .asymmetric(
-                        insertion: .move(edge: .bottom).combined(with: .opacity),
-                        removal: .move(edge: .top).combined(with: .opacity)
+                        insertion: .opacity.combined(with: .offset(y: 8)),
+                        removal: .opacity.combined(with: .offset(y: -8))
                     )
             )
-            .frame(maxWidth: .infinity, minHeight: 56)
+            .frame(maxWidth: .infinity, minHeight: 64)
             .clipped()
             .accessibilityHidden(true)
     }

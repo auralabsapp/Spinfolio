@@ -5484,6 +5484,17 @@
         }
       }
     },
+    "Continuer la démo" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Keep exploring the demo"
+          }
+        }
+      }
+    },
     "Continuer quand même" : {
       "localizations" : {
         "en" : {
@@ -9934,6 +9945,9 @@
         }
       }
     },
+    "Mode démo actif" : {
+
+    },
     "Mode hors ligne" : {
       "localizations" : {
         "en" : {
@@ -11644,12 +11658,44 @@
         }
       }
     },
+    "Quitter" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Exit"
+          }
+        }
+      }
+    },
+    "Quitter la démo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Exit the demo"
+          }
+        }
+      }
+    },
     "Quitter le mode démo" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Exit Demo Mode"
+          }
+        }
+      }
+    },
+    "Quitter le mode démo ?" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Exit demo mode?"
           }
         }
       }
@@ -14939,6 +14985,17 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "You can own a record in several copies: press and hold \"In Collection\" to add another one."
+          }
+        }
+      }
+    },
+    "Tu reviens à l'écran de connexion." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "You’ll go back to the sign-in screen."
           }
         }
       }

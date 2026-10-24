@@ -113,4 +113,36 @@ final class DemoModeUITests: XCTestCase {
         // L'écran d'accueil prend tout l'écran (barre d'onglets comprise) : plus d'onglet à ouvrir.
         XCTAssertTrue(app.buttons["Explorer avec une collection de démo"].waitForExistence(timeout: 10))
     }
+
+    @MainActor
+    func testDemoPillOffersExitBackToLoginScreen() {
+        launchInDemo()
+        XCTAssertTrue(firstLibraryItem.waitForExistence(timeout: 15))
+
+        let bannerExit = app.buttons["demoBannerExitButton"]
+        XCTAssertTrue(bannerExit.waitForExistence(timeout: 5), "bandeau de démo absent")
+        bannerExit.tap()
+
+        // Sortie directe, sans confirmation : retour à l'écran d'accueil.
+        XCTAssertTrue(app.buttons["Explorer avec une collection de démo"].waitForExistence(timeout: 10))
+        XCTAssertFalse(bannerExit.exists)
+    }
+
+    @MainActor
+    func testEnteringDemoAlwaysLandsOnCollection() {
+        launch("-uiTestSignedOut")
+        let demoButton = app.buttons["Explorer avec une collection de démo"]
+        XCTAssertTrue(demoButton.waitForExistence(timeout: 10))
+        demoButton.tap()
+        XCTAssertTrue(firstLibraryItem.waitForExistence(timeout: 15))
+
+        // Sortie depuis un autre onglet, puis nouvelle entrée en démo : retour sur Collection.
+        openTab("Réglages")
+        app.buttons["demoBannerExitButton"].tap()
+        XCTAssertTrue(demoButton.waitForExistence(timeout: 10))
+        demoButton.tap()
+
+        XCTAssertTrue(firstLibraryItem.waitForExistence(timeout: 15))
+        XCTAssertTrue(app.tabBars.buttons["Collection"].isSelected, "la démo doit s'ouvrir sur Collection")
+    }
 }
