@@ -30,6 +30,7 @@ struct CollectionRow: View {
 
             AsyncCoverImage(url: coverURL, cornerRadius: 10, targetSize: Self.coverSize)
                 .frame(width: Self.coverSize, height: Self.coverSize)
+                .coverZoomSource(releaseId: item.releaseId, cornerRadius: 10)
                 // Micro-bordure pour l'épaisseur carton, remplacée par la bordure de sélection
                 // quand cet exemplaire est coché.
                 .overlay {

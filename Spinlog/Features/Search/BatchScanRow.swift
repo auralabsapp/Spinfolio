@@ -9,6 +9,7 @@ struct BatchScanRow: View {
     let onRetry: () -> Void
 
     @State private var showingPressingChoice = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         HStack(spacing: 12) {
@@ -94,6 +95,8 @@ struct BatchScanRow: View {
         }
         .padding(.vertical, 4)
         .opacity(item.status == .notFound ? 0.5 : 1)
+        // Recherche → trouvé / non reconnu : la pochette et le texte se fondent au lieu de se remplacer d'un coup.
+        .animation(reduceMotion ? nil : .batchScanRowChange, value: item.status)
     }
 
     /// Ce code-barres correspond à plusieurs pressages Discogs (rééditions, éditions

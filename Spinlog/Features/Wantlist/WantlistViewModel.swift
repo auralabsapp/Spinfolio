@@ -341,25 +341,42 @@ final class WantlistViewModel {
     }
 
     func remove(_ item: WantlistItem) async {
+        guard let username = beginRemoval() else { return }
+
+        // Optimistic UI : suppression immédiate de l'UI et du cache local
+        animatesNextSectionsUpdate = true
+        items.removeAll { $0.id == item.id }
+        removeFromLocalState(item, username: username)
+        await sendRemoval(item, username: username)
+    }
+
+    /// Garde commune aux retraits : mode démo, hors ligne avec données périmées. Renvoie le nom
+    /// d'utilisateur du compte actif si le retrait peut avoir lieu.
+    private func beginRemoval() -> String? {
         if DemoMode.isActive {
             actionMessage = AppMessages.demoRemovalBlocked
-            return
+            return nil
         }
-        guard let username = authManager.username else { return }
+        guard let username = authManager.username else { return nil }
 
         // Si l'appareil est hors ligne et que les données ont plus de 6 heures (Option B) :
         // maintien de l'affichage en lecture seule et blocage des modifications
         if !networkMonitor.isConnected && isOfflineAndStale {
             actionMessage = String(localized: "Mode hors ligne (données de plus de 6 h) : modification bloquée.")
-            return
+            return nil
         }
+        return username
+    }
 
-        // Optimistic UI : suppression immédiate de l'UI et du cache local
-        animatesNextSectionsUpdate = true
-        items.removeAll { $0.id == item.id }
+    /// Retrait d'un disque du cache local et des états partagés ; `items` est déjà à jour.
+    private func removeFromLocalState(_ item: WantlistItem, username: String) {
         localStore.removeWantlistItem(username: username, releaseId: item.id)
         LibraryMembershipStore.shared.markRemovedFromWantlist(item.id)
+    }
 
+    /// Répercute un retrait déjà affiché sur Discogs : appel direct, mise en file (hors ligne ou
+    /// panne passagère) ou réaffichage du disque en cas de refus définitif.
+    private func sendRemoval(_ item: WantlistItem, username: String) async {
         if networkMonitor.isConnected, let credentials = authManager.credentials {
             do {
                 try await DiscogsAPIClient.shared.removeFromWantlist(username: username, releaseId: item.id, credentials: credentials)
@@ -386,11 +403,22 @@ final class WantlistViewModel {
         }
     }
 
-    /// Supprime plusieurs éléments de la wantlist (édition en lot) — même logique que
-    /// `remove`, en réutilisant le retrait unitaire et la file hors ligne.
+    /// Supprime plusieurs éléments de la wantlist (édition en lot) : tous disparaissent de la liste
+    /// d'un seul coup, puis Discogs est mis à jour un disque après l'autre en arrière-plan (même
+    /// principe que `CollectionViewModel.removeInstances`).
     func removeItems(_ targets: [WantlistItem]) async {
+        guard !targets.isEmpty, let username = beginRemoval() else { return }
+
+        let targetIds = Set(targets.map(\.id))
+        animatesNextSectionsUpdate = true
+        items.removeAll { targetIds.contains($0.id) }
         for item in targets {
-            await remove(item)
+            removeFromLocalState(item, username: username)
+        }
+        for item in targets {
+            // Compte changé pendant la boucle : ne pas envoyer la suite avec les identifiants d'un autre.
+            guard authManager.username == username else { return }
+            await sendRemoval(item, username: username)
         }
     }
 

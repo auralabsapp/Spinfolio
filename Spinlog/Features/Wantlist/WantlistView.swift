@@ -5,6 +5,8 @@ import SwiftUI
 /// côté wantlist Discogs.
 struct WantlistView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    /// Relie chaque pochette à la fiche qu'elle ouvre (zoom, voir `coverZoomSource`).
+    @Namespace private var coverZoom
     @State private var viewModel = WantlistViewModel.shared
     @State private var authManager = DiscogsAuthManager.shared
     @State private var tabCoordinator = TabNavigationCoordinator.shared
@@ -20,7 +22,6 @@ struct WantlistView: View {
     // Collection — sans Déplacer/Tag, qui n'ont pas de sens côté wantlist.
     @State private var isSelecting = false
     @State private var selectedItemIds: Set<Int> = []
-    @State private var isBulkProcessing = false
     @State private var showingBulkDeleteConfirmation = false
     /// Clé (`section.key`) de la section actuellement épinglée en haut, mesurée via
     /// `SectionHeaderOffsetKey` — pour la pastille de position de `SectionIndexBar`.
@@ -119,12 +120,13 @@ struct WantlistView: View {
     @ViewBuilder
     private var mainView: some View {
         content
+            .environment(\.coverZoomNamespace, coverZoom)
             .background(Color.appBackground.ignoresSafeArea())
             .navigationTitle("Wantlist")
             .navigationSubtitle(navigationSubtitle)
             .navigationBarTitleDisplayMode(.large)
             .serifNavigationTitle()
-                        .searchDestinations()
+            .searchDestinations(coverZoom: coverZoom)
             .scrollDismissesKeyboard(.immediately)
     }
 
@@ -171,15 +173,13 @@ struct WantlistView: View {
                 },
                 onBulkDelete: {
                     let targets = selectedItems
-                    Task {
-                        isBulkProcessing = true
-                        await viewModel.removeItems(targets)
-                        isBulkProcessing = false
-                        withAnimation {
-                            isSelecting = false
-                            selectedItemIds.removeAll()
-                        }
+                    // Sortie immédiate du mode sélection : les disques disparaissent de la liste
+                    // d'un coup et Discogs est mis à jour en arrière-plan (voir `removeItems`).
+                    withAnimation {
+                        isSelecting = false
+                        selectedItemIds.removeAll()
                     }
+                    Task { await viewModel.removeItems(targets) }
                 },
                 onConfirmMove: { item, folderId in
                     Task { await viewModel.confirmMoveToCollection(item, folderId: folderId) }
@@ -218,7 +218,7 @@ struct WantlistView: View {
     /// sélectionné plutôt que masquée entièrement.
     @ViewBuilder
     private var bulkActionsBar: some View {
-        LibraryBulkActionsBar(isSelecting: isSelecting, isEmpty: selectedItemIds.isEmpty, isProcessing: isBulkProcessing) {
+        LibraryBulkActionsBar(isSelecting: isSelecting, isEmpty: selectedItemIds.isEmpty, isProcessing: false) {
             Button(role: .destructive) {
                 showingBulkDeleteConfirmation = true
             } label: {

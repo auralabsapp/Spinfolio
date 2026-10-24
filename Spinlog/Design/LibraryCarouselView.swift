@@ -338,6 +338,7 @@ struct LibraryCarouselView<Item: SortableLibraryItem>: View {
                 NavigationLink(value: SearchDestination.release(item.releaseId, coverURL: coverURL)) {
                     AsyncCoverImage(url: coverURL, cornerRadius: isRegularDisplay ? 18 : 14, targetSize: size)
                         .frame(width: size, height: size)
+                        .coverZoomSource(releaseId: item.releaseId, cornerRadius: isRegularDisplay ? 18 : 14)
                         .opacity(isSelecting ? (isSelected ? 1.0 : 0.45) : 1.0)
                         // Ombre de contact (très proche) puis ombre d'ambiance flottante (large et
                         // douce) ; toutes deux atténuées pendant la sélection multiple, comme

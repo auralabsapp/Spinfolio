@@ -736,31 +736,56 @@ final class CollectionViewModel {
         }
     }
 
-    /// Supprime plusieurs exemplaires de la collection (édition en lot) — même logique que
-    /// `moveInstances`, en réutilisant `remove` par exemplaire.
-    func removeInstances(_ items: [CollectionItem]) async {
-        for item in items {
-            await remove(item)
+    /// Supprime plusieurs exemplaires de la collection (édition en lot). Tous disparaissent de la
+    /// liste d'un seul coup (une seule mise à jour des sections), puis Discogs est mis à jour un
+    /// exemplaire après l'autre en arrière-plan : retirer d'abord un exemplaire, attendre le réseau,
+    /// puis passer au suivant les faisait disparaître un par un.
+    func removeInstances(_ targets: [CollectionItem]) async {
+        guard !targets.isEmpty, let username = beginRemoval() else { return }
+
+        let targetIds = Set(targets.map(\.id))
+        animatesNextSectionsUpdate = true
+        items.removeAll { targetIds.contains($0.id) }
+        for item in targets {
+            removeFromLocalState(item, username: username)
+        }
+        for item in targets {
+            // Compte changé pendant la boucle : ne pas envoyer la suite avec les identifiants d'un autre.
+            guard authManager.username == username else { return }
+            await sendRemoval(item, username: username)
         }
     }
 
     func remove(_ item: CollectionItem) async {
+        guard let username = beginRemoval() else { return }
+
+        // Optimistic UI : retrait immédiat de la vue locale et du cache SwiftData
+        animatesNextSectionsUpdate = true
+        items.removeAll { $0.id == item.id }
+        removeFromLocalState(item, username: username)
+        await sendRemoval(item, username: username)
+    }
+
+    /// Garde commune aux retraits : mode démo, hors ligne avec données périmées. Renvoie le nom
+    /// d'utilisateur du compte actif si le retrait peut avoir lieu.
+    private func beginRemoval() -> String? {
         if DemoMode.isActive {
             actionMessage = AppMessages.demoRemovalBlocked
-            return
+            return nil
         }
-        guard let username = authManager.username else { return }
+        guard let username = authManager.username else { return nil }
 
         // Si l'appareil est hors ligne et que les données ont plus de 6 heures (Option B) :
         // maintien de l'affichage en lecture seule et blocage des modifications
         if !networkMonitor.isConnected && isOfflineAndStale {
             actionMessage = AppMessages.offlineStaleModificationBlocked
-            return
+            return nil
         }
+        return username
+    }
 
-        // Optimistic UI : retrait immédiat de la vue locale et du cache SwiftData
-        animatesNextSectionsUpdate = true
-        items.removeAll { $0.id == item.id }
+    /// Retrait d'un exemplaire du cache SwiftData et des états partagés ; `items` est déjà à jour.
+    private func removeFromLocalState(_ item: CollectionItem, username: String) {
         localStore.removeCollectionItem(username: username, folderId: item.folderId, instanceId: item.instanceId)
         localStore.removeCollectionItem(username: username, folderId: DiscogsConstants.allFolderId, instanceId: item.instanceId)
 
@@ -769,7 +794,11 @@ final class CollectionViewModel {
             localStore.removeCollectionItems(username: username, releaseId: item.releaseId)
         }
         LibraryMembershipStore.shared.notifyCollectionItemRemoved(releaseId: item.releaseId, instanceId: item.instanceId)
+    }
 
+    /// Répercute un retrait déjà affiché sur Discogs : appel direct, mise en file (hors ligne ou
+    /// panne passagère) ou réaffichage de l'exemplaire en cas de refus définitif.
+    private func sendRemoval(_ item: CollectionItem, username: String) async {
         // Exemplaire ajouté hors ligne et pas encore envoyé : il suffit d'annuler son ajout en
         // attente (voir `OfflineSyncQueue.cancelPendingAdd`).
         if item.instanceId < 0 {

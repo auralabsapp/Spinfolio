@@ -28,6 +28,12 @@ extension Animation {
     /// de disparaître d'un coup.
     static let libraryRowRemoval = Animation.easeInOut(duration: 0.28)
 
+    /// Chiffres d'un compteur d'écran qui roulent d'une valeur à l'autre (`animatedCount`).
+    static let counterChange = Animation.spring(response: 0.35, dampingFraction: 0.85)
+
+    /// Ligne du scan par lot qui change d'état (recherche, trouvé, non reconnu) ou de section.
+    static let batchScanRowChange = Animation.easeInOut(duration: 0.3)
+
     /// Pulsation du disque cible du guide de rangement quand on le touche : rebond court, pour
     /// montrer que le toucher est reconnu même si l'élément n'ouvre rien.
     static let shelfTargetPulse = Animation.spring(response: 0.25, dampingFraction: 0.55)

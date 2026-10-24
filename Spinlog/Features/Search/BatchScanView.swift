@@ -109,8 +109,11 @@ struct BatchScanView: View {
         }
         if phase == .scanning {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Terminer (\(viewModel.pendingItems.count))") {
+                Button {
                     withAnimation { phase = .review }
+                } label: {
+                    Text("Terminer (\(viewModel.pendingItems.count))")
+                        .animatedCount(viewModel.pendingItems.count)
                 }
                 .disabled(viewModel.pendingItems.isEmpty)
                 .bold()
@@ -234,12 +237,17 @@ struct BatchScanView: View {
                             }
                         } header: {
                             Text("Non reconnus (\(viewModel.unrecognizedItems.count))")
+                                .animatedCount(viewModel.unrecognizedItems.count)
                         }
                     }
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
                 .listRowSeparatorTint(Color.appSeparator)
+                // Lignes qui arrivent, partent (retrait, purge) ou changent de section (code non
+                // reconnu) en glissant plutôt qu'en sautant.
+                .animation(reduceMotion ? nil : .batchScanRowChange, value: viewModel.pendingItems.map(\.id))
+                .animation(reduceMotion ? nil : .batchScanRowChange, value: viewModel.unrecognizedItems.map(\.id))
 
                 bulkActionsBar
             }

@@ -39,6 +39,7 @@ struct WantlistRow: View {
 
             AsyncCoverImage(url: info.thumb ?? info.coverImage, cornerRadius: 8, targetSize: Self.coverSize)
                 .frame(width: Self.coverSize, height: Self.coverSize)
+                .coverZoomSource(releaseId: item.id, cornerRadius: 8)
                 // Micro-bordure pour l'épaisseur carton, remplacée par la bordure de sélection
                 // quand cet exemplaire est coché.
                 .overlay {

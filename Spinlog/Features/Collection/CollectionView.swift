@@ -2,6 +2,8 @@ import SwiftUI
 
 struct CollectionView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    /// Relie chaque pochette à la fiche qu'elle ouvre (zoom, voir `coverZoomSource`).
+    @Namespace private var coverZoom
     @State private var viewModel = CollectionViewModel.shared
     @State private var authManager = DiscogsAuthManager.shared
     @State private var tagStore = TagStore.shared
@@ -41,12 +43,13 @@ struct CollectionView: View {
 
     var body: some View {
         content
+            .environment(\.coverZoomNamespace, coverZoom)
             .background(Color.appBackground.ignoresSafeArea())
             .navigationTitle("Collection")
             .navigationSubtitle(navigationSubtitle)
             .navigationBarTitleDisplayMode(.large)
             .serifNavigationTitle()
-                        .searchDestinations()
+            .searchDestinations(coverZoom: coverZoom)
             .scrollDismissesKeyboard(.immediately)
             .toolbar {
                 if isSelecting {
@@ -124,15 +127,13 @@ struct CollectionView: View {
             ) {
                 Button("Supprimer", role: .destructive) {
                     let targets = selectedItems
-                    Task {
-                        isBulkProcessing = true
-                        await viewModel.removeInstances(targets)
-                        isBulkProcessing = false
-                        withAnimation {
-                            isSelecting = false
-                            selectedItemIds.removeAll()
-                        }
+                    // Sortie immédiate du mode sélection : les exemplaires disparaissent de la liste
+                    // d'un coup et Discogs est mis à jour en arrière-plan (voir `removeInstances`).
+                    withAnimation {
+                        isSelecting = false
+                        selectedItemIds.removeAll()
                     }
+                    Task { await viewModel.removeInstances(targets) }
                 }
                 Button("Annuler", role: .cancel) {}
             } message: {
