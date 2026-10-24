@@ -10,22 +10,19 @@ struct ColorThemeSelectionView: View {
     @State private var showingPremiumSheet = false
 
     var body: some View {
-        List {
+        SettingsSubPage(title: "Couleur du thème") {
             // Aperçu dynamique du thème sélectionné
             Section {
                 themeLivePreviewCard
-                    .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
-                    .listRowBackground(Color.clear)
             }
 
             // Liste des thèmes disponibles
             Section {
                 ForEach(AppColorTheme.allCases) { theme in
                     themeRow(theme)
-                        .listRowBackground(Color.clear)
                 }
             } header: {
-                Text("Palettes disponibles")
+                SectionEyebrow(title: "Palettes disponibles", icon: "paintpalette.fill")
             } footer: {
                 // Aussi pendant la démo, où tout est débloqué : montre ce que l'abonnement apporte.
                 if !premiumStore.isPremium || premiumStore.showsDemoPremiumBadges {
@@ -35,12 +32,6 @@ struct ColorThemeSelectionView: View {
                 }
             }
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .background(Color.appBackground)
-        .listRowSeparatorTint(Color.appSeparator)
-        .navigationTitle("Couleur du thème")
-        .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingPremiumSheet) {
             PremiumFeaturesSheet()
         }
@@ -138,12 +129,7 @@ struct ColorThemeSelectionView: View {
                 }
             }
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(uiColor: .secondarySystemGroupedBackground))
-                .shadow(color: Color.black.opacity(0.06), radius: 8, y: 4)
-        )
+        .padding(.vertical, 6)
     }
 
     // MARK: - Rangée de thème

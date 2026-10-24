@@ -366,10 +366,7 @@ struct SettingsOfflineSection: View {
     }
 
     private func formattedOfflineDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .short
-        formatter.timeStyle = .short
-        return formatter.string(from: date)
+        date.formatted(date: .numeric, time: .shortened)
     }
 }
 

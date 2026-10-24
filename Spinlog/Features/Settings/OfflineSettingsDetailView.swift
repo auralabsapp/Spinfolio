@@ -19,13 +19,11 @@ struct OfflineSettingsDetailView: View {
     @State private var autoSyncOverWifiEnabled = OfflineDownloadManager.shared.isAutoSyncOverWifiEnabled
 
     var body: some View {
-        List {
+        SettingsSubPage(title: "Mode Hors Ligne") {
             // MARK: - 1. Statut & Carte Récapitulative
             Section {
                 statusHeroCard
             }
-            .listRowInsets(EdgeInsets())
-            .listRowBackground(Color.clear)
 
             // MARK: - 2. Actions de Téléchargement
             Section {
@@ -44,7 +42,7 @@ struct OfflineSettingsDetailView: View {
 
                         HStack {
                             Text(offlineManager.progress.formatted(.percent.precision(.fractionLength(0))))
-                                .font(.caption2.monospacedDigit())
+                                .font(.caption.monospacedDigit())
                                 .foregroundStyle(.secondary)
                             Spacer()
                             Button("Annuler", role: .cancel) {
@@ -55,30 +53,25 @@ struct OfflineSettingsDetailView: View {
                         }
                     }
                     .padding(.vertical, 4)
-                    .listRowBackground(Color.clear)
                 } else {
                     Button {
                         startSync()
                     } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "arrow.triangle.2.circlepath")
-                                .font(.headline)
-                                .foregroundStyle(Color.spinlogPink)
+                        HStack(spacing: 14) {
+                            SettingsIcon(systemName: "arrow.triangle.2.circlepath", backgroundColor: Color.spinlogPink)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(offlineManager.lastSyncDate == nil ? "Télécharger toute ma collection" : "Synchroniser maintenant")
-                                    .font(.body.weight(.medium))
+                                (offlineManager.lastSyncDate == nil ? Text("Télécharger toute ma collection") : Text("Synchroniser maintenant"))
                                     .foregroundStyle(.primary)
                                 Text("Récupère tous tes albums, tes dossiers, ta wantlist et les pochettes")
-                                    .font(.caption2)
+                                    .font(.caption)
                                     .foregroundStyle(Color.appSecondaryText)
                             }
                             Spacer()
                         }
                     }
-                    .listRowBackground(Color.clear)
                 }
             } header: {
-                Text("Synchronisation locale")
+                SectionEyebrow(title: "Synchronisation locale", icon: "arrow.triangle.2.circlepath")
             } footer: {
                 Text("Le téléchargement s'exécute par tranches avec une pause entre chaque page afin de respecter le quota de 60 requêtes/minute de Discogs.")
             }
@@ -86,20 +79,17 @@ struct OfflineSettingsDetailView: View {
             // MARK: - 2bis. Synchro automatique en Wi-Fi
             Section {
                 Toggle(isOn: $autoSyncOverWifiEnabled) {
-                    HStack(spacing: 12) {
-                        Image(systemName: "wifi")
-                            .foregroundStyle(.teal)
+                    HStack(spacing: 14) {
+                        SettingsIcon(systemName: "wifi", backgroundColor: .teal)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Synchro auto en Wi-Fi")
-                                .font(.body.weight(.medium))
                             Text("Relance le téléchargement complet dès qu'une connexion Wi-Fi est disponible")
-                                .font(.caption2)
+                                .font(.caption)
                                 .foregroundStyle(Color.appSecondaryText)
                         }
                     }
                 }
                 .tint(Color.spinlogPink)
-                .listRowBackground(Color.clear)
                 .onChange(of: autoSyncOverWifiEnabled) { _, newValue in
                     offlineManager.isAutoSyncOverWifiEnabled = newValue
                     // Le déclencheur normal (`autoSyncIfNeeded`) ne s'exécute qu'au lancement de
@@ -119,15 +109,13 @@ struct OfflineSettingsDetailView: View {
 
             // MARK: - 3. Gestion du Stockage Disque
             Section {
-                HStack {
-                    Image(systemName: "photo.stack")
-                        .foregroundStyle(.teal)
+                HStack(spacing: 14) {
+                    SettingsIcon(systemName: "photo.stack", backgroundColor: .teal)
                     Text("Pochettes en cache")
                     Spacer()
                     Text(imageCacheSize)
                         .foregroundStyle(Color.appSecondaryText)
                 }
-                .listRowBackground(Color.clear)
 
                 Button(role: .destructive) {
                     showingClearCacheConfirmation = true
@@ -137,9 +125,8 @@ struct OfflineSettingsDetailView: View {
                         Text("Vider le cache d'images")
                     }
                 }
-                .listRowBackground(Color.clear)
             } header: {
-                Text("Espace de stockage")
+                SectionEyebrow(title: "Espace de stockage", icon: "internaldrive.fill")
             } footer: {
                 // Durée lue dans la constante partagée (`KingfisherConfig`) pour ne pas se désynchroniser.
                 Text("Les pochettes sont conservées sur le disque \(DiscogsConstants.imageDiskRetentionDays) jours au plus après leur téléchargement, pour un affichage immédiat hors ligne : synchronise régulièrement pour les garder. Vider le cache libère l'espace sans effacer ta liste d'albums.")
@@ -164,17 +151,10 @@ struct OfflineSettingsDetailView: View {
                         .foregroundStyle(.secondary)
                 }
                 .padding(.vertical, 4)
-                .listRowBackground(Color.clear)
             } header: {
-                Text("À savoir")
+                SectionEyebrow(title: "À savoir", icon: "info.circle.fill")
             }
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .background(Color.appBackground)
-        .listRowSeparatorTint(Color.appSeparator)
-        .navigationTitle("Mode Hors Ligne")
-        .navigationBarTitleDisplayMode(.inline)
         .task {
             await refreshCacheSize()
         }
@@ -216,7 +196,7 @@ struct OfflineSettingsDetailView: View {
                         .fill(Color.teal.opacity(0.18))
                         .frame(width: 52, height: 52)
                     Image(systemName: "arrow.down.circle.fill")
-                        .font(.system(size: 26))
+                        .font(.title2)
                         .foregroundStyle(.teal)
                 }
 
@@ -236,7 +216,7 @@ struct OfflineSettingsDetailView: View {
 
                     HStack(spacing: 8) {
                         Text("\(offlineManager.offlineItemCount) disques archivés")
-                            .font(.caption2.weight(.medium))
+                            .font(.caption.weight(.medium))
                             .foregroundStyle(.teal)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
@@ -247,10 +227,7 @@ struct OfflineSettingsDetailView: View {
                 Spacer()
             }
         }
-        .padding(16)
-        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .padding(.vertical, 6)
     }
 
     private func startSync(ignoringNetworkCost: Bool = false) {
@@ -273,9 +250,6 @@ struct OfflineSettingsDetailView: View {
     }
 
     private func formattedDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter.string(from: date)
+        date.formatted(date: .abbreviated, time: .shortened)
     }
 }
