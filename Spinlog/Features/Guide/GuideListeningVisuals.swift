@@ -9,13 +9,13 @@ struct ListeningMock: View {
         // Mêmes boutons et même pastille que `ListeningLogCard` pendant une écoute.
         HStack(spacing: 10) {
             Image(systemName: "opticaldisc.fill")
-                .font(.system(size: 16, weight: .semibold))
+                .font(.callout.weight(.semibold))
                 .foregroundStyle(.white)
                 .frame(width: 40, height: 40)
                 .background(Color.spinlogPink, in: Circle())
 
             Image(systemName: "stop.fill")
-                .font(.system(size: 14, weight: .bold))
+                .font(.subheadline.weight(.bold))
                 .foregroundStyle(.primary)
                 .frame(width: 40, height: 40)
                 .background(Color(uiColor: .tertiarySystemFill), in: Circle())
@@ -88,7 +88,7 @@ struct WidgetMock: View {
         VStack(alignment: .leading, spacing: 5) {
             Spacer(minLength: 0)
             Text("Album du jour")
-                .font(.caption2.bold())
+                .font(.caption.bold())
                 .textCase(.uppercase)
                 .foregroundStyle(Color.spinlogPink)
             TextLine(width: 64)

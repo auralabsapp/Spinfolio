@@ -102,9 +102,9 @@ struct ShelfScopeMock: View {
             // Même badge que le guide de rangement.
             HStack(spacing: 4) {
                 Image(systemName: "folder")
-                    .font(.caption2.weight(.bold))
+                    .font(.caption.weight(.bold))
                 Text("Tous les dossiers")
-                    .font(.caption2.weight(.semibold))
+                    .font(.caption.weight(.semibold))
             }
             .foregroundStyle(Color.appSecondaryText)
             .padding(.horizontal, 8)

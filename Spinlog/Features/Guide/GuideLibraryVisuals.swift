@@ -104,7 +104,7 @@ struct SortAndIndexMock: View {
             VStack(spacing: 3) {
                 ForEach(Self.letters, id: \.self) { letter in
                     Text(verbatim: letter)
-                        .font(.caption2.weight(.bold))
+                        .font(.caption.weight(.bold))
                         .foregroundStyle(letter == "B" ? Color.spinlogPink : Color.appSecondaryText)
                 }
             }

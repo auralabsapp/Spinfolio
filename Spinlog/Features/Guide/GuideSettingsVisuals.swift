@@ -219,7 +219,7 @@ struct TagsAndFoldersMock: View {
             Text(verbatim: title)
                 .font(.caption.weight(.semibold))
             Text(verbatim: count)
-                .font(.caption2)
+                .font(.caption)
                 .foregroundStyle(Color.appSecondaryText)
         }
         .padding(.horizontal, 10)
