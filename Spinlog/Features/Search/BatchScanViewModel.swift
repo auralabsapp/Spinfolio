@@ -47,6 +47,8 @@ final class BatchScanViewModel {
     private(set) var isAdding = false
     var addProgressText: String?
     var message: String?
+    /// Onglet où mener l'utilisateur une fois le bilan de l'ajout acquitté (`nil` : rien d'ajouté).
+    private(set) var destinationAfterAdd: AppTab?
 
     private let membership = LibraryMembershipStore.shared
     /// Codes dont la recherche a échoué faute de réseau : relancés au retour de la connexion.
@@ -168,6 +170,24 @@ final class BatchScanViewModel {
         items.removeAll { $0.id == item.id }
     }
 
+    /// Codes à traiter (en cours de recherche ou reconnus) : ceux que compte « Terminer ».
+    var pendingItems: [BatchScanItem] {
+        items.filter { $0.status != .notFound }
+    }
+
+    /// Codes sans disque trouvé : conservés tant que l'utilisateur ne les retire pas.
+    var unrecognizedItems: [BatchScanItem] {
+        items.filter { $0.status == .notFound }
+    }
+
+    /// Relance la recherche d'un code non reconnu (échec passager, code mal lu puis rescanné…).
+    func retry(_ item: BatchScanItem) {
+        guard let index = items.firstIndex(where: { $0.id == item.id }), items[index].status == .notFound else { return }
+        items[index].status = .resolving
+        let code = item.code
+        Task { await resolve(code: code) }
+    }
+
     func toggleSelection(_ item: BatchScanItem) {
         guard let index = items.firstIndex(where: { $0.id == item.id }) else { return }
         items[index].isSelected.toggle()
@@ -233,7 +253,8 @@ final class BatchScanViewModel {
         isAdding = false
         let addedCount = count - failedIds.count
         message = String(localized: "\(addedCount) disques ajoutés à la collection.")
-        appendOutcomeDetails(queuedCount: queuedCount, failedCount: failedIds.count)
+        destinationAfterAdd = addedCount > 0 ? .collection : nil
+        appendOutcomeDetails(queuedCount: queuedCount, failedCount: failedIds.count, purgedCount: purgeUnrecognizedIfFinished())
     }
 
     func addSelectedToWantlist() async {
@@ -267,7 +288,8 @@ final class BatchScanViewModel {
         isAdding = false
         let addedCount = count - failedIds.count
         message = String(localized: "\(addedCount) disques ajoutés à la wantlist.")
-        appendOutcomeDetails(queuedCount: queuedCount, failedCount: failedIds.count)
+        destinationAfterAdd = addedCount > 0 ? .wantlist : nil
+        appendOutcomeDetails(queuedCount: queuedCount, failedCount: failedIds.count, purgedCount: purgeUnrecognizedIfFinished())
     }
 
     // MARK: - Bilan des ajouts groupés
@@ -290,13 +312,33 @@ final class BatchScanViewModel {
         return .failed
     }
 
-    private func appendOutcomeDetails(queuedCount: Int, failedCount: Int) {
+    /// Onglet à ouvrir à la fermeture du bilan : seulement si le lot est terminé (plus aucun code à
+    /// traiter ; les codes non reconnus ne comptent pas), sinon l'utilisateur reste sur la revue
+    /// pour réessayer ou continuer.
+    func takeDestinationAfterAdd() -> AppTab? {
+        defer { destinationAfterAdd = nil }
+        return pendingItems.isEmpty ? destinationAfterAdd : nil
+    }
+
+    /// Lot terminé (plus aucun code reconnu ou en recherche) : les codes non reconnus sont retirés
+    /// de la liste, le bilan l'annonce. Tant qu'il reste des codes à traiter, ils sont conservés.
+    private func purgeUnrecognizedIfFinished() -> Int {
+        guard pendingItems.isEmpty else { return 0 }
+        let purgedCount = unrecognizedItems.count
+        items.removeAll { $0.status == .notFound }
+        return purgedCount
+    }
+
+    private func appendOutcomeDetails(queuedCount: Int, failedCount: Int, purgedCount: Int) {
         var details: [String] = []
         if queuedCount > 0 {
             details.append(String(localized: "\(queuedCount) disques en attente de synchronisation avec Discogs."))
         }
         if failedCount > 0 {
             details.append(String(localized: "\(failedCount) disques n'ont pas pu être ajoutés et restent dans la liste."))
+        }
+        if purgedCount > 0 {
+            details.append(String(localized: "\(purgedCount) codes non reconnus retirés de la liste."))
         }
         guard !details.isEmpty else { return }
         message = ([message].compactMap { $0 } + details).joined(separator: "\n")

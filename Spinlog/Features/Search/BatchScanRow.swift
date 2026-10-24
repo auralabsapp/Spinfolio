@@ -6,6 +6,7 @@ struct BatchScanRow: View {
     let isInWantlist: Bool
     let onToggle: () -> Void
     let onSelectMatch: (SearchResult) -> Void
+    let onRetry: () -> Void
 
     @State private var showingPressingChoice = false
 
@@ -75,6 +76,17 @@ struct BatchScanRow: View {
                 }
             }
             Spacer(minLength: 0)
+
+            if item.status == .notFound {
+                Button(action: onRetry) {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.body)
+                        .foregroundStyle(Color.spinlogPink)
+                        .frame(width: 36, height: 36)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Réessayer")
+            }
 
             if case .found(let selected) = item.status, item.alternatives.count > 1 {
                 pressingPicker(selected: selected, alternatives: item.alternatives)

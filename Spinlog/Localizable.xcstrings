@@ -1119,6 +1119,46 @@
         }
       }
     },
+    "%lld codes non reconnus retirés de la liste." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld unrecognized code removed from the list."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld unrecognized codes removed from the list."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld code non reconnu retiré de la liste."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld codes non reconnus retirés de la liste."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld codes scannés" : {
       "localizations" : {
         "en" : {
@@ -10134,6 +10174,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Not detected: average value"
+          }
+        }
+      }
+    },
+    "Non reconnus (%lld)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Not recognized (%lld)"
           }
         }
       }

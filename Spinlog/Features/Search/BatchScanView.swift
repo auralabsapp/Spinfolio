@@ -72,7 +72,13 @@ struct BatchScanView: View {
             get: { viewModel.message != nil },
             set: { if !$0 { viewModel.message = nil } }
         )) {
-            Button("OK", role: .cancel) {}
+            Button("OK", role: .cancel) {
+                // Lot terminé : on ferme le scan et on montre là où les disques viennent d'arriver.
+                if let tab = viewModel.takeDestinationAfterAdd() {
+                    dismiss()
+                    TabNavigationCoordinator.shared.selectedTab = tab
+                }
+            }
         } message: {
             Text(viewModel.message ?? "")
         }
@@ -103,10 +109,10 @@ struct BatchScanView: View {
         }
         if phase == .scanning {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Terminer (\(viewModel.items.count))") {
+                Button("Terminer (\(viewModel.pendingItems.count))") {
                     withAnimation { phase = .review }
                 }
-                .disabled(viewModel.items.isEmpty)
+                .disabled(viewModel.pendingItems.isEmpty)
                 .bold()
             }
         } else {
@@ -217,22 +223,18 @@ struct BatchScanView: View {
                 }
 
                 List {
-                    ForEach(viewModel.items) { item in
-                        BatchScanRow(
-                            item: item,
-                            isInCollection: viewModel.isAlreadyInCollection(item),
-                            isInWantlist: viewModel.isAlreadyInWantlist(item),
-                            onToggle: { viewModel.toggleSelection(item) },
-                            onSelectMatch: { result in viewModel.selectMatch(result, for: item) }
-                        )
-                        .swipeActions(edge: .trailing) {
-                            Button(role: .destructive) {
-                                viewModel.remove(item)
-                            } label: {
-                                Label("Retirer", systemImage: "trash")
+                    ForEach(viewModel.pendingItems) { item in
+                        reviewRow(item)
+                    }
+                    // Les codes sans disque trouvé restent à part jusqu'à ce que l'utilisateur les retire.
+                    if !viewModel.unrecognizedItems.isEmpty {
+                        Section {
+                            ForEach(viewModel.unrecognizedItems) { item in
+                                reviewRow(item)
                             }
+                        } header: {
+                            Text("Non reconnus (\(viewModel.unrecognizedItems.count))")
                         }
-                        .listRowBackground(Color.clear)
                     }
                 }
                 .listStyle(.plain)
@@ -242,6 +244,40 @@ struct BatchScanView: View {
                 bulkActionsBar
             }
         }
+    }
+
+    private func reviewRow(_ item: BatchScanItem) -> some View {
+        BatchScanRow(
+            item: item,
+            isInCollection: viewModel.isAlreadyInCollection(item),
+            isInWantlist: viewModel.isAlreadyInWantlist(item),
+            onToggle: { viewModel.toggleSelection(item) },
+            onSelectMatch: { result in viewModel.selectMatch(result, for: item) },
+            onRetry: { viewModel.retry(item) }
+        )
+        .swipeActions(edge: .trailing) {
+            Button(role: .destructive) {
+                viewModel.remove(item)
+            } label: {
+                Label("Retirer", systemImage: "trash")
+            }
+        }
+        // Le balayage seul n'existe pas sur iOS 26 : le menu contextuel double l'action.
+        .contextMenu {
+            if item.status == .notFound {
+                Button {
+                    viewModel.retry(item)
+                } label: {
+                    Label("Réessayer", systemImage: "arrow.clockwise")
+                }
+            }
+            Button(role: .destructive) {
+                viewModel.remove(item)
+            } label: {
+                Label("Retirer", systemImage: "trash")
+            }
+        }
+        .listRowBackground(Color.clear)
     }
 
     private var folderPicker: some View {
