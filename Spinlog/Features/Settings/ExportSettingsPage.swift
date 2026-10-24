@@ -84,6 +84,9 @@ struct ExportSettingsPage: View {
         } footer: {
             Text("L'export CSV regroupe tous tes albums (tous dossiers confondus) avec leurs métadonnées, tags et notes pour tes tableurs (Excel, Numbers). La déclaration PDF liste la collection avec état et prix d'achat, à présenter par exemple à un assureur.")
         }
+        // L'icône d'export laisse la place à l'indicateur d'avancement en fondu, et inversement.
+        .animatesSettingsChanges(value: exportViewModel.isExportingCSV)
+        .animatesSettingsChanges(value: exportViewModel.isExportingPDF)
     }
 
     private var pdfExportSubtitle: String {

@@ -90,6 +90,8 @@ struct OrganizationSettingsPage: View {
                 Text("Ces réglages valent pour le meuble, la Collection et la Wantlist.")
             }
         }
+        // La ligne « Personnaliser le tri des artistes » apparaît ou disparaît avec le réglage qui la commande.
+        .animatesSettingsChanges(value: shelfPreferences.sortByLastName)
         .task { loadDefaultFolder() }
         // Un dossier par défaut modifié depuis un autre appareil (iCloud) ne rafraîchirait pas ce
         // `@State`, chargé une seule fois à l'apparition.

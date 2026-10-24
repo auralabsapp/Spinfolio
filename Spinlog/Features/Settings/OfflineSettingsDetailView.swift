@@ -10,6 +10,7 @@ struct OfflineSettingsDetailView: View {
     @State private var networkMonitor = NetworkMonitor.shared
     @State private var premiumStore = PremiumStore.shared
     @State private var imageCacheSize: String = "Calcul..."
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showingClearCacheConfirmation = false
     @State private var showingCellularConfirmation = false
     @State private var alertMessage: String? = nil
@@ -39,11 +40,14 @@ struct OfflineSettingsDetailView: View {
 
                         ProgressView(value: offlineManager.progress, total: 1.0)
                             .tint(Color.spinlogPink)
+                            .animation(reduceMotion ? nil : .easeOut(duration: 0.25), value: offlineManager.progress)
 
                         HStack {
                             Text(offlineManager.progress.formatted(.percent.precision(.fractionLength(0))))
                                 .font(.caption.monospacedDigit())
                                 .foregroundStyle(.secondary)
+                                .contentTransition(.numericText(value: offlineManager.progress))
+                                .animation(reduceMotion ? nil : .counterChange, value: offlineManager.progress)
                             Spacer()
                             Button("Annuler", role: .cancel) {
                                 offlineManager.cancelDownload()
@@ -115,6 +119,8 @@ struct OfflineSettingsDetailView: View {
                     Spacer()
                     Text(imageCacheSize)
                         .foregroundStyle(Color.appSecondaryText)
+                        .contentTransition(.numericText())
+                        .animation(reduceMotion ? nil : .counterChange, value: imageCacheSize)
                 }
 
                 Button(role: .destructive) {
@@ -155,6 +161,11 @@ struct OfflineSettingsDetailView: View {
                 SectionEyebrow(title: "À savoir", icon: "info.circle.fill")
             }
         }
+        // Le bloc de progression remplace le bouton de synchro en fondu plutôt que d'un coup.
+        .animation(reduceMotion ? nil : .settingsContentChange, value: offlineManager.state.isDownloading)
+        .onChange(of: isSyncCompleted) { _, completed in
+            if completed { UINotificationFeedbackGenerator().notificationOccurred(.success) }
+        }
         .task {
             await refreshCacheSize()
         }
@@ -188,6 +199,11 @@ struct OfflineSettingsDetailView: View {
         .messageAlert(message: $alertMessage)
     }
 
+    private var isSyncCompleted: Bool {
+        if case .completed = offlineManager.state { return true }
+        return false
+    }
+
     private var statusHeroCard: some View {
         VStack(spacing: 12) {
             HStack(spacing: 14) {
@@ -198,6 +214,8 @@ struct OfflineSettingsDetailView: View {
                     Image(systemName: "arrow.down.circle.fill")
                         .font(.title2)
                         .foregroundStyle(.teal)
+                        // Petit rebond à la fin d'une synchronisation réussie.
+                        .symbolEffect(.bounce, options: .nonRepeating, value: isSyncCompleted)
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -216,6 +234,7 @@ struct OfflineSettingsDetailView: View {
 
                     HStack(spacing: 8) {
                         Text("\(offlineManager.offlineItemCount) disques archivés")
+                            .animatedCount(offlineManager.offlineItemCount)
                             .font(.caption.weight(.medium))
                             .foregroundStyle(.teal)
                             .padding(.horizontal, 8)

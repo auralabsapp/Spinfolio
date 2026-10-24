@@ -41,25 +41,10 @@ extension StatsView {
             VStack(alignment: .leading, spacing: 10) {
                 SectionEyebrow(title: "Évolution de la cote", icon: "chart.line.uptrend.xyaxis")
 
-                Chart(Array(viewModel.valueHistoryPoints.enumerated()), id: \.offset) { _, point in
-                    AreaMark(
-                        x: .value("Date", point.date),
-                        yStart: .value("Minimum", point.low),
-                        yEnd: .value("Maximum", point.high)
-                    )
-                    .foregroundStyle(Color.spinlogPink.opacity(0.12))
-
-                    LineMark(
-                        x: .value("Date", point.date),
-                        y: .value("Médiane", point.median)
-                    )
-                    .foregroundStyle(Color.spinlogPink)
-                    .lineStyle(StrokeStyle(lineWidth: 2))
-                }
-                .frame(height: 160)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 12)
-                .appleMusicGroupedCard()
+                StatsValueHistoryChart(points: viewModel.valueHistoryPoints)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
+                    .appleMusicGroupedCard()
 
                 Text("Zone claire = fourchette basse/haute Discogs ; ligne = valeur médiane.")
                     .font(.caption)
