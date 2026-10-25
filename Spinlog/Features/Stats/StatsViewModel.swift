@@ -202,6 +202,8 @@ final class StatsViewModel {
 
     private let authManager = DiscogsAuthManager.shared
     private let localStore = LocalDataStore.shared
+    /// Dernière interrogation des compteurs et de la valeur (voir `loadOverview`).
+    @ObservationIgnored private var overviewThrottle = ReloadThrottle()
     private var histogramTask: Task<Void, Never>?
     private var masterResolutionTask: Task<Void, Never>?
 
@@ -235,10 +237,17 @@ final class StatsViewModel {
 
         startHistogramLoad(hasFreshCache: !cached.isEmpty)
 
-        async let counters: Void = loadCounters(username: username)
-        async let valuation: Void = loadValuation()
-        async let invested: Void = computeTotalInvestedIfNeeded()
-        _ = await (counters, valuation, invested)
+        // Compteurs et valeur : redemandés à Discogs au plus toutes les 5 min (voir
+        // `ReloadThrottle`), au lieu de 4 requêtes à chaque visite de l'onglet.
+        if NetworkMonitor.shared.isConnected, collectionValue == nil || overviewThrottle.shouldReload(for: username) {
+            overviewThrottle.recordReload(for: username)
+            async let counters: Void = loadCounters(username: username)
+            async let valuation: Void = loadValuation()
+            async let invested: Void = computeTotalInvestedIfNeeded()
+            _ = await (counters, valuation, invested)
+        } else {
+            await computeTotalInvestedIfNeeded()
+        }
     }
 
     /// Compteurs Collection/Wantlist + derniers ajouts : 3 appels légers (`per_page` réduit),

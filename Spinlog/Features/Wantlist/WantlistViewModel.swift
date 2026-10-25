@@ -77,7 +77,16 @@ final class WantlistViewModel {
         }
     }
 
+    /// Apparition de l'onglet : rechargement depuis Discogs au plus toutes les 5 min (voir
+    /// `ReloadThrottle`) ; le cache déjà affiché suffit entre-temps.
+    func loadOnAppear() async {
+        guard let username = authManager.username else { return }
+        guard items.isEmpty || reloadThrottle.shouldReload(for: username) else { return }
+        await load()
+    }
+
     func reset() {
+        reloadThrottle.reset()
         items = []
         folders = []
         itemAwaitingFolderChoice = nil
@@ -175,6 +184,8 @@ final class WantlistViewModel {
     private let networkMonitor = NetworkMonitor.shared
     private let localStore = LocalDataStore.shared
     private let syncQueue = OfflineSyncQueue.shared
+    /// Dernier rechargement depuis Discogs (voir `loadOnAppear`).
+    @ObservationIgnored private var reloadThrottle = ReloadThrottle()
 
     init() {
         addLibraryObserver(for: .wantlistItemAdded, payloadKey: "item") { [weak self] (item: WantlistItem) in
@@ -228,6 +239,7 @@ final class WantlistViewModel {
         }
 
         guard let credentials = authManager.credentials else { return }
+        reloadThrottle.recordReload(for: username)
         if !isSilent {
             isLoading = true
         }

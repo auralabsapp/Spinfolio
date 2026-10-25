@@ -185,7 +185,7 @@ struct CollectionView: View {
 
             .task(id: authManager.isAuthenticated) {
                 if authManager.isAuthenticated {
-                    await viewModel.loadFoldersAndItems()
+                    await viewModel.loadOnAppear()
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: .networkConnectionRestored)) { _ in

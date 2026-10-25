@@ -125,7 +125,16 @@ final class CollectionViewModel {
     /// compte Discogs qui vient de se déconnecter (items, dossiers, filtres) ne reste affichée
     /// ni ne se mélange avec celle du compte suivant lors du prochain chargement (`items` est
     /// fusionné et non remplacé par `loadFoldersAndItems`/`loadFirstPage`, voir leurs commentaires).
+    /// Apparition de l'onglet : rechargement depuis Discogs au plus toutes les 5 min (voir
+    /// `ReloadThrottle`) ; le cache déjà affiché suffit entre-temps.
+    func loadOnAppear() async {
+        guard let username = authManager.username else { return }
+        guard items.isEmpty || reloadThrottle.shouldReload(for: username) else { return }
+        await loadFoldersAndItems()
+    }
+
     func reset() {
+        reloadThrottle.reset()
         // Sans cette annulation, la synchro de fond du compte précédent continuait de charger
         // ses pages (avec ses identifiants) et pouvait les mélanger aux items du compte suivant.
         backgroundSyncTask?.cancel()
@@ -153,6 +162,8 @@ final class CollectionViewModel {
     private let networkMonitor = NetworkMonitor.shared
     private let localStore = LocalDataStore.shared
     private let syncQueue = OfflineSyncQueue.shared
+    /// Dernier rechargement depuis Discogs (voir `loadOnAppear`).
+    @ObservationIgnored private var reloadThrottle = ReloadThrottle()
 
     init() {
         addLibraryObserver(for: .collectionItemAdded, payloadKey: "item") { [weak self] (item: CollectionItem) in
@@ -439,6 +450,7 @@ final class CollectionViewModel {
         if !networkMonitor.isConnected {
             return
         }
+        reloadThrottle.recordReload(for: username)
 
         guard let credentials = authManager.credentials else { return }
         if !isSilent && items.isEmpty {

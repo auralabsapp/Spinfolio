@@ -188,7 +188,7 @@ struct WantlistView: View {
             )
             .task(id: authManager.isAuthenticated) {
                 if authManager.isAuthenticated {
-                    await viewModel.load()
+                    await viewModel.loadOnAppear()
                     Task { await WantlistAlertStore.shared.checkAlerts() }
                 }
             }
