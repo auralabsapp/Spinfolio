@@ -64,11 +64,9 @@ struct OfflineBannerView: View {
         }
     }
 
+    /// `formatted` plutôt qu'un `DateFormatter` créé à chaque rendu (§3).
     private func formattedDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .short
-        formatter.timeStyle = .short
-        return formatter.string(from: date)
+        date.formatted(date: .numeric, time: .shortened)
     }
 
     private var offlineInfoSheet: some View {

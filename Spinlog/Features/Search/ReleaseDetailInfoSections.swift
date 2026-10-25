@@ -1,4 +1,5 @@
 import SwiftUI
+import Kingfisher
 
 /// Sections d'informations techniques (format, identifiants, labels, companies, vidéos,
 /// galerie d'images) et toast d'écoute de la fiche release — extrait de
@@ -153,7 +154,9 @@ struct ReleaseIdentifiersSection: View {
                             let title = [identifier.type, identifier.description]
                                 .compactMap { $0 }
                                 .joined(separator: " · ")
-                            Text(title.isEmpty ? "Identifiant" : title)
+                            // Pas de ternaire de `String` dans `Text` (§6) : « Identifiant » restait en
+                            // français ; le titre Discogs, lui, s'affiche tel quel.
+                            (title.isEmpty ? Text("Identifiant") : Text(verbatim: title))
                                 .font(.subheadline)
                             Text(identifier.value)
                                 .font(.caption)
@@ -218,6 +221,7 @@ struct ReleaseVideosSection: View {
     let videos: [ReleaseVideo]
 
     @State private var videoPlayerRequest: VideoPlayerRequest?
+    @Environment(\.displayScale) private var displayScale
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -250,14 +254,15 @@ struct ReleaseVideosSection: View {
     private func videoCard(_ video: ReleaseVideo) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             ZStack {
-                AsyncImage(url: video.thumbnailURL) { phase in
-                    if let image = phase.image {
-                        image.resizable().aspectRatio(16.0 / 9.0, contentMode: .fill)
-                    } else {
-                        Rectangle().fill(.fill.tertiary)
-                    }
-                }
-                .frame(width: 160, height: 90)
+                // Kingfisher directement (cache disque borné, comme `AsyncCoverImage`, qui reste
+                // réservé aux pochettes carrées) : `AsyncImage` retéléchargeait la vignette 16:9 à
+                // chaque affichage, sans cache disque.
+                KFImage(video.thumbnailURL)
+                    .placeholder { Rectangle().fill(.fill.tertiary) }
+                    .downsampling(size: CGSize(width: 160 * displayScale, height: 90 * displayScale))
+                    .resizable()
+                    .aspectRatio(16.0 / 9.0, contentMode: .fill)
+                    .frame(width: 160, height: 90)
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
                 Image(systemName: "play.circle.fill")

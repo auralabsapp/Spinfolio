@@ -78,7 +78,7 @@ struct SpinlogPaywallView: View {
                 // Achat ni abouti ni annulé (ex: "Demander à acheter" du partage familial, ou
                 // validation différée) : sans ce cas, l'écran restait figé sans aucun retour,
                 // laissant penser à un blocage plutôt qu'à un achat en attente d'approbation.
-                purchaseErrorMessage = "Ton achat est en attente de validation (par exemple si \"Demander à acheter\" est activé sur ce compte). Tu seras averti dès qu'il sera approuvé."
+                purchaseErrorMessage = String(localized: "Ton achat est en attente de validation (par exemple si \"Demander à acheter\" est activé sur ce compte). Tu seras averti dès qu'il sera approuvé.")
                 showingPurchaseErrorAlert = true
             case .success(.userCancelled):
                 break
@@ -92,7 +92,13 @@ struct SpinlogPaywallView: View {
         .alert("Information", isPresented: $showingPurchaseErrorAlert) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text(purchaseErrorMessage ?? "Une erreur inattendue est survenue lors de la communication avec l'App Store.")
+            // Littéral dans `Text` pour qu'il soit extrait et traduit (un repli `??` restait une
+            // `String` absente du catalogue).
+            if let purchaseErrorMessage {
+                Text(purchaseErrorMessage)
+            } else {
+                Text("Une erreur inattendue est survenue lors de la communication avec l'App Store.")
+            }
         }
     }
 

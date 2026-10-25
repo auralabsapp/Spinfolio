@@ -97,7 +97,8 @@ struct NowPlayingTurntableSheet: View {
         .padding(.top, 36)
         .padding(.bottom, 24)
         .frame(maxWidth: .infinity)
-        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
+        // Closure de géométrie appelée hors du fil principal par SwiftUI : `@Sendable` (§12).
+        .onGeometryChange(for: CGFloat.self) { @Sendable proxy in proxy.size.height } action: { contentHeight = $0 }
         .onAppear(perform: rememberCurrentAlbum)
         .onChange(of: activityManager.activeAlbumTitle) { rememberCurrentAlbum() }
         .onChange(of: activityManager.activeReleaseId) { _, id in

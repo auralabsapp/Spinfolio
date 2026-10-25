@@ -27,12 +27,17 @@ final class WantlistAlertViewModel {
     /// saisie, y compris quand il est vide — jamais à l'intérieur du texte édité (voir
     /// `targetPriceString`).
     var currencySymbol: String {
+        Self.currencyFormatter.currencyCode = currency
+        return Self.currencyFormatter.currencySymbol ?? currency
+    }
+
+    /// Partagé (lu par `body` à chaque rendu) plutôt que recréé à chaque accès (§3).
+    private static let currencyFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.locale = Locale.current
-        formatter.currencyCode = currency
-        return formatter.currencySymbol ?? currency
-    }
+        return formatter
+    }()
 
     private(set) var isLoading = true
     private(set) var currentStats: MarketplaceStats?

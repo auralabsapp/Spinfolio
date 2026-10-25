@@ -248,9 +248,8 @@ struct ListeningLogCard: View {
 
     private var relativeLastListeningText: String? {
         guard let date = lastListeningDate else { return nil }
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .full
-        return formatter.localizedString(for: date, relativeTo: Date())
+        // Style relatif de `formatted` plutôt qu'un formatter créé à chaque rendu (§3).
+        return date.formatted(.relative(presentation: .numeric, unitsStyle: .wide))
     }
 
     var body: some View {

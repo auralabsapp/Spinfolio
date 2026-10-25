@@ -221,16 +221,21 @@ struct Release: Decodable, Identifiable, Sendable {
         images?.first?.uri
     }
 
+    /// Un analyseur par format de date Discogs, créés une seule fois (lu à chaque rendu de la
+    /// fiche, §3). Format fixe : locale POSIX, sans quoi un calendrier non grégorien (bouddhiste,
+    /// japonais…) réglé sur l'appareil fausse l'analyse.
+    private static let releasedDateParsers: [(pattern: String, formatter: DateFormatter)] = ["yyyy-MM-dd", "yyyy-MM", "yyyy"].map { pattern in
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = pattern
+        return (pattern, formatter)
+    }
+
     /// Date de sortie de ce pressage précis (peut différer de `year`, l'année de sortie
     /// originale de l'œuvre), formatée pour l'affichage.
     var formattedReleasedDate: String? {
         guard let released, !released.isEmpty else { return nil }
-        let formatter = DateFormatter()
-        // Format fixe (dates Discogs) : locale POSIX, sans quoi un calendrier non grégorien
-        // (bouddhiste, japonais…) réglé sur l'appareil fausse l'analyse.
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        for pattern in ["yyyy-MM-dd", "yyyy-MM", "yyyy"] {
-            formatter.dateFormat = pattern
+        for (pattern, formatter) in Self.releasedDateParsers {
             if let date = formatter.date(from: released) {
                 let style: Date.FormatStyle = pattern == "yyyy"
                     ? .dateTime.year()

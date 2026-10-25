@@ -28,15 +28,6 @@ extension Color {
         spinlogPink.opacity(0.12)
     }
 
-    /// Dégradé signature pour les visualisations.
-    static var spinlogPinkGradient: LinearGradient {
-        LinearGradient(
-            colors: [spinlogPinkLight, spinlogPink, spinlogPinkDeep],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-    }
-
     /// Sommet des barres de graphique.
     static var chartPinkSoftTop: Color { spinlogPinkLight }
 

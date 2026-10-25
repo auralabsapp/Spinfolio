@@ -157,7 +157,7 @@ struct RandomAlbumProvider: TimelineProvider {
             widgetLogger.log("buildEntry : empty (aucun disque dans l'instantané).")
             return RandomAlbumEntry(date: date, state: .empty)
         }
-        widgetLogger.log("buildEntry : album choisi -> \(album.title, privacy: .public) (releaseId=\(album.releaseId)).")
+        widgetLogger.log("buildEntry : album choisi -> \(album.title, privacy: .private) (releaseId=\(album.releaseId)).")
         let data = await fetchImageData(from: album.coverURL)
         let isLight = CoverAnalysis.analyze(imageData: data).isLight
         return RandomAlbumEntry(date: date, state: .album(album, coverImageData: data, isLightCover: isLight))

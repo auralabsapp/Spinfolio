@@ -33,17 +33,6 @@ enum ShelfScope: Sendable, Equatable {
             return String(localized: "Tous les dossiers")
         }
     }
-
-    var scopeDescription: String {
-        switch self {
-        case .allFolders:
-            return String(localized: "Tous les dossiers de la collection")
-        case .specificFolder(let name, _):
-            return String(localized: "Limité au dossier « \(name) »")
-        case .unassignedFolder:
-            return String(localized: "Tous les dossiers (disque hors dossier)")
-        }
-    }
 }
 
 /// Modèle représentant les voisins d'un vinyle dans le meuble physique
@@ -84,47 +73,6 @@ struct ShelfNeighbors: Sendable {
         self.totalCount = totalCount
         self.positionIndex = positionIndex
         self.scope = scope
-    }
-
-    var isAtBeginning: Bool {
-        previous == nil && next != nil
-    }
-
-    var isAtEnd: Bool {
-        previous != nil && next == nil
-    }
-
-    var isSoleRecord: Bool {
-        previous == nil && next == nil
-    }
-
-    /// Phrase explicative naturelle générée selon le contexte de placement
-    @MainActor
-    var explanationText: String {
-        if isSoleRecord {
-            switch scope {
-            case .specificFolder(let name, _):
-                return String(localized: "C'est le seul « \(category.lowercasedDisplayName) » de ton dossier « \(name) ». Dépose-le où tu veux !")
-            case .allFolders, .unassignedFolder:
-                return String(localized: "C'est le premier « \(category.lowercasedDisplayName) » de ta collection. Dépose-le où tu veux dans cet espace de rangement !")
-            }
-        }
-        if let previous, let next {
-            return String(localized: "À ranger entre « \(previous.artistNames) – \(previous.title)\(yearSuffix(for: previous)) » et « \(next.artistNames) – \(next.title)\(yearSuffix(for: next)) ».")
-        }
-        if let next, previous == nil {
-            return String(localized: "À ranger tout au début de ton meuble, juste avant « \(next.artistNames) – \(next.title)\(yearSuffix(for: next)) ».")
-        }
-        if let previous, next == nil {
-            return String(localized: "À ranger tout à la fin de ton meuble, juste après « \(previous.artistNames) – \(previous.title)\(yearSuffix(for: previous)) ».")
-        }
-        return String(localized: "Emplacement déterminé selon la règle \(strategy.title.lowercased()).")
-    }
-
-    @MainActor
-    private func yearSuffix(for release: Release) -> String {
-        guard let year = release.effectiveShelfYear(useOriginalYear: strategy.usesMasterYear), year > 0 else { return "" }
-        return " (\(year))"
     }
 }
 

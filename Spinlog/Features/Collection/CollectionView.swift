@@ -571,6 +571,7 @@ struct CollectionView: View {
                     Image(systemName: "folder")
                         .font(.title3)
                 }
+                .accessibilityLabel("Déplacer la sélection dans un dossier")
 
                 Button {
                     showingBulkTagManagement = true
@@ -578,6 +579,7 @@ struct CollectionView: View {
                     Image(systemName: "tag")
                         .font(.title3)
                 }
+                .accessibilityLabel("Tags de la sélection")
 
                 Button(role: .destructive) {
                     showingBulkDeleteConfirmation = true
@@ -585,6 +587,7 @@ struct CollectionView: View {
                     Image(systemName: "trash")
                         .font(.title3)
                 }
+                .accessibilityLabel("Supprimer la sélection")
             }
         }
     }

@@ -382,7 +382,7 @@ enum GuideCatalog {
             summary: "La feuille montre la cote récente par état, pour viser juste.",
             steps: [
                 "Touche un état dans « Cote moyenne récente par état » : sa cote devient ton prix cible.",
-                "Ajuste avec les raccourcis -10 %, -20 % ou -30 %."
+                "Ajuste avec les raccourcis \((-0.1).formatted(.percent)), \((-0.2).formatted(.percent)) ou \((-0.3).formatted(.percent))."
             ],
             access: .premium,
             destination: .tab(.wantlist)

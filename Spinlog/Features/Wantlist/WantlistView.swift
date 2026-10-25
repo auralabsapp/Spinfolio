@@ -115,6 +115,7 @@ struct WantlistView: View {
         } label: {
             Image(systemName: "ellipsis")
         }
+        .accessibilityLabel("Options")
     }
 
     @ViewBuilder
@@ -225,6 +226,7 @@ struct WantlistView: View {
                 Image(systemName: "trash")
                     .font(.title3)
             }
+            .accessibilityLabel("Supprimer la sélection")
         }
     }
 

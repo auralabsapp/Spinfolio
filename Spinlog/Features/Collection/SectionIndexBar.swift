@@ -67,7 +67,8 @@ struct SectionIndexBar: View {
                     Text(railLabel(for: entry.token))
                         .font(.system(size: 12, weight: .bold))
                         .lineLimit(1)
-                        .minimumScaleFactor(0.7)
+                        // Pas de réduction (elle descendait à 8,4 pt, sous le plancher de 11 pt) :
+                        // les repères font au plus 2 caractères et tiennent dans la largeur.
                         .fixedSize(horizontal: true, vertical: false)
                         .foregroundStyle(
                             activeToken == entry.token ? Color.spinlogPink : (isCurrent ? .white : .secondary)

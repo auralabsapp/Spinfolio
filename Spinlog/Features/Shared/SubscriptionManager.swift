@@ -275,35 +275,6 @@ public final class SubscriptionManager {
         return lowest.0.formatted(lowest.1)
     }
 
-    /// Équivalent mensuel de l'abonnement annuel calculé dynamiquement
-    public var yearlyMonthlyEquivalentString: String {
-        if let yearlyProduct = yearlyProduct {
-            let monthlyPriceDecimal = yearlyProduct.price / 12
-            let formatter = NumberFormatter()
-            formatter.numberStyle = .currency
-            formatter.locale = Locale.current
-            if let formatted = formatter.string(from: monthlyPriceDecimal as NSDecimalNumber) {
-                return String(localized: "(\(formatted)/mois)")
-            }
-        }
-        return String(localized: "(2,08 €/mois)")
-    }
-
-    /// Pourcentage d'économie de l'abonnement annuel par rapport à 12 mois payés au tarif mensuel,
-    /// calculé dynamiquement pour ne pas se désynchroniser des tarifs réels à chaque changement de
-    /// prix (contrairement à un badge "ÉCONOMISEZ X%" codé en dur).
-    public var yearlySavingsPercentString: String {
-        if let yearlyProduct, let monthlyProduct, monthlyProduct.price > 0 {
-            let fullYearAtMonthlyRate = monthlyProduct.price * 12
-            let savings = 1 - (yearlyProduct.price / fullYearAtMonthlyRate)
-            let percent = Int(((savings as NSDecimalNumber).doubleValue * 100).rounded())
-            if percent > 0 {
-                return String(localized: "ÉCONOMISE \(percent) %")
-            }
-        }
-        return String(localized: "ÉCONOMISE \(30) %")
-    }
-
     public nonisolated static func verify<T>(_ result: VerificationResult<T>) throws -> T {
         switch result {
         case .unverified(_, let error):

@@ -371,7 +371,7 @@ final class WantlistViewModel {
         // Si l'appareil est hors ligne et que les données ont plus de 6 heures (Option B) :
         // maintien de l'affichage en lecture seule et blocage des modifications
         if !networkMonitor.isConnected && isOfflineAndStale {
-            actionMessage = String(localized: "Mode hors ligne (données de plus de 6 h) : modification bloquée.")
+            actionMessage = AppMessages.offlineStaleModificationBlocked
             return nil
         }
         return username
@@ -439,7 +439,7 @@ final class WantlistViewModel {
         guard let username = authManager.username else { return }
 
         if !networkMonitor.isConnected && isOfflineAndStale {
-            actionMessage = String(localized: "Mode hors ligne (données de plus de 6 h) : modification bloquée.")
+            actionMessage = AppMessages.offlineStaleModificationBlocked
             return
         }
 

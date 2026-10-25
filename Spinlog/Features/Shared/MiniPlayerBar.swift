@@ -115,7 +115,7 @@ struct MiniPlayerBar: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Mettre en pause et fermer le lecteur")
+            .accessibilityLabel("Arrêter la lecture")
         }
         .padding(.leading, 16)
         .padding(.trailing, 14)
@@ -253,7 +253,7 @@ struct MiniPlayerBar: View {
                         .buttonStyle(.plain)
                         .offset(y: -2)
                         .zIndex(2)
-                        .accessibilityLabel("Mettre en pause et fermer le lecteur")
+                        .accessibilityLabel("Arrêter la lecture")
                     }
                     .padding(.leading, 14)
                     .padding(.trailing, 10)
