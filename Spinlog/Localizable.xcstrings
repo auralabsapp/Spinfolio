@@ -239,71 +239,11 @@
         }
       }
     },
-    "%@ · %lld éléments" : {
+    "%@ · %lld/%lld albums" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ · %#@n@"
-          },
-          "substitutions" : {
-            "n" : {
-              "argNum" : 2,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg item"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg items"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ · %#@n@"
-          },
-          "substitutions" : {
-            "n" : {
-              "argNum" : 2,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg élément"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg éléments"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "%@ · %lld/%lld éléments" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
+            "state" : "machine_translated",
             "value" : "%1$@ · %2$lld/%#@n@"
           },
           "substitutions" : {
@@ -314,14 +254,14 @@
                 "plural" : {
                   "one" : {
                     "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg item"
+                      "state" : "machine_translated",
+                      "value" : "%arg album"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg items"
+                      "state" : "machine_translated",
+                      "value" : "%arg albums"
                     }
                   }
                 }
@@ -331,7 +271,7 @@
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "machine_translated",
             "value" : "%1$@ · %2$lld/%#@n@"
           },
           "substitutions" : {
@@ -342,14 +282,14 @@
                 "plural" : {
                   "one" : {
                     "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg élément"
+                      "state" : "machine_translated",
+                      "value" : "%arg album"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg éléments"
+                      "state" : "machine_translated",
+                      "value" : "%arg albums"
                     }
                   }
                 }
@@ -1275,46 +1215,6 @@
         }
       }
     },
-    "%lld éléments" : {
-      "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld item"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld items"
-                }
-              }
-            }
-          }
-        },
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld élément"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld éléments"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "%lld étoiles" : {
       "localizations" : {
         "en" : {
@@ -2121,11 +2021,11 @@
         }
       }
     },
-    "%lld/%lld éléments" : {
+    "%lld/%lld albums" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "machine_translated",
             "value" : "%1$lld/%#@n@"
           },
           "substitutions" : {
@@ -2136,14 +2036,14 @@
                 "plural" : {
                   "one" : {
                     "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg item"
+                      "state" : "machine_translated",
+                      "value" : "%arg album"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg items"
+                      "state" : "machine_translated",
+                      "value" : "%arg albums"
                     }
                   }
                 }
@@ -2153,7 +2053,7 @@
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "machine_translated",
             "value" : "%1$lld/%#@n@"
           },
           "substitutions" : {
@@ -2164,14 +2064,14 @@
                 "plural" : {
                   "one" : {
                     "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg élément"
+                      "state" : "machine_translated",
+                      "value" : "%arg album"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg éléments"
+                      "state" : "machine_translated",
+                      "value" : "%arg albums"
                     }
                   }
                 }
@@ -3607,6 +3507,16 @@
         }
       }
     },
+    "Aucun album" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "No Albums"
+          }
+        }
+      }
+    },
     "Aucun album n'a été trouvé dans ta collection pour l'export." : {
       "localizations" : {
         "en" : {
@@ -3653,6 +3563,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No albums found for this artist."
+          }
+        }
+      }
+    },
+    "Aucun album trouvé pour cette année." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "No albums found for this year."
           }
         }
       }
@@ -3733,26 +3653,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No folders available"
-          }
-        }
-      }
-    },
-    "Aucun élément" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No Items"
-          }
-        }
-      }
-    },
-    "Aucun élément trouvé pour cette année." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No items found for this year."
           }
         }
       }
@@ -4227,11 +4127,11 @@
         }
       }
     },
-    "Cet exemplaire sera définitivement retiré de ta collection Discogs." : {
+    "Cet exemplaire sera définitivement supprimé de ta collection Discogs." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "machine_translated",
             "value" : "This copy will be permanently removed from your Discogs collection."
           }
         }
@@ -4247,21 +4147,21 @@
         }
       }
     },
-    "Cette action retire définitivement ces éléments de ta wantlist Discogs." : {
+    "Cette action supprime définitivement ces albums de ta wantlist Discogs." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "This action permanently removes these items from your Discogs wantlist."
+            "state" : "machine_translated",
+            "value" : "This action permanently removes these albums from your Discogs wantlist."
           }
         }
       }
     },
-    "Cette action retire définitivement ces exemplaires de ta collection Discogs." : {
+    "Cette action supprime définitivement ces exemplaires de ta collection Discogs." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "machine_translated",
             "value" : "This action permanently removes these copies from your Discogs collection."
           }
         }
@@ -4273,6 +4173,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "This Year"
+          }
+        }
+      }
+    },
+    "Cette fiche nécessite une connexion réseau." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "This page requires a network connection."
           }
         }
       }
@@ -5774,16 +5684,6 @@
         }
       }
     },
-    "Discogs" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Discogs"
-          }
-        }
-      }
-    },
     "Discogs a refusé l'opération : %@" : {
       "localizations" : {
         "en" : {
@@ -6371,7 +6271,7 @@
         }
       }
     },
-    "En mode démo, il n'est pas possible de retirer des albums de la collection ou de la wantlist. Connecte ton compte Discogs dans Réglages pour gérer ta propre collection." : {
+    "En mode démo, il n'est pas possible de supprimer des albums de la collection ou de la wantlist. Connecte ton compte Discogs dans Réglages pour gérer ta propre collection." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7205,6 +7105,16 @@
         }
       }
     },
+    "Glisse vers la gauche sur un artiste personnalisé pour rétablir son tri automatique." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Swipe left on a customized artist to restore automatic sorting."
+          }
+        }
+      }
+    },
     "Glisser latéralement pour afficher les autres années" : {
       "localizations" : {
         "en" : {
@@ -7301,6 +7211,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Regular"
+          }
+        }
+      }
+    },
+    "Hors ligne : cette page ne se met plus à jour." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Offline: this page is no longer updating."
           }
         }
       }
@@ -7571,22 +7491,22 @@
         }
       }
     },
-    "Impossible de retirer ce disque sur Discogs." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Couldn't remove this record on Discogs."
-          }
-        }
-      }
-    },
     "Impossible de se connecter à Discogs." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Couldn't connect to Discogs."
+          }
+        }
+      }
+    },
+    "Impossible de supprimer ce disque sur Discogs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Couldn't remove this record on Discogs."
           }
         }
       }
@@ -7914,16 +7834,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Discogs search requires a network connection."
-          }
-        }
-      }
-    },
-    "La recherche nécessite une connexion réseau" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Search requires a network connection"
           }
         }
       }
@@ -8625,6 +8535,16 @@
         }
       }
     },
+    "Maintiens le doigt sur un artiste personnalisé pour rétablir son tri automatique." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Touch and hold a customized artist to restore automatic sorting."
+          }
+        }
+      }
+    },
     "Maintiens le doigt sur un tag pour le modifier ou le supprimer." : {
       "localizations" : {
         "en" : {
@@ -8947,16 +8867,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Edit Price Alert"
-          }
-        }
-      }
-    },
-    "Modifier la note / notes" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Edit Rating / Notes"
           }
         }
       }
@@ -9896,6 +9806,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Customize your tags and Discogs folders, including the default folder for new records."
+          }
+        }
+      }
+    },
+    "Personnaliser le tri" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Customize Sorting"
           }
         }
       }
@@ -10872,76 +10792,6 @@
         }
       }
     },
-    "Retiré de la collection" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "machine_translated",
-            "value" : "Removed from Collection"
-          }
-        }
-      }
-    },
-    "Retiré de la wantlist" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "machine_translated",
-            "value" : "Removed from Wantlist"
-          }
-        }
-      }
-    },
-    "Retirer" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remove"
-          }
-        }
-      }
-    },
-    "Retirer cet exemplaire (dossier « %@ ») de ta collection Discogs ?" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remove this copy (\"%@\" folder) from your Discogs collection?"
-          }
-        }
-      }
-    },
-    "Retirer de la collection ?" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remove From Collection?"
-          }
-        }
-      }
-    },
-    "Retirer de la wantlist" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remove From Wantlist"
-          }
-        }
-      }
-    },
-    "Retirer de la wantlist ?" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remove From Wantlist?"
-          }
-        }
-      }
-    },
     "Retirer de toute la sélection" : {
       "localizations" : {
         "en" : {
@@ -11533,6 +11383,26 @@
         }
       }
     },
+    "Supprimé de la collection" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Removed from Collection"
+          }
+        }
+      }
+    },
+    "Supprimé de la wantlist" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Removed from Wantlist"
+          }
+        }
+      }
+    },
     "Supprimer" : {
       "localizations" : {
         "en" : {
@@ -11615,21 +11485,21 @@
         }
       }
     },
-    "Supprimer %lld éléments ?" : {
+    "Supprimer %lld albums ?" : {
       "localizations" : {
         "en" : {
           "variations" : {
             "plural" : {
               "one" : {
                 "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Delete %lld item?"
+                  "state" : "machine_translated",
+                  "value" : "Delete %lld album?"
                 }
               },
               "other" : {
                 "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Delete %lld items?"
+                  "state" : "machine_translated",
+                  "value" : "Delete %lld albums?"
                 }
               }
             }
@@ -11640,14 +11510,14 @@
             "plural" : {
               "one" : {
                 "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Supprimer %lld élément ?"
+                  "state" : "machine_translated",
+                  "value" : "Supprimer %lld album ?"
                 }
               },
               "other" : {
                 "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Supprimer %lld éléments ?"
+                  "state" : "machine_translated",
+                  "value" : "Supprimer %lld albums ?"
                 }
               }
             }
@@ -11735,6 +11605,16 @@
         }
       }
     },
+    "Supprimer cet exemplaire (dossier « %@ ») de ta collection Discogs ?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Remove this copy (\"%@\" folder) from your Discogs collection?"
+          }
+        }
+      }
+    },
     "Supprimer cette alerte" : {
       "localizations" : {
         "en" : {
@@ -11791,6 +11671,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Remove from wantlist"
+          }
+        }
+      }
+    },
+    "Supprimer de la wantlist ?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Remove From Wantlist?"
           }
         }
       }
@@ -12644,7 +12534,7 @@
         }
       }
     },
-    "Tes grades récompensent la taille de ta collection et tes écoutes sur platine. Un grade obtenu ne se perd jamais, même si tu retires des disques." : {
+    "Tes grades récompensent la taille de ta collection et tes écoutes sur platine. Un grade obtenu ne se perd jamais, même si tu supprimes des disques." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -13111,11 +13001,11 @@
         }
       }
     },
-    "Tous tes exemplaires de cet album seront retirés de ta collection Discogs." : {
+    "Tous tes exemplaires de cet album seront supprimés de ta collection Discogs." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "machine_translated",
             "value" : "All your copies of this album will be removed from your Discogs collection."
           }
         }
@@ -13563,16 +13453,6 @@
         }
       }
     },
-    "Une erreur inattendue est survenue lors de la communication avec l'App Store." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "machine_translated",
-            "value" : "An unexpected error occurred while communicating with the App Store."
-          }
-        }
-      }
-    },
     "Une seule fois : Réglages > Suivi de plus-value, puis associe tes champs Discogs." : {
       "localizations" : {
         "en" : {
@@ -13674,41 +13554,41 @@
         }
       }
     },
-    "Veux-tu retirer « %@ » de ta collection Discogs ?" : {
+    "Veux-tu supprimer « %@ » de ta collection Discogs ?" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "machine_translated",
             "value" : "Do you want to remove \"%@\" from your Discogs collection?"
           }
         }
       }
     },
-    "Veux-tu retirer « %@ » de ta wantlist Discogs ?" : {
+    "Veux-tu supprimer « %@ » de ta wantlist Discogs ?" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "machine_translated",
             "value" : "Do you want to remove \"%@\" from your Discogs wantlist?"
           }
         }
       }
     },
-    "Veux-tu retirer cet album de ta collection Discogs ?" : {
+    "Veux-tu supprimer cet album de ta collection Discogs ?" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "machine_translated",
             "value" : "Do you want to remove this album from your Discogs collection?"
           }
         }
       }
     },
-    "Veux-tu retirer cet album de ta wantlist Discogs ?" : {
+    "Veux-tu supprimer cet album de ta wantlist Discogs ?" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "machine_translated",
             "value" : "Do you want to remove this album from your Discogs wantlist?"
           }
         }

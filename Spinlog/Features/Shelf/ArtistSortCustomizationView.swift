@@ -142,8 +142,29 @@ struct ArtistSortCustomizationView: View {
                                 }
                             }
                         }
+                        // Doublé d'un menu : seul accès au « Rétablir » sur iOS 26 (pas de balayage).
+                        .contextMenu {
+                            Button {
+                                editingArtist = artist
+                            } label: {
+                                Label("Personnaliser le tri", systemImage: "pencil")
+                            }
+                            if shelfPreferences.customSort(for: artist) != nil {
+                                Button(role: .destructive) {
+                                    shelfPreferences.setCustomSort(for: artist, sortKey: nil)
+                                } label: {
+                                    Label("Rétablir", systemImage: "arrow.uturn.backward")
+                                }
+                            }
+                        }
                         .listRowBackground(Color.clear)
                     }
+                } footer: {
+                    (SwipeActionsSupport.isAvailable
+                        ? Text("Glisse vers la gauche sur un artiste personnalisé pour rétablir son tri automatique.")
+                        : Text("Maintiens le doigt sur un artiste personnalisé pour rétablir son tri automatique."))
+                        .font(.footnote)
+                        .foregroundStyle(Color.appSecondaryText)
                 }
             }
 

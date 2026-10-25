@@ -197,7 +197,7 @@ struct MyItemCard: View {
             }
         } message: {
             if let item = itemPendingDeletion {
-                Text("Retirer cet exemplaire (dossier « \(actions.folderName(for: item.folderId)) ») de ta collection Discogs ?")
+                Text("Supprimer cet exemplaire (dossier « \(actions.folderName(for: item.folderId)) ») de ta collection Discogs ?")
             }
         }
         .sheet(item: $priceEditTarget) { item in

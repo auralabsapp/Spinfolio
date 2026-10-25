@@ -106,11 +106,11 @@ nonisolated enum AppMessages {
 
     static var discogsUnavailableQueued: String { String(localized: "Discogs ne répond pas : la modification sera synchronisée automatiquement.") }
     static var addFailed: String { String(localized: "Impossible d'ajouter ce disque sur Discogs.") }
-    static var removalFailed: String { String(localized: "Impossible de retirer ce disque sur Discogs.") }
+    static var removalFailed: String { String(localized: "Impossible de supprimer ce disque sur Discogs.") }
     static var moveFailed: String { String(localized: "Impossible de changer ce disque de dossier sur Discogs.") }
 
     // Mode démo (voir `DemoMode`) : la collection et la wantlist d'exemple sont en lecture seule.
     static var demoAddBlocked: String { String(localized: "En mode démo, il n'est pas possible d'ajouter des albums à la collection ou à la wantlist. Connecte ton compte Discogs dans Réglages pour gérer ta propre collection.") }
-    static var demoRemovalBlocked: String { String(localized: "En mode démo, il n'est pas possible de retirer des albums de la collection ou de la wantlist. Connecte ton compte Discogs dans Réglages pour gérer ta propre collection.") }
+    static var demoRemovalBlocked: String { String(localized: "En mode démo, il n'est pas possible de supprimer des albums de la collection ou de la wantlist. Connecte ton compte Discogs dans Réglages pour gérer ta propre collection.") }
     static var demoModificationBlocked: String { String(localized: "En mode démo, la collection et la wantlist ne peuvent pas être modifiées. Connecte ton compte Discogs dans Réglages pour gérer ta propre collection.") }
 }

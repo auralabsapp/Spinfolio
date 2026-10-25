@@ -13,7 +13,7 @@ struct GenreReleasesSheetView: View {
             Group {
                 if data.items.isEmpty {
                     ContentUnavailableView(
-                        "Aucun élément",
+                        "Aucun album",
                         systemImage: "opticaldisc",
                         description: Text("Aucun album trouvé pour ce genre.")
                     )
@@ -56,7 +56,7 @@ struct MediaFormatReleasesSheetView: View {
             Group {
                 if data.items.isEmpty {
                     ContentUnavailableView(
-                        "Aucun élément",
+                        "Aucun album",
                         systemImage: "opticaldisc",
                         description: Text("Aucun album trouvé pour ce support.")
                     )
@@ -99,7 +99,7 @@ struct ArtistReleasesSheetView: View {
             Group {
                 if data.items.isEmpty {
                     ContentUnavailableView(
-                        "Aucun élément",
+                        "Aucun album",
                         systemImage: "opticaldisc",
                         description: Text("Aucun album trouvé pour cet artiste.")
                     )
@@ -158,9 +158,9 @@ struct YearReleasesSheetView: View {
             Group {
                 if data.items.isEmpty {
                     ContentUnavailableView(
-                        "Aucun élément",
+                        "Aucun album",
                         systemImage: "opticaldisc",
-                        description: Text("Aucun élément trouvé pour cette année.")
+                        description: Text("Aucun album trouvé pour cette année.")
                     )
                 } else {
                     List {
@@ -180,7 +180,7 @@ struct YearReleasesSheetView: View {
                 }
             }
             .background(Color.appBackground.ignoresSafeArea())
-            .navigationTitle(Text("\(data.title) · \(data.items.count) éléments"))
+            .navigationTitle(Text("\(data.title) · \(data.items.count) albums"))
             .navigationBarTitleDisplayMode(.inline)
             .searchDestinations()
             .toolbar {

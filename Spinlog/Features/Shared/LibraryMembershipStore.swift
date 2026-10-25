@@ -24,9 +24,9 @@ enum LibraryToastKind: Equatable {
     var message: String {
         switch self {
         case .collectionAdded: String(localized: "Ajouté à la collection")
-        case .collectionRemoved: String(localized: "Retiré de la collection")
+        case .collectionRemoved: String(localized: "Supprimé de la collection")
         case .wantlistAdded: String(localized: "Ajouté à la wantlist")
-        case .wantlistRemoved: String(localized: "Retiré de la wantlist")
+        case .wantlistRemoved: String(localized: "Supprimé de la wantlist")
         }
     }
 
@@ -75,6 +75,7 @@ final class LibraryMembershipStore {
     /// Incrémenté à chaque nouvelle bulle : permet à la tâche de disparition automatique de
     /// vérifier qu'aucune bulle plus récente n'a pris le relais avant de vider `activeToast`.
     private var toastGeneration = 0
+    @ObservationIgnored private var lastToastHaptic = Date.distantPast
 
     private let authManager = DiscogsAuthManager.shared
     private let localStore = LocalDataStore.shared
@@ -82,6 +83,7 @@ final class LibraryMembershipStore {
     private init() {}
 
     private func presentToast(_ kind: LibraryToastKind, queuedOffline: Bool = false) {
+        playHaptic(for: kind)
         toastGeneration += 1
         let generation = toastGeneration
         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
@@ -94,6 +96,21 @@ final class LibraryMembershipStore {
             withAnimation(.easeOut(duration: 0.25)) {
                 activeToast = nil
             }
+        }
+    }
+
+    /// Retour haptique de toute la famille ajout / retrait, quel que soit l'écran d'origine (fiche,
+    /// liste, mosaïque, recherche) : auparavant seule la fiche vibrait. Une rafale (retrait en lot)
+    /// ne vibre qu'une fois.
+    private func playHaptic(for kind: LibraryToastKind) {
+        let now = Date()
+        guard now.timeIntervalSince(lastToastHaptic) > 0.6 else { return }
+        lastToastHaptic = now
+        switch kind {
+        case .collectionAdded, .wantlistAdded:
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+        case .collectionRemoved, .wantlistRemoved:
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
         }
     }
 

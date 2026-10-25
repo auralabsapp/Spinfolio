@@ -242,9 +242,9 @@ struct WantlistView: View {
         let total = viewModel.items.count
         if viewModel.hasActiveFilters {
             let filteredCount = viewModel.sections.flatMap(\.items).count
-            return String(localized: "\(filteredCount)/\(total) éléments")
+            return String(localized: "\(filteredCount)/\(total) albums")
         }
-        return String(localized: "\(total) éléments")
+        return String(localized: "\(total) albums")
     }
 
     @ViewBuilder
@@ -354,19 +354,8 @@ struct WantlistView: View {
                         }
                 )
             },
-            contextMenuContent: { item in
-                let alert = alertStore.alert(for: item.id)
-                return AnyView(
-                    Button {
-                        requestAlertSheet(for: item)
-                    } label: {
-                        Label(
-                            alert != nil ? "Modifier l'alerte prix" : "Définir une alerte prix",
-                            systemImage: alert != nil ? "bell.badge.fill" : "bell"
-                        )
-                    }
-                )
-            }
+            // Mêmes actions que le carrousel et les balayages de la liste (auparavant l'alerte seule).
+            contextMenuContent: { item in wantlistCarouselContextMenu(for: item) }
         )
     }
 
@@ -448,6 +437,7 @@ struct WantlistView: View {
                     }
                 )
             },
+            contextMenuContent: { item in wantlistCarouselContextMenu(for: item) },
             onLoadMore: { await viewModel.loadMoreIfNeeded(current: $0) },
             onRefresh: {
                 await viewModel.refresh()
@@ -609,7 +599,7 @@ private extension View {
     ) -> some View {
         self
             .confirmationDialog(
-                "Supprimer \(selectedCount) éléments ?",
+                "Supprimer \(selectedCount) albums ?",
                 isPresented: showingBulkDeleteConfirmation,
                 titleVisibility: .visible
             ) {
@@ -618,7 +608,7 @@ private extension View {
                 }
                 Button("Annuler", role: .cancel) {}
             } message: {
-                Text("Cette action retire définitivement ces éléments de ta wantlist Discogs.")
+                Text("Cette action supprime définitivement ces albums de ta wantlist Discogs.")
             }
             .confirmationDialog(
                 "Ajouter dans quel dossier ?",
@@ -636,14 +626,14 @@ private extension View {
                 Button("Annuler", role: .cancel) {}
             }
             .confirmationDialog(
-                "Retirer de la wantlist ?",
+                "Supprimer de la wantlist ?",
                 isPresented: Binding(
                     get: { itemPendingDeletion.wrappedValue != nil },
                     set: { if !$0 { itemPendingDeletion.wrappedValue = nil } }
                 ),
                 titleVisibility: .visible
             ) {
-                Button("Retirer de la wantlist", role: .destructive) {
+                Button("Supprimer de la wantlist", role: .destructive) {
                     if let item = itemPendingDeletion.wrappedValue {
                         onDelete(item)
                     }
@@ -654,7 +644,7 @@ private extension View {
                 }
             } message: {
                 if let item = itemPendingDeletion.wrappedValue {
-                    Text("Veux-tu retirer « \(item.basicInformation.title) » de ta wantlist Discogs ?")
+                    Text("Veux-tu supprimer « \(item.basicInformation.title) » de ta wantlist Discogs ?")
                 }
             }
     }

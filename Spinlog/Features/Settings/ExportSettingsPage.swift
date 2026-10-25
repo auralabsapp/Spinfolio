@@ -11,11 +11,7 @@ struct ExportSettingsPage: View {
         SettingsSubPage(title: "Export") {
             exportSection
         }
-        .alert(exportViewModel.alertTitle, isPresented: $exportViewModel.showingAlert) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(exportViewModel.alertMessage)
-        }
+        .messageAlert(Text(exportViewModel.alertTitle), message: $exportViewModel.alertMessage)
     }
 
     @ViewBuilder

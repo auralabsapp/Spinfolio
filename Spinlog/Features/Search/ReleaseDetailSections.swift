@@ -343,7 +343,7 @@ struct ReleaseQuickActionsBar: View {
             }
         } message: {
             if let inst = instancePendingDeletion {
-                Text("Retirer cet exemplaire (dossier « \(actions.folderName(for: inst.folderId)) ») de ta collection Discogs ?")
+                Text("Supprimer cet exemplaire (dossier « \(actions.folderName(for: inst.folderId)) ») de ta collection Discogs ?")
             }
         }
         .confirmationDialog(
@@ -356,10 +356,10 @@ struct ReleaseQuickActionsBar: View {
             }
             Button("Annuler", role: .cancel) {}
         } message: {
-            Text("Tous tes exemplaires de cet album seront retirés de ta collection Discogs.")
+            Text("Tous tes exemplaires de cet album seront supprimés de ta collection Discogs.")
         }
         .confirmationDialog(
-            "Retirer de la collection ?",
+            "Supprimer de la collection ?",
             isPresented: $showSingleDeleteConfirmation,
             titleVisibility: .visible
         ) {
@@ -368,28 +368,24 @@ struct ReleaseQuickActionsBar: View {
             }
             Button("Annuler", role: .cancel) {}
         } message: {
-            Text("Veux-tu retirer cet album de ta collection Discogs ?")
+            Text("Veux-tu supprimer cet album de ta collection Discogs ?")
         }
         .confirmationDialog(
-            "Retirer de la wantlist ?",
+            "Supprimer de la wantlist ?",
             isPresented: $showWantlistDeleteConfirmation,
             titleVisibility: .visible
         ) {
-            Button("Retirer de la wantlist", role: .destructive) {
+            Button("Supprimer de la wantlist", role: .destructive) {
                 Task { await actions.toggleWantlist(releaseId: releaseId, release: release) }
             }
             Button("Annuler", role: .cancel) {}
         } message: {
-            Text("Veux-tu retirer cet album de ta wantlist Discogs ?")
+            Text("Veux-tu supprimer cet album de ta wantlist Discogs ?")
         }
-        .alert(DemoMode.isActive ? Text("Mode démo") : Text(verbatim: "Discogs"), isPresented: Binding(
-            get: { actions.message != nil },
-            set: { if !$0 { actions.message = nil } }
-        )) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(actions.message ?? "")
-        }
+        .messageAlert(
+            DemoMode.isActive ? Text("Mode démo") : Text(verbatim: "Discogs"),
+            message: Bindable(actions).message
+        )
     }
 }
 

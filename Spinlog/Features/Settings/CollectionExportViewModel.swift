@@ -10,9 +10,9 @@ import Foundation
 final class CollectionExportViewModel {
     private(set) var isExportingCSV = false
     private(set) var isExportingPDF = false
-    var alertTitle = ""
-    var alertMessage = ""
-    var showingAlert = false
+    private(set) var alertTitle = ""
+    /// Message de l'alerte affichée ; `nil` quand elle est fermée (`messageAlert`).
+    var alertMessage: String?
 
     private let authManager = DiscogsAuthManager.shared
     private let tagStore = TagStore.shared
@@ -22,7 +22,6 @@ final class CollectionExportViewModel {
     private func presentAlert(title: String, message: String) {
         alertTitle = title
         alertMessage = message
-        showingAlert = true
     }
 
     /// Dossiers et exemplaires de la collection entière (dossier "Tous"), rafraîchis depuis

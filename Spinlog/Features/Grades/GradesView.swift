@@ -9,7 +9,7 @@ struct GradesView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
-                Text("Tes grades récompensent la taille de ta collection et tes écoutes sur platine. Un grade obtenu ne se perd jamais, même si tu retires des disques.")
+                Text("Tes grades récompensent la taille de ta collection et tes écoutes sur platine. Un grade obtenu ne se perd jamais, même si tu supprimes des disques.")
                     .font(.footnote)
                     .foregroundStyle(Color.appSecondaryText)
                     .fixedSize(horizontal: false, vertical: true)

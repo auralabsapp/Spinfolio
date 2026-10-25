@@ -379,8 +379,15 @@ struct BulkTagManagementSheet: View {
 
             if status != .none {
                 Button(role: .destructive) {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    removeTagFromAll(tag)
+                    // Même règle que le toucher : un tag porté par une partie seulement de la
+                    // sélection passe par la confirmation (auparavant retiré d'emblée par le menu).
+                    if case .partial(let count) = status {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        partialTagAction = BulkPartialTagAction(tag: tag, count: count)
+                    } else {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        removeTagFromAll(tag)
+                    }
                 } label: {
                     Label("Retirer de toute la sélection", systemImage: "minus.circle")
                 }

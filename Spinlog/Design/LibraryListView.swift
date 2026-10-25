@@ -38,6 +38,9 @@ struct LibraryListView<Item: SortableLibraryItem>: View {
     var rowBackground: (Item) -> AnyView? = { _ in AnyView(Color.clear) }
     var leadingSwipeActions: (Item) -> AnyView = { _ in AnyView(EmptyView()) }
     var trailingSwipeActions: (Item) -> AnyView = { _ in AnyView(EmptyView()) }
+    /// Mêmes actions que les balayages, par appui long : seul moyen d'y accéder sur iOS 26 et
+    /// avec VoiceOver (voir `LibraryMosaicView.contextMenuContent`).
+    var contextMenuContent: (Item) -> AnyView = { _ in AnyView(EmptyView()) }
     let onLoadMore: (Item) async -> Void
     let onRefresh: () async -> Void
 
@@ -97,6 +100,7 @@ struct LibraryListView<Item: SortableLibraryItem>: View {
                             .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                             .listRowBackground(rowBackground(item))
                             .task { await onLoadMore(item) }
+                            .contextMenu(isSelecting ? nil : ContextMenu { contextMenuContent(item) })
                             .swipeActions(edge: .leading, allowsFullSwipe: true) {
                                 if !isSelecting {
                                     leadingSwipeActions(item)

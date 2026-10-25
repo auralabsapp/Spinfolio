@@ -18,10 +18,9 @@ struct SearchView: View {
 
 
     var body: some View {
+        // Hors ligne, l'état vide « Recherche indisponible hors ligne » suffit : le bandeau en tête
+        // répétait le même message.
         VStack(spacing: 12) {
-            if !networkMonitor.isConnected {
-                OfflineBannerView(customMessage: String(localized: "La recherche nécessite une connexion réseau"))
-            }
             searchBar
             scopePicker
             content
@@ -279,6 +278,8 @@ struct SearchView: View {
                         .swipeActions(edge: .leading, allowsFullSwipe: true) {
                             leadingSwipeActions(for: result)
                         }
+                        // Même action par appui long (seul accès sur iOS 26).
+                        .contextMenu { leadingSwipeActions(for: result) }
                         .listRowBackground(Color.clear)
                 }
                 .listStyle(.plain)

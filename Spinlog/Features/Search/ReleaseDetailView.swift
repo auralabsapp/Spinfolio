@@ -164,16 +164,11 @@ struct ReleaseDetailView: View {
             .onChange(of: viewModel.release?.id, initial: true) { _, loadedId in
                 if loadedId != nil { sectionsRevealed = true }
             }
-            // Retour au geste de l'utilisateur : succès à l'ajout (+ « pop » de la jaquette), choc léger
-            // au retrait. Les changements d'état dus au simple chargement n'émettent aucun événement.
+            // « Pop » de la jaquette à l'ajout ; le retour haptique de l'ajout ou du retrait est joué
+            // avec la bulle de confirmation (`LibraryMembershipStore`), le même sur tous les écrans.
             .onChange(of: actions.lastFeedbackEvent) { _, event in
-                guard let event else { return }
-                if event.kind.isAddition {
-                    UINotificationFeedbackGenerator().notificationOccurred(.success)
-                    heroPop += 1
-                } else {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                }
+                guard let event, event.kind.isAddition else { return }
+                heroPop += 1
             }
     }
 

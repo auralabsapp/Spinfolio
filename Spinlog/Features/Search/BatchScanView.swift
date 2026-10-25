@@ -68,19 +68,12 @@ struct BatchScanView: View {
         } message: {
             Text("Les \(viewModel.items.count) codes scannés sont conservés : tu les retrouveras à la prochaine ouverture du scan par lot.")
         }
-        .alert("Discogs", isPresented: Binding(
-            get: { viewModel.message != nil },
-            set: { if !$0 { viewModel.message = nil } }
-        )) {
-            Button("OK", role: .cancel) {
-                // Lot terminé : on ferme le scan et on montre là où les disques viennent d'arriver.
-                if let tab = viewModel.takeDestinationAfterAdd() {
-                    dismiss()
-                    TabNavigationCoordinator.shared.selectedTab = tab
-                }
+        .messageAlert(Text(verbatim: "Discogs"), message: $viewModel.message) {
+            // Lot terminé : on ferme le scan et on montre là où les disques viennent d'arriver.
+            if let tab = viewModel.takeDestinationAfterAdd() {
+                dismiss()
+                TabNavigationCoordinator.shared.selectedTab = tab
             }
-        } message: {
-            Text(viewModel.message ?? "")
         }
     }
 
@@ -146,7 +139,9 @@ struct BatchScanView: View {
                         flashTrigger += 1
                         viewModel.scan(code: code)
                     },
-                    onError: { _ in },
+                    // Caméra indisponible ou refusée : même message que le scan simple, au lieu
+                    // d'un écran de scan qui ne réagit plus sans explication.
+                    onError: { error in viewModel.message = error.localizedDescription },
                     continuous: true
                 )
                 .ignoresSafeArea()
@@ -267,7 +262,7 @@ struct BatchScanView: View {
             Button(role: .destructive) {
                 viewModel.remove(item)
             } label: {
-                Label("Retirer", systemImage: "trash")
+                Label("Supprimer", systemImage: "trash")
             }
         }
         // Le balayage seul n'existe pas sur iOS 26 : le menu contextuel double l'action.
@@ -282,7 +277,7 @@ struct BatchScanView: View {
             Button(role: .destructive) {
                 viewModel.remove(item)
             } label: {
-                Label("Retirer", systemImage: "trash")
+                Label("Supprimer", systemImage: "trash")
             }
         }
         .listRowBackground(Color.clear)

@@ -117,7 +117,7 @@ struct CollectionView: View {
                 }
             } message: {
                 if let item = itemPendingDeletion {
-                    Text("Veux-tu retirer « \(item.basicInformation.title) » de ta collection Discogs ?")
+                    Text("Veux-tu supprimer « \(item.basicInformation.title) » de ta collection Discogs ?")
                 }
             }
             .confirmationDialog(
@@ -137,7 +137,7 @@ struct CollectionView: View {
                 }
                 Button("Annuler", role: .cancel) {}
             } message: {
-                Text("Cette action retire définitivement ces exemplaires de ta collection Discogs.")
+                Text("Cette action supprime définitivement ces exemplaires de ta collection Discogs.")
             }
             .confirmationDialog(
                 moveConfirmationTitle,
@@ -514,16 +514,20 @@ struct CollectionView: View {
                     Label("Où ranger", systemImage: "books.vertical.fill")
                 }
 
-                Button {
-                    editingItem = item
-                } label: {
-                    Label("Modifier la note / notes", systemImage: "pencil")
-                }
+                // Hors ligne avec des données de plus de 6 h, comme les balayages de la liste :
+                // ni modification ni suppression sur un état peut-être périmé.
+                if !viewModel.isOfflineAndStale {
+                    Button {
+                        editingItem = item
+                    } label: {
+                        Label("Modifier la note et les commentaires", systemImage: "pencil")
+                    }
 
-                Button(role: .destructive) {
-                    itemPendingDeletion = item
-                } label: {
-                    Label("Supprimer de la collection", systemImage: "trash")
+                    Button(role: .destructive) {
+                        itemPendingDeletion = item
+                    } label: {
+                        Label("Supprimer de la collection", systemImage: "trash")
+                    }
                 }
             }
         )
@@ -698,6 +702,7 @@ struct CollectionView: View {
                     }
                 )
             },
+            contextMenuContent: { item in collectionContextMenu(for: item) },
             onLoadMore: { await viewModel.loadMoreIfNeeded(current: $0) },
             onRefresh: { await viewModel.refresh() }
         )
@@ -712,9 +717,9 @@ struct CollectionView: View {
         guard let currentFolder else { return isShowingSkeleton ? currentFolderName : "" }
         if viewModel.hasActiveFilters {
             let filteredCount = viewModel.sections.flatMap(\.items).count
-            return String(localized: "\(currentFolder.name) · \(filteredCount)/\(currentFolder.count) éléments")
+            return String(localized: "\(currentFolder.name) · \(filteredCount)/\(currentFolder.count) albums")
         }
-        return String(localized: "\(currentFolder.name) · \(currentFolder.count) éléments")
+        return String(localized: "\(currentFolder.name) · \(currentFolder.count) albums")
     }
 
     @ViewBuilder

@@ -29,7 +29,6 @@ struct SpinlogPaywallView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showsAllFeatures: Bool = false
     @State private var purchaseErrorMessage: String? = nil
-    @State private var showingPurchaseErrorAlert: Bool = false
 
     /// CLUF standard d'Apple : couvre les conditions d'utilisation de l'app en l'absence de
     /// conditions personnalisées renseignées dans App Store Connect.
@@ -67,7 +66,6 @@ struct SpinlogPaywallView: View {
                 // prochain lancement (et la transaction restait non terminée).
                 guard let transaction = try? SubscriptionManager.verify(verification) else {
                     purchaseErrorMessage = String(localized: "L'achat n'a pas pu être vérifié auprès de l'App Store.")
-                    showingPurchaseErrorAlert = true
                     return
                 }
                 await transaction.finish()
@@ -79,27 +77,15 @@ struct SpinlogPaywallView: View {
                 // validation différée) : sans ce cas, l'écran restait figé sans aucun retour,
                 // laissant penser à un blocage plutôt qu'à un achat en attente d'approbation.
                 purchaseErrorMessage = String(localized: "Ton achat est en attente de validation (par exemple si \"Demander à acheter\" est activé sur ce compte). Tu seras averti dès qu'il sera approuvé.")
-                showingPurchaseErrorAlert = true
             case .success(.userCancelled):
                 break
             case .success:
                 break
             case .failure(let error):
                 purchaseErrorMessage = error.localizedDescription
-                showingPurchaseErrorAlert = true
             }
         }
-        .alert("Information", isPresented: $showingPurchaseErrorAlert) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            // Littéral dans `Text` pour qu'il soit extrait et traduit (un repli `??` restait une
-            // `String` absente du catalogue).
-            if let purchaseErrorMessage {
-                Text(purchaseErrorMessage)
-            } else {
-                Text("Une erreur inattendue est survenue lors de la communication avec l'App Store.")
-            }
-        }
+        .messageAlert(Text("Information"), message: $purchaseErrorMessage)
     }
 
     // MARK: - Contenu marketing (bannière + fonctionnalités, affiché au-dessus des forfaits)

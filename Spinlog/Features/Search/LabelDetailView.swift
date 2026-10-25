@@ -38,7 +38,8 @@ struct LabelDetailView: View {
             ContentUnavailableView {
                 Label("Impossible de charger ce label", systemImage: "exclamationmark.triangle")
             } description: {
-                Text(errorMessage)
+                // Hors ligne : la raison réelle plutôt que le message technique de l'erreur réseau.
+                NetworkMonitor.shared.isConnected ? Text(errorMessage) : Text("Cette fiche nécessite une connexion réseau.")
             } actions: {
                 Button("Réessayer") {
                     Task { await viewModel.load(labelId: labelId) }
@@ -48,6 +49,10 @@ struct LabelDetailView: View {
         } else if let label = viewModel.label {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
+                    // Même bandeau que la fiche artiste : la page reste affichée mais ne se met plus à jour.
+                    if !NetworkMonitor.shared.isConnected {
+                        OfflineBannerView(customMessage: String(localized: "Hors ligne : cette page ne se met plus à jour."))
+                    }
                     AsyncCoverImage(url: label.primaryImageURL)
                         .frame(width: Self.coverSize, height: Self.coverSize)
                         .overlay(

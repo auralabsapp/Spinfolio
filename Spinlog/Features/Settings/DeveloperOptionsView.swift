@@ -25,7 +25,6 @@ struct DeveloperOptionsView: View {
     @State private var showingPaywall = false
     @State private var showingFeaturesSheet = false
     @State private var toastMessage: String? = nil
-    @State private var showingToast = false
 
     // Sauvegarde & Restauration JSON
     @State private var showingFileExporter = false
@@ -105,7 +104,6 @@ struct DeveloperOptionsView: View {
                             await subscriptionManager.loadProducts()
                             await subscriptionManager.updateCustomerProductStatus()
                             toastMessage = "StoreKit 2 synchronisé"
-                            showingToast = true
                         }
                     }
                     .buttonStyle(.bordered)
@@ -389,9 +387,7 @@ struct DeveloperOptionsView: View {
         .sheet(isPresented: $showingFeaturesSheet) {
             PremiumFeaturesSheet()
         }
-        .alert(toastMessage ?? "", isPresented: $showingToast) {
-            Button("OK", role: .cancel) {}
-        }
+        .messageAlert(message: $toastMessage)
         .fileExporter(
             isPresented: $showingFileExporter,
             document: exportDocument,
@@ -557,7 +553,6 @@ struct DeveloperOptionsView: View {
 
     private func showToast(_ msg: String) {
         toastMessage = msg
-        showingToast = true
     }
 
     private var exportSubtitle: String {

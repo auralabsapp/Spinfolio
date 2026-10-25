@@ -286,7 +286,7 @@ struct CollectionItemEditSheet: View {
                 }
                 Button("Annuler", role: .cancel) {}
             } message: {
-                Text("Cet exemplaire sera définitivement retiré de ta collection Discogs.")
+                Text("Cet exemplaire sera définitivement supprimé de ta collection Discogs.")
             }
             .sheet(isPresented: $showingMarketplaceSheet) {
                 MarketplaceSheet(releaseId: item.releaseId)

@@ -33,4 +33,20 @@ extension View {
             Button("OK", role: .cancel) {}
         }
     }
+
+    /// Variante avec un titre (`Text`, pour rester traduit) au-dessus du message, et une action
+    /// facultative au toucher de « OK » (ex. fermer le scan par lot une fois le lot ajouté).
+    func messageAlert(_ title: Text, message: Binding<String?>, onDismiss: @escaping () -> Void = {}) -> some View {
+        alert(
+            title,
+            isPresented: Binding(
+                get: { message.wrappedValue != nil },
+                set: { if !$0 { message.wrappedValue = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel, action: onDismiss)
+        } message: {
+            Text(message.wrappedValue ?? "")
+        }
+    }
 }
