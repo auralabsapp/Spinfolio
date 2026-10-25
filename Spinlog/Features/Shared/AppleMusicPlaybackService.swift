@@ -180,6 +180,27 @@ final class AppleMusicPlaybackService {
         }
     }
 
+    /// Arrêt en douceur depuis la fenêtre de lecture : le son de l'extrait baisse en fondu pendant
+    /// que la fenêtre rentre dans le mini-lecteur, puis `stop()`. `ApplicationMusicPlayer` (morceau
+    /// complet) n'a pas de réglage de volume : il s'arrête simplement à la fin du fondu. Rien n'est
+    /// arrêté si un autre titre a été lancé entre-temps.
+    func fadeOutAndStop(over duration: TimeInterval) async {
+        let trackID = playingTrackID
+        let steps = 12
+        if let player = previewPlayer {
+            let startVolume = player.volume
+            for step in 1...steps {
+                try? await Task.sleep(for: .seconds(duration / Double(steps)))
+                guard previewPlayer === player else { return }
+                player.volume = startVolume * Float(1 - Double(step) / Double(steps))
+            }
+        } else {
+            try? await Task.sleep(for: .seconds(duration))
+        }
+        guard playingTrackID == trackID else { return }
+        stop()
+    }
+
     /// Déplace la tête de lecture à une position temporelle précise (en secondes).
     func seek(to seconds: TimeInterval) {
         guard totalDuration > 0 else { return }

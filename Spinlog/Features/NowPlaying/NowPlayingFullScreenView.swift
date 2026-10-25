@@ -22,6 +22,7 @@ private enum NowPlayingSheet: Identifiable {
 /// pistes. Elle sort du mini-lecteur (transition zoom) et se ferme en glissant vers le bas.
 struct NowPlayingFullScreenView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var viewModel = NowPlayingViewModel()
     @State private var service = AppleMusicPlaybackService.shared
 
@@ -31,6 +32,8 @@ struct NowPlayingFullScreenView: View {
     /// Dernier titre Apple Music connu : entre deux pistes, `service.currentItem` repasse un
     /// instant à `nil`, et la fenêtre ne doit alors ni se vider ni se fermer.
     @State private var lastItem: NowPlayingItem?
+    /// Arrêt demandé : un second toucher pendant la fermeture est ignoré (voir `stopAndClose`).
+    @State private var isStopping = false
 
     /// Part de la hauteur de l'écran occupée par la pochette, comme sur l'écran d'Apple Music.
     private static let coverHeightRatio = 0.55
@@ -297,8 +300,7 @@ struct NowPlayingFullScreenView: View {
             Spacer()
             // Le service de lecture n'a pas de pause : le bouton central arrête (et ferme) la lecture.
             transportButton(systemImage: "stop.fill", label: "Arrêter la lecture", isEnabled: true, size: 48) {
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                service.stop()
+                stopAndClose()
             }
             Spacer()
             transportButton(systemImage: "forward.fill", label: "Piste suivante", isEnabled: nextTrack != nil, size: 38) {
@@ -356,6 +358,21 @@ struct NowPlayingFullScreenView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Liste des pistes")
+        }
+    }
+
+    /// La fenêtre rentre d'abord dans le mini-lecteur (zoom inverse de l'ouverture), le son
+    /// baissant en fondu, puis la lecture s'arrête et le mini-lecteur s'efface. Auparavant l'arrêt
+    /// immédiat faisait disparaître le mini-lecteur, cible du zoom : la fenêtre se fermait d'un coup.
+    private func stopAndClose() {
+        guard !isStopping else { return }
+        isStopping = true
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        dismiss()
+        if reduceMotion {
+            service.stop()
+        } else {
+            Task { await service.fadeOutAndStop(over: 0.45) }
         }
     }
 
