@@ -171,6 +171,12 @@ final class DiscogsCategoryBackfillService {
         }.value
     }
 
+    /// Suppression des données : les artistes déjà parcourus révèlent ceux de la collection.
+    func clearHistory() {
+        stop()
+        UserDefaults.standard.removeObject(forKey: processedStorageKey)
+    }
+
     private func loadProcessed() -> [String: Date] {
         let stored = UserDefaults.standard.dictionary(forKey: processedStorageKey) as? [String: Double] ?? [:]
         return stored.mapValues { Date(timeIntervalSince1970: $0) }

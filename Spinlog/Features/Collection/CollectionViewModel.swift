@@ -192,6 +192,15 @@ final class CollectionViewModel {
         addLibraryObserver(for: .tagsChanged) { [weak self] in
             self?.recomputeSections()
         }
+
+        // Action hors ligne refusée par Discogs : l'affichage optimiste est faux, on recharge.
+        addLibraryObserver(for: .offlineActionDropped) { [weak self] notification in
+            guard let self,
+                  let raw = notification.userInfo?["type"] as? String,
+                  let type = ActionType(rawValue: raw),
+                  type != .addToWantlist, type != .removeFromWantlist else { return }
+            Task { await self.refresh() }
+        }
     }
 
     private func resolveMissingMastersIfNeeded() {

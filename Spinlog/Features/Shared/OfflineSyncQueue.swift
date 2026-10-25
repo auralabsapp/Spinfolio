@@ -77,6 +77,12 @@ enum OfflineSyncError: LocalizedError {
     }
 }
 
+extension Notification.Name {
+    /// Une action hors ligne a été abandonnée (refus définitif de Discogs ou action trop
+    /// ancienne) : `userInfo["type"]` porte le `rawValue` de son `ActionType`.
+    static let offlineActionDropped = Notification.Name("com.spinlog.offlineActionDropped")
+}
+
 /// File d'attente des mutations hors ligne avec traitement séquentiel et respect strict
 /// du rate-limiting de Discogs (1 appel/s min, backoff sur 429).
 @Observable
@@ -86,7 +92,9 @@ final class OfflineSyncQueue {
 
     private(set) var pendingActions: [PendingAction] = []
     private(set) var isProcessing: Bool = false
-    var lastErrorNotification: String?
+    /// Abandons à signaler, affichés par `RootTabView` jusqu'à ce que l'utilisateur ferme l'alerte
+    /// (`acknowledgeLastError`). Auparavant écrit mais jamais lu : l'échec restait silencieux.
+    private(set) var lastErrorNotification: String?
 
     private let storageKey = "com.spinlog.offlinePendingActions"
     private var lastRequestTime: Date = .distantPast
@@ -213,7 +221,7 @@ final class OfflineSyncQueue {
                     if Task.isCancelled || error.isCancellation { break }
                     if Self.hasExpired(action) {
                         removeAction(id: action.id)
-                        lastErrorNotification = String(localized: "Échec définitif de synchronisation : \(actionDescription(for: action)) (\(error.localizedDescription))")
+                        reportDroppedAction(action, error: error)
                         continue
                     }
                     consecutiveTransientFailures += 1
@@ -227,7 +235,7 @@ final class OfflineSyncQueue {
 
                 if updatedAction.retryCount >= Self.maxDefinitiveFailures {
                     removeAction(id: action.id)
-                    lastErrorNotification = String(localized: "Échec définitif de synchronisation : \(actionDescription(for: action)) (\(error.localizedDescription))")
+                    reportDroppedAction(action, error: error)
                 } else {
                     if let index = pendingActions.firstIndex(where: { $0.id == action.id }) {
                         pendingActions[index] = updatedAction
@@ -515,6 +523,24 @@ final class OfflineSyncQueue {
         if changed {
             persistActions()
         }
+    }
+
+    /// Plusieurs abandons avant que l'alerte ne soit fermée : tous restent listés, un par ligne.
+    nonisolated static func combinedFailureMessage(_ existing: String?, adding message: String) -> String {
+        existing.map { "\($0)\n\(message)" } ?? message
+    }
+
+    func acknowledgeLastError() {
+        lastErrorNotification = nil
+    }
+
+    /// Signale l'abandon à l'utilisateur et demande aux listes de se recharger depuis Discogs :
+    /// l'affichage optimiste (disque retiré, ajouté ou déplacé hors ligne) ne correspond plus à
+    /// ce que Discogs a réellement enregistré.
+    private func reportDroppedAction(_ action: PendingAction, error: Error) {
+        let message = String(localized: "Échec définitif de synchronisation : \(actionDescription(for: action)) (\(error.localizedDescription))")
+        lastErrorNotification = Self.combinedFailureMessage(lastErrorNotification, adding: message)
+        NotificationCenter.default.post(name: .offlineActionDropped, object: nil, userInfo: ["type": action.type.rawValue])
     }
 
     private func actionDescription(for action: PendingAction) -> String {

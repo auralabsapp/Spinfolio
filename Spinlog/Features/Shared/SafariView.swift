@@ -33,6 +33,16 @@ nonisolated enum DiscogsWebPolicy {
         "accounts.google.com", "appleid.apple.com", "www.facebook.com", "m.facebook.com"
     ]
 
+    /// Domaines dont les données web sont vidées à la déconnexion : Discogs, et les fournisseurs
+    /// de connexion (une session Google, Apple ou Facebook restée ouverte reconnectait sinon le
+    /// compte suivant au même compte). `displayName` d'un `WKWebsiteDataRecord` = domaine principal.
+    private static let sessionDomains: Set<String> = ["discogs.com", "google.com", "apple.com", "facebook.com"]
+
+    static func isSessionRecord(displayName: String) -> Bool {
+        let name = displayName.lowercased()
+        return sessionDomains.contains { name == $0 || name.hasSuffix(".\($0)") }
+    }
+
     static func isDiscogs(_ url: URL?) -> Bool {
         guard let url, url.scheme?.lowercased() == "https", let host = url.host?.lowercased() else { return false }
         return host == "discogs.com" || host.hasSuffix(".discogs.com")
@@ -61,8 +71,8 @@ struct SafariView: View {
     static func clearPersistedDiscogsSession() {
         let store = WKWebsiteDataStore.default()
         store.fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
-            let discogsRecords = records.filter { $0.displayName.contains("discogs") }
-            store.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), for: discogsRecords) {}
+            let sessionRecords = records.filter { DiscogsWebPolicy.isSessionRecord(displayName: $0.displayName) }
+            store.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), for: sessionRecords) {}
         }
     }
 

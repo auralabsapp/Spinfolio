@@ -64,7 +64,16 @@ final class BatchScanViewModel {
     }
 
     private var draftKey: String? {
-        DiscogsAuthManager.shared.username.map { "batchScanDraft_\($0.lowercased())" }
+        DiscogsAuthManager.shared.username.map(Self.draftKey(for:))
+    }
+
+    nonisolated static func draftKey(for username: String) -> String {
+        "batchScanDraft_\(username.trimmingCharacters(in: .whitespacesAndNewlines).lowercased())"
+    }
+
+    /// Suppression des données (ou sortie de la démo) : le brouillon du compte ne doit pas rester.
+    static func clearDraft(for username: String, defaults: UserDefaults = .standard) {
+        defaults.removeObject(forKey: draftKey(for: username))
     }
 
     init() {

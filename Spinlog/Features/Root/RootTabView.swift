@@ -21,6 +21,7 @@ struct RootTabView: View {
     @State private var collectionViewModelWarmup = CollectionViewModel.shared
     @State private var wantlistViewModelWarmup = WantlistViewModel.shared
     @State private var membershipStore = LibraryMembershipStore.shared
+    @State private var offlineSyncQueue = OfflineSyncQueue.shared
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -140,6 +141,12 @@ struct RootTabView: View {
             GradeEvaluator.shared.start()
         }
         .overlay { GradeCelebrationHost() }
+        // Action hors ligne abandonnée (refusée par Discogs ou trop ancienne) : alerte à fermer, sur
+        // n'importe quel onglet, puisqu'une modification de l'utilisateur a été perdue.
+        .messageAlert(message: Binding(
+            get: { offlineSyncQueue.lastErrorNotification },
+            set: { if $0 == nil { offlineSyncQueue.acknowledgeLastError() } }
+        ))
         // Chaque entrée en démo repart de la racine de Collection, quel que soit l'onglet ou la fiche où
         // l'on se trouvait en la quittant.
         .onChange(of: authManager.isAuthenticated) { _, isAuthenticated in

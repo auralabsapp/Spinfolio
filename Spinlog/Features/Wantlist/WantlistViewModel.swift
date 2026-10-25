@@ -184,6 +184,14 @@ final class WantlistViewModel {
         addLibraryObserver(for: .wantlistItemRemoved, payloadKey: "releaseId") { [weak self] (releaseId: Int) in
             self?.handleWantlistItemRemoved(releaseId: releaseId)
         }
+
+        // Action hors ligne refusée par Discogs : l'affichage optimiste est faux, on recharge.
+        addLibraryObserver(for: .offlineActionDropped) { [weak self] notification in
+            guard let self,
+                  let raw = notification.userInfo?["type"] as? String,
+                  ActionType(rawValue: raw) == .addToWantlist || ActionType(rawValue: raw) == .removeFromWantlist else { return }
+            Task { await self.refresh() }
+        }
     }
 
     private func handleWantlistItemAdded(_ item: WantlistItem) {

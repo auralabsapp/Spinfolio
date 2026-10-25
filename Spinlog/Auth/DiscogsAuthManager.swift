@@ -72,6 +72,7 @@ final class DiscogsAuthManager: NSObject {
         TagStore.shared.setActiveUsername(self.username)
         ListeningLogStore.shared.setActiveUsername(self.username)
         GradeStore.shared.setActiveUsername(self.username)
+        ShelfPreferencesStore.shared.setActiveUsername(self.username)
         // Jamais de synchro iCloud pour la démo : rien à conserver, et l'appareil d'un testeur
         // ne doit pas recevoir de zone CloudKit à ce nom.
         CloudSyncEngine.shared.setActiveUsername(isDemoMode ? nil : self.username)
@@ -121,6 +122,7 @@ final class DiscogsAuthManager: NSObject {
             TagStore.shared.setActiveUsername(username)
             ListeningLogStore.shared.setActiveUsername(username)
             GradeStore.shared.setActiveUsername(username)
+            ShelfPreferencesStore.shared.setActiveUsername(username)
             CloudSyncEngine.shared.setActiveUsername(username)
             WantlistAlertStore.shared.setActiveUsername(username)
             // Rejoue les actions hors ligne laissées en attente par ce compte lors d'une
@@ -155,6 +157,7 @@ final class DiscogsAuthManager: NSObject {
         TagStore.shared.setActiveUsername(username)
         ListeningLogStore.shared.setActiveUsername(username)
         GradeStore.shared.setActiveUsername(username)
+        ShelfPreferencesStore.shared.setActiveUsername(username)
         ListeningLogStore.shared.seedDemoSessions(DemoServer.exampleListeningSessions())
         WantlistAlertStore.shared.setActiveUsername(username)
     }
@@ -174,6 +177,7 @@ final class DiscogsAuthManager: NSObject {
         TagStore.shared.setActiveUsername(nil)
         ListeningLogStore.shared.setActiveUsername(nil)
         GradeStore.shared.setActiveUsername(nil)
+        ShelfPreferencesStore.shared.setActiveUsername(nil)
         CloudSyncEngine.shared.setActiveUsername(nil)
         WantlistAlertStore.shared.setActiveUsername(nil)
         // Idem pour Collection/Wantlist/Recherche : ces vues restent montées en permanence dans
@@ -233,6 +237,9 @@ final class DiscogsAuthManager: NSObject {
         LocalDataStore.shared.clearAllUserData(username: DemoMode.username)
         TagStore.shared.clearAccountData(for: DemoMode.username)
         ListeningLogStore.shared.clearAccountData(for: DemoMode.username)
+        // Réglages de rangement de la démo : sinon ils revenaient à la démo suivante.
+        ShelfPreferencesStore.shared.clearAccountData(for: DemoMode.username)
+        BatchScanViewModel.clearDraft(for: DemoMode.username)
         // Alertes de prix et actions en file de la démo : sinon elles revenaient à la démo
         // suivante (et la file gardait des modifications impossibles à envoyer).
         WantlistAlertStore.shared.clearAccountData(for: DemoMode.username)
@@ -265,6 +272,8 @@ final class DiscogsAuthManager: NSObject {
             TagStore.shared.clearAccountData(for: currentUsername)
             ListeningLogStore.shared.clearAccountData(for: currentUsername)
             GradeStore.shared.clearAccountData(for: currentUsername)
+            ShelfPreferencesStore.shared.clearAccountData(for: currentUsername)
+            BatchScanViewModel.clearDraft(for: currentUsername)
             WantlistAlertStore.shared.clearAccountData(for: currentUsername)
             OfflineSyncQueue.shared.removeActions(for: currentUsername)
             CollectionPreferencesStore.clearAccountData(for: currentUsername)
@@ -276,6 +285,7 @@ final class DiscogsAuthManager: NSObject {
             // repartent aussi (elles seront re-résolues à la demande avec le prochain compte).
             LocalDataStore.shared.clearAllMasterYears()
             DiscogsWorkCategoryCache.shared.clearAll()
+            DiscogsCategoryBackfillService.shared.clearHistory()
         }
         logout()
     }
