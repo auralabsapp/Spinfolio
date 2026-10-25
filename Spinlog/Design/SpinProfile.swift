@@ -10,7 +10,7 @@ nonisolated struct SpinProfile: Equatable, Sendable {
     /// Temps pour atteindre la vitesse de croisière, en secondes.
     var startupDuration: Double = 1.3
     /// Temps pour s'arrêter depuis la vitesse de croisière (moins si l'arrêt vient pendant le démarrage).
-    var stopDuration: Double = 1.6
+    var stopDuration: Double = 1.2
     let startTime: TimeInterval
     /// Instant où l'écoute s'arrête (`nil` tant qu'elle dure).
     var stopTime: TimeInterval?

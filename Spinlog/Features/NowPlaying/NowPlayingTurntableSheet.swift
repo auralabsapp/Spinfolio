@@ -116,7 +116,7 @@ struct NowPlayingTurntableSheet: View {
         isClosing = true
         isPlayingVisual = false
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(reduceMotion ? 150 : 2100))
+            try? await Task.sleep(for: .milliseconds(reduceMotion ? 150 : 1500))
             dismiss()
         }
     }
@@ -131,7 +131,7 @@ struct NowPlayingTurntableSheet: View {
         isClosing = true
         isPlayingVisual = false
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(reduceMotion ? 150 : 2100))
+            try? await Task.sleep(for: .milliseconds(reduceMotion ? 150 : 1500))
             endsListeningOnDisappear = true
             dismiss()
         }
