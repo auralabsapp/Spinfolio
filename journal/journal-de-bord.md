@@ -7,12 +7,21 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
-## 2026-10-25 — Audit complet : lots 1 à 6 ; mini-lecteur et fermetures en douceur
+## 2026-10-25 — Audit complet : lots 1 à 7 ; mini-lecteur et fermetures en douceur
 
 Audit en lecture seule de toute l'app (rapport `QA/audit-2026-10-25.md`, non publié), puis traitement
 lot par lot : isolation des comptes et de la démo, intégrité iCloud, retrait performant, petites
-corrections, messages d'échec et suppression des données, sécurité et journaux, réseau robuste.
+corrections, messages d'échec et suppression des données, sécurité et journaux, réseau robuste,
+rechargements d'onglet.
 En parallèle, fermetures du lecteur Apple Music et de la feuille d'écoute sur platine dans le mini-lecteur.
+
+### 23:35 — `2fdfd9d` Audit lot 7 : rechargements d'onglet espacés de 5 minutes
+- Collection et Wantlist : en revenant sur l'onglet, le cache s'affiche et Discogs n'est redemandé qu'au
+  plus toutes les 5 min (`ReloadThrottle`) ; une grosse collection peut finir sa relecture de fond.
+- Stats : compteurs et valeur de la collection redemandés au plus toutes les 5 min.
+- Tirer-pour-actualiser, retour du réseau, connexion et changement de compte rechargent toujours tout de suite.
+- Tests `ReloadThrottleTests` ; recette B51.
+- 9 fichiers, +101 / −6.
 
 ### 23:20 — `e8c744b` Audit lot 6 : réseau robuste
 - **File hors ligne** : quota Discogs dépassé (429) → nouvel essai espacé au lieu d'une boucle toutes
