@@ -238,24 +238,44 @@ final class ReleaseActions {
             collectionInstances[index].rating = rating
         }
 
+        // Hors ligne ou panne passagère : la note est gardée et part avec la file hors ligne,
+        // comme les autres modifications (auparavant la saisie était perdue).
+        let queuedRating = PendingAction(
+            type: .updateCollectionRating,
+            releaseId: anchor.releaseId,
+            folderId: anchor.folderId,
+            instanceId: anchor.instanceId,
+            value: String(rating)
+        )
         do {
-            try await DiscogsAPIClient.shared.updateCollectionRating(
-                username: username,
-                folderId: anchor.folderId,
-                releaseId: anchor.releaseId,
-                instanceId: anchor.instanceId,
-                rating: rating,
-                credentials: credentials
-            )
-            for instance in collectionInstances {
-                await localStore.saveCollectionItems([instance], username: username, folderId: instance.folderId)
-                await localStore.saveCollectionItems([instance], username: username, folderId: DiscogsConstants.allFolderId)
+            if networkMonitor.isConnected {
+                try await DiscogsAPIClient.shared.updateCollectionRating(
+                    username: username,
+                    folderId: anchor.folderId,
+                    releaseId: anchor.releaseId,
+                    instanceId: anchor.instanceId,
+                    rating: rating,
+                    credentials: credentials
+                )
+            } else {
+                syncQueue.enqueue(queuedRating)
             }
+            await saveRatedInstances(username: username)
+        } catch where error.isTransientNetworkFailure && !error.isCancellation {
+            syncQueue.enqueue(queuedRating)
+            await saveRatedInstances(username: username)
         } catch {
             collectionInstances = previousInstances
             message = String(localized: "Impossible d'enregistrer la note sur Discogs.")
         }
         isUpdatingRating = false
+    }
+
+    private func saveRatedInstances(username: String) async {
+        for instance in collectionInstances {
+            await localStore.saveCollectionItems([instance], username: username, folderId: instance.folderId)
+            await localStore.saveCollectionItems([instance], username: username, folderId: DiscogsConstants.allFolderId)
+        }
     }
 
     // MARK: - Suivi de cote (prix d'achat)
@@ -285,6 +305,20 @@ final class ReleaseActions {
         await localStore.saveCollectionItems([collectionInstances[index]], username: username, folderId: instance.folderId)
         await localStore.saveCollectionItems([collectionInstances[index]], username: username, folderId: DiscogsConstants.allFolderId)
 
+        // Hors ligne ou panne passagère : le prix reste affiché et part avec la file hors ligne
+        // (champ propre à l'utilisateur, accepté même sur un cache ancien).
+        let queuedField = PendingAction(
+            type: .updateCollectionField,
+            releaseId: instance.releaseId,
+            folderId: instance.folderId,
+            instanceId: instance.instanceId,
+            fieldId: fieldId,
+            value: canonicalValue
+        )
+        guard networkMonitor.isConnected else {
+            syncQueue.enqueue(queuedField)
+            return
+        }
         do {
             try await DiscogsAPIClient.shared.updateCollectionField(
                 username: username,
@@ -295,6 +329,8 @@ final class ReleaseActions {
                 value: canonicalValue,
                 credentials: credentials
             )
+        } catch where error.isTransientNetworkFailure && !error.isCancellation {
+            syncQueue.enqueue(queuedField)
         } catch {
             collectionInstances[index].notes = previousNotes
             await localStore.saveCollectionItems([collectionInstances[index]], username: username, folderId: instance.folderId)

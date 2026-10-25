@@ -10,15 +10,16 @@ extension Error {
     /// `true` si l'erreur provient de l'annulation de la tâche (attente du rate limiter ou requête
     /// réseau interrompue) : ce n'est pas un échec à montrer à l'utilisateur, la tâche a
     /// simplement été remplacée (nouvelle frappe, changement de dossier ou de tri...).
-    var isCancellation: Bool {
+    nonisolated var isCancellation: Bool {
         self is CancellationError || (self as? URLError)?.code == .cancelled
     }
 
     /// `true` si un nouvel essai a une chance d'aboutir : réseau indisponible ou interrompu,
     /// quota Discogs dépassé, erreur serveur (5xx). Les autres erreurs (4xx : identifiants
     /// invalides, release inexistante, requête refusée…) se reproduiront à l'identique.
-    var isTransientNetworkFailure: Bool {
-        if self is URLError || isCancellation { return true }
+    nonisolated var isTransientNetworkFailure: Bool {
+        if isCancellation { return true }
+        if let urlError = self as? URLError { return urlError.code.isTransientNetworkFailure }
         guard let apiError = self as? DiscogsAPIClient.APIError else { return false }
         switch apiError {
         case .rateLimited: return true
@@ -29,9 +30,26 @@ extension Error {
 
     /// `true` pour un 404 Discogs : pour une suppression, la ressource est déjà absente — le but
     /// de la requête est donc atteint.
-    var isNotFound: Bool {
+    nonisolated var isNotFound: Bool {
         if let apiError = self as? DiscogsAPIClient.APIError, case .http(404, _) = apiError { return true }
         return false
+    }
+}
+
+extension URLError.Code {
+    /// Coupure ou réseau indisponible : un nouvel essai a une chance d'aboutir. Auparavant toute
+    /// `URLError` l'était, y compris un certificat refusé ou une réponse illisible, qui restaient
+    /// alors jusqu'à 7 jours dans la file hors ligne.
+    nonisolated var isTransientNetworkFailure: Bool {
+        switch self {
+        case .notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotFindHost,
+             .cannotConnectToHost, .dnsLookupFailed, .internationalRoamingOff, .callIsActive,
+             .dataNotAllowed, .cannotLoadFromNetwork, .backgroundSessionWasDisconnected,
+             .secureConnectionFailed, .cancelled:
+            return true
+        default:
+            return false
+        }
     }
 }
 

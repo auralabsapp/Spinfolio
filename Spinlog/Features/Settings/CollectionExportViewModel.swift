@@ -37,15 +37,24 @@ final class CollectionExportViewModel {
                 folders = foldersResp.folders
                 localStore.saveFolders(folders, username: username)
             }
-            do {
-                items = try await DiscogsAPIClient.shared.fetchAllCollectionItems(
-                    username: username,
-                    folderId: DiscogsConstants.allFolderId,
-                    credentials: credentials
-                )
-                await localStore.syncCollectionFolder(username: username, folderId: DiscogsConstants.allFolderId, fullItems: items)
-            } catch {
+            // Cache de moins de 6 h, ou relecture complète déjà en cours (synchro de fond, mode hors
+            // ligne, widget) : le cache suffit, sans relire une seconde fois toute la collection.
+            let allFolder = DiscogsConstants.allFolderId
+            if !localStore.isCollectionStale(username: username, folderId: allFolder)
+                || !localStore.beginFullCollectionSync(username: username, folderId: allFolder) {
                 items = await localStore.getAllCollectionItems(username: username)
+            } else {
+                defer { localStore.endFullCollectionSync(username: username, folderId: allFolder) }
+                do {
+                    items = try await DiscogsAPIClient.shared.fetchAllCollectionItems(
+                        username: username,
+                        folderId: allFolder,
+                        credentials: credentials
+                    )
+                    await localStore.syncCollectionFolder(username: username, folderId: allFolder, fullItems: items)
+                } catch {
+                    items = await localStore.getAllCollectionItems(username: username)
+                }
             }
         } else {
             items = await localStore.getAllCollectionItems(username: username)

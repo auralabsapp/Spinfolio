@@ -67,6 +67,7 @@ actor MasterResolutionService {
     }
 
     private func runQueue() async {
+        var stoppedOnTransientFailure = false
         while !Task.isCancelled, !pending.isEmpty {
             let masterId = pending.removeFirst()
             queued.remove(masterId)
@@ -86,15 +87,23 @@ actor MasterResolutionService {
                 }
             } catch is CancellationError {
                 break
+            } catch where error.isTransientNetworkFailure && !error.isCancellation {
+                // Quota dépassé ou panne : les suivants échoueraient de même. Le master revient en
+                // tête de file et la résolution s'arrête jusqu'à la prochaine demande, au lieu de
+                // vider la file sans résultat en brûlant le quota.
+                pending.insert(masterId, at: 0)
+                queued.insert(masterId)
+                stoppedOnTransientFailure = true
+                break
             } catch {
-                // En cas d'erreur ponctuelle (404, réseau, etc.), on continue avec les suivants,
-                // sans rien persister : ce master sera redemandé au prochain calcul.
+                // Échec propre à ce master (404…) : on continue avec les suivants, sans rien
+                // persister ; il sera redemandé au prochain calcul.
             }
             await notifySubscribers(masterId: masterId, year: year)
         }
         worker = nil
         // Des masters ont pu être ajoutés pendant le dernier `await` après la sortie de boucle.
-        if !pending.isEmpty && !Task.isCancelled {
+        if !pending.isEmpty && !Task.isCancelled && !stoppedOnTransientFailure {
             startWorkerIfNeeded()
         }
     }

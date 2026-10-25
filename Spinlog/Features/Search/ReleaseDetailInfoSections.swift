@@ -34,25 +34,8 @@ struct ReleaseInfoCard: View {
 
     private func fetchMasterYearIfNeeded() async {
         guard let masterId = release.masterId, masterId > 0 else { return }
-
-        // Vérifier dans le cache local SwiftData
-        if LocalDataStore.shared.isMasterResolved(masterId) {
-            masterYear = LocalDataStore.shared.getMasterYear(for: masterId)
-            return
-        }
-
-        // Sinon charger via l'API Discogs
-        do {
-            let credentials = DiscogsAuthManager.shared.credentials
-            let master = try await DiscogsAPIClient.shared.masterRelease(id: masterId, credentials: credentials)
-            let year = max(master.year ?? 0, 0)
-            if year > 0 {
-                masterYear = year
-            }
-            // 0 si Discogs n'a pas d'année : évite de le redemander à chaque ouverture.
-            LocalDataStore.shared.saveMasterYear(year, for: masterId)
-        } catch {
-            // Silencieux en cas d'erreur réseau
+        if let year = await MasterYearLookup.year(for: masterId) {
+            masterYear = year
         }
     }
 

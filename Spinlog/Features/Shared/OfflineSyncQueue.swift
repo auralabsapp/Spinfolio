@@ -8,6 +8,8 @@ enum ActionType: String, Codable, Sendable {
     case removeFromWantlist
     case updateCollectionField
     case moveCollectionInstance
+    /// Note (étoiles) d'un exemplaire : `value` porte la note, de 0 à 5.
+    case updateCollectionRating
 }
 
 nonisolated struct PendingAction: Identifiable, Codable, Sendable {
@@ -209,9 +211,12 @@ final class OfflineSyncQueue {
                 removeAction(id: action.id)
             } catch {
                 if Self.isRateLimited(error) {
-                    // Backoff de sécurité avant de réessayer
-                    try? await Task.sleep(for: .seconds(5))
-                    continue
+                    // Quota Discogs dépassé : même nouvel essai espacé qu'une panne passagère.
+                    // Auparavant la boucle réessayait toutes les 5 s, sans plafond ni annulation.
+                    if Task.isCancelled { break }
+                    consecutiveTransientFailures += 1
+                    scheduleRetry()
+                    break
                 }
 
                 if error.isTransientNetworkFailure {
@@ -260,9 +265,9 @@ final class OfflineSyncQueue {
     }
 
     private static func isRateLimited(_ error: Error) -> Bool {
-        guard let apiError = error as? DiscogsAPIClient.APIError else {
-            return error.localizedDescription.contains("429")
-        }
+        // Seule l'erreur typée compte : la recherche de « 429 » dans le message attrapait aussi
+        // des erreurs sans rapport (un identifiant contenant 429).
+        guard let apiError = error as? DiscogsAPIClient.APIError else { return false }
         switch apiError {
         case .rateLimited: return true
         case .http(let status, _): return status == 429
@@ -481,6 +486,17 @@ final class OfflineSyncQueue {
                 credentials: credentials
             )
 
+        case .updateCollectionRating:
+            guard let instanceId = action.instanceId, let rating = action.value.flatMap(Int.init) else { return }
+            try await DiscogsAPIClient.shared.updateCollectionRating(
+                username: username,
+                folderId: action.folderId ?? DiscogsConstants.uncategorizedFolderId,
+                releaseId: action.releaseId,
+                instanceId: instanceId,
+                rating: rating,
+                credentials: credentials
+            )
+
         case .moveCollectionInstance:
             guard let instanceId = action.instanceId, let targetFolderId = action.targetFolderId else { return }
             try await DiscogsAPIClient.shared.moveCollectionInstance(
@@ -551,6 +567,7 @@ final class OfflineSyncQueue {
         case .removeFromWantlist: return String(localized: "Suppression de la wantlist (release \(String(action.releaseId)))")
         case .updateCollectionField: return String(localized: "Modification d'un champ personnalisé (release \(String(action.releaseId)))")
         case .moveCollectionInstance: return String(localized: "Changement de dossier (release \(String(action.releaseId)))")
+        case .updateCollectionRating: return String(localized: "Modification de la note (release \(String(action.releaseId)))")
         }
     }
 }

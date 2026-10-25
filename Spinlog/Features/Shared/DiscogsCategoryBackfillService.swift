@@ -80,11 +80,15 @@ final class DiscogsCategoryBackfillService {
         await DiscogsRateLimiter.$priority.withValue(.background) {
             for artist in toProcess {
                 guard await waitUntilAllowed() else { return }
-                if await classifyDiscography(of: artist) {
+                let outcome = await classifyDiscography(of: artist)
+                if outcome == .complete {
                     processed[String(artist.id)] = Date()
                     saveProcessed(processed)
                 }
                 DiscogsWorkCategoryCache.shared.flush()
+                // Quota dépassé ou panne : arrêt jusqu'à la prochaine ouverture, plutôt que de
+                // consommer le quota sur les artistes suivants pour rien.
+                if outcome == .transientFailure { return }
             }
         }
         DiscogsWorkCategoryCache.shared.flush()
@@ -92,13 +96,13 @@ final class DiscogsCategoryBackfillService {
 
     /// Classe les masters pas encore classés d'un artiste. `false` si le travail s'est arrêté
     /// avant la fin (annulation, réseau, erreur) : l'artiste sera repris à la prochaine ouverture.
-    private func classifyDiscography(of artist: LibraryArtist) async -> Bool {
+    private func classifyDiscography(of artist: LibraryArtist) async -> DiscogsWorkClassifier.Outcome {
         let credentials = DiscogsAuthManager.shared.credentials
         var rawItems: [ArtistReleaseItem] = []
         var page = 1
         var totalPages = 1
         while page <= min(totalPages, maxDiscographyPages) {
-            guard await waitUntilAllowed() else { return false }
+            guard await waitUntilAllowed() else { return .interrupted }
             do {
                 let response = try await DiscogsAPIClient.shared.artistReleases(
                     artistId: artist.id,
@@ -109,7 +113,7 @@ final class DiscogsCategoryBackfillService {
                 rawItems += response.releases
                 page += 1
             } catch {
-                return false
+                return error.isTransientNetworkFailure && !error.isCancellation ? .transientFailure : .interrupted
             }
         }
 
@@ -117,8 +121,8 @@ final class DiscogsCategoryBackfillService {
         let pending = DiscogsDiscography.mainWorks(from: rawItems)
             .filter { $0.kind == .master && cache.category(forMasterId: $0.discogsId) == nil }
             .map { DiscogsWorkClassifier.PendingMaster(masterId: $0.discogsId, mainRelease: $0.mainRelease) }
-        guard !pending.isEmpty else { return true }
-        guard await waitUntilAllowed() else { return false }
+        guard !pending.isEmpty else { return .complete }
+        guard await waitUntilAllowed() else { return .interrupted }
         return await DiscogsWorkClassifier.classify(pending, artistName: artist.name) { _, _ in }
     }
 

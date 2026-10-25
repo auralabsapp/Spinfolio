@@ -103,6 +103,23 @@ struct DiscogsRateLimiterTests {
         #expect(result.slot == now.addingTimeInterval(20))
     }
 
+    @Test func requestsBeyondTheCapAreSpacedInsteadOfLeavingTogether() {
+        // Le créneau plafonné est déjà pris : la requête suivante part une seconde après.
+        let reserved = Array(repeating: now, count: 50) + [now.addingTimeInterval(20)]
+        let result = DiscogsRateLimiter.nextSlot(now: now, reservedSlots: reserved, remaining: nil)
+        #expect(result.slot == now.addingTimeInterval(21))
+    }
+
+    @Test(arguments: [URLError.Code.notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotFindHost])
+    func connectivityErrorsAreRetried(_ code: URLError.Code) {
+        #expect(URLError(code).isTransientNetworkFailure)
+    }
+
+    @Test(arguments: [URLError.Code.serverCertificateUntrusted, .cannotDecodeContentData, .badURL, .userAuthenticationRequired])
+    func otherURLErrorsAreNotQueuedForAWeek(_ code: URLError.Code) {
+        #expect(!URLError(code).isTransientNetworkFailure)
+    }
+
     @Test func lowDiscogsBalanceSpacesRequestsAndCountsDown() {
         let last = now.addingTimeInterval(-1)
         let low = DiscogsRateLimiter.nextSlot(now: now, reservedSlots: [last], remaining: 3)

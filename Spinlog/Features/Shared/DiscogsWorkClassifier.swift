@@ -30,16 +30,18 @@ enum DiscogsWorkClassifier {
     ///   - masters: masters encore jamais classés.
     ///   - artistName: nom Discogs de l'artiste, suffixe d'homonymie compris (retiré ici).
     ///   - onClassified: appelé pour chaque master classé, au fil de l'eau.
-    /// - Returns: `false` si le classement s'est arrêté avant la fin (annulation, perte du
-    ///   réseau) ; les masters restants pourront être repris plus tard.
+    /// - Returns: `.complete`, ou `.interrupted` (annulation, perte du réseau, master isolé
+    ///   illisible), ou `.transientFailure` (quota Discogs dépassé, panne passagère) : dans ce cas
+    ///   l'appelant de fond doit s'arrêter plutôt que de passer à l'artiste suivant et brûler le
+    ///   quota. Les masters restants pourront être repris plus tard.
     @discardableResult
     static func classify(
         _ masters: [PendingMaster],
         artistName: String,
         onClassified: (Int, DiscogsWorkCategory) -> Void
-    ) async -> Bool {
+    ) async -> Outcome {
         var remaining = Dictionary(masters.map { ($0.masterId, $0) }, uniquingKeysWith: { first, _ in first })
-        guard !remaining.isEmpty else { return true }
+        guard !remaining.isEmpty else { return .complete }
         let credentials = DiscogsAuthManager.shared.credentials
 
         func record(_ category: DiscogsWorkCategory, for masterId: Int) {
@@ -54,16 +56,11 @@ enum DiscogsWorkClassifier {
             var page = 1
             var totalPages = 1
             while page <= min(totalPages, maxSearchPages), !remaining.isEmpty {
-                guard !Task.isCancelled, NetworkMonitor.shared.isConnected else { return false }
+                guard !Task.isCancelled, NetworkMonitor.shared.isConnected else { return .interrupted }
                 do {
-                    let response: MasterSearchResponse = try await DiscogsAPIClient.shared.requestDecodingInBackground(
-                        path: "database/search",
-                        queryItems: [
-                            URLQueryItem(name: "type", value: "master"),
-                            URLQueryItem(name: "artist", value: searchName),
-                            URLQueryItem(name: "page", value: String(page)),
-                            URLQueryItem(name: "per_page", value: String(DiscogsConstants.maxPageSize))
-                        ],
+                    let response: MasterSearchResponse = try await DiscogsAPIClient.shared.searchMastersDecodedInBackground(
+                        artist: searchName,
+                        page: page,
                         credentials: credentials
                     )
                     totalPages = response.pagination.pages
@@ -78,7 +75,8 @@ enum DiscogsWorkClassifier {
                     if matched == 0 && page > 1 { break }
                     page += 1
                 } catch {
-                    if error.isCancellation { return false }
+                    if error.isCancellation { return .interrupted }
+                    if error.isTransientNetworkFailure { return .transientFailure }
                     break
                 }
             }
@@ -86,25 +84,33 @@ enum DiscogsWorkClassifier {
 
         // 2. Pressage principal, pour ce que la recherche n'a pas trouvé.
         for master in masters where remaining[master.masterId] != nil {
-            guard !Task.isCancelled, NetworkMonitor.shared.isConnected else { return false }
+            guard !Task.isCancelled, NetworkMonitor.shared.isConnected else { return .interrupted }
             guard let mainRelease = master.mainRelease else {
                 // Rien à lire : rangé dans « Autres ».
                 record(.other, for: master.masterId)
                 continue
             }
             do {
-                let release: ReleaseFormatsResponse = try await DiscogsAPIClient.shared.requestDecodingInBackground(
-                    path: "releases/\(mainRelease)",
+                let release: ReleaseFormatsResponse = try await DiscogsAPIClient.shared.releaseDecodedInBackground(
+                    id: mainRelease,
                     credentials: credentials
                 )
                 let tokens = (release.formats ?? []).flatMap { [$0.name] + ($0.descriptions ?? []) }
                 record(DiscogsDiscography.category(fromFormatTokens: tokens), for: master.masterId)
             } catch {
-                if error.isCancellation { return false }
+                if error.isCancellation { return .interrupted }
+                // Quota ou panne : les suivants échoueraient de même, et le master reste à classer.
+                if error.isTransientNetworkFailure { return .transientFailure }
                 // Échec isolé (ex. réponse invalide) : on continue avec les suivants.
             }
         }
-        return remaining.isEmpty
+        return remaining.isEmpty ? .complete : .interrupted
+    }
+
+    enum Outcome: Equatable {
+        case complete
+        case interrupted
+        case transientFailure
     }
 }
 

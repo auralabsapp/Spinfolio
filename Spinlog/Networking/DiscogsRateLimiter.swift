@@ -135,6 +135,9 @@ actor DiscogsRateLimiter {
 
     /// Créneau de la prochaine requête normale, d'après les créneaux déjà réservés de la dernière
     /// minute (triés) et le solde annoncé par Discogs ; renvoie aussi le solde décompté localement.
+    /// Écart entre deux requêtes au-delà du plafond d'attente (le rythme du quota : 60 par minute).
+    nonisolated static let cappedSlotSpacing: TimeInterval = 1
+
     nonisolated static func nextSlot(now: Date, reservedSlots: [Date], remaining: Int?) -> (slot: Date, remaining: Int?) {
         var slot = now
         var remainingAfter = remaining
@@ -154,7 +157,13 @@ actor DiscogsRateLimiter {
         }
         // Voir `maxQueueWaitSeconds` : évite qu'une rafale de requêtes ne fasse composer les
         // créneaux réservés sur plusieurs minutes.
-        slot = min(slot, now.addingTimeInterval(maxQueueWaitSeconds))
+        // Au-delà du plafond, les requêtes ne partent plus toutes sur le même créneau (elles
+        // repassaient ensemble au-dessus du quota) : chacune prend la seconde suivant la
+        // dernière réservée.
+        let cap = now.addingTimeInterval(maxQueueWaitSeconds)
+        if slot > cap {
+            slot = max(cap, (reservedSlots.last ?? now).addingTimeInterval(cappedSlotSpacing))
+        }
         return (slot, remainingAfter)
     }
 

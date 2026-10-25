@@ -8901,6 +8901,16 @@
         }
       }
     },
+    "Modification de la note (release %@)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Rating edit (release %@)"
+          }
+        }
+      }
+    },
     "Modifier" : {
       "localizations" : {
         "en" : {

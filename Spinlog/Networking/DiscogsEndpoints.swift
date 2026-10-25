@@ -33,6 +33,30 @@ extension DiscogsAPIClient {
         try await request(path: "releases/\(id)", credentials: credentials)
     }
 
+    /// Fiche release réduite au type de réponse demandé, décodée hors du fil principal
+    /// (classement des œuvres en arrière-plan, voir `DiscogsWorkClassifier`).
+    func releaseDecodedInBackground<T: Decodable & Sendable>(id: Int, credentials: DiscogsCredentials? = nil) async throws -> T {
+        try await requestDecodingInBackground(path: "releases/\(id)", credentials: credentials)
+    }
+
+    /// Masters d'un artiste (recherche `type=master`), décodés hors du fil principal.
+    func searchMastersDecodedInBackground<T: Decodable & Sendable>(
+        artist: String,
+        page: Int,
+        credentials: DiscogsCredentials? = nil
+    ) async throws -> T {
+        try await requestDecodingInBackground(
+            path: "database/search",
+            queryItems: [
+                URLQueryItem(name: "type", value: "master"),
+                URLQueryItem(name: "artist", value: artist),
+                URLQueryItem(name: "page", value: String(page)),
+                URLQueryItem(name: "per_page", value: String(DiscogsConstants.maxPageSize))
+            ],
+            credentials: credentials
+        )
+    }
+
     func masterRelease(id: Int, credentials: DiscogsCredentials? = nil) async throws -> MasterRelease {
         try await request(path: "masters/\(id)", credentials: credentials)
     }
