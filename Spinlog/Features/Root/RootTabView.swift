@@ -22,6 +22,9 @@ struct RootTabView: View {
     @State private var wantlistViewModelWarmup = WantlistViewModel.shared
     @State private var membershipStore = LibraryMembershipStore.shared
     @State private var offlineSyncQueue = OfflineSyncQueue.shared
+    /// Accessoire du mini-lecteur, retiré dans une animation à la fin de la lecture ; son contenu reste
+    /// figé jusque-là (voir `MiniPlayerBar`), pour que capsule et contenu disparaissent ensemble.
+    @State private var isMiniPlayerAccessoryEnabled = MiniPlayerBar.isActive
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -93,7 +96,7 @@ struct RootTabView: View {
         // Mini-lecteur audio : au-dessus de la barre quand elle est normale, inline entre l'icône
         // de l'onglet courant et l'icône de recherche quand elle est réduite (comportement natif
         // identique à Musique). `MiniPlayerBar` adapte sa présentation via `tabViewBottomAccessoryPlacement`.
-        .tabViewBottomAccessory(isEnabled: MiniPlayerBar.isActive) {
+        .tabViewBottomAccessory(isEnabled: isMiniPlayerAccessoryEnabled) {
             MiniPlayerBar(transitionNamespace: nowPlayingNamespace)
         }
         // Bulle de confirmation ajout/retrait collection/wantlist (voir `LibraryMembershipStore`) :
@@ -141,6 +144,10 @@ struct RootTabView: View {
             GradeEvaluator.shared.start()
         }
         .overlay { GradeCelebrationHost() }
+        // Dans une animation : l'accessoire (capsule et contenu figé ensemble) entre et sort en douceur.
+        .onChange(of: MiniPlayerBar.isActive) { _, isActive in
+            withAnimation(.nowPlayingTransition) { isMiniPlayerAccessoryEnabled = isActive }
+        }
         // Action hors ligne abandonnée (refusée par Discogs ou trop ancienne) : alerte à fermer, sur
         // n'importe quel onglet, puisqu'une modification de l'utilisateur a été perdue.
         .messageAlert(message: Binding(
@@ -277,6 +284,8 @@ private struct NowPlayingCoverModifier: ViewModifier {
             }
             .sheet(item: binding(for: .turntable)) { _ in
                 NowPlayingTurntableSheet()
+                    // Sort du mini-lecteur et s'y réduit à la fermeture, comme la fenêtre Apple Music.
+                    .navigationTransition(.zoom(sourceID: MiniPlayerBar.transitionSourceID, in: namespace))
             }
     }
 }

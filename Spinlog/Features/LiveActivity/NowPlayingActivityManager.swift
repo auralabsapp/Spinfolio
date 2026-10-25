@@ -336,7 +336,8 @@ final class NowPlayingActivityManager {
     func endCurrentActivity() async {
         autoStopTask?.cancel()
         autoStopTask = nil
-        await endAllSystemActivities()
+        // L'interface d'abord (mini-lecteur, feuille) : la fin des Live Activities passe par le
+        // système et peut prendre un moment, que le mini-lecteur attendait avant de disparaître.
         withAnimation(.nowPlayingTransition) {
             self.activeReleaseId = nil
             self.activeAlbumTitle = nil
@@ -344,6 +345,7 @@ final class NowPlayingActivityManager {
             self.activeCoverURL = nil
             self.activeStartedAt = nil
         }
+        await endAllSystemActivities()
     }
 
     /// Bouton « Arrêter » de la Live Activity (lien `spinlog://end-session`) : n'agit que si le

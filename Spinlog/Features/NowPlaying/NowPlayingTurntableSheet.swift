@@ -19,6 +19,8 @@ struct NowPlayingTurntableSheet: View {
     /// Faux dès que l'écoute s'arrête : le disque ralentit et le bras se relève avant la fermeture.
     @State private var isPlayingVisual = true
     @State private var isClosing = false
+    /// Stop demandé depuis la feuille : l'écoute s'arrête à sa disparition (voir `stopAndClose`).
+    @State private var endsListeningOnDisappear = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// Hauteur mesurée du contenu, utilisée comme seul cran de la feuille.
     @State private var contentHeight: CGFloat = 420
@@ -74,13 +76,7 @@ struct NowPlayingTurntableSheet: View {
             }
 
             Button {
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                Task {
-                    // L'écoute s'arrête tout de suite (Live Activity, journal) ; la feuille reste le temps
-                    // que le disque ralentisse et que le bras se relève.
-                    await activityManager.endCurrentActivity()
-                    closeGracefully()
-                }
+                stopAndClose()
             } label: {
                 Label("Arrêter l'écoute", systemImage: "stop.fill")
                     .font(.headline)
@@ -100,6 +96,10 @@ struct NowPlayingTurntableSheet: View {
         // Closure de géométrie appelée hors du fil principal par SwiftUI : `@Sendable` (§12).
         .onGeometryChange(for: CGFloat.self) { @Sendable proxy in proxy.size.height } action: { contentHeight = $0 }
         .onAppear(perform: rememberCurrentAlbum)
+        .onDisappear {
+            guard endsListeningOnDisappear else { return }
+            Task { await NowPlayingActivityManager.shared.endCurrentActivity() }
+        }
         .onChange(of: activityManager.activeAlbumTitle) { rememberCurrentAlbum() }
         .onChange(of: activityManager.activeReleaseId) { _, id in
             // Écoute terminée ailleurs (Live Activity, autre écran) : même arrêt en douceur.
@@ -117,6 +117,22 @@ struct NowPlayingTurntableSheet: View {
         isPlayingVisual = false
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(reduceMotion ? 150 : 2100))
+            dismiss()
+        }
+    }
+
+    /// Stop : le disque ralentit et le bras se relève, puis la feuille se réduit dans le mini-lecteur
+    /// (zoom inverse de l'ouverture), et seulement une fois la feuille partie (`onDisappear`)
+    /// l'écoute s'arrête et le mini-lecteur s'efface. Arrêter plus tôt retirait la cible du zoom en
+    /// pleine fermeture : l'écran s'assombrissait un instant.
+    private func stopAndClose() {
+        guard !isClosing else { return }
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        isClosing = true
+        isPlayingVisual = false
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(reduceMotion ? 150 : 2100))
+            endsListeningOnDisappear = true
             dismiss()
         }
     }

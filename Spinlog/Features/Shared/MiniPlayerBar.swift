@@ -19,9 +19,16 @@ struct MiniPlayerBar: View {
     @State private var coordinator = TabNavigationCoordinator.shared
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.tabViewBottomAccessoryPlacement) private var accessoryPlacement
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var isDraggingProgress = false
     @State private var scrubProgress: Double = 0.0
+
+    /// Apparition du contenu (glisse depuis le bas en s'estompant et en rétrécissant ; simple fondu
+    /// avec Réduire les animations), par exemple au passage d'Apple Music à une écoute sur platine.
+    private var playerTransition: AnyTransition {
+        reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.94))
+    }
 
     /// Vrai dès qu'un titre Apple Music ou une écoute "platine" est active. Sert à piloter
     /// `tabViewBottomAccessory(isEnabled:)` sur le `TabView` racine.
@@ -37,12 +44,49 @@ struct MiniPlayerBar: View {
         Color.spinlogPurpleLight.mix(with: .white, by: colorScheme == .dark ? 0.40 : 0.50)
     }
 
+    /// Album d'une écoute sur platine, tel qu'affiché.
+    struct TurntableInfo: Equatable {
+        let releaseId: Int
+        let title: String?
+        let artist: String?
+        let coverURL: String?
+    }
+
+    // Dernier contenu affiché, figé à l'arrêt : l'accessoire est retiré d'un bloc, capsule et
+    // contenu ensemble. Sans ça, le contenu se vidait (titre effacé, barre de progression masquée)
+    // avant que la capsule ne disparaisse.
+    @State private var frozenAppleItem: NowPlayingItem?
+    @State private var frozenTime: TimeInterval = 0
+    @State private var frozenDuration: TimeInterval = 0
+    @State private var frozenTurntable: TurntableInfo?
+
+    private var isAppleMusicLive: Bool { service.currentItem != nil && service.isPlaying }
+
+    private var liveTurntable: TurntableInfo? {
+        guard let releaseId = activityManager.activeReleaseId, activityManager.isAnyPlaying else { return nil }
+        return TurntableInfo(
+            releaseId: releaseId,
+            title: activityManager.activeAlbumTitle,
+            artist: activityManager.activeArtistName,
+            coverURL: activityManager.activeCoverURL
+        )
+    }
+
+    private var isLive: Bool { isAppleMusicLive || liveTurntable != nil }
+
+    private var displayedDuration: TimeInterval {
+        isAppleMusicLive ? service.totalDuration : frozenDuration
+    }
+
     private var effectiveProgress: Double {
-        isDraggingProgress ? scrubProgress : service.playbackProgress
+        if isDraggingProgress { return scrubProgress }
+        guard isAppleMusicLive else { return frozenDuration > 0 ? min(frozenTime / frozenDuration, 1) : 0 }
+        return service.playbackProgress
     }
 
     private var effectiveTime: TimeInterval {
-        isDraggingProgress ? (scrubProgress * service.totalDuration) : service.playbackTime
+        if isDraggingProgress { return scrubProgress * displayedDuration }
+        return isAppleMusicLive ? service.playbackTime : frozenTime
     }
 
     private func formatTime(_ time: TimeInterval) -> String {
@@ -51,23 +95,43 @@ struct MiniPlayerBar: View {
     }
 
     var body: some View {
+        // Même branche pour le contenu en cours et le contenu figé : rien ne change à l'écran au
+        // moment de l'arrêt, seul l'accessoire entier se retire (voir `RootTabView`).
         Group {
-            if let item = service.currentItem, service.isPlaying {
+            if let item = isAppleMusicLive ? service.currentItem : frozenAppleItem {
                 if accessoryPlacement == .inline {
                     compactAppleMusicPlayerView(item: item)
                 } else {
                     appleMusicPlayerView(item: item)
                 }
-            } else if let releaseId = activityManager.activeReleaseId, activityManager.isAnyPlaying {
+            } else if let info = liveTurntable ?? frozenTurntable {
                 if accessoryPlacement == .inline {
-                    compactTurntablePlayerView(releaseId: releaseId)
+                    compactTurntablePlayerView(info: info)
                 } else {
-                    turntablePlayerView(releaseId: releaseId)
+                    turntablePlayerView(info: info)
                 }
             }
         }
+        // Figé, il ne répond plus (il n'y a plus rien à ouvrir ni à arrêter).
+        .allowsHitTesting(isLive)
         // Source de la transition zoom : la fenêtre de lecture sort de ce mini-lecteur et y rentre.
         .matchedTransitionSource(id: Self.transitionSourceID, in: transitionNamespace)
+        .onChange(of: service.currentItem, initial: true) { _, item in
+            guard let item, service.isPlaying else { return }
+            frozenAppleItem = item
+            frozenTurntable = nil
+        }
+        .onChange(of: service.playbackTime) { _, time in
+            // À l'arrêt, le temps repasse à 0 : seul le temps d'une lecture en cours est retenu.
+            guard isAppleMusicLive else { return }
+            frozenTime = time
+            frozenDuration = service.totalDuration
+        }
+        .onChange(of: liveTurntable, initial: true) { _, info in
+            guard let info else { return }
+            frozenTurntable = info
+            frozenAppleItem = nil
+        }
     }
 
     // MARK: - Présentation compacte (barre d'onglets réduite)
@@ -125,14 +189,15 @@ struct MiniPlayerBar: View {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             coordinator.presentNowPlaying(.appleMusic)
         }
+        .transition(playerTransition)
     }
 
     @ViewBuilder
-    private func compactTurntablePlayerView(releaseId: Int) -> some View {
+    private func compactTurntablePlayerView(info: TurntableInfo) -> some View {
         HStack(spacing: 10) {
             HStack(spacing: 10) {
                 AsyncCoverImage(
-                    url: activityManager.activeCoverURL,
+                    url: info.coverURL,
                     cornerRadius: 6,
                     showsBorder: true,
                     targetSize: 30
@@ -143,13 +208,13 @@ struct MiniPlayerBar: View {
 
                 VStack(alignment: .leading, spacing: 0) {
                     AutoScrollingText(
-                        text: activityManager.activeAlbumTitle ?? String(localized: "Album vinyle"),
+                        text: info.title ?? String(localized: "Album vinyle"),
                         font: .subheadline.weight(.semibold),
                         color: .primary
                     )
 
                     AutoScrollingText(
-                        text: turntableSubtitle(artist: activityManager.activeArtistName),
+                        text: turntableSubtitle(artist: info.artist),
                         font: .caption,
                         color: Color.appSecondaryText
                     )
@@ -157,7 +222,7 @@ struct MiniPlayerBar: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(activityManager.activeAlbumTitle ?? ""). Écoute en cours sur la platine. Touche pour ouvrir le lecteur.")
+            .accessibilityLabel("\(info.title ?? ""). Écoute en cours sur la platine. Touche pour ouvrir le lecteur.")
             .accessibilityAddTraits(.isButton)
 
             Button {
@@ -182,6 +247,7 @@ struct MiniPlayerBar: View {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             coordinator.presentNowPlaying(.turntable)
         }
+        .transition(playerTransition)
     }
 
     @ViewBuilder
@@ -220,8 +286,8 @@ struct MiniPlayerBar: View {
                             .offset(y: -2)
 
                             // 3. Position temporelle et durée juste à gauche du bouton pause (remontée également)
-                            if service.totalDuration > 0 {
-                                Text("\(formatTime(effectiveTime)) / \(formatTime(service.totalDuration))")
+                            if displayedDuration > 0 {
+                                Text("\(formatTime(effectiveTime)) / \(formatTime(displayedDuration))")
                                     .font(.caption)
                                     .foregroundStyle(isDraggingProgress ? .primary : Color.appSecondaryText)
                                     .monospacedDigit()
@@ -230,7 +296,7 @@ struct MiniPlayerBar: View {
                             }
                         }
                         .accessibilityElement(children: .ignore)
-                        .accessibilityLabel("\(item.trackTitle), \(item.artistName), lecture sur Apple Music. \(formatTime(effectiveTime)) sur \(formatTime(service.totalDuration)). Touche pour ouvrir le lecteur.")
+                        .accessibilityLabel("\(item.trackTitle), \(item.artistName), lecture sur Apple Music. \(formatTime(effectiveTime)) sur \(formatTime(displayedDuration)). Touche pour ouvrir le lecteur.")
                         .accessibilityAddTraits(.isButton)
 
                         // 4. Bouton Stop à droite (cercle rose Spinlog avec icône stop.fill), identique au mode platine
@@ -265,7 +331,7 @@ struct MiniPlayerBar: View {
                     }
 
                     // 5. Barre de progression tactile alignée sur le bord inférieur (ne décale pas le contenu)
-                    if service.totalDuration > 0 {
+                    if displayedDuration > 0 {
                         GeometryReader { geo in
                             let width = geo.size.width
                             let progressWidth = max(0, min(width * CGFloat(effectiveProgress), width))
@@ -334,22 +400,17 @@ struct MiniPlayerBar: View {
                         .animation(.easeInOut(duration: 0.15), value: isDraggingProgress)
                     }
                 }
-        .transition(
-            .asymmetric(
-                insertion: .move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.94)),
-                removal: .move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.94))
-            )
-        )
+        .transition(playerTransition)
     }
 
     @ViewBuilder
-    private func turntablePlayerView(releaseId: Int) -> some View {
+    private func turntablePlayerView(info: TurntableInfo) -> some View {
         HStack(spacing: 12) {
                 // Zone combinée : Pochette + Textes (ramène à l'album vinyle)
                 HStack(spacing: 12) {
                     // 1. Jaquette à gauche (36x36, coins arrondis 7)
                     AsyncCoverImage(
-                        url: activityManager.activeCoverURL,
+                        url: info.coverURL,
                         cornerRadius: 7,
                         showsBorder: true,
                         targetSize: 36
@@ -361,13 +422,13 @@ struct MiniPlayerBar: View {
                     // 2. Titre de l'album et sous-titre "Écoute sur platine"
                     VStack(alignment: .leading, spacing: 0.5) {
                         AutoScrollingText(
-                            text: activityManager.activeAlbumTitle ?? String(localized: "Album vinyle"),
+                            text: info.title ?? String(localized: "Album vinyle"),
                             font: .subheadline.weight(.semibold),
                             color: .primary
                         )
 
                         AutoScrollingText(
-                            text: turntableSubtitle(artist: activityManager.activeArtistName),
+                            text: turntableSubtitle(artist: info.artist),
                             font: .caption,
                             color: Color.appSecondaryText
                         )
@@ -375,7 +436,7 @@ struct MiniPlayerBar: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(activityManager.activeAlbumTitle ?? ""), \(activityManager.activeArtistName ?? ""). Écoute en cours sur la platine. Touche pour ouvrir le lecteur.")
+                .accessibilityLabel("\(info.title ?? ""), \(info.artist ?? ""). Écoute en cours sur la platine. Touche pour ouvrir le lecteur.")
                 .accessibilityAddTraits(.isButton)
 
                 // 3. Bouton Stop à droite (cercle rose Spinlog avec icône stop.fill)
@@ -409,12 +470,7 @@ struct MiniPlayerBar: View {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 coordinator.presentNowPlaying(.turntable)
             }
-        .transition(
-            .asymmetric(
-                insertion: .move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.94)),
-                removal: .move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.94))
-            )
-        )
+        .transition(playerTransition)
     }
 
     private func appleMusicSubtitle(artist: String) -> String {
