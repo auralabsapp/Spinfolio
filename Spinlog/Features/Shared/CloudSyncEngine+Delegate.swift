@@ -47,7 +47,7 @@ extension CloudSyncEngine {
             // Voir le commentaire sur `isApplyingRemoteChange` : couvre toute cette réapplication,
             // pour que `markDirty`/`markDeleted` refusent bruyamment d'être appelées entre-temps.
             isApplyingRemoteChange = true
-            defer { isApplyingRemoteChange = false }
+            defer { endApplyingRemoteChange() }
             // Un lot peut contenir des centaines d'enregistrements (première synchro) : regroupés
             // pour que chaque store n'écrive sur disque et ne notifie l'UI qu'une fois par lot.
             TagStore.shared.performBatchUpdate {
@@ -92,6 +92,11 @@ extension CloudSyncEngine {
                 handleFailedDelete(recordID: recordID, error: error, syncEngine: syncEngine)
             }
 
+        case .fetchedDatabaseChanges(let fetchedChanges):
+            for deletion in fetchedChanges.deletions {
+                handleZoneDeletion(zoneID: deletion.zoneID, reason: deletion.reason, syncEngine: syncEngine)
+            }
+
         default:
             break
         }
@@ -114,7 +119,7 @@ extension CloudSyncEngine {
                 if shouldApplyRemote(serverRecord) {
                     isApplyingRemoteChange = true
                     apply(remoteRecord: serverRecord, allowMerge: false)
-                    isApplyingRemoteChange = false
+                    endApplyingRemoteChange()
                     cloudSyncLogger.log("serverRecordChanged \(recordID.recordName, privacy: .public) : version serveur plus récente appliquée")
                     return
                 }

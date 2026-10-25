@@ -60,6 +60,34 @@ nonisolated enum GradeRules {
         return normalized(earliest.map { GradeUnlock(track: $0.key.track, tier: $0.key.tier, date: $0.value) })
     }
 
+    /// Résultat de la fusion d'un enregistrement iCloud avec les grades de l'appareil.
+    struct RemoteMerge: Equatable {
+        let unlocks: [GradeUnlock]
+        let welcomeDecided: Bool
+        /// L'appareil a changé (à enregistrer).
+        let changesLocal: Bool
+        /// L'appareil en sait plus que iCloud (à renvoyer). Évalué même si rien ne change en local :
+        /// auparavant, un grade connu du seul appareil n'était jamais renvoyé dans ce cas.
+        let needsResend: Bool
+    }
+
+    static func mergeRemote(
+        local: [GradeUnlock],
+        localWelcomeDecided: Bool,
+        remote: [GradeUnlock],
+        remoteWelcomeDecided: Bool
+    ) -> RemoteMerge {
+        let normalizedRemote = normalized(remote)
+        let merged = merge(local, normalizedRemote)
+        let mergedWelcome = localWelcomeDecided || remoteWelcomeDecided
+        return RemoteMerge(
+            unlocks: merged,
+            welcomeDecided: mergedWelcome,
+            changesLocal: merged != local || mergedWelcome != localWelcomeDecided,
+            needsResend: merged != normalizedRemote || mergedWelcome != remoteWelcomeDecided
+        )
+    }
+
     /// Ajoute les paliers manquants sous le plus haut acquis de chaque parcours (même date que ce
     /// dernier) : avoir le grade 4 suppose avoir franchi 1, 2 et 3, même si un enregistrement distant
     /// n'en portait qu'un. Résultat trié, donc comparable.

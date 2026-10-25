@@ -62,8 +62,17 @@ extension CloudSyncEngine {
         // Détachée (voir `detachedOnMainActor`) : `hydrateActiveZone` est appelé depuis
         // `handleEvent` (événement `accountChange`, émis dès le premier démarrage du moteur, donc
         // juste après l'achat Premium).
+        let capturedEngine = syncEngine
         detachedOnMainActor { [self] in
-            await performFetchChanges()
+            // Sans fusion préalable réussie, pousser l'état local écraserait celui d'un autre
+            // appareil (voir ci-dessus) ; et un moteur arrêté ou un autre compte devenu actif
+            // pendant l'attente ne doivent ni recevoir cette poussée ni la marquer comme faite.
+            // Elle sera retentée au prochain `hydrateActiveZone` (lancement, connexion, Premium).
+            let didFetch = await performFetchChanges()
+            guard didFetch, capturedEngine === self.syncEngine, self.activeUsername == activeUsername else {
+                cloudSyncLogger.log("Poussée initiale reportée — fetch=\(didFetch, privacy: .public)")
+                return
+            }
 
             let existingInstanceIds = TagStore.shared.allTaggedInstanceIds()
             let existingSessionIds = ListeningLogStore.shared.allSessionIds()
@@ -77,11 +86,17 @@ extension CloudSyncEngine {
             // comme un blocage au moment même de la poussée initiale.
             for (index, instanceId) in existingInstanceIds.enumerated() {
                 markTagsDirty(instanceId: instanceId)
-                if index % 25 == 24 { await Task.yield() }
+                if index % 25 == 24 {
+                    await Task.yield()
+                    guard self.activeUsername == activeUsername else { return }
+                }
             }
             for (index, sessionId) in existingSessionIds.enumerated() {
                 markSessionDirty(id: sessionId)
-                if index % 25 == 24 { await Task.yield() }
+                if index % 25 == 24 {
+                    await Task.yield()
+                    guard self.activeUsername == activeUsername else { return }
+                }
             }
             // Synchro iCloud de l'historique de valeur désactivée tant que le graphique « Évolution de la cote »
             // est masqué : ces points sont des données Discogs conservées au-delà de 6 h (CGU de l'API), à ne
@@ -91,7 +106,10 @@ extension CloudSyncEngine {
             // }
             for (index, releaseId) in existingAlertReleaseIds.enumerated() {
                 markWantlistAlertDirty(releaseId: releaseId)
-                if index % 25 == 24 { await Task.yield() }
+                if index % 25 == 24 {
+                    await Task.yield()
+                    guard self.activeUsername == activeUsername else { return }
+                }
             }
             markCollectionPreferencesDirty()
             markShelfPreferencesDirty()
@@ -160,13 +178,14 @@ extension CloudSyncEngine {
         // autre appareil serait systématiquement "ressuscitée" par l'union avec l'état local.
         let hydratedKey = Self.hydratedFlagKeyPrefix + activeUsername
         let isFirstHydrate = !UserDefaults.standard.bool(forKey: hydratedKey)
-        isFirstHydrateForActiveAccount = isFirstHydrate
         cloudSyncLogger.log("performFetchChanges() — première synchro pour ce compte sur cet appareil : \(isFirstHydrate)")
 
-        defer { isFirstHydrateForActiveAccount = false }
         do {
             try await syncEngine.fetchChanges()
             cloudSyncLogger.log("fetchChanges() terminé pour \(activeUsername, privacy: .private(mask: .hash))")
+            // Moteur remplacé ou compte changé pendant l'attente : ce fetch ne vaut pas
+            // réconciliation pour le compte actif.
+            guard syncEngine === self.syncEngine, activeUsername == self.activeUsername else { return false }
             if isFirstHydrate {
                 UserDefaults.standard.set(true, forKey: hydratedKey)
             }
@@ -427,7 +446,7 @@ extension CloudSyncEngine {
 
         case .appPreferences:
             let prefs = SyncedAppPreferences(
-                colorTheme: ThemeManager.shared.currentTheme.rawValue,
+                colorTheme: ThemeManager.shared.chosenTheme.rawValue,
                 appearance: AppearancePreferencesStore.shared.appearance.rawValue,
                 maxListeningDuration: AppearancePreferencesStore.shared.maxListeningDuration
             )

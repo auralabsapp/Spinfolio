@@ -27,9 +27,14 @@ final class CloudSyncEngine: CKSyncEngineDelegate {
     /// tagués) en un seul envoi réseau, plutôt que de lancer un `sendChanges()` concurrent par
     /// appel — inutile et potentiellement instable sur le même moteur.
     private var pendingSendTask: Task<Void, Never>?
-    /// `true` uniquement pendant le tout premier `fetchChanges()` réussi pour le compte actif sur
-    /// cet appareil — voir `apply(remoteRecord:allowMerge:)`.
-    var isFirstHydrateForActiveAccount = false
+    /// `true` tant que le premier `fetchChanges()` réussi pour le compte actif n'est pas terminé sur
+    /// cet appareil — voir `apply(remoteRecord:allowMerge:)`. Décidé au moment d'appliquer, d'après
+    /// le drapeau persisté : un drapeau en mémoire, partagé par deux récupérations concurrentes,
+    /// était remis à `false` par la première terminée et la seconde écrasait les tags locaux.
+    var isFirstHydrateForActiveAccount: Bool {
+        guard let activeUsername else { return false }
+        return !UserDefaults.standard.bool(forKey: Self.hydratedFlagKeyPrefix + activeUsername)
+    }
     /// `true` pendant toute la réapplication d'un lot de changements distants (`handleEvent`,
     /// cas `.fetchedRecordZoneChanges`). `TagStore`/`LocalDataStore` ne doivent jamais redéclencher
     /// un envoi (`markDirty`/`markDeleted`) pendant cette fenêtre : ils ne le font aujourd'hui que
@@ -39,6 +44,8 @@ final class CloudSyncEngine: CKSyncEngineDelegate {
     /// méthode d'écriture normale depuis le chemin "distant" échoue bruyamment (assertion en debug)
     /// plutôt que de rouvrir silencieusement une boucle d'envoi vers iCloud.
     var isApplyingRemoteChange = false
+    /// Renvoi des grades demandé pendant la réapplication en cours (voir `markGradesDirty`).
+    private var needsGradesResendAfterRemoteApply = false
     /// Mis à `true` par `handleEvent` dès qu'un enregistrement individuel échoue pendant l'envoi
     /// en cours (ex: `CKError.zoneBusy`/`.requestRateLimited` après une rafale de changements) —
     /// consulté par `scheduleSend()` pour appliquer le même délai qu'un échec global, qui sinon ne
@@ -383,7 +390,22 @@ final class CloudSyncEngine: CKSyncEngineDelegate {
     }
 
     /// Signale qu'un grade a été franchi (ou que l'appareil en sait plus que iCloud) : voir `GradeStore`.
+    /// Seul genre légitimement renvoyé pendant la réapplication d'un lot distant (les grades sont
+    /// toujours fusionnés) : l'envoi est alors différé à la fin du lot (`endApplyingRemoteChange`),
+    /// au lieu de déclencher l'assertion de `markDirty` et d'être perdu.
     func markGradesDirty() {
+        if isApplyingRemoteChange {
+            needsGradesResendAfterRemoteApply = true
+            return
+        }
+        markDirty(.grades)
+    }
+
+    /// Termine la réapplication d'un lot distant, puis renvoie les grades si la fusion l'a demandé.
+    func endApplyingRemoteChange() {
+        isApplyingRemoteChange = false
+        guard needsGradesResendAfterRemoteApply else { return }
+        needsGradesResendAfterRemoteApply = false
         markDirty(.grades)
     }
 

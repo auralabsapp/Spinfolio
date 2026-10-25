@@ -121,4 +121,45 @@ struct GradeRulesTests {
         #expect(!GradeEvaluator.isCollectionCacheReliable(cachedCount: 120, announcedTotal: nil, isStale: false))
         #expect(!GradeEvaluator.isCollectionCacheReliable(cachedCount: 0, announcedTotal: 0, isStale: false))
     }
+
+    // MARK: - Fusion d'un enregistrement iCloud
+
+    @Test func gradesKnownOnlyHereAreResentEvenWhenNothingChangesLocally() {
+        // L'appareil connaît un grade absent d'iCloud : rien ne change en local, mais il faut renvoyer.
+        let local = GradeRules.normalized([GradeUnlock(track: .collection, tier: 1, date: day1)])
+        let result = GradeRules.mergeRemote(local: local, localWelcomeDecided: true, remote: [], remoteWelcomeDecided: true)
+        #expect(!result.changesLocal)
+        #expect(result.needsResend)
+    }
+
+    @Test func remoteGradesAddedLocallyWithoutResendWhenICloudKnowsMore() {
+        let remote = [GradeUnlock(track: .listening, tier: 2, date: day1)]
+        let result = GradeRules.mergeRemote(local: [], localWelcomeDecided: false, remote: remote, remoteWelcomeDecided: true)
+        #expect(result.changesLocal)
+        #expect(!result.needsResend)
+        #expect(result.welcomeDecided)
+        #expect(result.unlocks == GradeRules.normalized(remote))
+    }
+
+    @Test func identicalGradesNeitherChangeNorResend() {
+        let unlocks = GradeRules.normalized([GradeUnlock(track: .collection, tier: 2, date: day1)])
+        let result = GradeRules.mergeRemote(local: unlocks, localWelcomeDecided: true, remote: unlocks, remoteWelcomeDecided: true)
+        #expect(!result.changesLocal)
+        #expect(!result.needsResend)
+    }
+
+    @Test func welcomeDecidedOnlyHereIsResent() {
+        let result = GradeRules.mergeRemote(local: [], localWelcomeDecided: true, remote: [], remoteWelcomeDecided: false)
+        #expect(!result.changesLocal)
+        #expect(result.needsResend)
+    }
+
+    @Test func earlierLocalDateIsResent() {
+        let local = [GradeUnlock(track: .collection, tier: 0, date: day1)]
+        let remote = [GradeUnlock(track: .collection, tier: 0, date: day2)]
+        let result = GradeRules.mergeRemote(local: local, localWelcomeDecided: true, remote: remote, remoteWelcomeDecided: true)
+        #expect(!result.changesLocal)
+        #expect(result.needsResend)
+        #expect(result.unlocks.first?.date == day1)
+    }
 }

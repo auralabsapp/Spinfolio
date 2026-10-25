@@ -166,20 +166,28 @@ final class GradeStore {
 
     /// Fusionne les grades reçus d'iCloud avec ceux de l'appareil (jamais de remplacement : un
     /// grade connu d'un seul côté est conservé, la date la plus ancienne l'emporte ; l'accueil
-    /// déjà fait quelque part est fait partout). Si l'appareil en sait plus que iCloud, on le renvoie.
+    /// déjà fait quelque part est fait partout). Si l'appareil en sait plus que iCloud, on le renvoie :
+    /// appelé pendant la réapplication d'un lot distant, ce renvoi est différé à la fin du lot par
+    /// `CloudSyncEngine.markGradesDirty`.
     func applyRemote(_ remote: SyncedGrades) {
         guard activeUsername != nil else { return }
-        let normalizedRemote = GradeRules.normalized(remote.unlocks)
-        let merged = GradeRules.merge(unlocks, normalizedRemote)
-        let mergedWelcome = welcomeDecided || remote.welcomeDecided
-        guard merged != unlocks || mergedWelcome != welcomeDecided else { return }
-        unlocks = merged
-        welcomeDecided = mergedWelcome
-        persist()
-        if merged != normalizedRemote || mergedWelcome != remote.welcomeDecided {
+        let result = GradeRules.mergeRemote(
+            local: unlocks,
+            localWelcomeDecided: welcomeDecided,
+            remote: remote.unlocks,
+            remoteWelcomeDecided: remote.welcomeDecided
+        )
+        if result.changesLocal {
+            unlocks = result.unlocks
+            welcomeDecided = result.welcomeDecided
+            persist()
+        }
+        if result.needsResend {
             CloudSyncEngine.shared.markGradesDirty()
         }
-        decideWelcomeIfNeeded()
+        if result.changesLocal {
+            decideWelcomeIfNeeded()
+        }
     }
 
     // MARK: - Persistance

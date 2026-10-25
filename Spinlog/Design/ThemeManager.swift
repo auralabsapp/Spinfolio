@@ -12,20 +12,34 @@ final class ThemeManager {
 
     var currentTheme: AppColorTheme {
         didSet {
-            defaults.set(currentTheme.rawValue, forKey: storageKey)
+            // Thème Premium masqué ou rétabli (perte puis reprise de l'abonnement) : le choix
+            // enregistré et iCloud ne changent pas, seul l'affichage suit.
+            if !isMaskingPremiumTheme {
+                defaults.set(currentTheme.rawValue, forKey: storageKey)
+            }
             publishAccentForExtensions()
             // Le widget n'est redessiné qu'à la demande : sans cela, il gardait l'ancienne couleur
             // jusqu'au tirage du lendemain.
             WidgetCenter.shared.reloadTimelines(ofKind: WidgetKinds.randomAlbum)
-            if !isApplyingRemoteTheme {
+            if !isApplyingRemoteTheme && !isMaskingPremiumTheme {
                 CloudSyncEngine.shared.markAppPreferencesDirty()
             }
         }
     }
 
+    /// Thème choisi par l'utilisateur, tel qu'enregistré et synchronisé. Diffère de `currentTheme`
+    /// quand un thème Premium est seulement masqué par la perte de l'abonnement : c'est lui qu'on
+    /// envoie sur iCloud, pour ne pas imposer le thème par défaut aux autres appareils.
+    var chosenTheme: AppColorTheme {
+        defaults.string(forKey: storageKey).flatMap(AppColorTheme.init(rawValue:)) ?? currentTheme
+    }
+
     /// Empêche `applyRemoteTheme` de redéclencher un envoi vers CloudKit : cette donnée en vient
     /// déjà (même principe que `ShelfPreferencesStore.isApplyingRemoteShelfPreferences`).
     private var isApplyingRemoteTheme = false
+    /// Voir `revertToDefaultIfNeeded` : auparavant, le retour au thème par défaut était enregistré
+    /// puis envoyé sur iCloud avant l'arrêt de la synchro, et le thème choisi était perdu partout.
+    private var isMaskingPremiumTheme = false
 
     private init() {
         var initialTheme: AppColorTheme = .signature
@@ -59,10 +73,19 @@ final class ThemeManager {
 
     /// Si l'utilisateur n'est plus premium et utilise un thème réservé aux membres premium,
     /// on le réinitialise automatiquement sur le thème de base (.signature).
+    /// Le thème choisi reste enregistré : il revient de lui-même si le Premium est retrouvé.
     func revertToDefaultIfNeeded(isPremium: Bool) {
-        if currentTheme.isPremiumOnly && !isPremium {
-            currentTheme = .signature
-        }
+        let target = Self.displayedTheme(chosen: chosenTheme, isPremium: isPremium)
+        guard target != currentTheme else { return }
+        isMaskingPremiumTheme = true
+        currentTheme = target
+        isMaskingPremiumTheme = false
+    }
+
+    /// Thème à afficher : le thème choisi, sauf un thème Premium sans abonnement (thème par défaut).
+    static func displayedTheme(chosen: AppColorTheme, isPremium: Bool) -> AppColorTheme {
+        if isPremium { return chosen }
+        return chosen.isPremiumOnly ? .signature : chosen
     }
 
     /// Transmet la couleur du thème à l'extension (Live Activity et widget) : teinte principale
