@@ -8,9 +8,10 @@ struct ArtistSortCustomizationView: View {
     @State private var editingArtist: String? = nil
     @State private var showingResetConfirmation = false
     @State private var filterMode: FilterMode = .all
-    /// Lecture disque (`getAllCollectionItemsSync`) mise en cache une seule fois à l'apparition de
-    /// l'écran, plutôt que refaite à chaque frappe dans la recherche : `allArtists` (et donc
-    /// `filteredArtists`) était recalculée — relecture disque comprise — à chaque caractère tapé.
+    /// Lecture disque mise en cache une seule fois à l'apparition de l'écran, plutôt que refaite
+    /// à chaque frappe dans la recherche : `allArtists` (et donc `filteredArtists`) était
+    /// recalculée — relecture disque comprise — à chaque caractère tapé. Décodée hors du fil
+    /// principal (`loadAllCollectionItems`).
     @State private var collectionArtists: [String] = []
 
     enum FilterMode: String, CaseIterable, Identifiable {
@@ -35,12 +36,12 @@ struct ArtistSortCustomizationView: View {
         return artistSet.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
     }
 
-    private func loadCollectionArtists() {
+    private func loadCollectionArtists() async {
         guard let username = DiscogsAuthManager.shared.username else {
             collectionArtists = []
             return
         }
-        let items = LocalDataStore.shared.getAllCollectionItemsSync(username: username)
+        let items = await LocalDataStore.shared.loadAllCollectionItems(username: username)
         var artistSet = Set<String>()
         for item in items {
             let cleaned = ArtistShelfSortHelper.cleanDiscogsSuffix(item.basicInformation.artistNames)
@@ -169,7 +170,7 @@ struct ArtistSortCustomizationView: View {
         .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $searchText, prompt: "Rechercher un artiste...")
         .task {
-            loadCollectionArtists()
+            await loadCollectionArtists()
         }
         .sheet(item: Binding(
             get: { editingArtist.map { ArtistEditPayload(artist: $0) } },

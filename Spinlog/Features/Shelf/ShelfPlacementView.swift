@@ -29,24 +29,29 @@ struct ShelfPlacementView: View {
     @State private var pulseResetTask: Task<Void, Never>?
 
     /// Calculés une seule fois à l'ouverture, plutôt qu'à chaque image de rendu comme le ferait
-    /// une propriété calculée ordinaire : cette recherche relit et redécode toute la collection
-    /// locale puis la trie entièrement (voir `ShelfPlacementService.findNeighborsInLocalStore`) —
-    /// un calcul coûteux, répété à chaque accès (`neighbors.previous`, `.next`, `.scope`… une
-    /// dizaine de fois par rendu), qui retardait visiblement l'apparition de la feuille.
-    private let neighbors: ShelfNeighbors
+    /// une propriété calculée ordinaire : cette recherche relit et décode toute la collection
+    /// locale puis la trie entièrement (voir `ShelfPlacementService.findNeighborsInLocalStore`).
+    /// Chargés de façon asynchrone (décodage hors du fil principal) : auparavant calculés dans
+    /// `init`, en synchrone, ce qui retardait l'apparition de la feuille sur une grosse collection.
+    @State private var loadedNeighbors: ShelfNeighbors?
+
+    /// Valeur d'attente, jamais affichée : le contenu n'apparaît qu'une fois `loadedNeighbors` connu.
+    private var neighbors: ShelfNeighbors {
+        loadedNeighbors ?? ShelfNeighbors(
+            target: targetRelease,
+            previous: nil,
+            next: nil,
+            strategy: preferences.sortStrategy,
+            category: targetRelease.shelfMediaCategory,
+            totalCount: 1,
+            positionIndex: 1,
+            scope: .allFolders
+        )
+    }
 
     init(targetRelease: Release, customCollection: [Release]? = nil) {
         self.targetRelease = targetRelease
         self.customCollection = customCollection
-        let preferences = ShelfPreferencesStore.shared
-        self.neighbors = ShelfPlacementViewModel().neighbors(
-            for: targetRelease,
-            customCollection: customCollection,
-            strategy: preferences.sortStrategy,
-            ignoreArticles: preferences.ignoreArticles,
-            restrictToSameFolder: preferences.restrictToSameFolder,
-            username: DiscogsAuthManager.shared.username
-        )
     }
 
     var body: some View {
@@ -63,6 +68,10 @@ struct ShelfPlacementView: View {
                         Spacer(minLength: 40)
                     }
                     .padding(.horizontal, 16)
+                } else if loadedNeighbors == nil {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 80)
                 } else {
                     VStack(alignment: .leading, spacing: 22) {
                         // 1. En-tête : Emplacement chiffré & jauge relative dans le meuble
@@ -114,7 +123,6 @@ struct ShelfPlacementView: View {
             }
             .onAppear {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                playEntranceIfNeeded()
 
                 Task {
                     await viewModel.prefetchMasterYearIfNeeded(
@@ -123,6 +131,18 @@ struct ShelfPlacementView: View {
                     )
                 }
             }
+        }
+        .task {
+            guard loadedNeighbors == nil else { return }
+            loadedNeighbors = await viewModel.neighbors(
+                for: targetRelease,
+                customCollection: customCollection,
+                strategy: preferences.sortStrategy,
+                ignoreArticles: preferences.ignoreArticles,
+                restrictToSameFolder: preferences.restrictToSameFolder,
+                username: authManager.username
+            )
+            playEntranceIfNeeded()
         }
         .presentationDragIndicator(.visible)
     }

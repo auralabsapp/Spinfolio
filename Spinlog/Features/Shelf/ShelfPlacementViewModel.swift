@@ -10,7 +10,7 @@ final class ShelfPlacementViewModel {
         ignoreArticles: Bool,
         restrictToSameFolder: Bool,
         username: String?
-    ) -> ShelfNeighbors {
+    ) async -> ShelfNeighbors {
         if let customCollection {
             return ShelfPlacementService.findNeighbors(
                 for: targetRelease,
@@ -19,7 +19,7 @@ final class ShelfPlacementViewModel {
                 ignoreArticles: ignoreArticles
             )
         } else {
-            return ShelfPlacementService.findNeighborsInLocalStore(
+            return await ShelfPlacementService.findNeighborsInLocalStore(
                 for: targetRelease,
                 username: username,
                 strategy: strategy,

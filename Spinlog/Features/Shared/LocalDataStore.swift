@@ -52,6 +52,10 @@ final class LocalDataStore {
     /// telle quelle : des masters déjà connus semblaient manquants et étaient redemandés à Discogs.
     private var masterYearsMemoryCache: [Int: Int]?
 
+    /// Disques à retirer de l'instantané du widget, regroupés par `scheduleWidgetSnapshotRemoval`.
+    private var pendingWidgetRemovedReleaseIds: Set<Int> = []
+    private var widgetRemovalTask: Task<Void, Never>?
+
     private func loadedMasterYears() -> [Int: Int] {
         if let cache = masterYearsMemoryCache {
             return cache
@@ -369,6 +373,34 @@ final class LocalDataStore {
 
         try? context.save()
         localDataStoreLogger.info("Données locales SwiftData purgées pour \(username)")
+    }
+
+    // MARK: - Widget
+
+    /// Retire du widget "Album du jour" les disques dont plus aucun exemplaire n'est en cache.
+    /// Auparavant, chaque retrait relisait et décodait toute la collection sur le fil principal
+    /// pour réécrire l'instantané : en retrait par lot, k disques coûtaient k décodages complets.
+    /// Ici, une requête sans décodage par disque, puis un seul passage sur l'instantané (léger)
+    /// pour tout le lot : la tâche ne s'exécute qu'une fois les retraits synchrones enchaînés.
+    func scheduleWidgetSnapshotRemoval(username: String, releaseIds: Set<Int>) {
+        let gone = releaseIds.filter {
+            !hasOtherCollectionInstance(username: username, releaseId: $0, excludingInstanceId: nil)
+        }
+        guard !gone.isEmpty else { return }
+        pendingWidgetRemovedReleaseIds.formUnion(gone)
+        guard widgetRemovalTask == nil else { return }
+        widgetRemovalTask = Task { [weak self] in
+            guard let self else { return }
+            let removed = pendingWidgetRemovedReleaseIds
+            pendingWidgetRemovedReleaseIds = []
+            widgetRemovalTask = nil
+            // Déconnecté entre-temps : l'instantané a déjà été vidé par `logout`.
+            guard DiscogsAuthManager.shared.isAuthenticated,
+                  let pruned = Self.widgetSnapshot(WidgetSnapshotStore.loadCollection(), removing: removed) else { return }
+            widgetSnapshotLogger.log("Retrait de \(removed.count) disque(s) de l'instantané du widget -> \(pruned.count) restant(s).")
+            WidgetSnapshotStore.saveCollection(pruned)
+            WidgetCenter.shared.reloadTimelines(ofKind: WidgetKinds.randomAlbum)
+        }
     }
 }
 

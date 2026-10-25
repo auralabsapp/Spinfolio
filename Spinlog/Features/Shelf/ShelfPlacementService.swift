@@ -383,7 +383,8 @@ enum ShelfPlacementService {
         )
     }
 
-    /// Recherche les voisins directement depuis le cache local de l'utilisateur connecté.
+    /// Recherche les voisins directement depuis le cache local de l'utilisateur connecté. La
+    /// collection est décodée hors du fil principal (auparavant en synchrone, à l'ouverture).
     @MainActor
     static func findNeighborsInLocalStore(
         for targetRelease: Release,
@@ -391,7 +392,7 @@ enum ShelfPlacementService {
         strategy: ShelfSortStrategy? = nil,
         ignoreArticles: Bool? = nil,
         restrictToSameFolder: Bool? = nil
-    ) -> ShelfNeighbors {
+    ) async -> ShelfNeighbors {
         let activeStrategy = strategy ?? ShelfPreferencesStore.shared.sortStrategy
         let activeIgnoreArticles = ignoreArticles ?? ShelfPreferencesStore.shared.ignoreArticles
         let activeRestrictToSameFolder = restrictToSameFolder ?? ShelfPreferencesStore.shared.restrictToSameFolder
@@ -407,7 +408,7 @@ enum ShelfPlacementService {
                 scope: .allFolders
             )
         }
-        var items = LocalDataStore.shared.getAllCollectionItemsSync(username: username)
+        var items = await LocalDataStore.shared.loadAllCollectionItems(username: username)
 
         var determinedScope: ShelfScope = .allFolders
 

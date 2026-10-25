@@ -153,11 +153,13 @@ extension LocalDataStore {
         }
     }
 
-    /// Ravitaille le widget "Album du jour" à partir de tous les disques de la collection en cache.
-    func refreshWidgetSnapshot(username: String) {
-        let all = getAllCollectionItemsSync(username: username)
-        guard !all.isEmpty else { return }
-        updateWidgetSnapshot(all)
+    /// Instantané sans les disques indiqués, ou `nil` s'il n'en contenait aucun (rien à réécrire).
+    nonisolated static func widgetSnapshot(
+        _ snapshot: [RandomAlbumSnapshotItem],
+        removing releaseIds: Set<Int>
+    ) -> [RandomAlbumSnapshotItem]? {
+        let pruned = snapshot.filter { !releaseIds.contains($0.releaseId) }
+        return pruned.count == snapshot.count ? nil : pruned
     }
 
     /// Réduit la collection à un instantané léger (id, titre, artiste, pochette) pour le widget
@@ -228,12 +230,29 @@ extension LocalDataStore {
         return items.count > allInFolder0.count ? items : allInFolder0
     }
 
-    /// Variante synchrone de `getAllCollectionItems`, pour les quelques appelants hors contexte
-    /// `async` (bookkeeping interne du widget ; écrans secondaires comme la personnalisation du
-    /// tri des artistes ou le placement en rayon, dont les propriétés calculées de vue ne peuvent
-    /// pas devenir `async` sans une restructuration que leur fréquence d'usage ne justifie pas).
-    /// Hors du chemin de chargement affiché à l'utilisateur au lancement (Collection/Stats), seul
-    /// vrai objectif de la variante `async`.
+    /// Même résultat que `getAllCollectionItemsSync` (tous les exemplaires en cache, dédoublonnés),
+    /// mais décodé hors du fil principal : pour les écrans qui peuvent attendre (rangement, tri
+    /// des artistes), sans le double décodage de `getAllCollectionItems`.
+    func loadAllCollectionItems(username: String) async -> [CollectionItem] {
+        let descriptor = FetchDescriptor<CachedCollectionEntry>(
+            predicate: #Predicate<CachedCollectionEntry> {
+                $0.username == username
+            }
+        )
+        guard let entries = try? context.fetch(descriptor) else { return [] }
+        let payloads = entries.map(\.payload)
+        return await Task.detached(priority: .userInitiated) {
+            Self.uniqueByInstance(Self.decodeCollectionItems(from: payloads))
+        }.value
+    }
+
+    nonisolated private static func uniqueByInstance(_ decoded: [CollectionItem]) -> [CollectionItem] {
+        var seen = Set<Int>()
+        return decoded.filter { seen.insert($0.instanceId).inserted }
+    }
+
+    /// Variante synchrone de `getAllCollectionItems`, réservée à l'amorçage du widget pendant la
+    /// synchro (rare : widget vide ou incomplet). Les écrans passent par `loadAllCollectionItems`.
     func getAllCollectionItemsSync(username: String) -> [CollectionItem] {
         let descriptor = FetchDescriptor<CachedCollectionEntry>(
             predicate: #Predicate<CachedCollectionEntry> {
@@ -281,11 +300,12 @@ extension LocalDataStore {
             predicate: #Predicate<CachedCollectionEntry> { $0.id == targetId }
         )
         if let entries = try? context.fetch(descriptor) {
+            let releaseIds = Set(entries.map(\.releaseId))
             for entry in entries {
                 context.delete(entry)
             }
             try? context.save()
-            refreshWidgetSnapshot(username: username)
+            scheduleWidgetSnapshotRemoval(username: username, releaseIds: releaseIds)
         }
     }
 
@@ -300,7 +320,7 @@ extension LocalDataStore {
                 context.delete(entry)
             }
             try? context.save()
-            refreshWidgetSnapshot(username: username)
+            scheduleWidgetSnapshotRemoval(username: username, releaseIds: [releaseId])
         }
     }
 
