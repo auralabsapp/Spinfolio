@@ -7,7 +7,157 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
-## 2026-10-24 — Écoute sur platine : CD, cassette, bras de lecture ; Réglages affiné
+## 2026-10-25 — Audit complet : lots 1 à 6 ; mini-lecteur et fermetures en douceur
+
+Audit en lecture seule de toute l'app (rapport `QA/audit-2026-10-25.md`, non publié), puis traitement
+lot par lot : isolation des comptes et de la démo, intégrité iCloud, retrait performant, petites
+corrections, messages d'échec et suppression des données, sécurité et journaux, réseau robuste.
+En parallèle, fermetures du lecteur Apple Music et de la feuille d'écoute sur platine dans le mini-lecteur.
+
+### 23:20 — `e8c744b` Audit lot 6 : réseau robuste
+- **File hors ligne** : quota Discogs dépassé (429) → nouvel essai espacé au lieu d'une boucle toutes
+  les 5 s ; détection textuelle de « 429 » retirée.
+- **Tâches de fond** : classement des œuvres et années des masters s'arrêtent sur quota ou panne
+  passagère, masters remis en attente au lieu d'être perdus.
+- **Note et prix d'achat** gardés et mis en file hors ligne ou sur panne (nouvelle action de note) ;
+  les champs personnalisés restent acceptés en file même sur un cache ancien (choix produit).
+- **Export CSV** : cache frais ou garde anti-doublon des relectures complètes.
+- **Limiteur** : requêtes au-delà du plafond de 20 s espacées d'une seconde.
+- **Erreurs réseau** : seules les coupures sont réessayées (plus les certificats ni les réponses illisibles).
+- Chemins d'API regroupés dans `DiscogsEndpoints` ; année du master via `MasterYearLookup`.
+- Tests du limiteur et des erreurs réseau ; recettes N28, N29.
+- 15 fichiers, +244 / −77.
+
+### 19:49 — `014af53` Écoute sur platine : arrêt en 1,5 s avant la fermeture de la feuille
+- Ralentissement du disque ramené à 1,2 s, feuille fermée après 1,5 s (au lieu de 2,1 s).
+- 2 fichiers, +3 / −3.
+
+### 19:38 — `e28b37e` Mini-lecteur : disparition d'un bloc après un Stop ; feuille platine qui se réduit dans le mini-lecteur
+- Contenu du mini-lecteur figé jusqu'au retrait de l'accessoire : capsule et contenu disparaissent ensemble.
+- Feuille d'écoute sur platine : zoom depuis et vers le mini-lecteur ; Stop ralentit le disque,
+  referme la feuille, puis arrête l'écoute une fois la feuille partie (plus d'assombrissement).
+- Fin d'écoute : interface mise à jour avant la fermeture des Live Activities.
+- Recette Q33.
+- 6 fichiers, +125 / −41.
+
+### 17:28 — `1a6aecb` Audit lot 5 : sécurité et journaux
+- **Vidéos YouTube** : identifiant validé (hôte exact, 11 caractères) avant insertion dans le lecteur,
+  stockage web éphémère séparé de la session discogs.com.
+- **Journaux** : diagnostics des listes en `.debug`, identifiants masqués, erreurs détaillées privées.
+- Clés Keychain partagées (`KeychainKeys`) ; widget sans repli hors App Group.
+- **Réinstallation** : jetons Discogs effacés au premier lancement d'une installation neuve, sans
+  déconnecter lors d'une mise à jour (`FreshInstallKeychainReset`).
+- **Live Activity** : lien d'arrêt avec un jeton propre à l'écoute ; un lien externe n'a plus d'effet.
+- Tests `ReleaseVideoTests`, `SecurityHardeningTests` ; recettes H33, R7, O24.
+- 23 fichiers, +315 / −76.
+
+### 17:10 — `c21170e` Lecteur Apple Music : Stop referme la fenêtre en douceur dans le mini-lecteur
+- La fenêtre rentre dans le mini-lecteur (zoom inverse) avant l'arrêt ; son de l'extrait en fondu.
+- Recette Q32.
+- 4 fichiers, +41 / −2.
+
+### 17:04 — `2b71a0e` Audit lot 4 : échecs hors ligne affichés, rangement par compte, suppression complète
+- Action hors ligne abandonnée : alerte à fermer sur tous les onglets, listes rechargées depuis Discogs.
+- **Réglages de rangement propres à chaque compte** (anciens réglages repris par le premier compte,
+  jamais par la démo) ; `ShelfPreferencesStore` dans son propre fichier.
+- « Supprimer mes données » efface aussi le rangement, le brouillon du scan et l'historique du complément
+  de discographie ; déconnexion : sessions Google, Apple et Facebook de la webview vidées.
+- Tests `ShelfPreferencesStoreTests`, `AccountLeftoversTests` ; recettes N27, D11, A31.
+- 13 fichiers, +403 / −142.
+
+### 16:53 — `4b2eb1b` Audit : gains rapides, code mort et nettoyage du catalogue
+- Libellés VoiceOver des boutons à icône, « Arrêter la lecture » du mini-lecteur, index vertical ≥ 11 pt.
+- Traductions et pluriels manquants, « Identifiant » de nouveau traduit, pourcentages du Guide formatés.
+- Formatters partagés, vignettes vidéo en cache, closure de géométrie `@Sendable`, titre masqué dans
+  les journaux du widget.
+- Code mort supprimé et 140 clés obsolètes retirées du catalogue ; recettes A23/A30 et I27 corrigées.
+- 20 fichiers, +153 / −1 831.
+
+### 16:31 — `a120aa1` Audit lot 3 : retrait performant
+- Retrait d'un disque : plus de relecture complète de la collection pour le widget, un seul passage
+  par lot sur l'instantané.
+- Guide de rangement et tri des artistes : collection décodée hors du fil principal.
+- Tests `WidgetSnapshotRemovalTests` ; recette C18.
+- 9 fichiers, +140 / −39.
+
+### 16:24 — `0513cb3` Audit lot 2 : intégrité iCloud
+- Grades connus d'un seul appareil renvoyés sur iCloud ; fusion initiale décidée au moment d'appliquer.
+- Poussée initiale seulement après une récupération réussie, sur le même moteur et le même compte.
+- Thème Premium masqué sans écriture à la perte de l'abonnement, rétabli au réabonnement.
+- Suppression de zone reçue d'iCloud : les autres appareils effacent les données synchronisées du compte.
+- Tests `GradeRulesTests`, `ThemeManagerTests`, `CloudSyncZoneDeletionTests` ; recettes M27 à M30.
+- 12 fichiers, +309 / −27.
+
+### 11:55 — `f103f1a` Audit lot 1 : isolation multi-compte et démo
+- Cache des champs personnalisés par compte ; Wantlist, Stats, alertes, widget et file hors ligne
+  ignorent les résultats arrivés après un changement de compte.
+- Démo : modification de champ bloquée, file, alertes et état hors ligne purgés à la sortie, pas d'iCloud.
+- Date de synchro hors ligne et nombre de disques archivés propres à chaque compte.
+- Tests `AccountIsolationTests`, `OfflineSyncRecordStoreTests` ; recettes P30, N26.
+- 17 fichiers, +336 / −27.
+
+### 11:24 — `4a8918d` Collection : grand titre qui se réduit de nouveau au défilement après l'entrée en démo ou la connexion
+- Le squelette reste dans la vraie liste jusqu'à la fin du premier chargement (plus d'état vide
+  intermédiaire qui retenait la barre de navigation).
+- 2 fichiers, +10 / −2.
+
+---
+
+## 2026-10-24 — Écoute sur platine, accueil animé, démo, interface plus vivante
+
+### 17:50 — `f478523` Cassette : design plus riche et plus en relief
+- Coque biseautée avec reflet et ombre, étiquette papier, fenêtre vitrée, pelotes de ruban et moyeux
+  métalliques, vis aux coins ; seules les bobines sont redessinées à chaque image.
+- 3 fichiers, +270 / −56.
+
+### 17:30 — `0cedc3b` Guide : maquettes sans taille de police fixe, textes réels en .caption
+- Styles système pour les icônes de la maquette d'écoute, textes en `.caption`.
+- 4 fichiers, +7 / −7.
+
+### 17:24 — `4da3c6a` Démo : pastille flottante de sortie, entrée toujours sur Collection ; accroche d'accueil sans chevauchement
+- Pastille « Mode démo ✕ » sous la barre de navigation, sortie directe vers l'écran d'accueil.
+- Chaque entrée en démo repart de la racine de Collection ; accroche de l'accueil qui ne recouvre plus le nom.
+- Recettes A28, A29 ; tests d'interface associés.
+- 7 fichiers, +164 / −5.
+
+### 16:56 — `e878a24` Écran d'accueil animé et plein écran avant la connexion
+- `WelcomeView` par-dessus les onglets : disque qui tourne, pochettes qui flottent, accroches qui défilent ;
+  actions de connexion factorisées (`LoginActionsView`), anciens écrans « non connecté » supprimés.
+- Recette A27.
+- 24 fichiers, +437 / −129.
+
+### 15:45 — `d5f949e` Réglages Apple Music : afficher l'état de l'abonnement sous la case de connexion
+- Vérification en cours, abonnement actif, aucun abonnement ou accès refusé, relu à chaque ouverture.
+- Tests `AppleMusicAccountStatusTests` ; recette Q31.
+- 6 fichiers, +175 / −13.
+
+### 15:45 — `50b8dc5` Animations : courbe de la cote qui se dessine, Mode Hors Ligne et lignes de Réglages en fondu
+- Courbe « Évolution de la cote » dessinée de gauche à droite ; chiffres qui roulent dans Mode Hors Ligne ;
+  lignes de Réglages révélées en fondu.
+- 7 fichiers, +93 / −19.
+
+### 15:27 — `7e7ec61` Écoute sur platine réservée aux disques possédés (fiche et raccourcis)
+- « Mes écoutes sur platine » seulement pour un disque en collection ; raccourci refusé sinon.
+- Recettes B50, F24, G27, H31, H32.
+- 8 fichiers, +53 / −13.
+
+### 15:27 — `5230486` Interface plus vivante : zoom pochette vers fiche, compteurs animés, scan par lot, suppression en lot instantanée
+- Zoom de la pochette vers la fiche ; chiffres qui roulent dans le scan par lot.
+- Suppression en lot : éléments retirés d'un coup, Discogs mis à jour en arrière-plan.
+- 14 fichiers, +189 / −42.
+
+### 14:55 — `c6decb2` Réglages : « Mode Hors Ligne » et « Couleur du thème » alignés sur les autres sous-pages
+- Mise en page commune `SettingsSubPage` ; recette J38.
+- 5 fichiers, +23 / −65.
+
+### 14:49 — `e567d25` Scan par lot : retour à l'onglet de destination, codes non reconnus à part
+- Après l'ajout, ouverture de Collection ou Wantlist ; section « Non reconnus », relançable, hors du compteur.
+- Recettes G25, G26.
+- 6 fichiers, +162 / −20.
+
+### 14:14 — `2d53f98` Ajout : la pochette vole vers l'onglet Collection ou Wantlist
+- Animation de la pochette jusqu'à l'onglet de destination ; recette H30.
+- 7 fichiers, +366 / −1.
 
 ### 00:59 — `bce8905` Bras de lecture : angle posé porté à 20°
 - La tête de lecture se pose un peu plus vers l'intérieur du disque (15° → 20°).
