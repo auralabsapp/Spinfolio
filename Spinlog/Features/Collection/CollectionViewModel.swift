@@ -30,6 +30,12 @@ final class CollectionViewModel {
         }
     }
     private(set) var isLoading = false
+    /// Vrai tant que le premier chargement du compte n'est pas terminé (et après `reset()`). Sans
+    /// lui, la vue montrait d'abord l'état « Collection vide » (un `ScrollView`) le temps de lire le
+    /// cache, puis basculait sur la `List` du squelette : la barre de navigation restait attachée à
+    /// la première vue de défilement et le grand titre ne se réduisait plus au défilement (entrée en
+    /// démo, connexion).
+    private(set) var isAwaitingFirstLoad = true
     private(set) var errorMessage: String?
     /// Résultat d'une action de l'utilisateur (retrait, déplacement…) à lui signaler, affiché en
     /// alerte par `CollectionView`. Distinct de `errorMessage`, qui n'est visible que lorsque la
@@ -134,6 +140,7 @@ final class CollectionViewModel {
         errorMessage = nil
         isOfflineAndStale = false
         isLoading = false
+        isAwaitingFirstLoad = true
         searchText = ""
         selectedTags = []
         selectedFormat = nil
@@ -399,6 +406,7 @@ final class CollectionViewModel {
 
     func loadFoldersAndItems(isSilent: Bool = false) async {
         guard let username = authManager.username else { return }
+        defer { isAwaitingFirstLoad = false }
 
         backgroundSyncTask?.cancel()
         backgroundSyncTask = nil

@@ -734,7 +734,7 @@ struct CollectionView: View {
             .libraryRefreshable {
                 await viewModel.refresh()
             }
-        } else if viewModel.items.isEmpty && !viewModel.isLoading {
+        } else if viewModel.items.isEmpty && !viewModel.isLoading && !viewModel.isAwaitingFirstLoad {
             ScrollView {
                 LibraryEmptyState(
                     title: "Collection vide",
@@ -949,7 +949,7 @@ struct CollectionView: View {
     /// pour le squelette puis pour le contenu réel la détruisait et la recréait à la bascule, ce
     /// qui faisait disparaître puis réapparaître le grand titre de navigation.
     private var isShowingSkeleton: Bool {
-        (viewModel.isLoading && viewModel.items.isEmpty)
+        ((viewModel.isLoading || viewModel.isAwaitingFirstLoad) && viewModel.items.isEmpty)
             || (viewModel.sections.isEmpty && viewModel.isComputingSections
                 && viewModel.searchText.isEmpty && !viewModel.hasActiveFilters)
     }
