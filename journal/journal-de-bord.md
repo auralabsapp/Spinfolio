@@ -7,6 +7,22 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
+## 2026-10-26 — Audit lot 12 : cohérence de l'interface
+
+### 00:52 — `a294c2a` Audit lot 12 : cohérence de l'interface
+- **Appui long** : menus en mode Liste (Collection, Wantlist), dans la Recherche et le Tri des artistes,
+  menu complet sur la mosaïque Wantlist ; ni Modifier ni Supprimer sur un cache hors ligne périmé.
+- Retrait d'un tag porté par une partie de la sélection : confirmation aussi depuis le menu.
+- Erreurs de caméra du scan par lot affichées ; bandeau hors ligne sur les pages Label et Master,
+  un seul message hors ligne dans la Recherche.
+- Vibration d'ajout et de retrait identique partout (une seule pour un retrait en lot).
+- **Vocabulaire** : « Supprimer » pour sortir un disque de la collection ou de la wantlist,
+  compteurs en « albums » ; alertes à message unifiées (`messageAlert`).
+- Recette P31 (+ B9, B17, N22 mis à jour).
+- 25 fichiers, +325 / −411.
+
+---
+
 ## 2026-10-25 — Audit complet : lots 1 à 7 ; mini-lecteur et fermetures en douceur
 
 Audit en lecture seule de toute l'app (rapport `QA/audit-2026-10-25.md`, non publié), puis traitement
