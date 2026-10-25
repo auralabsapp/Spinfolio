@@ -28,7 +28,9 @@ final class ReleaseActions {
     /// Dossiers proposés lors de l'ajout (si l'utilisateur a plusieurs dossiers et souhaite en choisir un).
     private(set) var folders: [CollectionFolder] = []
 
-    static var cachedCollectionFields: [CollectionField] = []
+    /// Champs personnalisés déjà récupérés, par compte : une liste unique servait sinon au compte
+    /// suivant (ou à la démo) les champs du compte précédent. Vidée à la déconnexion.
+    private static var fieldsCache = CollectionFieldsCache()
 
     private let authManager = DiscogsAuthManager.shared
     private let networkMonitor = NetworkMonitor.shared
@@ -41,15 +43,20 @@ final class ReleaseActions {
     /// n'expire pas en mémoire pour la durée de vie du process : ces champs ne changent que
     /// si l'utilisateur en crée/modifie sur discogs.com, ce qui est rare.
     static func fetchCollectionFields(username: String, credentials: DiscogsCredentials?) async -> [CollectionField] {
-        if !cachedCollectionFields.isEmpty {
-            return cachedCollectionFields
+        if let cached = fieldsCache.fields(for: username) {
+            return cached
         }
         guard let credentials,
               let response = try? await DiscogsAPIClient.shared.collectionFields(username: username, credentials: credentials) else {
             return []
         }
-        cachedCollectionFields = response.fields
+        fieldsCache.store(response.fields, for: username)
         return response.fields
+    }
+
+    /// Oublie les champs mis en cache (déconnexion, sortie de démo).
+    static func clearCachedCollectionFields() {
+        fieldsCache.removeAll()
     }
 
     /// Renvoie le nom convivial du dossier pour un identifiant donné

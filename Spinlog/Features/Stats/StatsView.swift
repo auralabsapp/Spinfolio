@@ -123,6 +123,8 @@ struct StatsView: View {
             .task(id: authManager.isAuthenticated) {
                 if authManager.isAuthenticated {
                     await viewModel.loadOverview()
+                } else {
+                    viewModel.cancelAccountTasks()
                 }
             }
             // Sans ça, un point d'historique de valeur ou un champ "prix d'achat" mis à jour par

@@ -186,6 +186,8 @@ final class DiscogsAuthManager: NSObject {
         WantlistViewModel.shared.reset()
         SearchViewModel.shared.reset()
         LibraryMembershipStore.shared.refresh()
+        // Les champs personnalisés en cache appartiennent au compte qu'on quitte.
+        ReleaseActions.clearCachedCollectionFields()
         // Vide la session web persistante des `SafariView` (fiches Discogs, marketplace...) :
         // sans ça, si l'utilisateur s'y était connecté manuellement, cette page resterait
         // connectée à ce compte même après connexion à un autre compte dans l'app.
@@ -231,6 +233,12 @@ final class DiscogsAuthManager: NSObject {
         LocalDataStore.shared.clearAllUserData(username: DemoMode.username)
         TagStore.shared.clearAccountData(for: DemoMode.username)
         ListeningLogStore.shared.clearAccountData(for: DemoMode.username)
+        // Alertes de prix et actions en file de la démo : sinon elles revenaient à la démo
+        // suivante (et la file gardait des modifications impossibles à envoyer).
+        WantlistAlertStore.shared.clearAccountData(for: DemoMode.username)
+        OfflineSyncQueue.shared.removeActions(for: DemoMode.username)
+        ReleaseActions.clearCachedCollectionFields()
+        OfflineDownloadManager.shared.resetOfflineState(for: DemoMode.username)
         // Sans ça, le widget continuait de proposer des disques de la démo après relancement.
         WidgetSnapshotStore.saveCollection([])
         WidgetCenter.shared.reloadTimelines(ofKind: WidgetKinds.randomAlbum)
@@ -260,7 +268,7 @@ final class DiscogsAuthManager: NSObject {
             WantlistAlertStore.shared.clearAccountData(for: currentUsername)
             OfflineSyncQueue.shared.removeActions(for: currentUsername)
             CollectionPreferencesStore.clearAccountData(for: currentUsername)
-            OfflineDownloadManager.shared.resetOfflineState()
+            OfflineDownloadManager.shared.resetOfflineState(for: currentUsername)
             // Pochettes téléchargées pour le mode hors ligne : elles ne sont pas rattachées à un
             // compte, donc le cache disque entier est vidé.
             KingfisherConfig.clearDiskCache()

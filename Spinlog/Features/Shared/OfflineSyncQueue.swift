@@ -175,7 +175,10 @@ final class OfflineSyncQueue {
 
         // Les actions d'un autre compte restent en file, intactes, jusqu'à ce que ce compte se
         // reconnecte : les rejouer ici les appliquerait à la collection du mauvais compte.
+        // La session est revérifiée à chaque tour : après une déconnexion ou un changement de
+        // compte, la boucle continuait sinon à envoyer avec les identifiants du compte quitté.
         while NetworkMonitor.shared.isConnected,
+              DiscogsAuthManager.shared.username == username,
               let action = pendingActions.first(where: { $0.belongs(to: username) }) {
 
             // Respect impératif du rate-limiting Discogs (au moins 1,1s entre chaque requête)

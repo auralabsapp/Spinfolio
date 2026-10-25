@@ -22,6 +22,9 @@ final class WidgetSnapshotSyncService {
         // Si le widget est vide ou a moins de disques que le cache local, on le peuple
         // instantanément sans attendre de requête réseau ni risquer de rate limit.
         let localItems = await LocalDataStore.shared.getAllCollectionItems(username: username)
+        // Déconnexion ou changement de compte pendant la lecture : le widget a déjà été vidé, il
+        // ne doit pas se remplir avec la collection du compte qu'on vient de quitter.
+        guard DiscogsAuthManager.shared.username == username else { return }
         let currentSnapshotCount = WidgetSnapshotStore.loadCollection().count
         if !localItems.isEmpty && (currentSnapshotCount == 0 || localItems.count > currentSnapshotCount) {
             LocalDataStore.shared.updateWidgetSnapshot(localItems)

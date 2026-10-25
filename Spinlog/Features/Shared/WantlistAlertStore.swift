@@ -329,6 +329,7 @@ final class WantlistAlertStore {
 
     /// Vérifie une alerte précise et envoie une notification si le prix est inférieur au seuil
     func checkSingleAlert(_ alert: WantlistAlert) async {
+        let checkedUsername = activeUsername
         do {
             let stats = try await DiscogsAPIClient.shared.marketplaceStats(
                 releaseId: alert.releaseId,
@@ -353,6 +354,9 @@ final class WantlistAlertStore {
             // on repart de sa version actuelle plutôt que de la copie d'avant la requête, qui
             // écrasait sinon la modification de l'utilisateur. Devise changée : ce résultat
             // n'est plus comparable, la prochaine vérification s'en chargera.
+            // Compte changé pendant les requêtes : le même disque peut avoir une alerte sur l'autre
+            // compte, qui ne doit recevoir ni ce prix ni sa notification.
+            guard activeUsername == checkedUsername else { return }
             guard let current = alerts[alert.releaseId]?.alert, current.currency == alert.currency else { return }
             var updated = current
             updated.lastCheckedAt = Date()

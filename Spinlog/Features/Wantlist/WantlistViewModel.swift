@@ -229,8 +229,11 @@ final class WantlistViewModel {
             let response = try await DiscogsAPIClient.shared.wantlist(
                 username: username, page: 1, sort: sortOption.apiSortValue, sortOrder: sortOption.apiSortOrder(ascending: sortAscending), credentials: credentials
             )
+            // Compte changé pendant la requête (déconnexion, autre compte, sortie de démo) : ces
+            // éléments ne le concernent pas, ils ne doivent ni s'afficher ni entrer dans son cache.
+            guard authManager.username == username else { return }
             // Fusionné plutôt que remplacé : voir `mergedWantlistItems`.
-            items = mergedWantlistItems(primary: items, secondary: response.wants)
+            items = Self.mergedWantlistItems(primary: items, secondary: response.wants)
             currentPage = 1
             totalPages = response.pagination.pages
             isOfflineAndStale = false
@@ -262,8 +265,11 @@ final class WantlistViewModel {
             let response = try await DiscogsAPIClient.shared.wantlist(
                 username: username, page: 1, sort: sortOption.apiSortValue, sortOrder: sortOption.apiSortOrder(ascending: sortAscending), credentials: credentials
             )
+            // Compte changé pendant la requête (déconnexion, autre compte, sortie de démo) : ces
+            // éléments ne le concernent pas, ils ne doivent ni s'afficher ni entrer dans son cache.
+            guard authManager.username == username else { return }
             // Fusionné (nouvel ordre de tri prioritaire) plutôt que remplacé : voir `mergedWantlistItems`.
-            items = mergedWantlistItems(primary: response.wants, secondary: items)
+            items = Self.mergedWantlistItems(primary: response.wants, secondary: items)
             currentPage = 1
             totalPages = response.pagination.pages
             isOfflineAndStale = false
@@ -282,7 +288,7 @@ final class WantlistViewModel {
     /// rafraîchissement (déclenché par exemple en rebasculant sur l'onglet Wantlist) arrivait
     /// avant que Discogs n'ait propagé l'ajout côté serveur — voir le même principe déjà en place
     /// dans `CollectionViewModel.fetchPage(append:)`.
-    private func mergedWantlistItems(primary: [WantlistItem], secondary: [WantlistItem]) -> [WantlistItem] {
+    nonisolated static func mergedWantlistItems(primary: [WantlistItem], secondary: [WantlistItem]) -> [WantlistItem] {
         var seen = Set<Int>()
         var merged: [WantlistItem] = []
         for item in primary + secondary where seen.insert(item.id).inserted {
@@ -293,6 +299,7 @@ final class WantlistViewModel {
 
     private func loadFromLocalStore(username: String) async {
         let cachedItems = await localStore.getWantlistItems(username: username)
+        guard authManager.username == username else { return }
         self.items = cachedItems
         self.isOfflineAndStale = localStore.isWantlistStale(username: username)
         self.isLoading = false
@@ -317,8 +324,10 @@ final class WantlistViewModel {
             let response = try await DiscogsAPIClient.shared.wantlist(
                 username: username, page: currentPage + 1, sort: sortOption.apiSortValue, sortOrder: sortOption.apiSortOrder(ascending: sortAscending), credentials: credentials
             )
-            let newItems = items + response.wants
-            items = newItems
+            guard authManager.username == username else { isLoading = false; return }
+            // Dédoublonné : `load()` fusionne la page 1 avec la liste déjà affichée et repart de
+            // la page 1, donc la page suivante peut contenir des disques déjà présents.
+            items = Self.mergedWantlistItems(primary: items, secondary: response.wants)
             currentPage += 1
             totalPages = response.pagination.pages
 

@@ -513,6 +513,12 @@ struct CollectionItemEditSheet: View {
                 errorMessage = message
             }
         }
+        // Démo : bloqué avant tout envoi ou mise en file (§7.2). Hors ligne, la modification partait
+        // sinon dans la file et restait en attente pour un compte qui n'existe pas.
+        if DemoMode.isActive {
+            report(AppMessages.demoModificationBlocked)
+            return
+        }
         guard DiscogsAuthManager.shared.session != nil else {
             report(String(localized: "Tu dois être connecté à Discogs pour enregistrer ces modifications."))
             return

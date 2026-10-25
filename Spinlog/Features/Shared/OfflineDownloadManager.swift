@@ -47,19 +47,24 @@ final class OfflineDownloadManager {
     private(set) var progress: Double = 0.0
 
     private let userDefaults = UserDefaults.standard
-    private let lastSyncDateKey = "com.spinlog.lastOfflineSyncDate"
-    private let offlineItemCountKey = "com.spinlog.offlineItemCount"
     private let autoSyncOverWifiKey = "com.spinlog.autoSyncOverWifiEnabled"
+    private var records: OfflineSyncRecordStore { OfflineSyncRecordStore(defaults: userDefaults) }
 
-    var lastSyncDate: Date? {
-        get { userDefaults.object(forKey: lastSyncDateKey) as? Date }
-        set { userDefaults.set(newValue, forKey: lastSyncDateKey) }
+    /// Compte dont on lit la date et le compteur ; les anciennes valeurs communes à l'appareil lui
+    /// sont attribuées au premier accès (jamais à la démo, qui n'en est pas l'auteur).
+    private var recordsUsername: String? {
+        guard let username = DiscogsAuthManager.shared.username else { return nil }
+        if username != DemoMode.username {
+            records.migrateLegacyIfNeeded(to: username)
+        }
+        return username
     }
 
-    var offlineItemCount: Int {
-        get { userDefaults.integer(forKey: offlineItemCountKey) }
-        set { userDefaults.set(newValue, forKey: offlineItemCountKey) }
-    }
+    /// Date de la dernière synchro complète du compte connecté (`nil` : jamais, ou déconnecté).
+    var lastSyncDate: Date? { records.lastSyncDate(for: recordsUsername) }
+
+    /// Nombre de disques archivés lors de cette synchro, pour le compte connecté.
+    var offlineItemCount: Int { records.itemCount(for: recordsUsername) }
 
     /// Réglage utilisateur (activé par défaut pour un nouvel utilisateur) : si activé,
     /// `autoSyncIfNeeded` relance la synchro complète silencieusement dès qu'une connexion non
@@ -205,11 +210,13 @@ final class OfflineDownloadManager {
                     self.state = .cachingCovers(current: 0, total: allUrls.count)
                     await prefetchImages(urls: allUrls)
                 }
+                // Annulée (bouton Annuler, déconnexion) pendant les pochettes : ne pas l'enregistrer
+                // comme une synchro terminée.
+                guard !Task.isCancelled else { return }
 
-                // 5. Finalisation
+                // 5. Finalisation, enregistrée pour le compte qui a lancé la synchro
                 let now = Date()
-                self.lastSyncDate = now
-                self.offlineItemCount = allCollectionItems.count
+                self.records.recordSync(at: now, itemCount: allCollectionItems.count, for: username)
                 self.progress = 1.0
                 self.state = .completed(now, allCollectionItems.count)
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
@@ -224,10 +231,9 @@ final class OfflineDownloadManager {
 
     /// Suppression des données du compte : le cache hors ligne étant effacé, ses compteurs
     /// (date de dernière synchro, nombre de disques) ne doivent plus s'afficher dans Réglages.
-    func resetOfflineState() {
+    func resetOfflineState(for username: String) {
         cancelDownload()
-        lastSyncDate = nil
-        offlineItemCount = 0
+        records.clear(for: username)
     }
 
     /// Interrompt le téléchargement en cours.

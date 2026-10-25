@@ -75,8 +75,10 @@ final class CloudSyncEngine: CKSyncEngineDelegate {
         isPremium && isUserEnabled
     }
 
+    /// Abonnement réel seulement : l'aperçu Premium de la démo ne doit pas démarrer la synchro
+    /// iCloud (§7.2 : pas de synchro en démo).
     private var shouldRun: Bool {
-        Self.shouldRun(isPremium: PremiumStore.shared.isPremium, isUserEnabled: isUserEnabled)
+        Self.shouldRun(isPremium: PremiumStore.shared.hasAccessOutsideDemo, isUserEnabled: isUserEnabled)
     }
 
     /// Les modifications faites pendant la coupure n'ont jamais été signalées au moteur (aucun

@@ -98,6 +98,16 @@ final class StatsViewModel {
         observerTokens.forEach(NotificationCenter.default.removeObserver)
     }
 
+    /// Arrête les chargements de fond lancés pour le compte qu'on quitte (déconnexion, sortie de
+    /// démo) : sinon ils continuaient avec ses identifiants et consommaient le quota Discogs.
+    func cancelAccountTasks() {
+        histogramTask?.cancel()
+        histogramTask = nil
+        masterResolutionTask?.cancel()
+        masterResolutionTask = nil
+        isLoadingHistogram = false
+    }
+
     private(set) var isLoadingOverview = false
     /// Spécifique aux 3 appels de `loadCounters` (compteurs + derniers ajouts), indépendant de
     /// `isLoadingOverview` : ce dernier passe à `false` dès que le cache local est appliqué, bien
@@ -363,7 +373,9 @@ final class StatsViewModel {
                     let allItems = try await DiscogsAPIClient.shared.fetchAllCollectionItems(
                         username: username, folderId: DiscogsConstants.allFolderId, credentials: credentials
                     )
-                    guard !Task.isCancelled else { return }
+                    // Annulée ou compte changé pendant le chargement (déconnexion, sortie de démo) :
+                    // ces disques ne doivent ni s'afficher ni réécrire le cache d'un autre compte.
+                    guard !Task.isCancelled, self.authManager.username == username else { return }
                     self.totalCollectionCount = allItems.count
                     await self.localStore.syncCollectionFolder(username: username, folderId: DiscogsConstants.allFolderId, fullItems: allItems)
                     self.applyCollectionItems(allItems)
