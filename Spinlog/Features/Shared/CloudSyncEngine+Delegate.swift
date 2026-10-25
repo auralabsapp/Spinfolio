@@ -15,7 +15,7 @@ extension CloudSyncEngine {
             cloudSyncLogger.log("handleEvent ignoré — moteur qui n'est plus actif")
             return
         }
-        cloudSyncLogger.log("handleEvent: \(String(describing: event), privacy: .public)")
+        cloudSyncLogger.log("handleEvent: \(String(describing: event), privacy: .private)")
         switch event {
         case .stateUpdate(let stateUpdate):
             if let data = try? JSONEncoder().encode(stateUpdate.stateSerialization) {
@@ -55,7 +55,7 @@ extension CloudSyncEngine {
                     for modification in fetchedChanges.modifications {
                         rememberSystemFields(of: modification.record)
                         guard shouldApplyRemote(modification.record) else {
-                            cloudSyncLogger.log("fetchedRecordZoneChanges — \(modification.record.recordID.recordName, privacy: .public) ignoré : modification locale plus récente en attente d'envoi")
+                            cloudSyncLogger.log("fetchedRecordZoneChanges — \(modification.record.recordID.recordName, privacy: .private(mask: .hash)) ignoré : modification locale plus récente en attente d'envoi")
                             continue
                         }
                         apply(remoteRecord: modification.record, allowMerge: isFirstHydrateForActiveAccount)
@@ -107,7 +107,7 @@ extension CloudSyncEngine {
     /// distinction — y compris les erreurs définitives (quota iCloud plein, permission refusée,
     /// argument invalide…), retentées toutes les 5 secondes indéfiniment.
     private func handleFailedSave(recordID: CKRecord.ID, error: CKError, syncEngine: CKSyncEngine) {
-        cloudSyncLogger.error("failedRecordSave \(recordID.recordName, privacy: .public) : \(String(describing: error), privacy: .public)")
+        cloudSyncLogger.error("failedRecordSave \(recordID.recordName, privacy: .private(mask: .hash)) : \(String(describing: error), privacy: .private)")
         switch error.code {
         case .serverRecordChanged:
             // Le serveur a une autre version. La plus récente des deux l'emporte (voir
@@ -120,7 +120,7 @@ extension CloudSyncEngine {
                     isApplyingRemoteChange = true
                     apply(remoteRecord: serverRecord, allowMerge: false)
                     endApplyingRemoteChange()
-                    cloudSyncLogger.log("serverRecordChanged \(recordID.recordName, privacy: .public) : version serveur plus récente appliquée")
+                    cloudSyncLogger.log("serverRecordChanged \(recordID.recordName, privacy: .private(mask: .hash)) : version serveur plus récente appliquée")
                     return
                 }
             }
@@ -148,12 +148,12 @@ extension CloudSyncEngine {
             // `.userDeletedZone` — l'utilisateur a lui-même effacé les données iCloud de l'app,
             // à respecter). Abandonné : la prochaine modification locale de cet enregistrement
             // le renverra de toute façon.
-            cloudSyncLogger.error("failedRecordSave \(recordID.recordName, privacy: .public) abandonné (erreur définitive \(error.code.rawValue, privacy: .public))")
+            cloudSyncLogger.error("failedRecordSave \(recordID.recordName, privacy: .private(mask: .hash)) abandonné (erreur définitive \(error.code.rawValue, privacy: .public))")
         }
     }
 
     private func handleFailedDelete(recordID: CKRecord.ID, error: CKError, syncEngine: CKSyncEngine) {
-        cloudSyncLogger.error("failedRecordDelete \(recordID.recordName, privacy: .public) : \(String(describing: error), privacy: .public)")
+        cloudSyncLogger.error("failedRecordDelete \(recordID.recordName, privacy: .private(mask: .hash)) : \(String(describing: error), privacy: .private)")
         switch error.code {
         case .unknownItem, .zoneNotFound, .userDeletedZone:
             // Déjà absent du serveur : le but de la suppression est atteint.
@@ -165,7 +165,7 @@ extension CloudSyncEngine {
             syncEngine.state.add(pendingRecordZoneChanges: [.deleteRecord(recordID)])
 
         default:
-            cloudSyncLogger.error("failedRecordDelete \(recordID.recordName, privacy: .public) abandonné (erreur définitive \(error.code.rawValue, privacy: .public))")
+            cloudSyncLogger.error("failedRecordDelete \(recordID.recordName, privacy: .private(mask: .hash)) abandonné (erreur définitive \(error.code.rawValue, privacy: .public))")
         }
     }
 

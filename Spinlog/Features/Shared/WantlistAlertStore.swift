@@ -402,7 +402,7 @@ final class WantlistAlertStore {
                 CloudSyncEngine.shared.markWantlistAlertDirty(releaseId: alert.releaseId)
             }
         } catch {
-            logger.warning("Échec de vérification marketplace pour release \(alert.releaseId): \(error.localizedDescription)")
+            logger.warning("Échec de vérification marketplace pour release \(alert.releaseId, privacy: .private(mask: .hash)): \(error.localizedDescription)")
         }
     }
 
@@ -428,7 +428,7 @@ final class WantlistAlertStore {
 
         do {
             try await UNUserNotificationCenter.current().add(request)
-            logger.info("Notification programmée pour la release \(alert.releaseId) à \(formattedPrice)")
+            logger.info("Notification programmée pour la release \(alert.releaseId, privacy: .private(mask: .hash)) à \(formattedPrice)")
         } catch {
             logger.error("Erreur d'ajout de notification: \(error.localizedDescription)")
         }

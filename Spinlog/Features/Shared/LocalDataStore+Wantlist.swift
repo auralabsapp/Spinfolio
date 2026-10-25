@@ -159,7 +159,7 @@ extension LocalDataStore {
             predicate: #Predicate<CachedWantlistEntry> { $0.id == targetId }
         )
         if let entries = try? context.fetch(descriptor) {
-            widgetSnapshotLogger.log("LibrarySyncDebug DELETE targetId=\(targetId) matchedEntries=\(entries.count)")
+            widgetSnapshotLogger.debug("LibrarySyncDebug DELETE targetId=\(targetId, privacy: .private(mask: .hash)) matchedEntries=\(entries.count)")
             for entry in entries {
                 context.delete(entry)
             }
@@ -170,9 +170,9 @@ extension LocalDataStore {
             } catch {
                 saveError = error.localizedDescription
             }
-            widgetSnapshotLogger.log("LibrarySyncDebug DELETE targetId=\(targetId) saveError=\(saveError)")
+            widgetSnapshotLogger.debug("LibrarySyncDebug DELETE targetId=\(targetId, privacy: .private(mask: .hash)) saveError=\(saveError)")
         } else {
-            widgetSnapshotLogger.log("LibrarySyncDebug DELETE targetId=\(targetId) fetchFailed")
+            widgetSnapshotLogger.debug("LibrarySyncDebug DELETE targetId=\(targetId, privacy: .private(mask: .hash)) fetchFailed")
         }
     }
 

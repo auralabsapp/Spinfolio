@@ -4,6 +4,15 @@ import OSLog
 
 private nonisolated let keychainLogger = Logger(subsystem: "com.auralabs.Spinlog", category: "KeychainStore")
 
+/// Clés Keychain du compte Discogs, partagées par `DiscogsAuthManager` et la signature des
+/// requêtes d'images (`KingfisherConfig`) : recopiées à la main, elles pouvaient diverger.
+nonisolated enum KeychainKeys {
+    static let accessToken = "accessToken"
+    static let accessTokenSecret = "accessTokenSecret"
+    static let username = "username"
+    static let avatarURL = "avatarURL"
+}
+
 /// Wrapper minimal autour du Keychain pour stocker les tokens OAuth Discogs.
 nonisolated struct KeychainStore {
     private let service = "com.spinlog.discogs"

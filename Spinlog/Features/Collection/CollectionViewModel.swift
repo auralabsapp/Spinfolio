@@ -230,7 +230,7 @@ final class CollectionViewModel {
     }
 
     private func handleCollectionItemAdded(_ item: CollectionItem) {
-        collectionDebugLogger.log("RECV collectionItemAdded release=\(item.releaseId) instance=\(item.instanceId) folder=\(item.folderId) selectedFolderId=\(self.selectedFolderId ?? -999) itemsCountBefore=\(self.items.count)")
+        collectionDebugLogger.debug("RECV collectionItemAdded release=\(item.releaseId, privacy: .private(mask: .hash)) instance=\(item.instanceId, privacy: .private(mask: .hash)) folder=\(item.folderId) selectedFolderId=\(self.selectedFolderId ?? -999) itemsCountBefore=\(self.items.count)")
         // Ajouté localement pendant un parcours des pages : Discogs peut ne pas le renvoyer dans
         // ce parcours (page déjà chargée), il ne doit donc pas être élagué à la fin.
         serverInstanceIdsInCurrentPass.insert(item.instanceId)
@@ -255,7 +255,7 @@ final class CollectionViewModel {
 
     private func handleCollectionItemRemoved(releaseId: Int, instanceId: Int?) {
         animatesNextSectionsUpdate = true
-        collectionDebugLogger.log("RECV collectionItemRemoved release=\(releaseId) instance=\(instanceId ?? -1) itemsCountBefore=\(self.items.count)")
+        collectionDebugLogger.debug("RECV collectionItemRemoved release=\(releaseId, privacy: .private(mask: .hash)) instance=\(instanceId ?? -1, privacy: .private(mask: .hash)) itemsCountBefore=\(self.items.count)")
         withAnimation(.easeInOut(duration: 0.2)) {
             if let instanceId {
                 items.removeAll { $0.instanceId == instanceId }

@@ -191,7 +191,7 @@ extension CloudSyncEngine {
             }
             return true
         } catch {
-            cloudSyncLogger.error("fetchChanges() a échoué pour \(activeUsername, privacy: .private(mask: .hash)) : \(error, privacy: .public)")
+            cloudSyncLogger.error("fetchChanges() a échoué pour \(activeUsername, privacy: .private(mask: .hash)) : \(error, privacy: .private)")
             return false
         }
     }
@@ -215,11 +215,11 @@ extension CloudSyncEngine {
             return
         }
         guard let kind = SyncedRecordKind.from(recordName: record.recordID.recordName) else {
-            cloudSyncLogger.log("apply(remoteRecord:) ignoré — recordName inattendu \(record.recordID.recordName, privacy: .public)")
+            cloudSyncLogger.log("apply(remoteRecord:) ignoré — recordName inattendu \(record.recordID.recordName, privacy: .private(mask: .hash))")
             return
         }
         guard let payload = record[Self.payloadField] as? Data else {
-            cloudSyncLogger.error("apply(remoteRecord:) — payload absent pour \(String(describing: kind), privacy: .public)")
+            cloudSyncLogger.error("apply(remoteRecord:) — payload absent pour \(String(describing: kind), privacy: .private(mask: .hash))")
             return
         }
 
@@ -243,7 +243,7 @@ extension CloudSyncEngine {
                 cloudSyncLogger.error("apply(remoteRecord:) — payload illisible pour une session d'écoute")
                 return
             }
-            cloudSyncLogger.log("apply(remoteRecord:) session d'écoute \(session.id, privacy: .public)")
+            cloudSyncLogger.log("apply(remoteRecord:) session d'écoute \(session.id, privacy: .private(mask: .hash))")
             ListeningLogStore.shared.applyRemoteSession(session)
 
         case .collectionPreferences:
@@ -378,7 +378,7 @@ extension CloudSyncEngine {
         guard let activeUsername, recordID.zoneID == zoneID(for: activeUsername) else { return }
         switch SyncedRecordKind.from(recordName: recordID.recordName) {
         case .listeningSession(let id):
-            cloudSyncLogger.log("applyDeletion(recordID:) session d'écoute \(id, privacy: .public)")
+            cloudSyncLogger.log("applyDeletion(recordID:) session d'écoute \(id, privacy: .private(mask: .hash))")
             ListeningLogStore.shared.applyRemoteSessionDeletion(id: id)
 
         case .wantlistAlert(let releaseId):

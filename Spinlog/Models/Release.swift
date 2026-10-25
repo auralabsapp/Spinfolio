@@ -117,17 +117,33 @@ struct ReleaseVideo: Decodable, Sendable, Identifiable {
 
     /// Identifiant de vidéo YouTube extrait de l'URL Discogs (formats `youtu.be/{id}` et
     /// `youtube.com/watch?v={id}`), utilisé à la fois pour la miniature et la lecture intégrée.
-    var youTubeVideoID: String? {
+    var youTubeVideoID: String? { Self.youTubeVideoID(fromURI: uri) }
+
+    nonisolated private static let youTubeHosts: Set<String> = ["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"]
+
+    /// L'URI vient de Discogs (contenu contributif) et l'identifiant est inséré dans le HTML du
+    /// lecteur : hôte exact et identifiant de 11 caractères `[A-Za-z0-9_-]` exigés. Auparavant,
+    /// tout hôte contenant « youtu » et n'importe quel texte étaient acceptés (injection possible).
+    nonisolated static func youTubeVideoID(fromURI uri: String) -> String? {
         guard let components = URLComponents(string: uri),
-              let host = components.host, host.contains("youtu") else { return nil }
-        let videoId: String?
-        if host.contains("youtu.be") {
-            videoId = components.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+              let scheme = components.scheme?.lowercased(), scheme == "https" || scheme == "http",
+              let host = components.host?.lowercased() else { return nil }
+        let candidate: String?
+        if host == "youtu.be" {
+            candidate = components.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        } else if youTubeHosts.contains(host) {
+            candidate = components.queryItems?.first { $0.name == "v" }?.value
         } else {
-            videoId = components.queryItems?.first { $0.name == "v" }?.value
+            candidate = nil
         }
-        guard let videoId, !videoId.isEmpty else { return nil }
-        return videoId
+        guard let candidate, isValidYouTubeID(candidate) else { return nil }
+        return candidate
+    }
+
+    nonisolated static func isValidYouTubeID(_ id: String) -> Bool {
+        id.count == 11 && id.unicodeScalars.allSatisfy { scalar in
+            scalar.isASCII && (CharacterSet.alphanumerics.contains(scalar) || scalar == "_" || scalar == "-")
+        }
     }
 
     /// Miniature YouTube reconstruite à partir de l'identifiant de vidéo dans l'URL,

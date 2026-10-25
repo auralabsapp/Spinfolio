@@ -174,7 +174,7 @@ final class CloudSyncEngine: CKSyncEngineDelegate {
             do {
                 stateSerialization = try JSONDecoder().decode(CKSyncEngine.State.Serialization.self, from: data)
             } catch {
-                cloudSyncLogger.error("Échec décodage de l'état persisté du moteur : \(error, privacy: .public)")
+                cloudSyncLogger.error("Échec décodage de l'état persisté du moteur : \(error, privacy: .private)")
             }
         }
         let configuration = CKSyncEngine.Configuration(
@@ -186,7 +186,7 @@ final class CloudSyncEngine: CKSyncEngineDelegate {
 
         container.accountStatus { status, error in
             if let error {
-                cloudSyncLogger.error("accountStatus() a échoué : \(error, privacy: .public)")
+                cloudSyncLogger.error("accountStatus() a échoué : \(error, privacy: .private)")
             } else {
                 cloudSyncLogger.log("accountStatus() = \(status.rawValue, privacy: .public)")
             }
@@ -276,7 +276,7 @@ final class CloudSyncEngine: CKSyncEngineDelegate {
         // On ordonne également la suppression directe auprès de CloudKit pour garantir l'exécution
         container.privateCloudDatabase.delete(withRecordZoneID: targetZoneID) { zoneID, error in
             if let error {
-                cloudSyncLogger.error("Suppression de la zone CloudKit \(targetZoneID.zoneName) : \(error.localizedDescription, privacy: .public)")
+                cloudSyncLogger.error("Suppression de la zone CloudKit \(targetZoneID.zoneName) : \(error.localizedDescription, privacy: .private)")
             } else {
                 cloudSyncLogger.info("Zone CloudKit \(targetZoneID.zoneName) supprimée avec succès.")
             }
@@ -293,14 +293,14 @@ final class CloudSyncEngine: CKSyncEngineDelegate {
         assert(!isApplyingRemoteChange, "markDirty appelé pendant l'application d'un changement distant")
         guard !isApplyingRemoteChange else { return }
         guard let syncEngine, let activeUsername else {
-            cloudSyncLogger.log("markDirty(\(String(describing: kind), privacy: .public)) ignoré — syncEngine=\(self.syncEngine == nil ? "nil" : "ok", privacy: .public) activeUsername=\(self.activeUsername ?? "nil", privacy: .private(mask: .hash))")
+            cloudSyncLogger.log("markDirty(\(String(describing: kind), privacy: .private(mask: .hash))) ignoré — syncEngine=\(self.syncEngine == nil ? "nil" : "ok", privacy: .public) activeUsername=\(self.activeUsername ?? "nil", privacy: .private(mask: .hash))")
             return
         }
         ensureZoneExists(for: activeUsername)
         let recordID = CKRecord.ID(recordName: kind.recordName, zoneID: zoneID(for: activeUsername))
         CloudSyncModificationLog.recordLocalModification(kind.recordName, username: activeUsername)
         syncEngine.state.add(pendingRecordZoneChanges: [.saveRecord(recordID)])
-        cloudSyncLogger.log("markDirty(\(String(describing: kind), privacy: .public)) — envoi vers zone \(recordID.zoneID.zoneName, privacy: .private(mask: .hash))")
+        cloudSyncLogger.log("markDirty(\(String(describing: kind), privacy: .private(mask: .hash))) — envoi vers zone \(recordID.zoneID.zoneName, privacy: .private(mask: .hash))")
         // La planification automatique du moteur est documentée comme "indéterminée" (dépend des
         // conditions système). On force un envoi pour que le changement apparaisse sur les autres
         // appareils sans attendre un cycle de synchronisation en arrière-plan.
@@ -312,12 +312,12 @@ final class CloudSyncEngine: CKSyncEngineDelegate {
         assert(!isApplyingRemoteChange, "markDeleted appelé pendant l'application d'un changement distant")
         guard !isApplyingRemoteChange else { return }
         guard let syncEngine, let activeUsername else {
-            cloudSyncLogger.log("markDeleted(\(String(describing: kind), privacy: .public)) ignoré — syncEngine=\(self.syncEngine == nil ? "nil" : "ok", privacy: .public) activeUsername=\(self.activeUsername ?? "nil", privacy: .private(mask: .hash))")
+            cloudSyncLogger.log("markDeleted(\(String(describing: kind), privacy: .private(mask: .hash))) ignoré — syncEngine=\(self.syncEngine == nil ? "nil" : "ok", privacy: .public) activeUsername=\(self.activeUsername ?? "nil", privacy: .private(mask: .hash))")
             return
         }
         let recordID = CKRecord.ID(recordName: kind.recordName, zoneID: zoneID(for: activeUsername))
         syncEngine.state.add(pendingRecordZoneChanges: [.deleteRecord(recordID)])
-        cloudSyncLogger.log("markDeleted(\(String(describing: kind), privacy: .public)) — suppression vers zone \(recordID.zoneID.zoneName, privacy: .private(mask: .hash))")
+        cloudSyncLogger.log("markDeleted(\(String(describing: kind), privacy: .private(mask: .hash))) — suppression vers zone \(recordID.zoneID.zoneName, privacy: .private(mask: .hash))")
         scheduleSend()
     }
 
@@ -424,7 +424,7 @@ final class CloudSyncEngine: CKSyncEngineDelegate {
                 cloudSyncLogger.log("sendChanges() terminé")
             } catch {
                 didFail = true
-                cloudSyncLogger.error("sendChanges() a échoué : \(error, privacy: .public)")
+                cloudSyncLogger.error("sendChanges() a échoué : \(error, privacy: .private)")
             }
             // Annulé par `stop()` : un nouveau moteur (et sa propre tâche d'envoi) a peut-être
             // déjà pris le relais, il ne faut ni l'effacer ni relancer d'envoi avec l'ancien.

@@ -84,6 +84,8 @@ struct AlbumCoverOrVinylView: View {
 /// Contenu principal partagé à l'identique entre le Lock Screen et la Dynamic Island étendue.
 struct NowPlayingContentRow: View {
     let releaseId: Int
+    /// Lien du bouton Stop, avec le jeton de l'écoute (voir `NowPlayingActivityAttributes.endSessionURL`).
+    let endSessionURL: URL?
     let albumTitle: String
     let artistName: String
     let imageData: Data?
@@ -139,14 +141,16 @@ struct NowPlayingContentRow: View {
             Spacer(minLength: 8)
 
             // Bouton Stop (icône carrée seule dans une pastille circulaire)
-            Link(destination: URL(string: "spinlog://end-session/\(releaseId)")!) {
-                Image(systemName: "stop.fill")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(width: stopButtonSize, height: stopButtonSize)
-                    .background(Color.white.opacity(0.18), in: Circle())
+            if let endSessionURL {
+                Link(destination: endSessionURL) {
+                    Image(systemName: "stop.fill")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: stopButtonSize, height: stopButtonSize)
+                        .background(Color.white.opacity(0.18), in: Circle())
+                }
+                .accessibilityLabel("Arrêter l'écoute")
             }
-            .accessibilityLabel("Arrêter l'écoute")
         }
     }
 }
@@ -158,6 +162,7 @@ struct NowPlayingLiveActivityWidget: Widget {
             // MARK: - Lock Screen & Bannière étendue
             NowPlayingContentRow(
                 releaseId: context.attributes.releaseId,
+                endSessionURL: context.attributes.endSessionURL,
                 albumTitle: context.attributes.albumTitle,
                 artistName: context.attributes.artistName,
                 imageData: context.state.coverImageData,
@@ -176,6 +181,7 @@ struct NowPlayingLiveActivityWidget: Widget {
                 DynamicIslandExpandedRegion(.bottom) {
                     NowPlayingContentRow(
                         releaseId: context.attributes.releaseId,
+                        endSessionURL: context.attributes.endSessionURL,
                         albumTitle: context.attributes.albumTitle,
                         artistName: context.attributes.artistName,
                         imageData: context.state.coverImageData,

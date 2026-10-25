@@ -44,12 +44,7 @@ final class DiscogsAuthManager: NSObject {
         return (username, credentials)
     }
 
-    private enum Keys {
-        static let accessToken = "accessToken"
-        static let accessTokenSecret = "accessTokenSecret"
-        static let username = "username"
-        static let avatarURL = "avatarURL"
-    }
+    private typealias Keys = KeychainKeys
 
     private override init() {
         let keychain = KeychainStore()

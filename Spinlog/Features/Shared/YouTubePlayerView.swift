@@ -23,6 +23,9 @@ struct YouTubePlayerView: UIViewRepresentable {
         let configuration = WKWebViewConfiguration()
         configuration.allowsInlineMediaPlayback = true
         configuration.mediaTypesRequiringUserActionForPlayback = []
+        // Stockage éphémère, jamais celui de `SafariView` : la page est chargée avec l'origine
+        // discogs.com et ne doit pas pouvoir lire la session Discogs de l'utilisateur.
+        configuration.websiteDataStore = .nonPersistent()
 
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.isOpaque = false
@@ -32,7 +35,9 @@ struct YouTubePlayerView: UIViewRepresentable {
     }
 
     func updateUIView(_ webView: WKWebView, context: Context) {
-        guard context.coordinator.loadedVideoID != videoID else { return }
+        // Défense en profondeur : l'identifiant est inséré tel quel dans le HTML ci-dessous.
+        guard ReleaseVideo.isValidYouTubeID(videoID),
+              context.coordinator.loadedVideoID != videoID else { return }
         context.coordinator.loadedVideoID = videoID
 
         // Certaines vidéos restreignent l'intégration à une liste de domaines autorisés par leur

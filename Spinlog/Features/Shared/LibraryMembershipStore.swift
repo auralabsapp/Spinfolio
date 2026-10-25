@@ -154,7 +154,7 @@ final class LibraryMembershipStore {
         }
         // Le nombre suffit : la liste complète des identifiants, triée et concaténée, était
         // écrite dans les journaux à chaque appel, y compris en production.
-        membershipDebugLogger.log("REFRESH collection=\(freshCollectionIds.count) wantlist=\(freshWantlistIds.count)")
+        membershipDebugLogger.debug("REFRESH collection=\(freshCollectionIds.count) wantlist=\(freshWantlistIds.count)")
     }
 
     func isInCollection(_ releaseId: Int) -> Bool { boxes[releaseId]?.inCollection ?? false }
@@ -183,7 +183,7 @@ final class LibraryMembershipStore {
     // MARK: - Notifications pour mise à jour immédiate des listes
 
     func notifyCollectionItemAdded(_ item: CollectionItem) {
-        membershipDebugLogger.log("POST collectionItemAdded release=\(item.releaseId) instance=\(item.instanceId) folder=\(item.folderId)")
+        membershipDebugLogger.debug("POST collectionItemAdded release=\(item.releaseId, privacy: .private(mask: .hash)) instance=\(item.instanceId, privacy: .private(mask: .hash)) folder=\(item.folderId)")
         markInCollection(item.releaseId)
         presentToast(.collectionAdded)
         launchFlight(coverURL: item.basicInformation.coverImage ?? item.basicInformation.thumb, destination: .collection)
@@ -207,7 +207,7 @@ final class LibraryMembershipStore {
     }
 
     func notifyCollectionItemRemoved(releaseId: Int, instanceId: Int? = nil) {
-        membershipDebugLogger.log("POST collectionItemRemoved release=\(releaseId) instance=\(instanceId ?? -1)")
+        membershipDebugLogger.debug("POST collectionItemRemoved release=\(releaseId, privacy: .private(mask: .hash)) instance=\(instanceId ?? -1, privacy: .private(mask: .hash))")
         if let username = authManager.username {
             let stillOwned = localStore.hasOtherCollectionInstance(username: username, releaseId: releaseId, excludingInstanceId: instanceId)
             if !stillOwned {
@@ -229,7 +229,7 @@ final class LibraryMembershipStore {
     }
 
     func notifyWantlistItemAdded(_ item: WantlistItem) {
-        membershipDebugLogger.log("POST wantlistItemAdded release=\(item.id)")
+        membershipDebugLogger.debug("POST wantlistItemAdded release=\(item.id, privacy: .private(mask: .hash))")
         markInWantlist(item.id)
         presentToast(.wantlistAdded)
         launchFlight(coverURL: item.basicInformation.coverImage ?? item.basicInformation.thumb, destination: .wantlist)
@@ -241,9 +241,9 @@ final class LibraryMembershipStore {
     }
 
     func notifyWantlistItemRemoved(releaseId: Int) {
-        membershipDebugLogger.log("POST wantlistItemRemoved release=\(releaseId) containedBefore=\(self.isInWantlist(releaseId))")
+        membershipDebugLogger.debug("POST wantlistItemRemoved release=\(releaseId, privacy: .private(mask: .hash)) containedBefore=\(self.isInWantlist(releaseId))")
         markRemovedFromWantlist(releaseId)
-        membershipDebugLogger.log("POST wantlistItemRemoved release=\(releaseId) containedAfter=\(self.isInWantlist(releaseId))")
+        membershipDebugLogger.debug("POST wantlistItemRemoved release=\(releaseId, privacy: .private(mask: .hash)) containedAfter=\(self.isInWantlist(releaseId))")
         presentToast(.wantlistRemoved)
         NotificationCenter.default.post(
             name: .wantlistItemRemoved,

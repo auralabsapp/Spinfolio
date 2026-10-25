@@ -32,8 +32,8 @@ enum KingfisherConfig {
             req.setValue(DiscogsSecrets.userAgent, forHTTPHeaderField: "User-Agent")
 
             let keychain = KeychainStore()
-            let token = keychain.get("accessToken")
-            let secret = keychain.get("accessTokenSecret")
+            let token = keychain.get(KeychainKeys.accessToken)
+            let secret = keychain.get(KeychainKeys.accessTokenSecret)
             let signer = OAuth1Signer(
                 consumerKey: DiscogsSecrets.consumerKey,
                 consumerSecret: DiscogsSecrets.consumerSecret

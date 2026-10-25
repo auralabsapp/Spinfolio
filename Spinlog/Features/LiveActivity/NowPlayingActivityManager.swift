@@ -142,7 +142,8 @@ final class NowPlayingActivityManager {
         let attributes = NowPlayingActivityAttributes(
             releaseId: releaseId,
             albumTitle: albumTitle,
-            artistName: artistName
+            artistName: artistName,
+            sessionToken: UUID().uuidString
         )
 
         let initialState = NowPlayingActivityAttributes.ContentState(
@@ -160,7 +161,7 @@ final class NowPlayingActivityManager {
             )
             self.currentActivity = activity
             newActivity = activity
-            logger.info("Live Activity successfully started synchronously for release \(releaseId)")
+            logger.info("Live Activity successfully started synchronously for release \(releaseId, privacy: .private(mask: .hash))")
         } catch {
             logger.error("Failed to request Live Activity: \(error.localizedDescription)")
         }
@@ -189,7 +190,7 @@ final class NowPlayingActivityManager {
                         coverImageData: coverData
                     )
                     await activity.update(.init(state: updatedState, staleDate: now.addingTimeInterval(duration)))
-                    logger.info("Live Activity updated with async cover image for release \(releaseId)")
+                    logger.info("Live Activity updated with async cover image for release \(releaseId, privacy: .private(mask: .hash))")
                 }
             }
 
@@ -210,7 +211,7 @@ final class NowPlayingActivityManager {
             try? await Task.sleep(nanoseconds: UInt64(remainingSeconds * 1_000_000_000))
             guard !Task.isCancelled else { return }
             guard let self = self, self.activeReleaseId == releaseId else { return }
-            logger.info("Durée max d'écoute atteinte pour release \(releaseId), arrêt automatique.")
+            logger.info("Durée max d'écoute atteinte pour release \(releaseId, privacy: .private(mask: .hash)), arrêt automatique.")
             await self.endCurrentActivity()
         }
     }
@@ -343,6 +344,20 @@ final class NowPlayingActivityManager {
             self.activeCoverURL = nil
             self.activeStartedAt = nil
         }
+    }
+
+    /// Bouton « Arrêter » de la Live Activity (lien `spinlog://end-session`) : n'agit que si le
+    /// jeton correspond à l'activité, pour qu'une autre page ou app ne puisse pas couper l'écoute
+    /// en ouvrant ce lien.
+    func endActivityFromLink(releaseId: Int, token: String?) async {
+        let isGenuine = Activity<NowPlayingActivityAttributes>.activities.contains {
+            $0.attributes.releaseId == releaseId && $0.attributes.acceptsEndRequest(token: token)
+        }
+        guard isGenuine else {
+            logger.warning("Lien d'arrêt d'écoute ignoré : jeton absent ou inconnu")
+            return
+        }
+        await endActivity(for: releaseId)
     }
 
     /// Termine une activité spécifique par son releaseId si elle correspond à celle en cours.

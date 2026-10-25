@@ -21,17 +21,19 @@ enum WidgetSnapshotStore {
     private static let themeAccentKey = "com.spinlog.themeAccentOnDarkRGB"
     private static let themeAccentOnLightKey = "com.spinlog.themeAccentOnLightRGB"
 
-    private static var defaults: UserDefaults {
-        UserDefaults(suiteName: appGroupID) ?? .standard
+    /// App Group uniquement : un repli sur `.standard` lisait des réglages propres à l'extension,
+    /// toujours vides, et sortait de la raison d'accès déclarée dans son `PrivacyInfo` (1C8F.1).
+    private static var defaults: UserDefaults? {
+        UserDefaults(suiteName: appGroupID)
     }
 
     static func saveCollection(_ items: [RandomAlbumSnapshotItem]) {
         guard let data = try? JSONEncoder().encode(items) else { return }
-        defaults.set(data, forKey: collectionKey)
+        defaults?.set(data, forKey: collectionKey)
     }
 
     static func loadCollection() -> [RandomAlbumSnapshotItem] {
-        guard let data = defaults.data(forKey: collectionKey),
+        guard let data = defaults?.data(forKey: collectionKey),
               let items = try? JSONDecoder().decode([RandomAlbumSnapshotItem].self, from: data) else {
             return []
         }
@@ -40,7 +42,7 @@ enum WidgetSnapshotStore {
 
     /// Reflète `PremiumStore.shared.isPremium` (côté app), stocké dans le même App Group.
     static var isPremium: Bool {
-        defaults.bool(forKey: isPremiumKey)
+        defaults?.bool(forKey: isPremiumKey) ?? false
     }
 
     /// `PremiumStore` réécrit cette clé à CHAQUE lancement de l'app (même valeur inchangée),
@@ -50,7 +52,7 @@ enum WidgetSnapshotStore {
     /// utilisateur non premium ou une collection vide, qui sont des états légitimes où la clé,
     /// elle, est bien présente (valant simplement `false`/liste vide).
     static var hasReceivedDataFromApp: Bool {
-        defaults.object(forKey: collectionKey) != nil || defaults.object(forKey: isPremiumKey) != nil
+        defaults?.object(forKey: collectionKey) != nil || defaults?.object(forKey: isPremiumKey) != nil
     }
 
     /// Couleur du thème choisi dans l'app, dans sa variante pour fond sombre (la Live Activity a
@@ -63,7 +65,7 @@ enum WidgetSnapshotStore {
     static var themeAccentOnLight: Color? { color(forKey: themeAccentOnLightKey) }
 
     private static func color(forKey key: String) -> Color? {
-        guard let components = defaults.array(forKey: key) as? [Double], components.count == 3 else {
+        guard let components = defaults?.array(forKey: key) as? [Double], components.count == 3 else {
             return nil
         }
         return Color(red: components[0], green: components[1], blue: components[2])

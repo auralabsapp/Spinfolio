@@ -109,6 +109,8 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
+        // Tout premier : avant qu'un store ne lise les jetons ou n'écrive ses réglages.
+        FreshInstallKeychainReset.runIfNeeded()
         KingfisherConfig.configure()
         _ = NetworkMonitor.shared
         _ = OfflineSyncQueue.shared
@@ -134,13 +136,11 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
 
                     switch url.host {
                     case "end-session":
-                        if let releaseId = Int(releaseIdStr) {
+                        // Seul le bouton de la Live Activity (lien avec jeton) peut arrêter l'écoute ;
+                        // un lien sans identifiant de disque, qui arrêtait tout, est ignoré.
+                        if let request = NowPlayingActivityAttributes.endSessionRequest(from: url) {
                             Task {
-                                await NowPlayingActivityManager.shared.endActivity(for: releaseId)
-                            }
-                        } else {
-                            Task {
-                                await NowPlayingActivityManager.shared.endCurrentActivity()
+                                await NowPlayingActivityManager.shared.endActivityFromLink(releaseId: request.releaseId, token: request.token)
                             }
                         }
                     case "release":
