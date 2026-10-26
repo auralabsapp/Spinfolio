@@ -26,9 +26,10 @@ struct CollectionView: View {
     @State private var showingBulkTagManagement = false
     @State private var pendingMoveFolder: CollectionFolder? = nil
     private var activityManager = NowPlayingActivityManager.shared
-    /// Clé (`section.key`) de la section actuellement épinglée en haut, mesurée via
-    /// `SectionHeaderOffsetKey` — pour la pastille de position de `SectionIndexBar`.
-    @State private var currentSectionKey: String? = nil
+    /// Section actuellement épinglée en haut, mesurée via `SectionHeaderOffsetKey` — pour la
+    /// pastille de position de `SectionIndexBar`. Lue seulement par la barre d'index (voir
+    /// `LibraryCurrentSectionTracker`), jamais par ce `body`.
+    @State private var sectionTracker = LibraryCurrentSectionTracker()
     /// Nom de la zone de défilement dans laquelle les en-têtes de section rapportent leur
     /// position (voir `reportingSectionOffset`) : un seul nom suffit pour le mode Liste et le mode
     /// Mosaïque, mutuellement exclusifs (`displayMode`).
@@ -261,7 +262,7 @@ struct CollectionView: View {
     private func indexBarOverlay(proxy: ScrollViewProxy) -> some View {
         LibraryIndexBarOverlay(
             indexEntries: viewModel.display.indexEntries,
-            currentSectionKey: currentSectionKey,
+            sectionTracker: sectionTracker,
             sections: viewModel.display.sections,
             indexToken: { viewModel.display.indexToken(for: $0) },
             proxy: proxy
@@ -439,10 +440,9 @@ struct CollectionView: View {
                 .animation(.easeInOut(duration: 0.2), value: viewModel.display.indexEntries.count > 1)
                 // Section actuellement épinglée en haut, pour la pastille de position de
                 // `SectionIndexBar` : ne déclenche un nouveau rendu que lorsqu'elle change
-                // réellement, pas à chaque image du défilement (voir `currentSectionKey`).
+                // réellement, pas à chaque image du défilement (voir `LibraryCurrentSectionTracker`).
                 .onPreferenceChange(SectionHeaderOffsetKey.self) { candidate in
-                    let topKey = candidate?.key
-                    if topKey != currentSectionKey { currentSectionKey = topKey }
+                    sectionTracker.update(to: candidate?.key)
                 }
                 .safeAreaInset(edge: .top) {
                     // Mode liste exclu : sa propre `List` intègre déjà la barre de filtres

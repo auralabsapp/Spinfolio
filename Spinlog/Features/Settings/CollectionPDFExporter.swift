@@ -11,7 +11,8 @@ enum CollectionPDFExporter {
     private static let margin: CGFloat = 36
     // Réduit par rapport à une table purement textuelle : chaque ligne inclut désormais une
     // jaquette de 34pt qui augmente sa hauteur minimale.
-    private static let rowsPerPage = 15
+    // 13 lignes : à 9 pt minimum, quinze lignes à titre sur deux lignes dépasseraient la hauteur de page.
+    private static let rowsPerPage = 13
 
     /// Télécharge (ou récupère en cache Kingfisher) une jaquette par release représentée dans
     /// l'export, avec un plafond de téléchargements simultanés pour ne pas saturer le réseau sur
@@ -281,28 +282,28 @@ private struct PDFInventoryPageView: View {
                         .font(.system(size: 9, weight: .semibold))
                         .lineLimit(2)
                     Text(item.basicInformation.artistNames)
-                        .font(.system(size: 8))
+                        .font(.system(size: 9))
                         .foregroundStyle(.gray)
                         .lineLimit(1)
                     Text(folderMap[item.folderId] ?? "")
-                        .font(.system(size: 7))
+                        .font(.system(size: 9))
                         .foregroundStyle(.gray)
                 }
             }
             .frame(width: PDFLayout.titleColumnWidth, alignment: .leading)
 
             Text(formatAndYear(item))
-                .font(.system(size: 8))
+                .font(.system(size: 9))
                 .foregroundStyle(.black)
                 .frame(width: PDFLayout.formatColumnWidth, alignment: .leading)
 
             Text(condition(item))
-                .font(.system(size: 8))
+                .font(.system(size: 9))
                 .foregroundStyle(.black)
                 .frame(width: PDFLayout.conditionColumnWidth, alignment: .leading)
 
             Text(purchasePrice(item))
-                .font(.system(size: 8, weight: .medium))
+                .font(.system(size: 9, weight: .medium))
                 .foregroundStyle(.black)
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }

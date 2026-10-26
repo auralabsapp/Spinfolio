@@ -11,8 +11,8 @@ private let goldLight = Color.goldLight
 private var goldHeaderGradient: LinearGradient {
     LinearGradient(
         colors: [
-            Color(red: 0.65, green: 0.36, blue: 0.07),
-            Color(red: 0.85, green: 0.50, blue: 0.12),
+            Color.goldHeaderTop,
+            Color.goldHeaderMiddle,
             Color.goldAccent
         ],
         startPoint: .top,

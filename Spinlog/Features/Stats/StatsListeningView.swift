@@ -244,17 +244,17 @@ extension StatsView {
         switch rank {
         case 1:
             return LinearGradient(
-                colors: [Color(red: 1.0, green: 0.85, blue: 0.4), Color(red: 0.82, green: 0.62, blue: 0.13)],
+                colors: Color.podiumGold,
                 startPoint: .top, endPoint: .bottom
             )
         case 2:
             return LinearGradient(
-                colors: [Color(white: 0.85), Color(white: 0.64)],
+                colors: Color.podiumSilver,
                 startPoint: .top, endPoint: .bottom
             )
         default:
             return LinearGradient(
-                colors: [Color(red: 0.80, green: 0.55, blue: 0.35), Color(red: 0.62, green: 0.40, blue: 0.24)],
+                colors: Color.podiumBronze,
                 startPoint: .top, endPoint: .bottom
             )
         }

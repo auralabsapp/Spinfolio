@@ -138,6 +138,13 @@ extension Color {
     static let goldDeep = Color(red: 0.72, green: 0.40, blue: 0.08)
     static let goldLight = Color(red: 0.98, green: 0.78, blue: 0.28)
     static let goldBadgeBg = goldAccent.opacity(0.16)
+    /// Haut et bas du dégradé d'en-tête du paywall (or plus profond que `goldAccent`).
+    static let goldHeaderTop = Color(red: 0.65, green: 0.36, blue: 0.07)
+    static let goldHeaderMiddle = Color(red: 0.85, green: 0.50, blue: 0.12)
+    /// Piédestaux du podium (Stats > Écoutes) : or, argent, bronze.
+    static let podiumGold = [Color(red: 1.0, green: 0.85, blue: 0.4), Color(red: 0.82, green: 0.62, blue: 0.13)]
+    static let podiumSilver = [Color(white: 0.85), Color(white: 0.64)]
+    static let podiumBronze = [Color(red: 0.80, green: 0.55, blue: 0.35), Color(red: 0.62, green: 0.40, blue: 0.24)]
     /// Or des TEXTES (prix, mention « PREMIUM », liens dorés) : `goldWarm` ne faisait que 2,6:1
     /// sur le fond clair, sous le seuil de lisibilité (4,5:1). Or plus profond en mode clair
     /// (5,1:1 sur le fond, 4,6:1 sur la carte dorée), `goldWarm` inchangé en mode sombre (6,6:1).

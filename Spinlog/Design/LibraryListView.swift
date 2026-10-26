@@ -87,7 +87,7 @@ struct LibraryListView<Item: SortableLibraryItem>: View {
                             .fill(.libraryHeaderBackground(for: colorScheme))
                             .padding(.horizontal, -8)
                     }
-                    // Pour la pastille de position de `SectionIndexBar` (voir `currentSectionKey`
+                    // Pour la pastille de position de `SectionIndexBar` (voir `LibraryCurrentSectionTracker`
                     // côté appelant).
                     .reportingSectionOffset(key: section.key, coordinateSpace: sectionsCoordinateSpace)
                 ) {

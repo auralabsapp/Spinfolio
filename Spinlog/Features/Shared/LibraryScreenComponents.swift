@@ -68,19 +68,33 @@ struct LibrarySortMenu: View {
     }
 }
 
+/// Section épinglée en haut de la liste, pour la pastille de position de la barre d'index. Vit
+/// dans un objet à part, que l'écran ne lit jamais dans son `body` : seul `LibraryIndexBarOverlay`
+/// l'observe, si bien qu'un changement de section pendant le défilement ne réévalue plus tout
+/// l'écran (sections, badges, tags), seulement la barre.
+@Observable @MainActor
+final class LibraryCurrentSectionTracker {
+    var key: String?
+
+    /// N'écrit que si la valeur change, pour ne rien invalider à chaque image du défilement.
+    func update(to newKey: String?) {
+        if newKey != key { key = newKey }
+    }
+}
+
 /// Barre de navigation rapide (A-Z/Années) en overlay sur la vue qui défile effectivement (liste
 /// ou grille) — identique entre les deux écrans, paramétrée par les sections de l'un ou l'autre.
 struct LibraryIndexBarOverlay<Item>: View {
     let indexEntries: [(token: String, sectionKey: String)]
-    let currentSectionKey: String?
+    let sectionTracker: LibraryCurrentSectionTracker
     let sections: [(key: String, items: [Item])]
     let indexToken: ((key: String, items: [Item])) -> String
     let proxy: ScrollViewProxy
 
-    /// Jeton de `currentSectionKey` (plusieurs sections — un artiste par section — peuvent
+    /// Jeton de la section courante (plusieurs sections — un artiste par section — peuvent
     /// partager le même jeton, leur première lettre commune).
     private var currentIndexToken: String? {
-        guard let currentSectionKey,
+        guard let currentSectionKey = sectionTracker.key,
               let section = sections.first(where: { $0.key == currentSectionKey }) else { return nil }
         return indexToken(section)
     }
