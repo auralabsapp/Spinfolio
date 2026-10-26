@@ -43,6 +43,7 @@ struct MasterDetailView: View {
                     Task { await viewModel.load(masterId: masterId) }
                 }
                 .buttonStyle(.glassProminent)
+                .foregroundStyle(Color.onAccent)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(infoBackgroundColor.ignoresSafeArea())

@@ -170,7 +170,7 @@ struct EraseAccountDataSheet: View {
                 .focused($isFieldFocused)
                 .onSubmit { isFieldFocused = false }
                 .padding(12)
-                .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .appleMusicGroupedCard(cornerRadius: 10)
                 .overlay(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .strokeBorder(isConfirmed ? Color.red.opacity(0.7) : Color.clear, lineWidth: 1.5)

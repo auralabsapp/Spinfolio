@@ -45,6 +45,7 @@ struct LabelDetailView: View {
                     Task { await viewModel.load(labelId: labelId) }
                 }
                 .buttonStyle(.glassProminent)
+                .foregroundStyle(Color.onAccent)
             }
         } else if let label = viewModel.label {
             ScrollView {
@@ -87,7 +88,7 @@ struct LabelDetailView: View {
     private var labelDetailSkeleton: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                SkeletonBlock(cornerRadius: 8, width: Self.coverSize, height: Self.coverSize)
+                SkeletonBlock(cornerRadius: AppLayout.coverCornerRadius, width: Self.coverSize, height: Self.coverSize)
                     .frame(maxWidth: .infinity)
 
                 SkeletonBlock(width: 180, height: 22)

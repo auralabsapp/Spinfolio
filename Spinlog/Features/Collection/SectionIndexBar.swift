@@ -71,7 +71,7 @@ struct SectionIndexBar: View {
                         // les repères font au plus 2 caractères et tiennent dans la largeur.
                         .fixedSize(horizontal: true, vertical: false)
                         .foregroundStyle(
-                            activeToken == entry.token ? Color.spinlogPink : (isCurrent ? .white : .secondary)
+                            activeToken == entry.token ? Color.spinlogPink : (isCurrent ? Color.onAccent : .secondary)
                         )
                         .frame(width: 20, height: 20)
                         .background {
@@ -110,7 +110,7 @@ struct SectionIndexBar: View {
                 let bubbleCenterY = min(max(touchY, 30), max((barHeight ?? 0) - 30, 30))
                 Text(activeToken)
                     .font(.system(size: activeToken.count > 2 ? 22 : 30, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color.onAccentGradient)
                     .frame(width: 60, height: 60)
                     .background(
                         Circle()

@@ -64,7 +64,7 @@ final class StatsMasterYearsResolver {
         masterYears[masterId] = year
         missingCount = max(0, total - resolved)
         progress = StatsViewModel.masterResolutionProgress(of: items, masterYears: masterYears)
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+        withAnimation(.statsContentChange) {
             distribution = StatsViewModel.originalYears(of: items, masterYears: masterYears)
         }
         if resolved >= total {

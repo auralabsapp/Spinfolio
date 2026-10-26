@@ -15,7 +15,7 @@ struct OfflineBannerView: View {
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: "wifi.slash")
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Color.appWarning)
                     .font(.subheadline.weight(.semibold))
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -26,7 +26,7 @@ struct OfflineBannerView: View {
 
                         Image(systemName: "info.circle")
                             .font(.caption2)
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(Color.appWarning)
                     }
 
                     if let custom = customMessage {
@@ -49,11 +49,11 @@ struct OfflineBannerView: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .background(Color.orange.opacity(0.12))
+            .background(Color.appWarning.opacity(0.12))
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .strokeBorder(Color.orange.opacity(0.28), lineWidth: 0.8)
+                    .strokeBorder(Color.appWarning.opacity(0.28), lineWidth: 0.8)
             )
             .padding(.horizontal, 16)
             .padding(.vertical, 4)
@@ -74,7 +74,7 @@ struct OfflineBannerView: View {
             VStack(spacing: 20) {
                 Image(systemName: "wifi.slash")
                     .font(.system(size: 48))
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Color.appWarning)
                     .padding(.top, 24)
 
                 Text("Mode Hors Ligne")
@@ -83,7 +83,7 @@ struct OfflineBannerView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     HStack(alignment: .top, spacing: 12) {
                         Image(systemName: "archivebox.fill")
-                            .foregroundStyle(.teal)
+                            .foregroundStyle(Color.appOffline)
                             .font(.title3)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Archive locale")
@@ -96,7 +96,7 @@ struct OfflineBannerView: View {
 
                     HStack(alignment: .top, spacing: 12) {
                         Image(systemName: "arrow.triangle.2.circlepath")
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(Color.appWarning)
                             .font(.title3)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Synchronisation automatique")
@@ -124,6 +124,7 @@ struct OfflineBannerView: View {
                 }
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
     }
 }

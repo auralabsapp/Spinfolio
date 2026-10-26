@@ -75,6 +75,7 @@ struct UserProfileSheet: View {
                     Task { await viewModel.load(username: username) }
                 }
                 .buttonStyle(.glassProminent)
+                .foregroundStyle(Color.onAccent)
             }
         } else if let profile = viewModel.profile {
             ScrollView {

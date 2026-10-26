@@ -120,7 +120,7 @@ struct ShelfScopeMock: View {
             .minimumScaleFactor(0.8)
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
-            .foregroundStyle(highlighted ? Color.white : Color.primary)
+            .foregroundStyle(highlighted ? Color.onAccent : Color.primary)
             .background(highlighted ? AnyShapeStyle(Color.spinlogPink) : AnyShapeStyle(Color.primary.opacity(0.08)), in: Capsule())
     }
 }

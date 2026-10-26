@@ -209,6 +209,7 @@ struct ReleaseDetailView: View {
                     Task { await viewModel.load(releaseId: releaseId, actions: actions) }
                 }
                 .buttonStyle(.glassProminent)
+                .foregroundStyle(Color.onAccent)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(infoBackgroundColor.ignoresSafeArea())
@@ -662,7 +663,7 @@ struct ReleaseDetailView: View {
                         Image(systemName: "chevron.right")
                     }
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color.onAccent)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
                     .padding(.horizontal, 14)

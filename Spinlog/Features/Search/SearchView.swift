@@ -151,7 +151,7 @@ struct SearchView: View {
                 } else {
                     Image(systemName: "rectangle.stack.badge.plus")
                         .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(Color(red: 0.92, green: 0.62, blue: 0.16))
+                        .foregroundStyle(Color.goldAccent)
                         .overlay(alignment: .topTrailing) {
                             goldCornerBadge(systemName: "lock.fill")
                         }
@@ -175,16 +175,7 @@ struct SearchView: View {
     private func goldCornerBadge(systemName: String) -> some View {
         ZStack {
             Circle()
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color(red: 0.98, green: 0.78, blue: 0.28),
-                            Color(red: 0.88, green: 0.52, blue: 0.12)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .fill(Color.goldButtonGradient)
                 .frame(width: 12, height: 12)
 
             // Taille isolée (pas de token partagé) : ce badge fait 12×12 fixe,
@@ -258,6 +249,7 @@ struct SearchView: View {
                     Task { await viewModel.retry() }
                 }
                 .buttonStyle(.glassProminent)
+                .foregroundStyle(Color.onAccent)
             }
         } else if trimmed.isEmpty {
             ContentUnavailableView(

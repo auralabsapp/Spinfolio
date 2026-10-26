@@ -97,22 +97,12 @@ private struct TrackPlayButton: View {
     var coverURL: String? = nil
     var destination: SearchDestination? = nil
 
-    @Environment(\.colorScheme) private var colorScheme
     @State private var service = AppleMusicPlaybackService.shared
 
     private var isPlaying: Bool { service.playingTrackID == trackID }
     private var isLoading: Bool { service.isLoadingTrackID == trackID }
     /// `nil` tant que la correspondance n'a pas encore été vérifiée (voir `.task` ci-dessous).
     private var matchStatus: Bool? { service.matchStatus(for: trackID) }
-
-    /// Teinte Apple Music adaptée au thème :
-    /// - Thème sombre : rouge adouci et profond
-    /// - Thème clair : rouge plus lumineux pour ne pas paraître trop sombre sur fond clair
-    private var appleMusicRed: Color {
-        colorScheme == .dark
-            ? Color(red: 222 / 255, green: 56 / 255, blue: 72 / 255)
-            : Color(red: 246 / 255, green: 66 / 255, blue: 84 / 255)
-    }
 
     /// Couleur de secours pour l'indicateur de chargement alignée sur l'arrière-plan.
     private var symbolColor: Color {
@@ -131,7 +121,7 @@ private struct TrackPlayButton: View {
             if isPlaying {
                 Image(systemName: "waveform")
                     .font(.inlineIcon)
-                    .foregroundStyle(appleMusicRed)
+                    .foregroundStyle(Color.appleMusicRed)
                     .symbolEffect(.variableColor.iterative.reversing, options: .repeating)
                     .motionTransition(
                         .asymmetric(
@@ -157,7 +147,7 @@ private struct TrackPlayButton: View {
             } label: {
                 ZStack {
                     Circle()
-                        .fill(matchStatus == false ? appleMusicRed.opacity(0.35) : appleMusicRed)
+                        .fill(matchStatus == false ? Color.appleMusicRed.opacity(0.35) : Color.appleMusicRed)
                         .frame(width: 20, height: 20)
 
                     if isLoading {

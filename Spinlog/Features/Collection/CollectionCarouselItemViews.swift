@@ -20,7 +20,7 @@ struct CollectionCarouselBadges: View {
                 HStack(spacing: 3) {
                     Image(systemName: "star.fill")
                         .font(.inlineIcon)
-                        .foregroundStyle(Color.orange)
+                        .foregroundStyle(Color.ratingStar)
                     Text("\(rating)")
                         .font(isRegularDisplay ? .footnote.bold() : .caption2.bold())
                         .foregroundStyle(.secondary)

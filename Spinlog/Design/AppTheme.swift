@@ -118,6 +118,27 @@ enum AppColorTheme: String, CaseIterable, Identifiable, Codable, Sendable {
         primaryColor.opacity(0.12)
     }
 
+    /// Texte et icônes posés sur un fond plein de `primaryUIColor`, résolus avec le même mode
+    /// clair ou sombre (voir `AccentContrast`).
+    var onAccentUIColor: UIColor {
+        let accent = primaryUIColor
+        return UIColor { @Sendable trait in
+            AccentContrast.text(on: accent.resolvedColor(with: trait))
+        }
+    }
+
+    /// Texte sur le dégradé des boutons (`Color.spinlogPinkButtonGradient`) : teinte claire en
+    /// haut, teinte primaire (clair) ou profonde (sombre) en bas.
+    var onAccentGradientUIColor: UIColor {
+        let top = lightUIColor
+        let primary = primaryUIColor
+        let deep = deepUIColor
+        return UIColor { @Sendable trait in
+            let bottom = trait.userInterfaceStyle == .dark ? deep : primary
+            return AccentContrast.text(on: top.resolvedColor(with: trait), bottom.resolvedColor(with: trait))
+        }
+    }
+
     var primaryUIColor: UIColor {
         UIColor { @Sendable trait in
             let isDark = trait.userInterfaceStyle == .dark
@@ -146,7 +167,9 @@ enum AppColorTheme: String, CaseIterable, Identifiable, Codable, Sendable {
             case .velvet:
                 base = isDark
                     ? UIColor(red: 0.64, green: 0.48, blue: 1.0, alpha: 1.0)
-                    : UIColor(red: 0.48, green: 0.30, blue: 0.90, alpha: 1.0)
+                    // Un peu plus foncé qu'à l'origine (0,48 / 0,30 / 0,90) : le texte blanc des
+                    // boutons pleins y atteint 4,5:1 (4,44:1 auparavant, voir `AccentContrastTests`).
+                    : UIColor(red: 0.44, green: 0.26, blue: 0.86, alpha: 1.0)
             case .gold:
                 base = isDark
                     ? UIColor(red: 0.95, green: 0.74, blue: 0.32, alpha: 1.0)

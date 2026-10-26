@@ -84,6 +84,7 @@ struct NowPlayingTurntableSheet: View {
                     .padding(.vertical, 6)
             }
             .buttonStyle(.borderedProminent)
+            .foregroundStyle(Color.onAccent)
             .buttonBorderShape(.capsule)
             .tint(Color.spinlogPink)
             .padding(.top, 4)

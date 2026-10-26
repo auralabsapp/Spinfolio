@@ -94,6 +94,7 @@ struct GradeCelebrationView: View {
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
+                    .foregroundStyle(Color.onAccent)
                     .tint(Color.spinlogPink)
 
                     Button("Fermer", action: onDismiss)

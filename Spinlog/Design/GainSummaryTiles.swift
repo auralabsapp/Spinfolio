@@ -41,7 +41,7 @@ struct GainSummaryTiles: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
-        .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .appleMusicGroupedCard(cornerRadius: 12)
     }
 
     private var gainTile: some View {

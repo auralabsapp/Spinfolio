@@ -40,6 +40,13 @@ extension Animation {
     /// Pulsation du disque cible du guide de rangement quand on le touche : rebond court, pour
     /// montrer que le toucher est reconnu même si l'élément n'ouvre rien.
     static let shelfTargetPulse = Animation.spring(response: 0.25, dampingFraction: 0.55)
+
+    /// Bascule optimiste d'un état de bibliothèque (possédé, en wantlist, exemplaire ajouté ou
+    /// retiré) au toucher, avant la réponse de Discogs.
+    static let optimisticToggle = Animation.easeInOut(duration: 0.2)
+
+    /// Mise à jour d'une section de l'onglet Stats (répartitions, classements, derniers ajouts).
+    static let statsContentChange = Animation.spring(response: 0.4, dampingFraction: 0.85)
 }
 
 extension View {

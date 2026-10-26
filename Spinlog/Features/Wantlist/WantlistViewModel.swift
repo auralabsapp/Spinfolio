@@ -204,7 +204,7 @@ final class WantlistViewModel {
 
     private func handleWantlistItemAdded(_ item: WantlistItem) {
         if !items.contains(where: { $0.id == item.id }) {
-            withAnimation(.easeInOut(duration: 0.2)) {
+            withAnimation(.optimisticToggle) {
                 items.insert(item, at: 0)
             }
         }
@@ -212,7 +212,7 @@ final class WantlistViewModel {
 
     private func handleWantlistItemRemoved(releaseId: Int) {
         animatesNextSectionsUpdate = true
-        withAnimation(.easeInOut(duration: 0.2)) {
+        withAnimation(.optimisticToggle) {
             items.removeAll { $0.id == releaseId }
         }
     }

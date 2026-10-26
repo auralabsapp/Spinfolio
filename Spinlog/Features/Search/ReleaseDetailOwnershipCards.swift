@@ -266,7 +266,7 @@ struct ListeningLogCard: View {
             }) {
                 Image(systemName: "opticaldisc.fill")
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(isPlayingThisRelease ? Color.white : Color.spinlogPink)
+                    .foregroundStyle(isPlayingThisRelease ? Color.onAccent : Color.spinlogPink)
                     // Le disque tourne à 33 tours/min tant que l'écoute dure (comme dans la feuille
                     // d'écoute) ; seule l'icône tourne, pas son fond.
                     .continuousRotation(isActive: isPlayingThisRelease)
@@ -375,7 +375,7 @@ struct ReleaseRatingCard: View {
                     ForEach(1...5, id: \.self) { value in
                         Image(systemName: value <= rating ? "star.fill" : "star")
                             .font(.title3)
-                            .foregroundStyle(value <= rating ? Color.orange : Color.secondary.opacity(0.3))
+                            .foregroundStyle(value <= rating ? Color.ratingStar : Color.secondary.opacity(0.3))
                             .padding(.horizontal, 2)
                             .padding(.vertical, 10)
                             .contentShape(Rectangle())

@@ -332,11 +332,11 @@ struct SettingsAppleMusicSection: View {
                 Text("Vérification de l'abonnement…")
             case .denied:
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Color.appWarning)
                 Text("Accès à Apple Music refusé : autorise-le pour \(AppInfo.name) dans les réglages de l'iPhone.")
             case .noSubscription:
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Color.appWarning)
                 Text("Aucun abonnement Apple Music actif : seuls les extraits de 30 s sont lus.")
             case .active:
                 Image(systemName: "checkmark.seal.fill")

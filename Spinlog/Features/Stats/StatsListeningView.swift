@@ -189,10 +189,10 @@ extension StatsView {
                 coverURL: entry.item.basicInformation.coverImage ?? entry.item.basicInformation.thumb
             )) {
                 VStack(spacing: 6) {
-                    AsyncCoverImage(url: entry.item.basicInformation.coverImage ?? entry.item.basicInformation.thumb, cornerRadius: 8, targetSize: podiumCoverSize(for: rank))
+                    AsyncCoverImage(url: entry.item.basicInformation.coverImage ?? entry.item.basicInformation.thumb, cornerRadius: AppLayout.coverCornerRadius, targetSize: podiumCoverSize(for: rank))
                         .frame(width: podiumCoverSize(for: rank), height: podiumCoverSize(for: rank))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            RoundedRectangle(cornerRadius: AppLayout.coverCornerRadius, style: .continuous)
                                 .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
                         )
                         .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)
@@ -268,10 +268,10 @@ extension StatsView {
             HStack(spacing: 12) {
                 rankBadge(rank)
 
-                AsyncCoverImage(url: entry.item.basicInformation.coverImage ?? entry.item.basicInformation.thumb, cornerRadius: 8, targetSize: 44)
+                AsyncCoverImage(url: entry.item.basicInformation.coverImage ?? entry.item.basicInformation.thumb, cornerRadius: AppLayout.coverCornerRadius, targetSize: 44)
                     .frame(width: 44, height: 44)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        RoundedRectangle(cornerRadius: AppLayout.coverCornerRadius, style: .continuous)
                             .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
                     )
                     .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)
@@ -364,9 +364,9 @@ extension StatsView {
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                         .frame(width: 44, height: 44)
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .clipShape(RoundedRectangle(cornerRadius: AppLayout.coverCornerRadius, style: .continuous))
                 } else {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    RoundedRectangle(cornerRadius: AppLayout.coverCornerRadius, style: .continuous)
                         .fill(.quaternary)
                         .frame(width: 44, height: 44)
                         .overlay {
@@ -377,7 +377,7 @@ extension StatsView {
                 }
             }
             .overlay(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                RoundedRectangle(cornerRadius: AppLayout.coverCornerRadius, style: .continuous)
                     .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
             )
             .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)

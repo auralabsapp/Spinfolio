@@ -18,6 +18,7 @@ struct LoginActionsView: View {
                 }
             }
             .buttonStyle(.glassProminent)
+            .foregroundStyle(Color.onAccent)
             .disabled(authManager.isAuthenticating)
 
             // Inscription dans la webview Discogs de l'app ; une fois le compte créé (et

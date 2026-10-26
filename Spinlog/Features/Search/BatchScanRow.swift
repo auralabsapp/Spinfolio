@@ -153,10 +153,10 @@ private struct PressingChoiceSheet: View {
                         dismiss()
                     } label: {
                         HStack(alignment: .top, spacing: 14) {
-                            AsyncCoverImage(url: alternative.coverImage ?? alternative.thumb, cornerRadius: 8, targetSize: 88)
+                            AsyncCoverImage(url: alternative.coverImage ?? alternative.thumb, cornerRadius: AppLayout.coverCornerRadius, targetSize: 88)
                                 .frame(width: 88, height: 88)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    RoundedRectangle(cornerRadius: AppLayout.coverCornerRadius, style: .continuous)
                                         .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
                                 )
                                 .shadow(color: .black.opacity(0.22), radius: 5, x: 0, y: 3)

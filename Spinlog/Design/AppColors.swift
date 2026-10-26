@@ -23,6 +23,36 @@ extension Color {
         ThemeManager.shared.currentTheme.deepColor
     }
 
+    /// Texte et icônes sur un fond plein de `spinlogPink` (boutons, pastilles sélectionnées) :
+    /// blanc ou presque-noir selon la teinte du thème, pour rester lisible (voir `AccentContrast`).
+    static var onAccent: Color {
+        Color(uiColor: ThemeManager.shared.currentTheme.onAccentUIColor)
+    }
+
+    /// Texte et icônes sur `spinlogPinkButtonGradient`.
+    static var onAccentGradient: Color {
+        Color(uiColor: ThemeManager.shared.currentTheme.onAccentGradientUIColor)
+    }
+
+    /// Avertissement (doublon, limite atteinte, accès refusé…) : orange système en sombre, orange
+    /// foncé en clair, où l'orange système ne donnait qu'environ 2,2:1 sur fond clair.
+    static let appWarning = Color(uiColor: UIColor { @Sendable trait in
+        trait.userInterfaceStyle == .dark
+            ? .systemOrange
+            : UIColor(red: 0.72, green: 0.32, blue: 0.0, alpha: 1)
+    })
+
+    /// Teinte des données hors ligne : sarcelle système en sombre, sarcelle foncée en clair (même
+    /// raison que `appWarning`).
+    static let appOffline = Color(uiColor: UIColor { @Sendable trait in
+        trait.userInterfaceStyle == .dark
+            ? .systemTeal
+            : UIColor(red: 0.0, green: 0.42, blue: 0.48, alpha: 1)
+    })
+
+    /// Étoiles de note : une seule teinte partout (`.yellow` d'un côté, `.orange` de l'autre avant).
+    static let ratingStar = Color.orange
+
     /// Arrière-plan subtil pour les boutons sélectionnés et badges actifs.
     static var spinlogPinkBadge: Color {
         spinlogPink.opacity(0.12)
@@ -283,6 +313,36 @@ extension Color {
         guard isSelecting else { return coverAmbientShadowResting }
         return isSelected ? coverAmbientShadowSelected : coverAmbientShadowDeselected
     }
+
+    /// Rouge Apple Music des boutons de lecture : adouci en sombre, plus lumineux en clair pour ne
+    /// pas paraître terne sur fond clair.
+    static let appleMusicRed = Color(uiColor: UIColor { @Sendable trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(red: 222 / 255, green: 56 / 255, blue: 72 / 255, alpha: 1)
+            : UIColor(red: 246 / 255, green: 66 / 255, blue: 84 / 255, alpha: 1)
+    })
+
+    /// Part « Autres » / « Non précisé » des graphiques en parts.
+    static let chartNeutral = Color(white: 0.55)
+
+    /// Couleurs des parts des graphiques (Stats) : l'accent du thème, puis les teintes de
+    /// `ChartPalette` qui s'en distinguent. Mises en cache par thème (lues pour chaque part).
+    static var chartPalette: [Color] {
+        let theme = ThemeManager.shared.currentTheme
+        if let cached = chartPaletteCache[theme] { return cached }
+        let palette = [spinlogPink] + ChartPalette.availableHues(accent: theme.primaryUIColor).map(\.color)
+        chartPaletteCache[theme] = palette
+        return palette
+    }
+
+    /// Première teinte disponible (non confondue avec l'accent) parmi `preferred`, pour une part
+    /// qui garde une couleur fixe d'un affichage à l'autre (CD, cassette).
+    static func chartColor(preferring preferred: [ChartPalette.Hue]) -> Color {
+        let available = ChartPalette.availableHues(accent: ThemeManager.shared.currentTheme.primaryUIColor)
+        return (preferred.first(where: available.contains) ?? preferred.first)?.color ?? chartNeutral
+    }
+
+    private static var chartPaletteCache: [AppColorTheme: [Color]] = [:]
 }
 
 private extension UIColor {
@@ -291,6 +351,56 @@ private extension UIColor {
         var hue: CGFloat = 0, saturation: CGFloat = 0, brightness: CGFloat = 0, alpha: CGFloat = 0
         guard getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha) else { return self }
         return UIColor(hue: hue, saturation: saturation * (1 - amount), brightness: brightness, alpha: alpha)
+    }
+}
+
+/// Teintes des graphiques en parts, à côté de l'accent du thème. L'accent ouvrait une palette fixe
+/// qui contenait aussi un bleu, un vert, un orange et un rouge : avec les thèmes de ces teintes
+/// (et déjà en rose, proche du rouge), deux parts voisines se confondaient. Les teintes trop
+/// proches de l'accent sont donc écartées. Testé dans `ChartPaletteTests`.
+nonisolated enum ChartPalette {
+    /// Dans l'ordre d'attribution aux parts.
+    enum Hue: CaseIterable, Sendable {
+        case violet, blue, teal, orange, yellow, green, red
+
+        var uiColor: UIColor {
+            switch self {
+            case .violet: UIColor(red: 0.58, green: 0.35, blue: 0.88, alpha: 1)
+            case .blue: UIColor(red: 0.28, green: 0.52, blue: 0.95, alpha: 1)
+            case .teal: UIColor(red: 0.16, green: 0.72, blue: 0.74, alpha: 1)
+            case .orange: UIColor(red: 0.98, green: 0.58, blue: 0.22, alpha: 1)
+            case .yellow: UIColor(red: 0.95, green: 0.75, blue: 0.25, alpha: 1)
+            case .green: UIColor(red: 0.30, green: 0.78, blue: 0.55, alpha: 1)
+            case .red: UIColor(red: 0.88, green: 0.30, blue: 0.45, alpha: 1)
+            }
+        }
+
+        var color: Color { Color(uiColor: uiColor) }
+    }
+
+    /// Écart minimal de teinte avec l'accent (fraction du cercle chromatique, ici 25°).
+    static let minimumHueDistance: CGFloat = 25.0 / 360
+    /// Sous cette saturation (Ardoise, Espresso), l'accent est presque gris : sa teinte ne se
+    /// confond avec aucune part, rien n'est écarté.
+    static let minimumAccentSaturation: CGFloat = 0.25
+
+    /// Teintes conservées à côté de `accent`, résolu en mode clair (la teinte varie peu en sombre).
+    static func availableHues(accent: UIColor) -> [Hue] {
+        let resolved = accent.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+        var hue: CGFloat = 0, saturation: CGFloat = 0, brightness: CGFloat = 0, alpha: CGFloat = 0
+        guard resolved.getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha),
+              saturation >= minimumAccentSaturation else {
+            return Hue.allCases
+        }
+        return Hue.allCases.filter { hueDistance($0.uiColor, hue) >= minimumHueDistance }
+    }
+
+    /// Distance sur le cercle chromatique (0 à 0,5).
+    static func hueDistance(_ color: UIColor, _ otherHue: CGFloat) -> CGFloat {
+        var hue: CGFloat = 0, saturation: CGFloat = 0, brightness: CGFloat = 0, alpha: CGFloat = 0
+        color.getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha)
+        let distance = abs(hue - otherHue)
+        return min(distance, 1 - distance)
     }
 }
 

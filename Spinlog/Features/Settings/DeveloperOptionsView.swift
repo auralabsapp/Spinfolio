@@ -61,7 +61,7 @@ struct DeveloperOptionsView: View {
                 } label: {
                     HStack(spacing: 12) {
                         Image(systemName: "sparkles")
-                            .foregroundStyle(Color(red: 0.95, green: 0.68, blue: 0.18))
+                            .foregroundStyle(Color.goldAccent)
                         Text("Afficher l'écran Paywall")
                             .foregroundStyle(.primary)
                     }

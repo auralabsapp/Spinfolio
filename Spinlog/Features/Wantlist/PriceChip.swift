@@ -18,7 +18,7 @@ struct PriceChip: View {
                     .font(.caption.weight(.semibold))
                     .monospacedDigit()
             }
-            .foregroundStyle(isSelected ? Color.white : Color.primary)
+            .foregroundStyle(isSelected ? Color.onAccent : Color.primary)
             .frame(maxWidth: .infinity)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)

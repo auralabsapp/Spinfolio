@@ -10,7 +10,7 @@ struct ListeningMock: View {
         HStack(spacing: 10) {
             Image(systemName: "opticaldisc.fill")
                 .font(.callout.weight(.semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(Color.onAccent)
                 .frame(width: 40, height: 40)
                 .background(Color.spinlogPink, in: Circle())
 

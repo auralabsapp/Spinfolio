@@ -12,7 +12,7 @@ struct LibraryToastBubble: View {
             Image(systemName: kind.systemImage)
                 .font(.system(size: 20))
                 .symbolRenderingMode(.palette)
-                .foregroundStyle(.white, Color.spinlogPink)
+                .foregroundStyle(Color.onAccent, Color.spinlogPink)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(kind.message)

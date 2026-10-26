@@ -343,11 +343,11 @@ struct BulkTagManagementSheet: View {
             case .partial(let count):
                 Text("\(count)/\(items.count)")
                     .font(.footnote.weight(.medium))
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Color.appWarning)
 
                 Image(systemName: "minus.circle.fill")
                     .font(.title3)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Color.appWarning)
 
             case .none:
                 let totalCount = store.instanceCount(for: tag)

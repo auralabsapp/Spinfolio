@@ -10,7 +10,7 @@ extension StatsView {
     func scrollToChartTitle(_ id: String, scrollProxy: ScrollViewProxy) {
         Task { @MainActor in
             try? await Task.sleep(for: AppTiming.scrollSettleDelay)
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+            withAnimation(.statsContentChange) {
                 scrollProxy.scrollTo(id, anchor: .top)
             }
         }

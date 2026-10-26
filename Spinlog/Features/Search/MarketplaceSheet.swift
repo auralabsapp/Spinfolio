@@ -45,6 +45,7 @@ struct MarketplaceSheet: View {
                     Task { await viewModel.load(releaseId: releaseId) }
                 }
                 .buttonStyle(.glassProminent)
+                .foregroundStyle(Color.onAccent)
             }
         } else {
             List {

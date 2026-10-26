@@ -309,7 +309,7 @@ struct StatsView: View {
                     HStack(spacing: 12) {
                         ForEach(0..<4, id: \.self) { _ in
                             VStack(alignment: .leading, spacing: 4) {
-                                SkeletonBlock(cornerRadius: 8, width: Self.recentAdditionCoverSize, height: Self.recentAdditionCoverSize)
+                                SkeletonBlock(cornerRadius: AppLayout.coverCornerRadius, width: Self.recentAdditionCoverSize, height: Self.recentAdditionCoverSize)
                                 // Hauteurs alignées sur les hauteurs de ligne réelles
                                 // (`.caption.weight(.semibold)` puis `.caption2` dans le vrai
                                 // contenu ci-dessous) : avec les 11/9pt précédents, trop courts,
@@ -332,12 +332,12 @@ struct StatsView: View {
                         ForEach(viewModel.recentAdditions) { item in
                             NavigationLink(value: SearchDestination.release(item.releaseId, coverURL: item.basicInformation.coverImage ?? item.basicInformation.thumb)) {
                                 VStack(alignment: .leading, spacing: 4) {
-                                    AsyncCoverImage(url: item.basicInformation.coverImage ?? item.basicInformation.thumb, cornerRadius: 8, targetSize: Self.recentAdditionCoverSize)
+                                    AsyncCoverImage(url: item.basicInformation.coverImage ?? item.basicInformation.thumb, cornerRadius: AppLayout.coverCornerRadius, targetSize: Self.recentAdditionCoverSize)
                                         .frame(width: Self.recentAdditionCoverSize, height: Self.recentAdditionCoverSize)
                                         // Micro-bordure pour l'épaisseur carton, comme les pochettes
                                         // de la Collection et de la Wantlist.
                                         .overlay(
-                                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                            RoundedRectangle(cornerRadius: AppLayout.coverCornerRadius, style: .continuous)
                                                 .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
                                         )
                                         // Ombre de contact (très proche) puis ombre d'ambiance

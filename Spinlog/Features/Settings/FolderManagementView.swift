@@ -318,7 +318,7 @@ struct FolderManagementView: View {
                 Text("Supprimer un dossier déplace automatiquement tous les exemplaires qu'il contient vers le dossier Uncategorized.")
             } icon: {
                 Image(systemName: "arrow.uturn.down.circle.fill")
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Color.appWarning)
             }
             Label {
                 Text("Les dossiers All et Uncategorized sont des dossiers système de Discogs : ils ne peuvent être ni renommés, ni supprimés.")
@@ -392,7 +392,7 @@ struct FolderNameSheet: View {
                 if isDuplicate {
                     Label("Un dossier porte déjà ce nom.", systemImage: "exclamationmark.triangle.fill")
                         .font(.footnote)
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(Color.appWarning)
                 }
                 Spacer()
             }

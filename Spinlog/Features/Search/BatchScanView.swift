@@ -323,6 +323,7 @@ struct BatchScanView: View {
                         .padding(.vertical, 10)
                 }
                 .buttonStyle(.borderedProminent)
+                .foregroundStyle(Color.onAccent)
                 .tint(Color.spinlogPink)
 
                 Button {

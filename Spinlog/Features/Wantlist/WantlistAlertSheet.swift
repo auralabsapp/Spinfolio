@@ -5,6 +5,10 @@ struct WantlistAlertSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel = WantlistAlertViewModel()
+    /// Montant saisi et symbole de devise : grands chiffres de la carte, qui suivent malgré tout la
+    /// taille de texte choisie par l'utilisateur (au lieu de tailles fixes).
+    @ScaledMetric(relativeTo: .largeTitle) private var targetPriceSize: CGFloat = 44
+    @ScaledMetric(relativeTo: .title) private var currencySymbolSize: CGFloat = 28
 
     @State private var showPermissionAlert = false
     @State private var showingDeleteConfirmation = false
@@ -319,7 +323,7 @@ struct WantlistAlertSheet: View {
                     // Symbole invisible, de même largeur que celui de droite : le montant saisi
                     // reste exactement au centre de la carte.
                     Text(viewModel.currencySymbol)
-                        .font(.system(size: 28, weight: .semibold, design: .rounded))
+                        .font(.system(size: currencySymbolSize, weight: .semibold, design: .rounded))
                         .hidden()
                         .accessibilityHidden(true)
 
@@ -327,7 +331,7 @@ struct WantlistAlertSheet: View {
                         TextField("0,00", text: $viewModel.targetPriceString, selection: $priceSelection)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.center)
-                            .font(.system(size: 44, weight: .bold, design: .rounded))
+                            .font(.system(size: targetPriceSize, weight: .bold, design: .rounded))
                             .monospacedDigit()
                             .foregroundStyle(Color.spinlogPink)
                             .minimumScaleFactor(0.6)
@@ -339,7 +343,7 @@ struct WantlistAlertSheet: View {
 
                         if let rollingPrice {
                             Text(rollingPrice)
-                                .font(.system(size: 44, weight: .bold, design: .rounded))
+                                .font(.system(size: targetPriceSize, weight: .bold, design: .rounded))
                                 .monospacedDigit()
                                 .foregroundStyle(Color.spinlogPink)
                                 .minimumScaleFactor(0.6)
@@ -351,7 +355,7 @@ struct WantlistAlertSheet: View {
                     .scaleEffect(isPriceBumped ? 1.07 : 1)
 
                     Text(viewModel.currencySymbol)
-                        .font(.system(size: 28, weight: .semibold, design: .rounded))
+                        .font(.system(size: currencySymbolSize, weight: .semibold, design: .rounded))
                         .foregroundStyle(Color.appSecondaryText)
                 }
                 .frame(maxWidth: .infinity, alignment: .center)

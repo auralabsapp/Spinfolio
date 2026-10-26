@@ -32,7 +32,7 @@ struct LibrarySectionHeader: View {
             Text("\(count)")
                 .font(.caption.weight(.bold))
                 .monospacedDigit()
-                .foregroundStyle(.white)
+                .foregroundStyle(Color.onAccentGradient)
                 .padding(.horizontal, 7)
                 .padding(.vertical, 2.5)
                 .background(

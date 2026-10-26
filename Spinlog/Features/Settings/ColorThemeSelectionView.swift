@@ -32,9 +32,8 @@ struct ColorThemeSelectionView: View {
                 }
             }
         }
-        .sheet(isPresented: $showingPremiumSheet) {
-            PremiumFeaturesSheet()
-        }
+        // Paywall, comme les autres verrous Premium (et non la seule liste des fonctions, sans achat).
+        .premiumFeaturesSheet(isPresented: $showingPremiumSheet)
     }
 
     // MARK: - Carte d'aperçu dynamique
@@ -50,7 +49,7 @@ struct ColorThemeSelectionView: View {
 
                     Image(systemName: themeManager.currentTheme.iconName)
                         .font(.system(size: 20, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Color.onAccent)
                 }
 
                 VStack(alignment: .leading, spacing: 3) {
@@ -60,12 +59,7 @@ struct ColorThemeSelectionView: View {
                             .foregroundStyle(.primary)
 
                         if themeManager.currentTheme.isPremiumOnly {
-                            Text("PREMIUM")
-                                .font(.emphasisLabel)
-                                .foregroundStyle(themeManager.currentTheme.primaryColor)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(themeManager.currentTheme.badgeColor, in: Capsule())
+                            PremiumPill()
                         }
                     }
 
@@ -104,7 +98,7 @@ struct ColorThemeSelectionView: View {
                         Text("En écoute")
                             .font(.caption.weight(.semibold))
                     }
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color.onAccentGradient)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 5)
                     .background(Color.spinlogPinkButtonGradient, in: Capsule())

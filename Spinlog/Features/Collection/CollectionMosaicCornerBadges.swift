@@ -40,7 +40,7 @@ struct CollectionMosaicCornerBadges: View {
                     HStack(spacing: 1.5) {
                         Image(systemName: "star.fill")
                             .font(.coverCornerBadge)
-                            .foregroundStyle(Color.orange)
+                            .foregroundStyle(Color.ratingStar)
                         Text("\(rating)")
                             .font(.coverCornerBadge)
                             .foregroundStyle(.white)

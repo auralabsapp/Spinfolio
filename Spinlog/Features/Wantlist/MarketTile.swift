@@ -23,7 +23,7 @@ struct MarketTile: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
-        .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .appleMusicGroupedCard()
         .overlay(alignment: .topTrailing) {
             if action != nil {
                 // Indique que la tuile s'ouvre (comme les lignes qui renvoient vers Discogs).

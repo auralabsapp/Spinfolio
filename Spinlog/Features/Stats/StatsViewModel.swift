@@ -61,7 +61,7 @@ final class StatsViewModel {
             applyCollectionItems(state.allItems)
         }
         if animated {
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+            withAnimation(.statsContentChange) {
                 recentAdditions = state.recentAdditions
             }
         } else {
@@ -256,7 +256,7 @@ final class StatsViewModel {
             totalWantlistCount = counters.wantlistCount
             // Même animation que les autres sections de l'écran (répartitions, classements…) au
             // passage du squelette aux vraies pochettes, plutôt qu'un remplacement instantané.
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+            withAnimation(.statsContentChange) {
                 recentAdditions = counters.recentAdditions.filter { !locallyRemovedInstanceIds.contains($0.instanceId) }
             }
         } catch {
@@ -356,7 +356,7 @@ final class StatsViewModel {
         let labels = Self.labelDistribution(of: allCollectionItems)
         let media = Self.mediaFormatDistribution(of: allCollectionItems)
         let artists = Self.artistRanking(of: allCollectionItems)
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+        withAnimation(.statsContentChange) {
             otherGenresNames = genres.others
             genreDistribution = genres.entries
             otherLabelsNames = labels.others

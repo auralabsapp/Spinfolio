@@ -212,7 +212,7 @@ private struct LibraryAddFlightContent: View {
                     .position(end)
             }
 
-            AsyncCoverImage(url: flight.coverURL, cornerRadius: 8, targetSize: Self.coverSize)
+            AsyncCoverImage(url: flight.coverURL, cornerRadius: AppLayout.coverCornerRadius, targetSize: Self.coverSize)
                 .frame(width: Self.coverSize, height: Self.coverSize)
                 .shadow(color: .black.opacity(0.35), radius: 10, x: 0, y: 6)
                 .scaleEffect(hasLanded ? 0.28 : 1)

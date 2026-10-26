@@ -233,7 +233,7 @@ final class ReleaseActions {
         }
 
         // Optimistic UI : griser instantanément le bouton
-        withAnimation(.easeInOut(duration: 0.2)) {
+        withAnimation(.optimisticToggle) {
             isInCollection = true
             justAddedReleaseId = releaseId
         }
@@ -299,7 +299,7 @@ final class ReleaseActions {
     /// Annule l'exemplaire temporaire affiché par `addToCollection`.
     private func rollbackOptimisticAdd(tempInstanceId: Int, releaseId: Int) {
         TagStore.shared.removeTags(for: tempInstanceId)
-        withAnimation(.easeInOut(duration: 0.2)) {
+        withAnimation(.optimisticToggle) {
             collectionInstances.removeAll { $0.instanceId == tempInstanceId }
             isInCollection = !collectionInstances.isEmpty
             if justAddedReleaseId == releaseId {
@@ -318,7 +318,7 @@ final class ReleaseActions {
         let releaseId = instance.releaseId
 
         let previousInstances = collectionInstances
-        withAnimation(.easeInOut(duration: 0.2)) {
+        withAnimation(.optimisticToggle) {
             collectionInstances.removeAll { $0.instanceId == instance.instanceId }
             isInCollection = !collectionInstances.isEmpty
             if collectionInstances.isEmpty && justAddedReleaseId == releaseId {
@@ -366,7 +366,7 @@ final class ReleaseActions {
     /// ne restaurait que ce view model : la liste de la collection, déjà prévenue du retrait,
     /// continuait d'afficher le disque comme retiré.
     private func restoreRemovedInstances(_ removed: [CollectionItem], previousInstances: [CollectionItem], username: String) async {
-        withAnimation(.easeInOut(duration: 0.2)) {
+        withAnimation(.optimisticToggle) {
             collectionInstances = previousInstances
             isInCollection = !previousInstances.isEmpty
         }
@@ -404,7 +404,7 @@ final class ReleaseActions {
     }
 
     private func replaceInstance(_ instanceId: Int, with item: CollectionItem) {
-        withAnimation(.easeInOut(duration: 0.2)) {
+        withAnimation(.optimisticToggle) {
             if let index = collectionInstances.firstIndex(where: { $0.instanceId == instanceId }) {
                 collectionInstances[index] = item
             }
@@ -420,7 +420,7 @@ final class ReleaseActions {
         guard let username = authManager.username else { return }
 
         let savedInstances = collectionInstances
-        withAnimation(.easeInOut(duration: 0.2)) {
+        withAnimation(.optimisticToggle) {
             collectionInstances = []
             isInCollection = false
             if justAddedReleaseId == releaseId {
@@ -464,7 +464,7 @@ final class ReleaseActions {
         case .refused where notRemoved.isEmpty:
             // Exemplaires introuvables sur Discogs : le disque reste affiché comme possédé.
             LibraryMembershipStore.shared.markInCollection(releaseId)
-            withAnimation(.easeInOut(duration: 0.2)) {
+            withAnimation(.optimisticToggle) {
                 isInCollection = true
             }
             message = AppMessages.removalFailed

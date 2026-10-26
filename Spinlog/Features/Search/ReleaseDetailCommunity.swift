@@ -74,7 +74,7 @@ struct CommunityStatsBar: View {
                     HStack(spacing: 3) {
                         Image(systemName: "star.fill")
                             .font(.caption)
-                            .foregroundStyle(.yellow)
+                            .foregroundStyle(Color.ratingStar)
                         Text(rating.average.formatted(.number.precision(.fractionLength(1))))
                             .font(.subheadline.weight(.bold))
                     }
@@ -132,7 +132,7 @@ struct GenreTagsRow: View {
                 ForEach(genres, id: \.self) { genre in
                     Text(genre)
                         .font(.caption.weight(.bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Color.onAccent)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background(Color.spinlogPink, in: Capsule())

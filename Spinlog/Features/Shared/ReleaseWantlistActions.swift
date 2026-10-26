@@ -85,7 +85,7 @@ final class ReleaseWantlistActions {
         }
 
         // Optimistic UI : griser instantanément le bouton
-        withAnimation(.easeInOut(duration: 0.2)) {
+        withAnimation(.optimisticToggle) {
             isInWantlist = true
         }
         notifyFeedback(.addedToWantlist)
@@ -114,7 +114,7 @@ final class ReleaseWantlistActions {
             report(AppMessages.discogsUnavailableQueued)
         case nil, .refused:
             // Bloqué, ou refus définitif : on annule plutôt que de laisser la file échouer trois fois.
-            withAnimation(.easeInOut(duration: 0.2)) {
+            withAnimation(.optimisticToggle) {
                 isInWantlist = false
             }
             localStore.removeWantlistItem(username: username, releaseId: releaseId)
@@ -143,7 +143,7 @@ final class ReleaseWantlistActions {
         let previousItem = localStore.getWantlistItem(username: username, releaseId: releaseId)
 
         // Optimistic UI : dégriser instantanément le bouton
-        withAnimation(.easeInOut(duration: 0.2)) {
+        withAnimation(.optimisticToggle) {
             isInWantlist = false
         }
         notifyFeedback(.removedFromWantlist)
@@ -156,7 +156,7 @@ final class ReleaseWantlistActions {
         case .queuedAfterFailure:
             report(AppMessages.discogsUnavailableQueued)
         case .refused:
-            withAnimation(.easeInOut(duration: 0.2)) {
+            withAnimation(.optimisticToggle) {
                 isInWantlist = true
             }
             if let previousItem {

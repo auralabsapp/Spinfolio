@@ -119,7 +119,7 @@ final class CollectionViewModel {
         pagination.noteLocallyAdded(instanceId: item.instanceId)
         let change = CollectionLocalChanges.afterExternalAdd(of: item, items: items, folders: folders, selectedFolderId: selectedFolderId)
         if let newItems = change.items {
-            withAnimation(.easeInOut(duration: 0.2)) { items = newItems }
+            withAnimation(.optimisticToggle) { items = newItems }
         }
         folders = change.folders
     }
@@ -130,7 +130,7 @@ final class CollectionViewModel {
         let change = CollectionLocalChanges.afterExternalRemoval(
             releaseId: releaseId, instanceId: instanceId, items: items, folders: folders, selectedFolderId: selectedFolderId
         )
-        withAnimation(.easeInOut(duration: 0.2)) { items = change.items }
+        withAnimation(.optimisticToggle) { items = change.items }
         folders = change.folders
     }
 
@@ -435,7 +435,7 @@ final class CollectionViewModel {
             LibraryMembershipStore.shared.noteQueuedOffline(.collectionRemoved)
         case .refused:
             if !items.contains(where: { $0.id == item.id }) {
-                withAnimation(.easeInOut(duration: 0.2)) { items.append(item) }
+                withAnimation(.optimisticToggle) { items.append(item) }
             }
             await localStore.saveCollectionItemInFolderAndAll(item, username: username)
             LibraryMembershipStore.shared.markInCollection(item.releaseId)
@@ -470,7 +470,7 @@ final class CollectionViewModel {
 
     /// Mise à jour optimiste d'un déplacement (ou son annulation) : liste et compteurs des dossiers.
     private func applyMove(from source: CollectionItem, to destination: CollectionItem, reverting: Bool = false) {
-        withAnimation(.easeInOut(duration: 0.2)) {
+        withAnimation(.optimisticToggle) {
             items = reverting
                 ? CollectionLocalChanges.itemsAfterRevertingMove(items, original: destination, moved: source, selectedFolderId: selectedFolderId)
                 : CollectionLocalChanges.itemsAfterMove(items, original: source, moved: destination, selectedFolderId: selectedFolderId)

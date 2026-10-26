@@ -37,17 +37,17 @@ struct WantlistRow: View {
                     .motionTransition(.scale.combined(with: .opacity))
             }
 
-            AsyncCoverImage(url: info.thumb ?? info.coverImage, cornerRadius: 8, targetSize: Self.coverSize)
+            AsyncCoverImage(url: info.thumb ?? info.coverImage, cornerRadius: AppLayout.coverCornerRadius, targetSize: Self.coverSize)
                 .frame(width: Self.coverSize, height: Self.coverSize)
-                .coverZoomSource(releaseId: item.id, cornerRadius: 8)
+                .coverZoomSource(releaseId: item.id, cornerRadius: AppLayout.coverCornerRadius)
                 // Micro-bordure pour l'épaisseur carton, remplacée par la bordure de sélection
                 // quand cet exemplaire est coché.
                 .overlay {
                     if isSelecting && isSelected {
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        RoundedRectangle(cornerRadius: AppLayout.coverCornerRadius, style: .continuous)
                             .strokeBorder(Color.spinlogPink, lineWidth: 2.5)
                     } else {
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        RoundedRectangle(cornerRadius: AppLayout.coverCornerRadius, style: .continuous)
                             .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
                     }
                 }

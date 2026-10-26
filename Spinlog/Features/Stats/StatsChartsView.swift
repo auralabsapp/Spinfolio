@@ -133,18 +133,9 @@ extension StatsView {
 
     func genreColor(for name: String, index: Int) -> Color {
         if name == StatsViewModel.othersLabel || name == StatsViewModel.unspecifiedLabel {
-            return Color(white: 0.55)
+            return Color.chartNeutral
         }
-        let palette: [Color] = [
-            Color.spinlogPink,
-            Color(red: 0.58, green: 0.35, blue: 0.88),
-            Color(red: 0.28, green: 0.52, blue: 0.95),
-            Color(red: 0.16, green: 0.72, blue: 0.74),
-            Color(red: 0.98, green: 0.58, blue: 0.22),
-            Color(red: 0.95, green: 0.75, blue: 0.25),
-            Color(red: 0.30, green: 0.78, blue: 0.55),
-            Color(red: 0.88, green: 0.30, blue: 0.45)
-        ]
+        let palette = Color.chartPalette
         return palette[index % palette.count]
     }
 
@@ -244,9 +235,9 @@ extension StatsView {
         // Comparé aux libellés traduits de `ShelfMediaCategory` (mêmes valeurs que les parts).
         switch name {
         case ShelfMediaCategory.vinyl12.broadFormatLabel: return Color.spinlogPink
-        case ShelfMediaCategory.cd.broadFormatLabel: return Color(red: 0.28, green: 0.52, blue: 0.95)
-        case ShelfMediaCategory.cassette.broadFormatLabel: return Color(red: 0.98, green: 0.58, blue: 0.22)
-        default: return Color(white: 0.55)
+        case ShelfMediaCategory.cd.broadFormatLabel: return Color.chartColor(preferring: [.blue, .violet, .teal])
+        case ShelfMediaCategory.cassette.broadFormatLabel: return Color.chartColor(preferring: [.orange, .yellow, .green])
+        default: return Color.chartNeutral
         }
     }
 

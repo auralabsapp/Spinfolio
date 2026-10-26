@@ -143,7 +143,7 @@ struct OfflineSettingsDetailView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 6) {
                         Image(systemName: "arrow.triangle.2.circlepath")
-                            .foregroundStyle(.teal)
+                            .foregroundStyle(Color.appOffline)
                         Text("Actualisation automatique")
                             .font(.subheadline.weight(.semibold))
                     }
@@ -209,11 +209,11 @@ struct OfflineSettingsDetailView: View {
             HStack(spacing: 14) {
                 ZStack {
                     Circle()
-                        .fill(Color.teal.opacity(0.18))
+                        .fill(Color.appOffline.opacity(0.18))
                         .frame(width: 52, height: 52)
                     Image(systemName: "arrow.down.circle.fill")
                         .font(.title2)
-                        .foregroundStyle(.teal)
+                        .foregroundStyle(Color.appOffline)
                         // Petit rebond à la fin d'une synchronisation réussie.
                         .symbolEffect(.bounce, options: .nonRepeating, value: isSyncCompleted)
                 }
@@ -236,10 +236,10 @@ struct OfflineSettingsDetailView: View {
                         Text("\(offlineManager.offlineItemCount) disques archivés")
                             .animatedCount(offlineManager.offlineItemCount)
                             .font(.caption.weight(.medium))
-                            .foregroundStyle(.teal)
+                            .foregroundStyle(Color.appOffline)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
-                            .background(Color.teal.opacity(0.12), in: Capsule())
+                            .background(Color.appOffline.opacity(0.12), in: Capsule())
                     }
                 }
 

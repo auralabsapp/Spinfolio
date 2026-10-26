@@ -48,7 +48,7 @@ struct HorizontalSectionIndexBar: View {
                         .font(.system(size: 11, weight: isSelected ? .black : .semibold, design: .rounded))
                         .lineLimit(1)
                         .minimumScaleFactor(0.5)
-                        .foregroundStyle(isCurrent ? .white : (isSelected ? Color.spinlogPink : Color.secondary))
+                        .foregroundStyle(isCurrent ? Color.onAccent : (isSelected ? Color.spinlogPink : Color.secondary))
                         .frame(width: itemWidth, height: 20)
                         .background {
                             if isCurrent {
@@ -78,7 +78,7 @@ struct HorizontalSectionIndexBar: View {
                     let bubbleX = min(max(touchX - width / 2, -width / 2 + 28), width / 2 - 28)
                     Text(displayToken)
                         .font(.system(size: displayToken.count > 2 ? 18 : 24, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Color.onAccentGradient)
                         .frame(width: 48, height: 48)
                         .background(
                             Circle()

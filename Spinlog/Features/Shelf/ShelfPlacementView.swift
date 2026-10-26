@@ -149,14 +149,8 @@ struct ShelfPlacementView: View {
 
     // MARK: - Badge de périmètre de rangement
 
-    /// Teinte orange adaptée : plus sombre et contrastée en mode clair pour une excellente lisibilité
-    private var folderBadgeColor: Color {
-        if colorScheme == .light {
-            return Color(red: 0.72, green: 0.32, blue: 0.0)
-        } else {
-            return Color.orange
-        }
-    }
+    /// Teinte orange adaptée : plus sombre et contrastée en mode clair (voir `Color.appWarning`).
+    private var folderBadgeColor: Color { Color.appWarning }
 
     private var scopeBadge: some View {
         HStack(spacing: 4) {
@@ -182,7 +176,7 @@ struct ShelfPlacementView: View {
         VStack(spacing: 12) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text("N° \(displayedPosition)")
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .font(.system(.title, design: .rounded, weight: .bold))
                     .foregroundStyle(.primary)
                     .monospacedDigit()
                     // Le chiffre défile de 0 jusqu'à la position du disque à l'ouverture.
@@ -418,11 +412,11 @@ struct ShelfPlacementView: View {
                 .background(color.opacity(0.12), in: Capsule())
 
             ZStack {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                RoundedRectangle(cornerRadius: AppLayout.coverCornerRadius, style: .continuous)
                     .fill(color.opacity(0.06))
                     .frame(width: 76, height: 76)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        RoundedRectangle(cornerRadius: AppLayout.coverCornerRadius, style: .continuous)
                             .strokeBorder(color.opacity(0.3), style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
                     )
 

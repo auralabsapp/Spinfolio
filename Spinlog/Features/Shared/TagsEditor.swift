@@ -254,7 +254,7 @@ struct ReleaseTagSheet: View {
 
                             Text("\(appliedTags.count)/\(TagConstants.maxTagsPerInstance) tags attribués à cet exemplaire")
                                 .font(.footnote.weight(.medium))
-                                .foregroundStyle(hasReachedMaxTags ? .orange : Color.appSecondaryText)
+                                .foregroundStyle(hasReachedMaxTags ? Color.appWarning : Color.appSecondaryText)
                         }
                     }
                 }

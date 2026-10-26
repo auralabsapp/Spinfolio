@@ -39,6 +39,7 @@ struct CameraScannerGate<Scanner: View>: View {
                         }
                     }
                     .buttonStyle(.glassProminent)
+                    .foregroundStyle(Color.onAccent)
                 }
             case .unsupported:
                 ContentUnavailableView(

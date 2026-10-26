@@ -118,6 +118,7 @@ struct ArtistDetailView: View {
                     Task { await viewModel.load(artistId: artistId) }
                 }
                 .buttonStyle(.glassProminent)
+                .foregroundStyle(Color.onAccent)
             }
         } else if viewModel.artistName != nil {
             ScrollView {
@@ -335,7 +336,7 @@ struct ArtistDetailView: View {
         Button(action: action) {
             Text(title)
                 .font(.subheadline.weight(isSelected ? .semibold : .regular))
-                .foregroundStyle(isSelected ? Color.white : Color.primary)
+                .foregroundStyle(isSelected ? Color.onAccent : Color.primary)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 7)
                 .background(isSelected ? Color.spinlogPink : Color.primary.opacity(0.08), in: Capsule())
@@ -608,6 +609,7 @@ struct ArtistDetailView: View {
                 }
             }
             .buttonStyle(.borderedProminent)
+            .foregroundStyle(Color.onAccent)
             .tint(Color.spinlogPink)
         }
         .frame(maxWidth: .infinity)

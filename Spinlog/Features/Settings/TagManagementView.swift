@@ -72,7 +72,7 @@ struct TagRenameSheet: View {
                         VStack(alignment: .leading, spacing: 12) {
                             HStack(spacing: 8) {
                                 Image(systemName: "exclamationmark.triangle.fill")
-                                    .foregroundStyle(.orange)
+                                    .foregroundStyle(Color.appWarning)
                                 Text("Tag déjà existant")
                                     .font(.subheadline.weight(.semibold))
                             }
@@ -87,8 +87,8 @@ struct TagRenameSheet: View {
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 11)
-                                .background(Color.orange.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
-                                .foregroundStyle(.orange)
+                                .background(Color.appWarning.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
+                                .foregroundStyle(Color.appWarning)
                             }
                             .buttonStyle(.plain)
                         }
@@ -225,7 +225,7 @@ struct TagManagementView: View {
                     HStack(spacing: 12) {
                         Image(systemName: "exclamationmark.circle.fill")
                             .font(.title3)
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(Color.appWarning)
 
                         Text("Tag déjà existant")
                             .font(.subheadline.weight(.semibold))

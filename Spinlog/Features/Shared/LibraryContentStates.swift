@@ -20,6 +20,7 @@ struct LibraryErrorState: View {
                     Task { await onRefresh() }
                 }
                 .buttonStyle(.glassProminent)
+                .foregroundStyle(Color.onAccent)
             }
             .frame(maxWidth: .infinity, minHeight: 400)
         }
@@ -43,6 +44,7 @@ struct LibraryEmptyLibraryState: View {
                     TabNavigationCoordinator.shared.selectedTab = .search
                 }
                 .buttonStyle(.glassProminent)
+                .foregroundStyle(Color.onAccent)
             }
             .frame(maxWidth: .infinity, minHeight: 400)
         }

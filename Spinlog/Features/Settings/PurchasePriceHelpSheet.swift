@@ -63,7 +63,7 @@ struct PurchasePriceHelpSheet: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
-        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.primary.opacity(0.06)))
+        .appleMusicGroupedCard(cornerRadius: 10)
     }
 
     private func resultCard(symbol: String, color: Color, title: LocalizedStringKey, subtitle: LocalizedStringKey) -> some View {
@@ -80,7 +80,7 @@ struct PurchasePriceHelpSheet: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.primary.opacity(0.06)))
+        .appleMusicGroupedCard(cornerRadius: 10)
     }
 
     private var arrow: some View {
@@ -183,7 +183,7 @@ struct PurchasePriceHelpSheet: View {
         HStack(spacing: 10) {
             // Le texte dit l'état en toutes lettres : pas d'information portée par la seule couleur.
             Image(systemName: isOK ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                .foregroundStyle(isOK ? Color.gainPositive : Color.orange)
+                .foregroundStyle(isOK ? Color.gainPositive : Color.appWarning)
                 .accessibilityHidden(true)
             Text(title)
                 .font(.subheadline)

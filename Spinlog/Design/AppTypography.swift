@@ -24,9 +24,9 @@ extension Font {
     /// Gros chiffre de statistique (écran Stats). Dupliqué à l'identique 3 fois avant ce fichier.
     static let statHeadlineNumber = Font.system(size: 32, weight: .heavy, design: .rounded)
 
-    /// Badge dans le coin d'une pochette miniature (nombre d'exemplaires, note, lecture en cours) :
-    /// la densité d'une grille/mosaïque justifie une taille sous le plancher de lisibilité normal
-    /// (`inlineIcon`/`emphasisLabel`), mais ces badges utilisaient chacun une taille différente
-    /// (9, 8, 8, 7pt) sur la même carte — unifiés ici en un seul token.
-    static let coverCornerBadge = Font.system(size: 10, weight: .bold)
+    /// Badge dans le coin d'une pochette miniature (nombre d'exemplaires, note, lecture en cours).
+    /// Ces badges utilisaient chacun une taille différente (9, 8, 8, 7 pt) sur la même carte —
+    /// unifiés ici en un seul token, à 11 pt (et non plus 10) : ils portent du texte réel (numéro
+    /// d'exemplaire, note), qui ne doit pas descendre sous le plancher de lisibilité.
+    static let coverCornerBadge = Font.system(size: 11, weight: .bold)
 }

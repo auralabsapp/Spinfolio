@@ -7,15 +7,13 @@ private let goldAccent = Color.goldAccent
 private let goldWarm = Color.goldWarm
 private let goldDeep = Color.goldDeep
 private let goldLight = Color.goldLight
-private let goldBadgeBg = Color.goldBadgeBg
-private var goldButtonGradient: LinearGradient { Color.goldButtonGradient }
 
 private var goldHeaderGradient: LinearGradient {
     LinearGradient(
         colors: [
             Color(red: 0.65, green: 0.36, blue: 0.07),
             Color(red: 0.85, green: 0.50, blue: 0.12),
-            Color(red: 0.95, green: 0.68, blue: 0.18)
+            Color.goldAccent
         ],
         startPoint: .top,
         endPoint: .bottom
@@ -94,7 +92,7 @@ struct SpinlogPaywallView: View {
 
             VStack(spacing: 6) {
                 Text("Obtiens un accès complet")
-                    .font(.system(size: 27, weight: .bold))
+                    .font(.title.bold())
                     .foregroundStyle(.primary)
                     .multilineTextAlignment(.center)
 
@@ -103,17 +101,7 @@ struct SpinlogPaywallView: View {
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Color.appSecondaryText)
 
-                    HStack(spacing: 4) {
-                        Image(systemName: "crown.fill")
-                            .font(.inlineIcon)
-                        Text("PREMIUM")
-                            .font(.emphasisLabel)
-                    }
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(goldButtonGradient, in: Capsule())
-                    .shadow(color: goldWarm.opacity(0.35), radius: 4, y: 1)
+                    PremiumPill(style: .prominent)
                 }
             }
             .padding(.top, 4)
@@ -141,7 +129,7 @@ struct SpinlogPaywallView: View {
                     } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "plus")
-                                .font(.system(size: 13, weight: .bold))
+                                .font(.footnote.weight(.bold))
                                 .foregroundStyle(Color.goldText)
 
                             Text("et \(PremiumFeatureCatalog.all.count - visibleFeatures.count) fonctionnalités supplémentaires")
