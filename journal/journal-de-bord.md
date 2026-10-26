@@ -7,7 +7,14 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
-## 2026-10-26 — Audit : lots 12, 8, 9, 11, 13 et 14 ; découpage des gros fichiers
+## 2026-10-26 — Audit : lots 12, 8, 9, 11, 13, 14 et 15 ; découpage des gros fichiers
+
+### 11:47 — `5bf7419` Audit lot 15 : diagnostic d'abonnement masqué, force unwraps retirés
+- Le diagnostic d'abonnement n'apparaît plus de lui-même sur TestFlight ni en revue App Store :
+  7 touchers sur « Version » (À propos) l'affichent ou le masquent, jamais sur l'App Store.
+- Derniers `try!` et force unwraps du code retirés (chemins d'erreur explicites).
+- Recette L31.
+- 19 fichiers, +116 / −19.
 
 ### 11:38 — `12e5fe8` Découpe Collection, Stats et fiche disque sous 500 lignes
 - Les quatre plus gros fichiers (de 820 à 1 000 lignes) passent sous 500, par une vraie
