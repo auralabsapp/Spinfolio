@@ -28,6 +28,7 @@ struct SheetCloseButton: View {
                     .font(.system(size: size, weight: .semibold))
                     .foregroundStyle(.secondary)
                     .frame(width: 32, height: 32)
+                    .expandedHitArea(visibleSide: 32)
 
             case .prominentOnMedia:
                 let buttonDimension = max(32, size)
@@ -48,10 +49,10 @@ struct SheetCloseButton: View {
                         .strokeBorder(Color.white.opacity(0.24), lineWidth: 0.75)
                 )
                 .shadow(color: Color.black.opacity(0.35), radius: 6, x: 0, y: 2)
+                .expandedHitArea(visibleSide: buttonDimension)
             }
         }
         .buttonStyle(.plain)
-        .contentShape(Rectangle())
         .accessibilityLabel("Fermer")
     }
 }

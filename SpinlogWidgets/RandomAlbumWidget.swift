@@ -16,7 +16,7 @@ private enum WidgetThemeColor {
         WidgetSnapshotStore.themeAccentOnLight ?? Color(red: 185 / 255, green: 20 / 255, blue: 90 / 255)
     }
 }
-private let widgetLogger = Logger(subsystem: "com.aurelienscarpa.Spinlog", category: "WidgetSnapshotSync")
+private let widgetLogger = Logger(subsystem: "com.auralabs.Spinlog", category: "WidgetSnapshotSync")
 
 /// Analyse de la couleur et luminosité de la jaquette pour adapter dynamiquement la lisibilité du texte.
 struct CoverAnalysis: Sendable {

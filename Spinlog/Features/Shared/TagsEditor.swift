@@ -231,13 +231,16 @@ struct ReleaseTagSheet: View {
                         .padding(.vertical, 36)
                         .padding(.horizontal, 20)
                     } else {
+                        // Filtré une seule fois : relu dans chaque ligne, le filtre était refait
+                        // pour chaque tag à chaque frappe.
+                        let tags = filteredTags
                         VStack(alignment: .leading, spacing: 10) {
-                            SectionEyebrow(title: "Tags disponibles (\(filteredTags.count))", icon: "tag.fill")
+                            SectionEyebrow(title: "Tags disponibles (\(tags.count))", icon: "tag.fill")
 
                             VStack(spacing: 0) {
-                                ForEach(Array(filteredTags.enumerated()), id: \.element) { index, tag in
+                                ForEach(Array(tags.enumerated()), id: \.element) { index, tag in
                                     tagRow(tag)
-                                    if index < filteredTags.count - 1 {
+                                    if index < tags.count - 1 {
                                         Divider().overlay(Color.appSeparator).opacity(0.15).padding(.leading, 14)
                                     }
                                 }

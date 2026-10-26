@@ -7,7 +7,7 @@ struct CollectionRow: View {
 
     let item: CollectionItem
     var copyBadge: String? = nil
-    /// Calculés par l'appelant (voir `CollectionViewModel.tagsByInstance(for:)`) plutôt que lus
+    /// Calculés par l'appelant (voir `CollectionViewModel.tagsByInstanceId`) plutôt que lus
     /// ici depuis `TagStore.shared` : une lecture directe du store établirait une dépendance
     /// `@Observable` sur tout son dictionnaire interne, et modifier le tag d'UN disque
     /// invaliderait alors TOUTES les lignes visibles plutôt que la seule concernée.
@@ -25,7 +25,7 @@ struct CollectionRow: View {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .font(.title3)
                     .foregroundStyle(isSelected ? Color.spinlogPink : Color.appTertiaryText)
-                    .transition(.scale.combined(with: .opacity))
+                    .motionTransition(.scale.combined(with: .opacity))
             }
 
             AsyncCoverImage(url: coverURL, cornerRadius: 10, targetSize: Self.coverSize)

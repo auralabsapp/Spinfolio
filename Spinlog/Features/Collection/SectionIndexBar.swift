@@ -122,7 +122,7 @@ struct SectionIndexBar: View {
                             .shadow(color: Color.buttonPinkBottom.opacity(0.35), radius: 8, y: 2)
                     )
                     .offset(x: -46, y: bubbleCenterY - 30)
-                    .transition(.opacity.combined(with: .scale))
+                    .motionTransition(.opacity.combined(with: .scale))
             }
         }
         .sectionIndexAccessibility(entries: entries, currentToken: currentToken, onSelect: onSelect)

@@ -133,7 +133,7 @@ extension StatsView {
                             }
                         }
                         .padding(.top, 4)
-                        .transition(.opacity.combined(with: .move(edge: .bottom)))
+                        .motionTransition(.opacity.combined(with: .move(edge: .bottom)))
                     }
                 }
                 .padding(12)

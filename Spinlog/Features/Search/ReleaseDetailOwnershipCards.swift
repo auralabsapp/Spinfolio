@@ -271,6 +271,7 @@ struct ListeningLogCard: View {
                     // d'écoute) ; seule l'icône tourne, pas son fond.
                     .continuousRotation(isActive: isPlayingThisRelease)
                     .frame(width: 40, height: 40)
+                    .expandedHitArea(visibleSide: 40)
                     .background(isPlayingThisRelease ? Color.spinlogPink : Color.spinlogPinkBadge, in: Circle())
             }
             .buttonStyle(.plain)
@@ -286,6 +287,7 @@ struct ListeningLogCard: View {
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(isPlayingThisRelease ? Color.primary : Color.secondary.opacity(0.4))
                     .frame(width: 40, height: 40)
+                    .expandedHitArea(visibleSide: 40)
                     .background(isPlayingThisRelease ? Color(uiColor: .tertiarySystemFill) : Color(uiColor: .quaternarySystemFill).opacity(0.5), in: Circle())
             }
             .buttonStyle(.plain)
@@ -308,7 +310,7 @@ struct ListeningLogCard: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .background(Color.spinlogPink.opacity(0.12), in: Capsule())
-                    .transition(.opacity.combined(with: .scale))
+                    .motionTransition(.opacity.combined(with: .scale))
                 }
 
                 if playCount > 0 {
@@ -366,16 +368,34 @@ struct ReleaseRatingCard: View {
             SectionEyebrow(title: "Ma note de la release", icon: "star.fill")
 
             HStack(spacing: 10) {
-                HStack(spacing: 4) {
+                // Espacement porté par chaque étoile (2 + 2 pt) plutôt que par la pile : les zones
+                // de toucher se touchent, sans trou entre deux étoiles. Elles sont aussi étendues à
+                // 44 pt de haut sans changer la mise en page (rembourrage annulé juste après).
+                HStack(spacing: 0) {
                     ForEach(1...5, id: \.self) { value in
                         Image(systemName: value <= rating ? "star.fill" : "star")
                             .font(.title3)
                             .foregroundStyle(value <= rating ? Color.orange : Color.secondary.opacity(0.3))
+                            .padding(.horizontal, 2)
+                            .padding(.vertical, 10)
+                            .contentShape(Rectangle())
+                            .padding(.vertical, -10)
                             .onTapGesture {
                                 onSetRating(rating == value ? 0 : value)
                             }
-                            .accessibilityLabel("\(value) étoiles")
-                            .accessibilityAddTraits(.isButton)
+                    }
+                }
+                .padding(.horizontal, -2)
+                // Un seul élément réglable pour VoiceOver (balayer vers le haut ou le bas) plutôt
+                // que cinq boutons à parcourir sans valeur d'ensemble.
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Ma note")
+                .accessibilityValue(rating == 0 ? Text("Aucune note") : Text("\(rating) étoiles"))
+                .accessibilityAdjustableAction { direction in
+                    switch direction {
+                    case .increment where rating < 5: onSetRating(rating + 1)
+                    case .decrement where rating > 0: onSetRating(rating - 1)
+                    default: break
                     }
                 }
 

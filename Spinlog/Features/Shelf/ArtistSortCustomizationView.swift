@@ -13,6 +13,11 @@ struct ArtistSortCustomizationView: View {
     /// recalculée — relecture disque comprise — à chaque caractère tapé. Décodée hors du fil
     /// principal (`loadAllCollectionItems`).
     @State private var collectionArtists: [String] = []
+    /// Artistes triés et clé de tri effective de chacun, recalculés seulement quand la collection
+    /// ou les réglages de tri changent : calculés dans `body`, le tri localisé était refait trois
+    /// fois par rendu, et la clé de chaque artiste à chaque frappe dans la recherche.
+    @State private var allArtists: [String] = []
+    @State private var effectiveKeys: [String: String] = [:]
 
     enum FilterMode: String, CaseIterable, Identifiable {
         case all = "Tous"
@@ -28,12 +33,22 @@ struct ArtistSortCustomizationView: View {
         }
     }
 
-    private var allArtists: [String] {
-        var artistSet = Set(collectionArtists)
-        for customArtist in shelfPreferences.customArtistSortOverrides.keys {
-            artistSet.insert(customArtist)
-        }
-        return artistSet.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+    private func recomputeArtists() {
+        let overrides = shelfPreferences.customArtistSortOverrides
+        let artists = Set(collectionArtists).union(overrides.keys)
+            .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+        allArtists = artists
+        effectiveKeys = Dictionary(uniqueKeysWithValues: artists.map { artist in
+            (artist, effectiveKey(for: artist, overrides: overrides))
+        })
+    }
+
+    private func effectiveKey(for artist: String, overrides: [String: String]) -> String {
+        artist.shelfArtistSortKey(
+            ignoreArticles: shelfPreferences.ignoreArticles,
+            sortByLastName: shelfPreferences.sortByLastName,
+            overrides: overrides
+        )
     }
 
     private func loadCollectionArtists() async {
@@ -59,11 +74,7 @@ struct ArtistSortCustomizationView: View {
                 matchesSearch = true
             } else {
                 let query = searchText.lowercased()
-                let currentSort = shelfPreferences.customSort(for: artist) ?? artist.shelfArtistSortKey(
-                    ignoreArticles: shelfPreferences.ignoreArticles,
-                    sortByLastName: shelfPreferences.sortByLastName,
-                    overrides: shelfPreferences.customArtistSortOverrides
-                )
+                let currentSort = shelfPreferences.customSort(for: artist) ?? effectiveKeys[artist] ?? artist
                 matchesSearch = artist.lowercased().contains(query) || currentSort.lowercased().contains(query)
             }
 
@@ -77,6 +88,8 @@ struct ArtistSortCustomizationView: View {
     }
 
     var body: some View {
+        // Filtré une seule fois par rendu (lu pour l'état vide puis pour la liste).
+        let artists = filteredArtists
         List {
             Section {
                 VStack(alignment: .leading, spacing: 8) {
@@ -104,13 +117,13 @@ struct ArtistSortCustomizationView: View {
                 .listRowBackground(Color.clear)
             }
 
-            if filteredArtists.isEmpty {
+            if artists.isEmpty {
                 Section {
                     VStack(spacing: 8) {
                         Image(systemName: filterMode == .customized ? "slider.horizontal.3" : "magnifyingglass")
                             .font(.title2)
                             .foregroundStyle(Color.appSecondaryText)
-                        Text(filterMode == .customized ? "Aucun artiste personnalisé pour l'instant" : "Aucun artiste trouvé")
+                        (filterMode == .customized ? Text("Aucun artiste personnalisé pour l'instant") : Text("Aucun artiste trouvé"))
                             .font(.subheadline)
                             .foregroundStyle(Color.appSecondaryText)
                     }
@@ -120,15 +133,11 @@ struct ArtistSortCustomizationView: View {
                 }
             } else {
                 Section {
-                    ForEach(filteredArtists, id: \.self) { artist in
+                    ForEach(artists, id: \.self) { artist in
                         ArtistSortRow(
                             artist: artist,
                             customOverride: shelfPreferences.customSort(for: artist),
-                            effectiveKey: artist.shelfArtistSortKey(
-                                ignoreArticles: shelfPreferences.ignoreArticles,
-                                sortByLastName: shelfPreferences.sortByLastName,
-                                overrides: shelfPreferences.customArtistSortOverrides
-                            ),
+                            effectiveKey: effectiveKeys[artist] ?? artist,
                             onTap: {
                                 editingArtist = artist
                             }
@@ -192,7 +201,11 @@ struct ArtistSortCustomizationView: View {
         .searchable(text: $searchText, prompt: "Rechercher un artiste...")
         .task {
             await loadCollectionArtists()
+            recomputeArtists()
         }
+        .onChange(of: shelfPreferences.customArtistSortOverrides) { recomputeArtists() }
+        .onChange(of: shelfPreferences.ignoreArticles) { recomputeArtists() }
+        .onChange(of: shelfPreferences.sortByLastName) { recomputeArtists() }
         .sheet(item: Binding(
             get: { editingArtist.map { ArtistEditPayload(artist: $0) } },
             set: { editingArtist = $0?.artist }

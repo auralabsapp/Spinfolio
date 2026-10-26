@@ -3,7 +3,7 @@ import UserNotifications
 import BackgroundTasks
 import OSLog
 
-private nonisolated let appDelegateLogger = Logger(subsystem: "com.auralabs.Spinlog", category: "AppDelegate")
+private nonisolated let appDelegateLogger = Logger(subsystem: AppInfo.logSubsystem, category: "AppDelegate")
 
 final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(

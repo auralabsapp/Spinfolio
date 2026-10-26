@@ -9,6 +9,16 @@ enum SearchScope: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    /// Libellé traduit du sélecteur : `rawValue` reste le texte français, non extrait du catalogue.
+    var title: LocalizedStringResource {
+        switch self {
+        case .all: "Tout"
+        case .release: "Releases"
+        case .artist: "Artistes"
+        case .label: "Labels"
+        }
+    }
+
     var typeParameter: String? {
         switch self {
         case .all: return nil

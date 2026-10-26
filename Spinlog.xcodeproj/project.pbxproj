@@ -66,6 +66,14 @@
 			);
 			target = 27FA070A305E9810004E6B81 /* SpinlogWidgetsExtension */;
 		};
+		27FA0723305E9812004E6B8A /* Exceptions for "SpinlogWidgets" folder in "Spinlog" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				NowPlayingActivityAttributes.swift,
+				SharedAppGroup.swift,
+			);
+			target = 000000000000000100000000 /* Spinlog */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -90,6 +98,7 @@
 		27FA0711305E9811004E6B81 /* SpinlogWidgets */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+				27FA0723305E9812004E6B8A /* Exceptions for "SpinlogWidgets" folder in "Spinlog" target */,
 				27FA0723305E9812004E6B81 /* Exceptions for "SpinlogWidgets" folder in "SpinlogWidgetsExtension" target */,
 			);
 			path = SpinlogWidgets;

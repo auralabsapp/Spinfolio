@@ -166,8 +166,10 @@ struct MiniPlayerBar: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(item.trackTitle), \(item.artistName), lecture sur Apple Music. Touche pour ouvrir le lecteur.")
+            .accessibilityLabel("\(item.trackTitle), \(item.artistName), lecture sur Apple Music")
+            .accessibilityHint("Ouvre le lecteur.")
             .accessibilityAddTraits(.isButton)
+            .accessibilityAction { coordinator.presentNowPlaying(.appleMusic) }
 
             Button {
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
@@ -176,7 +178,7 @@ struct MiniPlayerBar: View {
                 Image(systemName: "stop.fill")
                     .font(.system(size: 19, weight: .semibold))
                     .foregroundStyle(Color.spinlogPink)
-                    .contentShape(Rectangle())
+                    .expandedHitArea(visibleSide: 22)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Arrêter la lecture")
@@ -222,8 +224,10 @@ struct MiniPlayerBar: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(info.title ?? ""). Écoute en cours sur la platine. Touche pour ouvrir le lecteur.")
+            .accessibilityLabel("\(info.title ?? ""). Écoute en cours sur la platine")
+            .accessibilityHint("Ouvre le lecteur.")
             .accessibilityAddTraits(.isButton)
+            .accessibilityAction { coordinator.presentNowPlaying(.turntable) }
 
             Button {
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
@@ -234,7 +238,7 @@ struct MiniPlayerBar: View {
                 Image(systemName: "stop.fill")
                     .font(.system(size: 19, weight: .semibold))
                     .foregroundStyle(Color.spinlogPink)
-                    .contentShape(Rectangle())
+                    .expandedHitArea(visibleSide: 22)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Arrêter l'écoute sur la platine")
@@ -296,8 +300,10 @@ struct MiniPlayerBar: View {
                             }
                         }
                         .accessibilityElement(children: .ignore)
-                        .accessibilityLabel("\(item.trackTitle), \(item.artistName), lecture sur Apple Music. \(formatTime(effectiveTime)) sur \(formatTime(displayedDuration)). Touche pour ouvrir le lecteur.")
+                        .accessibilityLabel("\(item.trackTitle), \(item.artistName), lecture sur Apple Music. \(formatTime(effectiveTime)) sur \(formatTime(displayedDuration))")
+                        .accessibilityHint("Ouvre le lecteur.")
                         .accessibilityAddTraits(.isButton)
+                        .accessibilityAction { coordinator.presentNowPlaying(.appleMusic) }
 
                         // 4. Bouton Stop à droite (cercle rose Spinlog avec icône stop.fill), identique au mode platine
                         Button {
@@ -314,7 +320,7 @@ struct MiniPlayerBar: View {
                                     .foregroundStyle(Color.white)
                             }
                             .frame(width: 36, height: 36)
-                            .contentShape(Circle())
+                            .expandedHitArea(visibleSide: 36)
                         }
                         .buttonStyle(.plain)
                         .offset(y: -2)
@@ -394,6 +400,15 @@ struct MiniPlayerBar: View {
                             )
                         }
                         .frame(height: 14)
+                        // Le glissé n'existe pas pour VoiceOver : la barre devient un élément
+                        // réglable (balayer vers le haut ou le bas avance ou recule de 15 s).
+                        .accessibilityElement()
+                        .accessibilityLabel("Position de lecture")
+                        .accessibilityValue("\(formatTime(effectiveTime)) sur \(formatTime(displayedDuration))")
+                        .accessibilityAdjustableAction { direction in
+                            let step: TimeInterval = direction == .increment ? 15 : -15
+                            service.seek(to: max(0, min(effectiveTime + step, service.totalDuration)))
+                        }
                         .padding(.leading, 60)
                         .padding(.trailing, 16)
                         .padding(.bottom, 3)
@@ -436,8 +451,10 @@ struct MiniPlayerBar: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(info.title ?? ""), \(info.artist ?? ""). Écoute en cours sur la platine. Touche pour ouvrir le lecteur.")
+                .accessibilityLabel("\(info.title ?? ""), \(info.artist ?? ""). Écoute en cours sur la platine")
+                .accessibilityHint("Ouvre le lecteur.")
                 .accessibilityAddTraits(.isButton)
+                .accessibilityAction { coordinator.presentNowPlaying(.turntable) }
 
                 // 3. Bouton Stop à droite (cercle rose Spinlog avec icône stop.fill)
                 Button {
@@ -456,7 +473,7 @@ struct MiniPlayerBar: View {
                             .foregroundStyle(Color.white)
                     }
                     .frame(width: 36, height: 36)
-                    .contentShape(Circle())
+                    .expandedHitArea(visibleSide: 36)
                 }
                 .buttonStyle(.plain)
                 .zIndex(2)

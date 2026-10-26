@@ -3,9 +3,9 @@ import StoreKit
 import Observation
 import OSLog
 
-private nonisolated let logger = Logger(subsystem: "com.auralabs.Spinlog", category: "SubscriptionManager")
+private nonisolated let logger = Logger(subsystem: AppInfo.logSubsystem, category: "SubscriptionManager")
 
-public enum SubscriptionPlanID: String, CaseIterable, Sendable {
+enum SubscriptionPlanID: String, CaseIterable, Sendable {
     case yearly = "com.auralabs.Spinlog.premium.yearly"
     case monthly = "com.auralabs.Spinlog.premium.monthly"
 }
@@ -17,39 +17,39 @@ public enum SubscriptionPlanID: String, CaseIterable, Sendable {
 /// renouvellements en arrière-plan et la synchronisation avec `PremiumStore`.
 @Observable
 @MainActor
-public final class SubscriptionManager {
-    public static let shared = SubscriptionManager()
+final class SubscriptionManager {
+    static let shared = SubscriptionManager()
 
-    public private(set) var products: [Product] = []
-    public private(set) var purchasedProductIDs: Set<String> = []
-    public private(set) var isLoading: Bool = false
-    public private(set) var isPurchasing: Bool = false
-    public private(set) var errorMessage: String? = nil
+    private(set) var products: [Product] = []
+    private(set) var purchasedProductIDs: Set<String> = []
+    private(set) var isLoading: Bool = false
+    private(set) var isPurchasing: Bool = false
+    private(set) var errorMessage: String? = nil
 
     private var transactionListenerTask: Task<Void, Never>? = nil
 
     // MARK: - Diagnostic (environnements de test uniquement, voir `SubscriptionDiagnosticSection`)
 
     /// Droit renvoyé par StoreKit lors de la dernière vérification, retenu ou non.
-    public struct EntitlementSnapshot: Identifiable, Sendable {
-        public let id: UInt64
-        public let productID: String
-        public let expirationDate: Date?
-        public let revocationDate: Date?
-        public let counted: Bool
+    struct EntitlementSnapshot: Identifiable, Sendable {
+        let id: UInt64
+        let productID: String
+        let expirationDate: Date?
+        let revocationDate: Date?
+        let counted: Bool
     }
 
     /// `true` hors App Store (TestFlight, compte sandbox, fichier StoreKit de Xcode).
-    public private(set) var isTestEnvironment = false
-    public private(set) var lastEntitlementCheck: Date?
-    public private(set) var lastEntitlements: [EntitlementSnapshot] = []
+    private(set) var isTestEnvironment = false
+    private(set) var lastEntitlementCheck: Date?
+    private(set) var lastEntitlements: [EntitlementSnapshot] = []
 
     private init() {
         startTransactionListener()
     }
 
     /// Démarre la surveillance continue des transactions StoreKit 2 et synchronise le statut initial
-    public func start() {
+    func start() {
         Task {
             if case .verified(let appTransaction)? = try? await AppTransaction.shared {
                 isTestEnvironment = appTransaction.environment != .production
@@ -78,7 +78,7 @@ public final class SubscriptionManager {
 
     // MARK: - Chargement des produits
 
-    public func loadProducts() async {
+    func loadProducts() async {
         guard !isLoading else { return }
         isLoading = true
         errorMessage = nil
@@ -104,7 +104,7 @@ public final class SubscriptionManager {
 
     // MARK: - Achat
 
-    public func purchase(_ plan: SubscriptionPlanID) async throws -> Bool {
+    func purchase(_ plan: SubscriptionPlanID) async throws -> Bool {
         if let product = product(for: plan) {
             return try await purchase(product)
         }
@@ -125,7 +125,7 @@ public final class SubscriptionManager {
         #endif
     }
 
-    public func purchase(_ product: Product) async throws -> Bool {
+    func purchase(_ product: Product) async throws -> Bool {
         isPurchasing = true
         errorMessage = nil
         defer { isPurchasing = false }
@@ -154,7 +154,7 @@ public final class SubscriptionManager {
 
     // MARK: - Restauration des achats
 
-    public func restorePurchases() async throws {
+    func restorePurchases() async throws {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
@@ -172,7 +172,7 @@ public final class SubscriptionManager {
 
     // MARK: - Vérification des droits actifs
 
-    public func updateCustomerProductStatus() async {
+    func updateCustomerProductStatus() async {
         var activeIDs: Set<String> = []
         // Seuls les abonnements Premium comptent : un futur achat in-app d'un autre type (ex:
         // pourboire, pack de thèmes) ne doit pas débloquer le Premium par simple présence.
@@ -219,15 +219,15 @@ public final class SubscriptionManager {
 
     // MARK: - Helpers & Formatage des prix
 
-    public func product(for plan: SubscriptionPlanID) -> Product? {
+    func product(for plan: SubscriptionPlanID) -> Product? {
         products.first { $0.id == plan.rawValue }
     }
 
-    public var yearlyProduct: Product? {
+    var yearlyProduct: Product? {
         product(for: .yearly)
     }
 
-    public var monthlyProduct: Product? {
+    var monthlyProduct: Product? {
         product(for: .monthly)
     }
 
@@ -235,7 +235,7 @@ public final class SubscriptionManager {
     /// depuis l'offre introductive StoreKit — `nil` si ce forfait n'a pas d'essai configuré.
     /// Affiché dans le paywall pour respecter la ligne directrice App Review 3.1.2 (conditions
     /// d'essai visibles avant achat).
-    public func freeTrialText(for plan: SubscriptionPlanID) -> String? {
+    func freeTrialText(for plan: SubscriptionPlanID) -> String? {
         guard let offer = product(for: plan)?.subscription?.introductoryOffer,
               offer.paymentMode == .freeTrial else { return nil }
         let count = offer.period.value * offer.periodCount
@@ -249,14 +249,14 @@ public final class SubscriptionManager {
         }
     }
 
-    public var yearlyPriceString: String {
+    var yearlyPriceString: String {
         if let product = yearlyProduct {
             return String(localized: "\(product.displayPrice) / an")
         }
         return String(localized: "24,99 € / an")
     }
 
-    public var monthlyPriceString: String {
+    var monthlyPriceString: String {
         if let product = monthlyProduct {
             return String(localized: "\(product.displayPrice) / mois")
         }
@@ -267,7 +267,7 @@ public final class SubscriptionManager {
     /// de la boutique de l'utilisateur ; `nil` tant que les produits StoreKit ne sont pas chargés.
     /// Remplace un « À partir de 2,50 € / mois » codé en dur, faux hors zone euro et à chaque
     /// changement de tarif.
-    public var lowestMonthlyPriceString: String? {
+    var lowestMonthlyPriceString: String? {
         let candidates = [yearlyProduct.map { ($0.price / 12, $0.priceFormatStyle) },
                           monthlyProduct.map { ($0.price, $0.priceFormatStyle) }]
             .compactMap { $0 }
@@ -275,7 +275,7 @@ public final class SubscriptionManager {
         return lowest.0.formatted(lowest.1)
     }
 
-    public nonisolated static func verify<T>(_ result: VerificationResult<T>) throws -> T {
+    nonisolated static func verify<T>(_ result: VerificationResult<T>) throws -> T {
         switch result {
         case .unverified(_, let error):
             throw error

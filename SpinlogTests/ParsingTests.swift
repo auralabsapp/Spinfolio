@@ -73,7 +73,8 @@ struct DiscogsDurationTests {
 /// Pastille de plus-value masquée (compte non Premium) : même format que le montant réel.
 struct MaskedGainAmountTests {
     @Test func digitsAreHiddenButTheCurrencyStays() {
-        let masked = SwipeableInstanceRow.maskedAmount(currency: "EUR")
+        // Langue fixée : le symbole dépend sinon de la langue du Simulateur.
+        let masked = SwipeableInstanceRow.maskedAmount(currency: "EUR", locale: Locale(identifier: "fr_FR"))
         #expect(masked.contains("€"))
         #expect(masked.contains("?"))
         #expect(!masked.contains("0"))

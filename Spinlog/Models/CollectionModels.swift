@@ -1,7 +1,7 @@
 import Foundation
 import OSLog
 
-nonisolated private let collectionDecodingLogger = Logger(subsystem: "com.auralabs.Spinlog", category: "CollectionDecoding")
+nonisolated private let collectionDecodingLogger = Logger(subsystem: AppInfo.logSubsystem, category: "CollectionDecoding")
 
 /// Un dossier de la collection d'un utilisateur (ex: "All", "Vinyle", ...).
 struct CollectionFolder: Codable, Identifiable, Sendable {

@@ -2,7 +2,7 @@ import Foundation
 import OSLog
 import SwiftUI
 
-private let membershipDebugLogger = Logger(subsystem: "com.aurelienscarpa.Spinlog", category: "LibrarySyncDebug")
+private let membershipDebugLogger = Logger(subsystem: AppInfo.logSubsystem, category: "LibrarySyncDebug")
 
 extension Notification.Name {
     static let collectionItemAdded = Notification.Name("com.spinlog.collectionItemAdded")

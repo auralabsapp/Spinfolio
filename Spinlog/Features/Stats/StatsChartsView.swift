@@ -126,7 +126,7 @@ extension StatsView {
                     }
                 }
                 .padding(.bottom, 10)
-                .transition(.opacity.combined(with: .move(edge: .top)))
+                .motionTransition(.opacity.combined(with: .move(edge: .top)))
             }
         }
     }
@@ -236,7 +236,7 @@ extension StatsView {
                 }
             }
             .padding(.bottom, 10)
-            .transition(.opacity.combined(with: .move(edge: .top)))
+            .motionTransition(.opacity.combined(with: .move(edge: .top)))
         }
     }
 

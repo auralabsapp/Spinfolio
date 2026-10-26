@@ -35,6 +35,7 @@ struct LoginActionsView: View {
             }
             .buttonStyle(.glass)
             .disabled(authManager.isAuthenticating)
+            .accessibilityIdentifier("startDemoButton")
 
             if let error = authManager.lastError {
                 Text(error)

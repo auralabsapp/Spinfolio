@@ -41,3 +41,20 @@ extension Animation {
     /// montrer que le toucher est reconnu même si l'élément n'ouvre rien.
     static let shelfTargetPulse = Animation.spring(response: 0.25, dampingFraction: 0.55)
 }
+
+extension View {
+    /// Transition d'apparition et de disparition qui se réduit à un simple fondu quand
+    /// « Réduire les animations » est activé (déplacements et changements d'échelle retirés).
+    func motionTransition(_ transition: AnyTransition) -> some View {
+        modifier(ReducedMotionTransition(transition: transition))
+    }
+}
+
+private struct ReducedMotionTransition: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let transition: AnyTransition
+
+    func body(content: Content) -> some View {
+        content.transition(reduceMotion ? .opacity : transition)
+    }
+}

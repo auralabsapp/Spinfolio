@@ -1,25 +1,16 @@
 import SwiftUI
 
-/// Un disque de la collection, réduit aux seules données nécessaires à l'affichage du widget
-/// (pas de dépendance au cache SwiftData complet, invisible depuis l'extension de widgets).
-struct RandomAlbumSnapshotItem: Codable, Sendable {
-    let releaseId: Int
-    let title: String
-    let artistNames: String
-    let coverURL: String?
-}
-
 /// Pont de données entre l'app et l'extension de widgets (App Group partagé) : l'app y écrit
 /// un instantané léger de la collection à chaque synchronisation complète, et le widget
 /// "Album du jour" le relit pour piocher une pochette sans accès réseau ni au cache SwiftData
 /// de l'app. Le tirage du jour est calculé à partir d'un hash stable de la date plutôt que
 /// stocké, pour éviter tout aller-retour d'écriture depuis l'extension.
 enum WidgetSnapshotStore {
-    private static let appGroupID = "group.com.auralabs.Spinlog"
-    private static let collectionKey = "com.spinlog.widgetCollectionSnapshot"
-    private static let isPremiumKey = "com.spinlog.isPremium"
-    private static let themeAccentKey = "com.spinlog.themeAccentOnDarkRGB"
-    private static let themeAccentOnLightKey = "com.spinlog.themeAccentOnLightRGB"
+    private static let appGroupID = SharedAppGroup.id
+    private static let collectionKey = SharedAppGroup.collectionSnapshotKey
+    private static let isPremiumKey = SharedAppGroup.isPremiumKey
+    private static let themeAccentKey = SharedAppGroup.themeAccentOnDarkKey
+    private static let themeAccentOnLightKey = SharedAppGroup.themeAccentOnLightKey
 
     /// App Group uniquement : un repli sur `.standard` lisait des réglages propres à l'extension,
     /// toujours vides, et sortait de la raison d'accès déclarée dans son `PrivacyInfo` (1C8F.1).

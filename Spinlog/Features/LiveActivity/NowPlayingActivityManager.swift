@@ -9,18 +9,18 @@ import Kingfisher
 import OSLog
 import BackgroundTasks
 
-private let logger = Logger(subsystem: "com.aurelienscarpa.Spinlog", category: "LiveActivity")
+private let logger = Logger(subsystem: AppInfo.logSubsystem, category: "LiveActivity")
 
-public enum ListeningMaxDurationOption: Int, CaseIterable, Identifiable, Sendable {
+enum ListeningMaxDurationOption: Int, CaseIterable, Identifiable, Sendable {
     case thirtyMinutes = 1800
     case fortyFiveMinutes = 2700
     case oneHour = 3600
     case ninetyMinutes = 5400
     case twoHours = 7200
 
-    public var id: Int { rawValue }
+    var id: Int { rawValue }
 
-    public var label: String {
+    var label: String {
         switch self {
         case .thirtyMinutes: return String(localized: "30 minutes (1 face)")
         case .fortyFiveMinutes: return String(localized: "45 minutes")
@@ -41,8 +41,8 @@ public enum ListeningMaxDurationOption: Int, CaseIterable, Identifiable, Sendabl
 final class NowPlayingActivityManager {
     static let shared = NowPlayingActivityManager()
 
-    public static let maxListeningDurationKey = "spinlog_max_listening_duration"
-    public static let defaultDuration: TimeInterval = 3600 // 1 heure
+    static let maxListeningDurationKey = "spinlog_max_listening_duration"
+    static let defaultDuration: TimeInterval = 3600 // 1 heure
 
     private(set) var activeReleaseId: Int?
     private(set) var activeAlbumTitle: String?
@@ -52,7 +52,7 @@ final class NowPlayingActivityManager {
     @ObservationIgnored private var currentActivity: Activity<NowPlayingActivityAttributes>?
     @ObservationIgnored private var autoStopTask: Task<Void, Never>?
 
-    public var maxListeningDuration: TimeInterval {
+    var maxListeningDuration: TimeInterval {
         let val = UserDefaults.standard.double(forKey: Self.maxListeningDurationKey)
         return val > 0 ? val : Self.defaultDuration
     }

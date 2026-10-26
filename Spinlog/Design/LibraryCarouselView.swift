@@ -365,7 +365,7 @@ struct LibraryCarouselView<Item: SortableLibraryItem>: View {
                                             .padding(2)
                                     )
                                     .padding(isRegularDisplay ? 16 : 12)
-                                    .transition(.scale.combined(with: .opacity))
+                                    .motionTransition(.scale.combined(with: .opacity))
                             }
                         }
                 }
@@ -447,7 +447,7 @@ struct LibraryCarouselView<Item: SortableLibraryItem>: View {
             if !isSelecting {
                 quickActions(item)
                     .padding(.top, isRegularDisplay ? 8 : 4)
-                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                    .motionTransition(.opacity.combined(with: .scale(scale: 0.95)))
 
                 // Indicateur de position (ex : "14 sur 85"), juste sous les icônes d'actions.
                 positionIndicator(items: items)

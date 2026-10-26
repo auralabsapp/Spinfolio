@@ -30,10 +30,8 @@ struct SpinlogPaywallView: View {
     @State private var showsAllFeatures: Bool = false
     @State private var purchaseErrorMessage: String? = nil
 
-    /// CLUF standard d'Apple : couvre les conditions d'utilisation de l'app en l'absence de
-    /// conditions personnalisées renseignées dans App Store Connect.
-    private let termsURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
-    private let privacyURL = URL(string: "https://auralabsapp.github.io/Spinfolio/privacy.html")!
+    private let termsURL = AppInfo.termsURL
+    private let privacyURL = AppInfo.privacyURL
 
     /// Identifiant du groupe d'abonnement (voir `Spinlog.storekit` pour les tests locaux — doit
     /// correspondre au groupe réel créé dans App Store Connect pour fonctionner en sandbox/prod).

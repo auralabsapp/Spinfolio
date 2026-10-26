@@ -1,7 +1,7 @@
 import Foundation
 import OSLog
 
-private nonisolated let freshInstallLogger = Logger(subsystem: "com.auralabs.Spinlog", category: "FreshInstall")
+private nonisolated let freshInstallLogger = Logger(subsystem: AppInfo.logSubsystem, category: "FreshInstall")
 
 /// Le Keychain survit à la désinstallation de l'app, contrairement aux `UserDefaults` : après une
 /// réinstallation, l'app retrouvait les jetons Discogs du compte précédent et se croyait connectée

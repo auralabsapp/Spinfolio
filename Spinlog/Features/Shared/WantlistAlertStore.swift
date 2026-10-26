@@ -4,10 +4,10 @@ import UserNotifications
 import BackgroundTasks
 import OSLog
 
-private let logger = Logger(subsystem: "com.aurelienscarpa.Spinlog", category: "WantlistAlerts")
+private let logger = Logger(subsystem: AppInfo.logSubsystem, category: "WantlistAlerts")
 
 /// Identifiant de tâche d'arrière-plan pour la vérification des alertes
-public let wantlistAlertsTaskIdentifier = "com.aurelienscarpa.Spinlog.wantlistAlertsCheck"
+let wantlistAlertsTaskIdentifier = "com.aurelienscarpa.Spinlog.wantlistAlertsCheck"
 
 /// Boîte observable individuelle pour une alerte : permet à `@Observable` de suivre la
 /// mutation d'UNE seule alerte sans invalider tous les lecteurs de `WantlistAlertStore.alerts`.
@@ -366,22 +366,23 @@ final class WantlistAlertStore {
                 updated.currentLowestPriceCurrency = alert.currency
             }
 
-            if let lowestPrice, lowestPrice <= updated.targetPrice {
-                // Ne notifie que si nous n'avons pas déjà notifié pour ce prix ou un prix inférieur.
-                let shouldNotify = updated.lastNotifiedPrice.map { lowestPrice < $0 } ?? true
-                if shouldNotify {
-                    updated.lastNotifiedPrice = lowestPrice
-                    // Enregistré AVANT d'envoyer la notification : si l'app est suspendue juste
-                    // après (tâche de fond expirée), le passage suivant ne la renverra pas.
-                    // Auparavant, rien n'était enregistré avant la fin de toute la boucle.
-                    upsert(updated)
-                    persistAlerts()
-                    await postNotification(for: updated, price: lowestPrice)
-                }
-            } else {
-                // Repassé au-dessus du seuil (ou plus rien en vente) : on réarme l'alerte, pour
-                // qu'une nouvelle baisse sous le seuil soit à nouveau signalée — même à un prix
-                // déjà notifié par le passé.
+            switch Self.priceDecision(
+                lowestPrice: lowestPrice,
+                targetPrice: updated.targetPrice,
+                lastNotifiedPrice: updated.lastNotifiedPrice
+            ) {
+            case .notify:
+                guard let lowestPrice else { break }
+                updated.lastNotifiedPrice = lowestPrice
+                // Enregistré AVANT d'envoyer la notification : si l'app est suspendue juste
+                // après (tâche de fond expirée), le passage suivant ne la renverra pas.
+                // Auparavant, rien n'était enregistré avant la fin de toute la boucle.
+                upsert(updated)
+                persistAlerts()
+                await postNotification(for: updated, price: lowestPrice)
+            case .alreadyNotified:
+                break
+            case .rearm:
                 updated.lastNotifiedPrice = nil
             }
 
@@ -407,6 +408,25 @@ final class WantlistAlertStore {
     }
 
     // MARK: - Envoi de Notification Locale
+
+    /// Suite à donner au prix le plus bas constaté pour une alerte.
+    nonisolated enum PriceDecision: Equatable {
+        /// Sous le seuil, et plus bas que le dernier prix déjà signalé (ou jamais signalé).
+        case notify
+        /// Sous le seuil, mais déjà signalé à ce prix ou plus bas : rien à envoyer.
+        case alreadyNotified
+        /// Repassé au-dessus du seuil (ou plus rien en vente) : l'alerte est réarmée, pour
+        /// qu'une nouvelle baisse sous le seuil soit à nouveau signalée — même à un prix déjà
+        /// notifié par le passé.
+        case rearm
+    }
+
+    /// Règle de déclenchement des alertes de prix, isolée de l'appel réseau pour être testée.
+    nonisolated static func priceDecision(lowestPrice: Double?, targetPrice: Double, lastNotifiedPrice: Double?) -> PriceDecision {
+        guard let lowestPrice, lowestPrice <= targetPrice else { return .rearm }
+        if let lastNotifiedPrice, lowestPrice >= lastNotifiedPrice { return .alreadyNotified }
+        return .notify
+    }
 
     private func postNotification(for alert: WantlistAlert, price: Double) async {
         let content = UNMutableNotificationContent()

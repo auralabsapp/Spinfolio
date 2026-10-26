@@ -34,7 +34,7 @@ struct WantlistRow: View {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .font(.title3)
                     .foregroundStyle(isSelected ? Color.spinlogPink : Color.appTertiaryText)
-                    .transition(.scale.combined(with: .opacity))
+                    .motionTransition(.scale.combined(with: .opacity))
             }
 
             AsyncCoverImage(url: info.thumb ?? info.coverImage, cornerRadius: 8, targetSize: Self.coverSize)

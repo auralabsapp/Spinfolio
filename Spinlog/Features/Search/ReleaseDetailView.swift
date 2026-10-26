@@ -677,7 +677,7 @@ struct ReleaseDetailView: View {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .strokeBorder(Color.spinlogPink.opacity(0.35), lineWidth: 1)
         )
-        .transition(.opacity.combined(with: .scale(scale: 0.98)))
+        .motionTransition(.opacity.combined(with: .scale(scale: 0.98)))
     }
 
     private func hasOtherInfo(for release: Release) -> Bool {

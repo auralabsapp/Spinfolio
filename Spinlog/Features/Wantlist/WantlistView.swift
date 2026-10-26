@@ -17,7 +17,7 @@ struct WantlistView: View {
     @State private var showingTagFilterSheet = false
     @State private var tagStore = TagStore.shared
     @State private var alertStore = WantlistAlertStore.shared
-    @AppStorage("wantlistDisplayMode") private var displayMode: LibraryDisplayMode = .list
+    @AppStorage(DisplayPreferenceKeys.wantlist) private var displayMode: LibraryDisplayMode = .list
     // MARK: - Sélection multiple (suppression en lot), tous modes, à l'image de
     // Collection — sans Déplacer/Tag, qui n'ont pas de sens côté wantlist.
     @State private var isSelecting = false
@@ -66,29 +66,15 @@ struct WantlistView: View {
                     Divider().overlay(Color.appSeparator)
                 }
 
-                Button("Tous les formats") {
-                    viewModel.selectedFormat = nil
-                }
-                ForEach(formats, id: \.self) { format in
-                    Button {
-                        viewModel.selectedFormat = (viewModel.selectedFormat == format ? nil : format)
-                    } label: {
-                        HStack {
-                            Text(format)
-                            if viewModel.selectedFormat == format {
-                                Spacer()
-                                Image(systemName: "checkmark")
-                            }
-                        }
-                    }
-                }
+                LibraryFormatFilterOptions(formats: formats, selectedFormat: $viewModel.selectedFormat)
             } label: {
-                Label(
-                    viewModel.selectedFormat != nil ? "Format : \(viewModel.selectedFormat!)" : "Filtrer par format",
-                    systemImage: viewModel.selectedFormat != nil
+                Label {
+                    viewModel.selectedFormat.map { Text("Format : \($0)") } ?? Text("Filtrer par format")
+                } icon: {
+                    Image(systemName: viewModel.selectedFormat != nil
                         ? "line.3.horizontal.decrease.circle.fill"
-                        : "line.3.horizontal.decrease.circle"
-                )
+                        : "line.3.horizontal.decrease.circle")
+                }
             }
         }
     }
@@ -241,7 +227,7 @@ struct WantlistView: View {
         guard !viewModel.items.isEmpty else { return isShowingSkeleton ? "…" : "" }
         let total = viewModel.items.count
         if viewModel.hasActiveFilters {
-            let filteredCount = viewModel.sections.flatMap(\.items).count
+            let filteredCount = viewModel.visibleItemCount
             return String(localized: "\(filteredCount)/\(total) albums")
         }
         return String(localized: "\(total) albums")
@@ -449,63 +435,27 @@ struct WantlistView: View {
     @ViewBuilder
     private var content: some View {
         if let error = viewModel.errorMessage, viewModel.items.isEmpty {
-            ScrollView {
-                ContentUnavailableView {
-                    Label("Erreur", systemImage: "exclamationmark.triangle")
-                } description: {
-                    Text(error)
-                } actions: {
-                    Button("Réessayer") {
-                        Task { await viewModel.refresh() }
-                    }
-                    .buttonStyle(.glassProminent)
-                }
-                    .frame(maxWidth: .infinity, minHeight: 400)
-            }
-            .libraryRefreshable {
-                await viewModel.refresh()
-            }
+            LibraryErrorState(message: error) { await viewModel.refresh() }
         } else if viewModel.items.isEmpty && !viewModel.isLoading {
-            ScrollView {
-                LibraryEmptyState(
-                    title: "Wantlist vide",
-                    message: "Ajoute des disques que tu recherches depuis la recherche ou le scan.",
-                    symbol: "heart.fill"
-                ) {
-                    Button("Rechercher un disque") {
-                        TabNavigationCoordinator.shared.selectedTab = .search
-                    }
-                    .buttonStyle(.glassProminent)
-                }
-                .frame(maxWidth: .infinity, minHeight: 400)
-            }
-            .libraryRefreshable {
-                await viewModel.refresh()
-            }
+            LibraryEmptyLibraryState(
+                title: "Wantlist vide",
+                message: "Ajoute des disques que tu recherches depuis la recherche ou le scan.",
+                symbol: "heart.fill"
+            ) { await viewModel.refresh() }
         } else if viewModel.sections.isEmpty && !isShowingSkeleton {
-            VStack(spacing: 0) {
-                if viewModel.isOfflineAndStale {
-                    OfflineBannerView(
-                        lastSyncDate: OfflineDownloadManager.shared.lastSyncDate,
-                        itemCount: OfflineDownloadManager.shared.offlineItemCount
-                    )
-                }
+            LibraryNoResultsState(isOfflineAndStale: viewModel.isOfflineAndStale, searchText: viewModel.searchText) {
                 if viewModel.hasActiveFilters {
                     LibraryActiveFiltersBar(
                         selectedFormat: $viewModel.selectedFormat,
                         onClearAll: viewModel.clearFilters
                     )
                 }
-                ContentUnavailableView.search(text: viewModel.searchText)
             }
         } else {
             ScrollViewReader { proxy in
                 VStack(spacing: 0) {
                     if viewModel.isOfflineAndStale {
-                        OfflineBannerView(
-                            lastSyncDate: OfflineDownloadManager.shared.lastSyncDate,
-                            itemCount: OfflineDownloadManager.shared.offlineItemCount
-                        )
+                        LibraryOfflineBanner()
                     }
 
                     switch displayMode {

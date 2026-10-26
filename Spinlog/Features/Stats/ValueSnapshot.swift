@@ -8,12 +8,12 @@ extension Notification.Name {
 }
 
 /// Formate une date en clé de jour stable (fuseau local), utilisée comme identifiant unique pour
-/// garantir au plus un point d'historique par jour, quel que soit le modèle.
-private nonisolated func dayStamp(for date: Date) -> String {
-    let formatter = DateFormatter()
-    formatter.dateFormat = "yyyy-MM-dd"
-    formatter.timeZone = .current
-    return formatter.string(from: date)
+/// garantir au plus un point d'historique par jour, quel que soit le modèle. Composants du
+/// calendrier plutôt qu'un `DateFormatter` créé à chaque appel ; même calendrier et même fuseau
+/// que l'ancien formatter, pour garder les identifiants déjà enregistrés.
+private nonisolated func dayStamp(for date: Date, calendar: Calendar = .current) -> String {
+    let components = calendar.dateComponents([.year, .month, .day], from: date)
+    return String(format: "%04d-%02d-%02d", components.year ?? 0, components.month ?? 0, components.day ?? 0)
 }
 
 /// Point de mesure temporel léger de la valeur globale de la collection (`GET
@@ -50,8 +50,8 @@ final class CollectionSnapshot {
         "\(username)_\(dayStamp(for: date))"
     }
 
-    nonisolated static func dayStamp(for date: Date) -> String {
-        Spinlog.dayStamp(for: date)
+    nonisolated static func dayStamp(for date: Date, calendar: Calendar = .current) -> String {
+        Spinlog.dayStamp(for: date, calendar: calendar)
     }
 }
 

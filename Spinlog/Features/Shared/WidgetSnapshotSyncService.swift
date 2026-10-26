@@ -1,7 +1,7 @@
 import Foundation
 import OSLog
 
-private let widgetSyncLogger = Logger(subsystem: "com.aurelienscarpa.Spinlog", category: "WidgetSnapshotSync")
+private let widgetSyncLogger = Logger(subsystem: AppInfo.logSubsystem, category: "WidgetSnapshotSync")
 
 /// Alimente le widget "Album du jour" dès le lancement de l'app (et au retour au premier plan),
 /// sans dépendre du fait que l'utilisateur visite un onglet particulier (Collection tant qu'il ne
@@ -25,7 +25,7 @@ final class WidgetSnapshotSyncService {
         // Déconnexion ou changement de compte pendant la lecture : le widget a déjà été vidé, il
         // ne doit pas se remplir avec la collection du compte qu'on vient de quitter.
         guard DiscogsAuthManager.shared.username == username else { return }
-        let currentSnapshotCount = WidgetSnapshotStore.loadCollection().count
+        let currentSnapshotCount = WidgetSnapshotStore.collectionCount
         if !localItems.isEmpty && (currentSnapshotCount == 0 || localItems.count > currentSnapshotCount) {
             LocalDataStore.shared.updateWidgetSnapshot(localItems)
             widgetSyncLogger.log("Sync widget : instantané immédiatement alimenté depuis le cache local (\(localItems.count) disques).")
@@ -37,7 +37,7 @@ final class WidgetSnapshotSyncService {
             return
         }
         let isStale = LocalDataStore.shared.isCollectionStale(username: username, folderId: DiscogsConstants.allFolderId)
-        let snapshotIsEmpty = WidgetSnapshotStore.loadCollection().isEmpty
+        let snapshotIsEmpty = WidgetSnapshotStore.collectionCount == 0
         guard isStale || snapshotIsEmpty else {
             widgetSyncLogger.log("Sync widget ignorée : cache déjà frais et instantané non vide.")
             return
@@ -65,11 +65,11 @@ final class WidgetSnapshotSyncService {
                 // n'appartient plus au compte actif et ne doit pas atterrir dans le widget.
                 guard DiscogsAuthManager.shared.username == username else { return }
                 await LocalDataStore.shared.syncCollectionFolder(username: username, folderId: DiscogsConstants.allFolderId, fullItems: items)
-                widgetSyncLogger.log("Sync widget : instantané écrit, \(WidgetSnapshotStore.loadCollection().count) disque(s) désormais visibles par le widget.")
+                widgetSyncLogger.log("Sync widget : instantané écrit, \(WidgetSnapshotStore.collectionCount) disque(s) désormais visibles par le widget.")
             } catch {
                 widgetSyncLogger.error("Sync widget : échec de récupération de la collection — \(error.localizedDescription)")
                 // En cas d'erreur réseau, si le widget n'a toujours rien, repli gracieux sur le cache local
-                if WidgetSnapshotStore.loadCollection().isEmpty {
+                if WidgetSnapshotStore.collectionCount == 0 {
                     let cached = await LocalDataStore.shared.getAllCollectionItems(username: username)
                     if !cached.isEmpty {
                         LocalDataStore.shared.updateWidgetSnapshot(cached)

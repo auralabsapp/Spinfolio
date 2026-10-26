@@ -5,18 +5,7 @@ import Observation
 import OSLog
 import SwiftUI
 
-private let logger = Logger(subsystem: "com.auralabs.Spinlog", category: "AppleMusicPlayback")
-
-/// Informations sur le morceau actuellement en cours de lecture pour le mini-lecteur et le système.
-struct NowPlayingItem: Equatable {
-    let trackID: String
-    let trackTitle: String
-    let artistName: String
-    let albumTitle: String
-    let coverURL: String?
-    let destination: SearchDestination?
-    let sourceTab: AppTab
-}
+private let logger = Logger(subsystem: AppInfo.logSubsystem, category: "AppleMusicPlayback")
 
 /// Lit un titre de la tracklist d'une fiche release : extrait de 30s par défaut, ou morceau
 /// complet si `AppleMusicAccountStore` signale un compte Apple Music connecté avec un abonnement
@@ -268,7 +257,7 @@ final class AppleMusicPlaybackService {
                     try session.setActive(false, options: .notifyOthersOnDeactivation)
                 }
             } catch {
-                Logger(subsystem: "com.spinlog.app", category: "AppleMusicPlayback")
+                Logger(subsystem: AppInfo.logSubsystem, category: "AppleMusicPlayback")
                     .error("Configuration AVAudioSession (active=\(active)) échouée : \(error, privacy: .public)")
             }
         }

@@ -27,7 +27,9 @@ struct SkeletonBlock: View {
     }
 
     private var shimmeringBlock: some View {
-        TimelineView(.animation) { timeline in
+        // 30 images/s suffisent pour un reflet lent (un tour en 2,4 s) : jusqu'à 16 blocs par
+        // page étaient sinon redessinés à chaque image de l'écran (120 Hz en ProMotion).
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
             let t = timeline.date.timeIntervalSinceReferenceDate
                 .truncatingRemainder(dividingBy: duration) / duration
 

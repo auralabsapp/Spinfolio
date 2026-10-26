@@ -1,33 +1,36 @@
 import Foundation
 
-/// Un disque de la collection, réduit aux seules données nécessaires à l'affichage du widget
-/// (pas de dépendance au cache SwiftData complet, invisible depuis l'extension de widgets).
-struct RandomAlbumSnapshotItem: Codable, Sendable {
-    let releaseId: Int
-    let title: String
-    let artistNames: String
-    let coverURL: String?
-}
-
 /// Pont de données entre l'app et l'extension de widgets (App Group partagé) : l'app y écrit
 /// un instantané léger de la collection à chaque synchronisation complète, et le widget
 /// "Album du jour" le relit pour piocher une pochette sans accès réseau ni au cache SwiftData
 /// de l'app. Le tirage du jour est calculé à partir d'un hash stable de la date plutôt que
 /// stocké, pour éviter tout aller-retour d'écriture depuis l'extension.
 enum WidgetSnapshotStore {
-    private static let collectionKey = "com.spinlog.widgetCollectionSnapshot"
-    private static let isPremiumKey = PremiumConstants.isPremiumDefaultsKey
-    /// Même clé que dans la copie de ce fichier côté extension (`SpinlogWidgets/`).
-    private static let themeAccentKey = "com.spinlog.themeAccentOnDarkRGB"
-    private static let themeAccentOnLightKey = "com.spinlog.themeAccentOnLightRGB"
+    private static let collectionKey = SharedAppGroup.collectionSnapshotKey
+    private static let isPremiumKey = SharedAppGroup.isPremiumKey
+    private static let themeAccentKey = SharedAppGroup.themeAccentOnDarkKey
+    private static let themeAccentOnLightKey = SharedAppGroup.themeAccentOnLightKey
 
     private static var defaults: UserDefaults {
         UserDefaults(suiteName: AppGroup.id) ?? .standard
     }
 
+    /// Nombre de disques de l'instantané, gardé en mémoire après la première lecture : la synchro
+    /// de fond le consulte à chaque page reçue, et le décodage complet du JSON était refait à
+    /// chaque fois. Seule l'app écrit l'instantané (via `saveCollection`), qui tient ce compteur à jour.
+    private static var cachedCollectionCount: Int?
+
+    static var collectionCount: Int {
+        if let cachedCollectionCount { return cachedCollectionCount }
+        let count = loadCollection().count
+        cachedCollectionCount = count
+        return count
+    }
+
     static func saveCollection(_ items: [RandomAlbumSnapshotItem]) {
         guard let data = try? JSONEncoder().encode(items) else { return }
         defaults.set(data, forKey: collectionKey)
+        cachedCollectionCount = items.count
     }
 
     static func loadCollection() -> [RandomAlbumSnapshotItem] {

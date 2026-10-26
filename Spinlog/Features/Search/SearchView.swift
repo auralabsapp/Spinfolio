@@ -83,7 +83,7 @@ struct SearchView: View {
                             .foregroundStyle(Color.appTertiaryText)
                             .lineLimit(1)
                             .id(suggestionIndex)
-                            .transition(.asymmetric(
+                            .motionTransition(.asymmetric(
                                 insertion: .move(edge: .bottom).combined(with: .opacity),
                                 removal: .move(edge: .top).combined(with: .opacity)
                             ))
@@ -199,7 +199,7 @@ struct SearchView: View {
     private var scopePicker: some View {
         Picker("Filtrer", selection: $viewModel.scope) {
             ForEach(SearchScope.allCases) { scope in
-                Text(scope.rawValue).tag(scope)
+                Text(scope.title).tag(scope)
             }
         }
         .pickerStyle(.segmented)

@@ -92,7 +92,7 @@ struct HorizontalSectionIndexBar: View {
                                 .shadow(color: Color.buttonPinkBottom.opacity(0.40), radius: 8, y: 3)
                         )
                         .offset(x: bubbleX, y: -56)
-                        .transition(.scale.combined(with: .opacity))
+                        .motionTransition(.scale.combined(with: .opacity))
                 }
             }
             .animation(.spring(response: 0.25, dampingFraction: 0.8), value: dragToken)

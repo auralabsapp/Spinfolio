@@ -70,12 +70,12 @@ actor CurrencyConversionService {
         guard from != to else { return 1.0 }
 
         let key = "\(from)_\(to)"
-        if let cached = cache[key], Date().timeIntervalSince(cached.fetchedAt) < cacheTTL {
-            return cached.rate
+        let now = Date()
+        if let fresh = Self.freshRate(cache[key].map { ($0.rate, $0.fetchedAt) }, now: now, ttl: cacheTTL) {
+            return fresh
         }
 
-        let recentlyFailed = lastFailureAt[key].map { Date().timeIntervalSince($0) < failureRetryDelay } ?? false
-        if !recentlyFailed {
+        if Self.shouldFetch(lastFailureAt: lastFailureAt[key], now: now, retryDelay: failureRetryDelay) {
             if let fetched = await fetchRate(from: from, to: to) {
                 cache[key] = CachedRate(rate: fetched, fetchedAt: Date())
                 lastFailureAt[key] = nil
@@ -85,11 +85,26 @@ actor CurrencyConversionService {
             lastFailureAt[key] = Date()
         }
 
-        // Un taux réel expiré reste plus juste que la table figée.
-        if let stale = cache[key] {
-            return stale.rate
-        }
-        return Self.staticFallbackRate(from: from, to: to)
+        return Self.fallbackRate(staleRate: cache[key]?.rate, from: from, to: to)
+    }
+
+    // MARK: - Choix du taux (fonctions pures, testées dans `CurrencyConversionTests`)
+
+    /// Taux en cache encore valide (moins de `ttl`), sinon `nil`.
+    nonisolated static func freshRate(_ cached: (rate: Double, fetchedAt: Date)?, now: Date, ttl: TimeInterval) -> Double? {
+        guard let cached, now.timeIntervalSince(cached.fetchedAt) < ttl else { return nil }
+        return cached.rate
+    }
+
+    /// Faut-il interroger l'API ? Pas dans les `retryDelay` qui suivent un échec pour cette paire.
+    nonisolated static func shouldFetch(lastFailureAt: Date?, now: Date, retryDelay: TimeInterval) -> Bool {
+        guard let lastFailureAt else { return true }
+        return now.timeIntervalSince(lastFailureAt) >= retryDelay
+    }
+
+    /// Taux de secours : un taux réel expiré reste plus juste que la table figée.
+    nonisolated static func fallbackRate(staleRate: Double?, from: String, to: String) -> Double {
+        staleRate ?? staticFallbackRate(from: from, to: to)
     }
 
     func convert(_ amount: Double, from: String, to: String) async -> Double {
@@ -116,7 +131,7 @@ actor CurrencyConversionService {
 
     // MARK: - Repli statique
 
-    private static func staticFallbackRate(from: String, to: String) -> Double {
+    nonisolated static func staticFallbackRate(from: String, to: String) -> Double {
         guard let fromToUSD = staticRatesToUSD[from], let toToUSD = staticRatesToUSD[to], toToUSD > 0 else {
             return 1.0
         }

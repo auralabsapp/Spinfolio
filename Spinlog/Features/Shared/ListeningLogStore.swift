@@ -3,12 +3,12 @@ import Observation
 
 /// Représente une session d'écoute horodatée rattachée à une release Discogs.
 /// `nonisolated` : simple valeur, construite aussi par la génération pure du journal de démo.
-nonisolated public struct ListeningSession: Codable, Identifiable, Sendable, Hashable {
-    public let id: UUID
-    public let releaseId: Int
-    public let timestamp: Date
+nonisolated struct ListeningSession: Codable, Identifiable, Sendable, Hashable {
+    let id: UUID
+    let releaseId: Int
+    let timestamp: Date
 
-    public init(id: UUID = UUID(), releaseId: Int, timestamp: Date = Date()) {
+    init(id: UUID = UUID(), releaseId: Int, timestamp: Date = Date()) {
         self.id = id
         self.releaseId = releaseId
         self.timestamp = timestamp
@@ -159,16 +159,40 @@ final class ListeningLogStore {
     /// Applique une session reçue d'iCloud (ajout ou mise à jour). N'écrit qu'en local : ne
     /// redéclenche pas d'envoi vers CloudKit, cette donnée en vient déjà.
     func applyRemoteSession(_ session: ListeningSession) {
-        if let index = sessions.firstIndex(where: { $0.id == session.id }) {
-            sessions[index] = session
-        } else {
-            sessions.append(session)
-        }
         // En lot, le tri est fait une seule fois à la fin (`performBatchUpdate`).
-        if batchDepth == 0 {
-            sessions.sort { $0.timestamp > $1.timestamp }
-        }
+        sessions = Self.applying(session, to: sessions, sorted: batchDepth == 0)
         persist()
+    }
+
+    /// Ajoute une session reçue ou remplace celle de même identifiant (recevoir deux fois la
+    /// même session n'en crée pas de doublon). Fonction pure, testée dans `ListeningLogMergeTests`.
+    nonisolated static func applying(_ session: ListeningSession, to sessions: [ListeningSession], sorted: Bool) -> [ListeningSession] {
+        var result = sessions
+        if let index = result.firstIndex(where: { $0.id == session.id }) {
+            result[index] = session
+        } else {
+            result.append(session)
+        }
+        if sorted {
+            result.sort { $0.timestamp > $1.timestamp }
+        }
+        return result
+    }
+
+    /// Fusion d'une sauvegarde restaurée : les sessions déjà présentes sont gardées telles
+    /// quelles, seules les nouvelles sont ajoutées (et renvoyées pour être poussées vers iCloud).
+    nonisolated static func mergingRestored(
+        _ imported: [ListeningSession],
+        into sessions: [ListeningSession]
+    ) -> (sessions: [ListeningSession], addedIds: [UUID]) {
+        var existingIds = Set(sessions.map(\.id))
+        var merged = sessions
+        var addedIds: [UUID] = []
+        for session in imported where existingIds.insert(session.id).inserted {
+            merged.append(session)
+            addedIds.append(session.id)
+        }
+        return (merged.sorted { $0.timestamp > $1.timestamp }, addedIds)
     }
 
     /// Applique une suppression de session reçue d'iCloud. N'écrit qu'en local.
@@ -181,19 +205,8 @@ final class ListeningLogStore {
 
     /// Remplace ou fusionne les sessions lors d'une restauration de sauvegarde.
     func restoreSessions(_ importedSessions: [ListeningSession]) {
-        var existingSet = Set(sessions.map(\.id))
-        var merged = sessions
-        var addedIds: [UUID] = []
-
-        for session in importedSessions {
-            if !existingSet.contains(session.id) {
-                merged.append(session)
-                existingSet.insert(session.id)
-                addedIds.append(session.id)
-            }
-        }
-
-        self.sessions = merged.sorted { $0.timestamp > $1.timestamp }
+        let (merged, addedIds) = Self.mergingRestored(importedSessions, into: sessions)
+        self.sessions = merged
         persist()
         // Sans ça, les sessions restaurées restaient sur cet appareil et n'atteignaient jamais
         // iCloud ni les autres appareils.

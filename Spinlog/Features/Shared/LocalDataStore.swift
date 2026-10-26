@@ -3,8 +3,8 @@ import SwiftData
 import WidgetKit
 import OSLog
 
-let widgetSnapshotLogger = Logger(subsystem: "com.aurelienscarpa.Spinlog", category: "WidgetSnapshotSync")
-let localDataStoreLogger = Logger(subsystem: "com.aurelienscarpa.Spinlog", category: "LocalDataStore")
+let widgetSnapshotLogger = Logger(subsystem: AppInfo.logSubsystem, category: "WidgetSnapshotSync")
+let localDataStoreLogger = Logger(subsystem: AppInfo.logSubsystem, category: "LocalDataStore")
 
 /// Gestionnaire de persistance locale basé sur SwiftData avec règle de TTL de 6 heures.
 @MainActor

@@ -1,7 +1,7 @@
 import Foundation
 import OSLog
 
-private let nowPlayingLogger = Logger(subsystem: "com.auralabs.Spinlog", category: "NowPlaying")
+private let nowPlayingLogger = Logger(subsystem: AppInfo.logSubsystem, category: "NowPlaying")
 
 /// Charge l'album de la lecture en cours pour la fenêtre plein écran. Passe par
 /// `DiscogsAPIClient` (cache, limiteur et mode démo compris), jamais depuis la vue.

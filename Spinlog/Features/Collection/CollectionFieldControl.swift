@@ -175,7 +175,7 @@ struct CollectionFieldControl: View {
                 .font(.title3)
                 .foregroundStyle(.green)
                 .padding(.leading, 6)
-                .transition(.scale.combined(with: .opacity))
+                .motionTransition(.scale.combined(with: .opacity))
         } else if isDirty {
             Button {
                 isFocused = false
@@ -187,7 +187,7 @@ struct CollectionFieldControl: View {
             }
             .buttonStyle(.plain)
             .padding(.leading, 6)
-            .transition(.scale.combined(with: .opacity))
+            .motionTransition(.scale.combined(with: .opacity))
             .accessibilityLabel("Valider et enregistrer ce champ sur Discogs")
         }
     }

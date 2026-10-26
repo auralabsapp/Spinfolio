@@ -144,7 +144,7 @@ struct YearHistogramChart: View {
                         ))
                         .shadow(color: Color.buttonPinkBottom.opacity(0.35), radius: 4, y: 1.5)
                 )
-                .transition(.opacity.combined(with: .scale(scale: 0.9)))
+                .motionTransition(.opacity.combined(with: .scale(scale: 0.9)))
         }
     }
 }

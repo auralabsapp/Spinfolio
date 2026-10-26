@@ -52,7 +52,7 @@ final class DemoModeUITests: XCTestCase {
     @MainActor
     func testLoginScreenOffersDemoAndOpensSampleCollection() {
         launch("-uiTestSignedOut")
-        let demoButton = app.buttons["Explorer avec une collection de démo"]
+        let demoButton = app.buttons["startDemoButton"]
         XCTAssertTrue(demoButton.waitForExistence(timeout: 10))
 
         demoButton.tap()
@@ -105,13 +105,13 @@ final class DemoModeUITests: XCTestCase {
         XCTAssertTrue(firstLibraryItem.waitForExistence(timeout: 15))
 
         openTab("Réglages")
-        let exitButton = app.buttons["Quitter le mode démo"]
+        let exitButton = app.buttons["settingsExitDemoButton"]
         scrollTo(exitButton)
         XCTAssertTrue(exitButton.waitForExistence(timeout: 5))
         exitButton.tap()
 
         // L'écran d'accueil prend tout l'écran (barre d'onglets comprise) : plus d'onglet à ouvrir.
-        XCTAssertTrue(app.buttons["Explorer avec une collection de démo"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["startDemoButton"].waitForExistence(timeout: 10))
     }
 
     @MainActor
@@ -124,14 +124,14 @@ final class DemoModeUITests: XCTestCase {
         bannerExit.tap()
 
         // Sortie directe, sans confirmation : retour à l'écran d'accueil.
-        XCTAssertTrue(app.buttons["Explorer avec une collection de démo"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["startDemoButton"].waitForExistence(timeout: 10))
         XCTAssertFalse(bannerExit.exists)
     }
 
     @MainActor
     func testEnteringDemoAlwaysLandsOnCollection() {
         launch("-uiTestSignedOut")
-        let demoButton = app.buttons["Explorer avec une collection de démo"]
+        let demoButton = app.buttons["startDemoButton"]
         XCTAssertTrue(demoButton.waitForExistence(timeout: 10))
         demoButton.tap()
         XCTAssertTrue(firstLibraryItem.waitForExistence(timeout: 15))

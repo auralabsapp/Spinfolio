@@ -3,7 +3,7 @@ import Observation
 import SwiftUI
 import OSLog
 
-private let collectionDebugLogger = Logger(subsystem: "com.aurelienscarpa.Spinlog", category: "LibrarySyncDebug")
+private let collectionDebugLogger = Logger(subsystem: AppInfo.logSubsystem, category: "LibrarySyncDebug")
 
 @Observable
 @MainActor
@@ -104,8 +104,7 @@ final class CollectionViewModel {
     }
 
     var hasActiveFilters: Bool {
-        !selectedTags.isEmpty ||
-        (selectedFormat != nil && !selectedFormat!.isEmpty)
+        !selectedTags.isEmpty || !(selectedFormat ?? "").isEmpty
     }
 
     func clearFilters() {
@@ -202,6 +201,7 @@ final class CollectionViewModel {
 
         addLibraryObserver(for: .tagsChanged) { [weak self] in
             self?.recomputeSections()
+            self?.recomputeTagsIndex()
         }
 
         // Action hors ligne refusée par Discogs : l'affichage optimiste est faux, on recharge.
@@ -283,54 +283,41 @@ final class CollectionViewModel {
         recomputeSections()
     }
 
-    /// Index `releaseId -> exemplaires` recalculé une seule fois par changement réel de `items`
-    /// (voir `recomputeSections()` juste au-dessus pour la même logique appliquée au tri), plutôt
-    /// que refiltrer toute la collection à chaque ligne affichée dans `copyBadge(for:)`.
-    private var copiesByReleaseId: [Int: [CollectionItem]] = [:]
+    /// Badge « Ex. 2/3 » de chaque exemplaire possédé en plusieurs fois, par `id` d'exemplaire.
+    /// Recalculé une seule fois par changement réel de `items` (comme `sections`) : la vue le
+    /// relisait auparavant en reparcourant toute la collection à chaque passage de `body`, y
+    /// compris à chaque changement de section pendant le défilement.
+    private(set) var copyBadgesByItemId: [Int: String] = [:]
+
+    /// Tags de chaque exemplaire affiché, par `instanceId`, recalculés quand `items` ou les tags
+    /// changent. Les lignes reçoivent ce dictionnaire plutôt que de lire `TagStore` elles-mêmes :
+    /// lu depuis CHAQUE ligne, son dictionnaire observé faisait refaire le rendu de toutes les
+    /// lignes visibles dès qu'un seul disque changeait de tag.
+    private(set) var tagsByInstanceId: [Int: [String]] = [:]
 
     private func recomputeCopiesIndex() {
-        copiesByReleaseId = Dictionary(grouping: items, by: { $0.releaseId })
+        copyBadgesByItemId = Self.copyBadges(for: items)
+        recomputeTagsIndex()
     }
 
-    /// Renvoie un badge si l'utilisateur possède plusieurs exemplaires de ce disque
-    func copyBadge(for item: CollectionItem) -> String? {
-        guard let copies = copiesByReleaseId[item.releaseId], copies.count > 1 else { return nil }
-        let index = (copies.firstIndex(where: { $0.id == item.id }) ?? 0) + 1
-        return "Ex. \(index)/\(copies.count)"
-    }
-
-    /// Même résultat que `copyBadge(for:)` appelé item par item, mais en une seule lecture de
-    /// `copiesByReleaseId` : `copiesByReleaseId` est un dictionnaire, donc une lecture de l'un de
-    /// ses éléments crée une dépendance Observation sur sa valeur ENTIÈRE. Appeler `copyBadge(for:)`
-    /// depuis la closure de chaque ligne visible (comme avant) en faisait donc un observateur
-    /// indépendant de tout le dictionnaire — à chaque page reçue pendant la synchro de fond
-    /// (qui réassigne `copiesByReleaseId` via `recomputeCopiesIndex()`), SwiftUI réinvalidait
-    /// chaque ligne séparément au lieu d'une seule fois pour toute la vue-liste. À appeler une
-    /// fois par passage de rendu (voir `CollectionView.collectionViewList`/`collectionViewCarousel`),
-    /// puis indexer le dictionnaire résultat (une valeur captée, pas une lecture Observation) dans
-    /// chaque ligne.
-    func copyBadges(for items: [CollectionItem]) -> [Int: String] {
-        var result: [Int: String] = [:]
-        for item in items {
-            if let badge = copyBadge(for: item) {
-                result[item.id] = badge
-            }
-        }
-        return result
-    }
-
-    /// Même principe que `copyBadges(for:)` : calculé une seule fois pour tout le passage de
-    /// rendu et renvoyé comme dictionnaire simple, plutôt que chaque `CollectionRow` ne lise
-    /// `TagStore.shared` elle-même. `TagStore.tags(for:releaseId:)` lit en interne un dictionnaire
-    /// entier stocké comme propriété `@Observable` — y accéder depuis le corps de CHAQUE ligne
-    /// établissait une dépendance sur ce dictionnaire complet, donc modifier le tag d'UN seul
-    /// disque invalidait et refaisait le rendu de TOUTES les lignes visibles.
-    func tagsByInstance(for items: [CollectionItem]) -> [Int: [String]] {
+    private func recomputeTagsIndex() {
         var result: [Int: [String]] = [:]
         for item in items {
             let tags = TagStore.shared.tags(for: item.instanceId, releaseId: item.releaseId)
             if !tags.isEmpty {
                 result[item.instanceId] = tags
+            }
+        }
+        tagsByInstanceId = result
+    }
+
+    /// Badge « Ex. n/total » des disques possédés en plusieurs exemplaires, dans l'ordre de
+    /// `items`. Fonction pure, testée dans `CollectionCachesTests`.
+    nonisolated static func copyBadges(for items: [CollectionItem]) -> [Int: String] {
+        var result: [Int: String] = [:]
+        for copies in Dictionary(grouping: items, by: \.releaseId).values where copies.count > 1 {
+            for (index, copy) in copies.enumerated() {
+                result[copy.id] = "Ex. \(index + 1)/\(copies.count)"
             }
         }
         return result
@@ -354,7 +341,16 @@ final class CollectionViewModel {
     /// Éléments filtrés par la recherche et les filtres actifs, regroupés par section dans un ordre
     /// rigoureusement déterministe (même en cache ou hors-ligne). Recalculé par
     /// `recomputeSections()` uniquement quand `items`/tri/filtres changent réellement.
-    private(set) var sections: [(key: String, items: [CollectionItem])] = []
+    private(set) var sections: [(key: String, items: [CollectionItem])] = [] {
+        didSet {
+            indexEntries = libraryIndexEntries(for: sections, sort: sortOption)
+            visibleItemCount = sections.reduce(0) { $0 + $1.items.count }
+        }
+    }
+    /// Jetons de la barre de navigation rapide et nombre de disques affichés, recalculés avec
+    /// `sections` plutôt qu'à chaque lecture (plusieurs par passage de `body`).
+    private(set) var indexEntries: [(token: String, sectionKey: String)] = []
+    private(set) var visibleItemCount = 0
     /// Vrai pendant le calcul détaché des sections (voir `recomputeSections`) : `sections` est
     /// alors vide ou périmé sans que la recherche soit en cause. Au lancement, la vue affiche un
     /// indicateur de chargement plutôt que « Aucun résultat » le temps du premier tri.
@@ -391,21 +387,6 @@ final class CollectionViewModel {
                 isComputingSections = false
             }
         )
-    }
-
-    /// Jetons pour la barre de navigation rapide sur le bord droit : lettres pour un tri
-    /// alphabétique, années sur 2 chiffres pour un tri par date d'ajout. Chaque jeton est
-    /// associé à la clé de la première section correspondante, pour y faire défiler la liste.
-    var indexEntries: [(token: String, sectionKey: String)] {
-        var seenTokens = Set<String>()
-        var result: [(token: String, sectionKey: String)] = []
-        for section in sections {
-            let token = indexToken(for: section)
-            guard !seenTokens.contains(token) else { continue }
-            seenTokens.insert(token)
-            result.append((token, section.key))
-        }
-        return result
     }
 
     /// Jeton (lettre ou année sur 2 chiffres) pour la 1re ligne de l'en-tête d'une section,
@@ -539,7 +520,7 @@ final class CollectionViewModel {
 
         // En disques distincts, comme l'instantané du widget (dédoublonné par release) : comparer
         // le nombre d'exemplaires était toujours vrai dès qu'un disque existait en double.
-        let currentSnapshotCount = WidgetSnapshotStore.loadCollection().count
+        let currentSnapshotCount = WidgetSnapshotStore.collectionCount
         let cachedReleaseCount = Set(cachedItems.map(\.releaseId)).count
         if !cachedItems.isEmpty && (currentSnapshotCount == 0 || cachedReleaseCount > currentSnapshotCount) {
             localStore.updateWidgetSnapshot(cachedItems)

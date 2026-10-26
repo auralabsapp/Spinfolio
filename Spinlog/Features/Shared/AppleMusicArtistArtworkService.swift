@@ -2,7 +2,7 @@ import Foundation
 import MusicKit
 import OSLog
 
-private let logger = Logger(subsystem: "com.auralabs.Spinlog", category: "AppleMusicArtistArtwork")
+private let logger = Logger(subsystem: AppInfo.logSubsystem, category: "AppleMusicArtistArtwork")
 
 /// Les 4 sections de discographie qu'Apple Music distingue nativement pour un artiste —
 /// contrairement à Discogs, qui ne donne aucun moyen fiable de séparer un album studio d'un

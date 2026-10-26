@@ -2,7 +2,7 @@ import Foundation
 import Observation
 import OSLog
 
-nonisolated private let gradeLogger = Logger(subsystem: "com.auralabs.Spinlog", category: "Grades")
+nonisolated private let gradeLogger = Logger(subsystem: AppInfo.logSubsystem, category: "Grades")
 
 /// Un grade qui vient d'être franchi et qu'il faut fêter (voir `GradeCelebrationView`).
 struct GradeCelebration: Identifiable, Equatable {

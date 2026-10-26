@@ -10,7 +10,7 @@ struct CollectionView: View {
     @State private var tabCoordinator = TabNavigationCoordinator.shared
     @State private var editingItem: CollectionItem?
     @State private var shelfTargetRelease: Release?
-    @AppStorage("collectionDisplayMode") private var displayMode: LibraryDisplayMode = .list
+    @AppStorage(DisplayPreferenceKeys.collection) private var displayMode: LibraryDisplayMode = .list
     @State private var highlightedItemId: Int? = nil
     @State private var randomScrollTrigger: ScrollTargetTrigger? = nil
     @State private var highlightTask: Task<Void, Never>? = nil
@@ -70,7 +70,7 @@ struct CollectionView: View {
                                 Image(systemName: "shuffle")
                             }
                             .accessibilityLabel("Disque au hasard")
-                            .disabled(viewModel.sections.flatMap(\.items).isEmpty)
+                            .disabled(viewModel.visibleItemCount == 0)
                         }
                     }
 
@@ -249,27 +249,13 @@ struct CollectionView: View {
             let formats = viewModel.availableFormats
             if !formats.isEmpty {
                 Menu {
-                    Button("Tous les formats") {
-                        viewModel.selectedFormat = nil
-                    }
-                    ForEach(formats, id: \.self) { format in
-                        Button {
-                            viewModel.selectedFormat = (viewModel.selectedFormat == format ? nil : format)
-                        } label: {
-                            HStack {
-                                Text(format)
-                                if viewModel.selectedFormat == format {
-                                    Spacer()
-                                    Image(systemName: "checkmark")
-                                }
-                            }
-                        }
-                    }
+                    LibraryFormatFilterOptions(formats: formats, selectedFormat: $viewModel.selectedFormat)
                 } label: {
-                    Label(
-                        viewModel.selectedFormat != nil ? "Format : \(viewModel.selectedFormat!)" : "Filtrer par format",
-                        systemImage: "square.stack.3d.up"
-                    )
+                    Label {
+                        viewModel.selectedFormat.map { Text("Format : \($0)") } ?? Text("Filtrer par format")
+                    } icon: {
+                        Image(systemName: "square.stack.3d.up")
+                    }
                 }
             }
         } label: {
@@ -294,7 +280,7 @@ struct CollectionView: View {
                 } label: {
                     Label("Disque au hasard", systemImage: "shuffle")
                 }
-                .disabled(viewModel.sections.flatMap(\.items).isEmpty)
+                .disabled(viewModel.visibleItemCount == 0)
             }
 
             Button {
@@ -389,9 +375,9 @@ struct CollectionView: View {
 
     @ViewBuilder
     private var collectionViewCarousel: some View {
-        // Calculé une seule fois pour tout ce passage de rendu plutôt qu'un appel par ligne
-        // visible — voir `CollectionViewModel.copyBadges(for:)`.
-        let copyBadges = viewModel.copyBadges(for: viewModel.items)
+        // Lu une seule fois pour tout ce passage de rendu plutôt qu'une lecture observée par
+        // ligne visible — voir `CollectionViewModel.copyBadgesByItemId`.
+        let copyBadges = viewModel.copyBadgesByItemId
         LibraryCarouselView<CollectionItem>(
             sections: viewModel.sections,
             indexEntries: viewModel.indexEntries,
@@ -402,84 +388,32 @@ struct CollectionView: View {
             onLoadMore: { await viewModel.loadMoreIfNeeded(current: $0) },
             scrollToTrigger: randomScrollTrigger,
             secondaryBadge: { item in
-                AnyView(
-                    HStack(spacing: 8) {
-                        if let badge = copyBadges[item.id] {
-                            Text(badge)
-                                .font(isRegularDisplay ? .footnote.bold() : .caption2.bold())
-                                .padding(.horizontal, isRegularDisplay ? 9 : 7)
-                                .padding(.vertical, isRegularDisplay ? 3 : 2)
-                                .background(Color.primary.opacity(0.08), in: Capsule())
-                        }
-
-                        if item.rating > 0 {
-                            HStack(spacing: 3) {
-                                Image(systemName: "star.fill")
-                                    .font(.inlineIcon)
-                                    .foregroundStyle(Color.orange)
-                                Text("\(item.rating)")
-                                    .font(isRegularDisplay ? .footnote.bold() : .caption2.bold())
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                    .padding(.top, 2)
-                )
+                AnyView(CollectionCarouselBadges(
+                    copyBadge: copyBadges[item.id],
+                    rating: item.rating,
+                    isRegularDisplay: isRegularDisplay
+                ))
             },
             quickActions: { item in
-                AnyView(
-                    HStack(spacing: isRegularDisplay ? 16 : 12) {
-                        // Écoute en direct (Start / Stop)
-                        Button {
-                            if activityManager.isPlaying(releaseId: item.releaseId) {
-                                stopListening(for: item)
-                            } else {
-                                triggerListeningLog(for: item)
-                            }
-                        } label: {
-                            Image(systemName: activityManager.isPlaying(releaseId: item.releaseId) ? "stop.fill" : "opticaldisc.fill")
-                                .font(.system(size: isRegularDisplay ? 17 : 14, weight: .bold))
-                                .foregroundStyle(activityManager.isPlaying(releaseId: item.releaseId) ? .white : Color.spinlogPink)
-                                .frame(width: isRegularDisplay ? 46 : 38, height: isRegularDisplay ? 46 : 38)
-                                .background(
-                                    activityManager.isPlaying(releaseId: item.releaseId) ? Color(uiColor: .systemGray) : Color.spinlogPinkBadge,
-                                    in: Circle()
-                                )
+                AnyView(CollectionCarouselQuickActions(
+                    isPlaying: activityManager.isPlaying(releaseId: item.releaseId),
+                    isRegularDisplay: isRegularDisplay,
+                    onToggleListening: {
+                        if activityManager.isPlaying(releaseId: item.releaseId) {
+                            stopListening(for: item)
+                        } else {
+                            triggerListeningLog(for: item)
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(activityManager.isPlaying(releaseId: item.releaseId) ? Text("Arrêter l'écoute") : Text("J'écoute ce disque sur la platine"))
-
-                        // Où ranger
-                        Button {
-                            if !premiumStore.isPremium {
-                                showingPremiumSheet = true
-                            } else {
-                                shelfTargetRelease = Release(from: item)
-                            }
-                        } label: {
-                            Image(systemName: "books.vertical.fill")
-                                .font(.system(size: isRegularDisplay ? 17 : 14, weight: .semibold))
-                                .foregroundStyle(.indigo)
-                                .frame(width: isRegularDisplay ? 46 : 38, height: isRegularDisplay ? 46 : 38)
-                                .background(Color.indigo.opacity(0.12), in: Circle())
+                    },
+                    onShowShelf: {
+                        if !premiumStore.isPremium {
+                            showingPremiumSheet = true
+                        } else {
+                            shelfTargetRelease = Release(from: item)
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Où ranger ce disque")
-
-                        // Modifier notes/note
-                        Button {
-                            editingItem = item
-                        } label: {
-                            Image(systemName: "pencil")
-                                .font(.system(size: isRegularDisplay ? 17 : 14, weight: .semibold))
-                                .foregroundStyle(Color.appSecondaryText)
-                                .frame(width: isRegularDisplay ? 46 : 38, height: isRegularDisplay ? 46 : 38)
-                                .background(Color.primary.opacity(0.06), in: Circle())
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Modifier la note et les commentaires")
-                    }
-                )
+                    },
+                    onEdit: { editingItem = item }
+                ))
             },
             contextMenuContent: { item in collectionContextMenu(for: item) }
         )
@@ -611,10 +545,10 @@ struct CollectionView: View {
 
     @ViewBuilder
     private var collectionViewList: some View {
-        // Calculé une seule fois pour tout ce passage de rendu plutôt qu'un appel par ligne
-        // visible — voir `CollectionViewModel.copyBadges(for:)`/`tagsByInstance(for:)`.
-        let copyBadges = viewModel.copyBadges(for: viewModel.items)
-        let allTags = viewModel.tagsByInstance(for: viewModel.items)
+        // Lus une seule fois pour tout ce passage de rendu plutôt qu'une lecture observée par
+        // ligne visible — voir `CollectionViewModel.copyBadgesByItemId`/`tagsByInstanceId`.
+        let copyBadges = viewModel.copyBadgesByItemId
+        let allTags = viewModel.tagsByInstanceId
         LibraryListView<CollectionItem>(
             sections: viewModel.sections,
             isLoading: isShowingSkeleton,
@@ -716,7 +650,7 @@ struct CollectionView: View {
         // plus ensuite.
         guard let currentFolder else { return isShowingSkeleton ? currentFolderName : "" }
         if viewModel.hasActiveFilters {
-            let filteredCount = viewModel.sections.flatMap(\.items).count
+            let filteredCount = viewModel.visibleItemCount
             return String(localized: "\(currentFolder.name) · \(filteredCount)/\(currentFolder.count) albums")
         }
         return String(localized: "\(currentFolder.name) · \(currentFolder.count) albums")
@@ -726,47 +660,15 @@ struct CollectionView: View {
     private var content: some View {
 
         if let error = viewModel.errorMessage, viewModel.items.isEmpty {
-            ScrollView {
-                ContentUnavailableView {
-                    Label("Erreur", systemImage: "exclamationmark.triangle")
-                } description: {
-                    Text(error)
-                } actions: {
-                    Button("Réessayer") {
-                        Task { await viewModel.refresh() }
-                    }
-                    .buttonStyle(.glassProminent)
-                }
-                    .frame(maxWidth: .infinity, minHeight: 400)
-            }
-            .libraryRefreshable {
-                await viewModel.refresh()
-            }
+            LibraryErrorState(message: error) { await viewModel.refresh() }
         } else if viewModel.items.isEmpty && !viewModel.isLoading && !viewModel.isAwaitingFirstLoad {
-            ScrollView {
-                LibraryEmptyState(
-                    title: "Collection vide",
-                    message: "Ajoute des disques depuis la recherche ou le scan.",
-                    symbol: "square.stack.fill"
-                ) {
-                    Button("Rechercher un disque") {
-                        TabNavigationCoordinator.shared.selectedTab = .search
-                    }
-                    .buttonStyle(.glassProminent)
-                }
-                .frame(maxWidth: .infinity, minHeight: 400)
-            }
-            .libraryRefreshable {
-                await viewModel.refresh()
-            }
+            LibraryEmptyLibraryState(
+                title: "Collection vide",
+                message: "Ajoute des disques depuis la recherche ou le scan.",
+                symbol: "square.stack.fill"
+            ) { await viewModel.refresh() }
         } else if viewModel.sections.isEmpty && !isShowingSkeleton {
-            VStack(spacing: 0) {
-                if viewModel.isOfflineAndStale {
-                    OfflineBannerView(
-                        lastSyncDate: OfflineDownloadManager.shared.lastSyncDate,
-                        itemCount: OfflineDownloadManager.shared.offlineItemCount
-                    )
-                }
+            LibraryNoResultsState(isOfflineAndStale: viewModel.isOfflineAndStale, searchText: viewModel.searchText) {
                 if viewModel.hasActiveFilters {
                     LibraryActiveFiltersBar(
                         selectedTags: $viewModel.selectedTags,
@@ -774,16 +676,12 @@ struct CollectionView: View {
                         onClearAll: viewModel.clearFilters
                     )
                 }
-                ContentUnavailableView.search(text: viewModel.searchText)
             }
         } else {
             ScrollViewReader { proxy in
                 VStack(spacing: 0) {
                     if viewModel.isOfflineAndStale {
-                        OfflineBannerView(
-                            lastSyncDate: OfflineDownloadManager.shared.lastSyncDate,
-                            itemCount: OfflineDownloadManager.shared.offlineItemCount
-                        )
+                        LibraryOfflineBanner()
                     }
 
                     switch displayMode {
@@ -818,9 +716,9 @@ struct CollectionView: View {
                             .scrollBounceBehavior(.always)
                         }
                     case .grid:
-                        // Calculé une seule fois pour tout ce passage de rendu plutôt qu'un appel
-                        // par ligne visible — voir `CollectionViewModel.copyBadges(for:)`.
-                        let copyBadges = viewModel.copyBadges(for: viewModel.items)
+                        // Lu une seule fois pour tout ce passage de rendu plutôt qu'une lecture
+                        // observée par ligne visible — voir `CollectionViewModel.copyBadgesByItemId`.
+                        let copyBadges = viewModel.copyBadgesByItemId
                         LibraryMosaicView<CollectionItem>(
                             sections: viewModel.sections,
                             isLoading: isShowingSkeleton,
@@ -845,51 +743,11 @@ struct CollectionView: View {
                                 }
                             },
                             cornerBadges: { item in
-                                AnyView(
-                                    Color.clear
-                                        .overlay(alignment: .topTrailing) {
-                                            if let badge = copyBadges[item.id] {
-                                                Text(badge)
-                                                    .font(.coverCornerBadge)
-                                                    .foregroundStyle(.white)
-                                                    .padding(.horizontal, 4)
-                                                    .padding(.vertical, 2)
-                                                    .background(Color.black.opacity(0.7), in: Capsule())
-                                                    .overlay(Capsule().strokeBorder(Color.white.opacity(0.3), lineWidth: 0.5))
-                                                    .padding(4)
-                                            }
-                                        }
-                                        .overlay(alignment: .bottomLeading) {
-                                            if activityManager.isPlaying(releaseId: item.releaseId) {
-                                                HStack(spacing: 3) {
-                                                    Image(systemName: "waveform")
-                                                        .font(.coverCornerBadge)
-                                                        .symbolEffect(.variableColor.iterative.reversing)
-                                                }
-                                                .foregroundStyle(Color.spinlogPink)
-                                                .padding(.horizontal, 5)
-                                                .padding(.vertical, 3)
-                                                .background(.ultraThinMaterial, in: Capsule())
-                                                .padding(4)
-                                            }
-                                        }
-                                        .overlay(alignment: .bottomTrailing) {
-                                            if item.rating > 0 {
-                                                HStack(spacing: 1.5) {
-                                                    Image(systemName: "star.fill")
-                                                        .font(.coverCornerBadge)
-                                                        .foregroundStyle(Color.orange)
-                                                    Text("\(item.rating)")
-                                                        .font(.coverCornerBadge)
-                                                        .foregroundStyle(.white)
-                                                }
-                                                .padding(.horizontal, 4)
-                                                .padding(.vertical, 2)
-                                                .background(Color.black.opacity(0.65), in: Capsule())
-                                                .padding(4)
-                                            }
-                                        }
-                                )
+                                AnyView(CollectionMosaicCornerBadges(
+                                    copyBadge: copyBadges[item.id],
+                                    isPlaying: activityManager.isPlaying(releaseId: item.releaseId),
+                                    rating: item.rating
+                                ))
                             },
                             contextMenuContent: { item in collectionContextMenu(for: item) }
                         )

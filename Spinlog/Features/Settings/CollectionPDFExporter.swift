@@ -188,7 +188,7 @@ private struct PDFCoverPageView: View {
             infoRow("Nombre d'articles", "\(itemCount)")
 
             if let totalInvested {
-                infoRow("Total investi (prix d'achat déclarés)", "\(String(format: "%.2f", totalInvested)) \(totalInvestedCurrency)")
+                infoRow("Total investi (prix d'achat déclarés)", totalInvested.formatted(.currency(code: totalInvestedCurrency)))
             }
 
             if let marketValue {
@@ -346,6 +346,6 @@ private struct PDFInventoryPageView: View {
         guard let purchasePriceFieldId else { return "—" }
         let raw = item.value(forFieldId: purchasePriceFieldId).trimmingCharacters(in: .whitespacesAndNewlines)
         guard !raw.isEmpty, let parsed = PurchasePriceParser.parse(raw, defaultCurrency: defaultCurrency) else { return "—" }
-        return "\(String(format: "%.2f", parsed.amount)) \(parsed.currency)"
+        return parsed.amount.formatted(.currency(code: parsed.currency))
     }
 }

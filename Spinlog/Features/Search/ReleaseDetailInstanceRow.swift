@@ -84,7 +84,7 @@ struct SwipeableInstanceRow: View {
         let itemTags = TagStore.shared.tags(for: item.instanceId, releaseId: item.releaseId)
 
         return HStack(spacing: 12) {
-            AsyncCoverImage(url: coverURL, cornerRadius: 6)
+            AsyncCoverImage(url: coverURL, cornerRadius: 6, targetSize: 38)
                 .frame(width: 38, height: 38)
                 // Micro-bordure pour l'épaisseur carton, comme les pochettes de la Collection et
                 // de la Wantlist.
@@ -228,8 +228,8 @@ struct SwipeableInstanceRow: View {
 
     /// Montant masqué au format de la devise (« ? € » en français, « €? » en anglais) : même mise
     /// en forme que le montant réel, chiffres remplacés par un point d'interrogation.
-    nonisolated static func maskedAmount(currency: String) -> String {
-        0.formatted(.currency(code: currency).precision(.fractionLength(0))).replacingOccurrences(of: "0", with: "?")
+    nonisolated static func maskedAmount(currency: String, locale: Locale = .current) -> String {
+        0.formatted(.currency(code: currency).precision(.fractionLength(0)).locale(locale)).replacingOccurrences(of: "0", with: "?")
     }
 }
 

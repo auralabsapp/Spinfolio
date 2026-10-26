@@ -157,7 +157,7 @@ struct LibraryMosaicView<Item: SortableLibraryItem>: View {
                                         .padding(2)
                                 )
                                 .padding(6)
-                                .transition(.scale.combined(with: .opacity))
+                                .motionTransition(.scale.combined(with: .opacity))
                         }
                     }
                     .overlay {

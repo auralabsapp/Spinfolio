@@ -31,6 +31,6 @@ struct LibraryToastBubble: View {
         .background(Capsule().fill(.thinMaterial))
         .overlay(Capsule().strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.8))
         .shadow(color: .black.opacity(0.18), radius: 12, x: 0, y: 6)
-        .transition(.move(edge: .bottom).combined(with: .opacity))
+        .motionTransition(.move(edge: .bottom).combined(with: .opacity))
     }
 }

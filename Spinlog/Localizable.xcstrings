@@ -453,50 +453,50 @@
         }
       }
     },
-    "%@, %@, lecture sur Apple Music. %@ sur %@. Touche pour ouvrir le lecteur." : {
+    "%@, %@, lecture sur Apple Music" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "%1$@, %2$@, playing on Apple Music. %3$@ of %4$@. Tap to open the player."
+            "value" : "%1$@, %2$@, playing on Apple Music"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "%1$@, %2$@, lecture sur Apple Music. %3$@ sur %4$@. Touche pour ouvrir le lecteur."
+            "value" : "%1$@, %2$@, lecture sur Apple Music"
           }
         }
       }
     },
-    "%@, %@, lecture sur Apple Music. Touche pour ouvrir le lecteur." : {
+    "%@, %@, lecture sur Apple Music. %@ sur %@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "%1$@, %2$@, playing on Apple Music. Tap to open the player."
+            "value" : "%1$@, %2$@, playing on Apple Music. %3$@ of %4$@"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "%1$@, %2$@, lecture sur Apple Music. Touche pour ouvrir le lecteur."
+            "value" : "%1$@, %2$@, lecture sur Apple Music. %3$@ sur %4$@"
           }
         }
       }
     },
-    "%@, %@. Écoute en cours sur la platine. Touche pour ouvrir le lecteur." : {
+    "%@, %@. Écoute en cours sur la platine" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "%1$@, %2$@. Listening on the turntable. Tap to open the player."
+            "value" : "%1$@, %2$@. Listening on the turntable"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "%1$@, %2$@. Écoute en cours sur la platine. Touche pour ouvrir le lecteur."
+            "value" : "%1$@, %2$@. Écoute en cours sur la platine"
           }
         }
       }
@@ -517,12 +517,54 @@
         }
       }
     },
-    "%@. Écoute en cours sur la platine. Touche pour ouvrir le lecteur." : {
+    "%@, en baisse de %@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "%@. Listening on the turntable. Tap to open the player."
+            "value" : "%1$@, down %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, en baisse de %2$@"
+          }
+        }
+      }
+    },
+    "%@, en hausse de %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "%1$@, up %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, en hausse de %2$@"
+          }
+        }
+      }
+    },
+    "%@, stable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "%@, steady"
+          }
+        }
+      }
+    },
+    "%@. Écoute en cours sur la platine" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "%@. Listening on the turntable"
           }
         }
       }
@@ -1183,13 +1225,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "machine_translated",
-                  "value" : "%lld turntable play"
+                  "value" : "%lld turntable listen"
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "machine_translated",
-                  "value" : "%lld turntable plays"
+                  "value" : "%lld turntable listens"
                 }
               }
             }
@@ -2395,13 +2437,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "machine_translated",
-                  "value" : "At %lld play"
+                  "value" : "At %lld listen"
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "machine_translated",
-                  "value" : "At %lld plays"
+                  "value" : "At %lld listens"
                 }
               }
             }
@@ -3703,6 +3745,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "No listening session in progress."
+          }
+        }
+      }
+    },
+    "Aucune note" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "No rating"
           }
         }
       }
@@ -6076,7 +6128,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "turntable plays"
+            "value" : "turntable listens"
           }
         }
       }
@@ -7879,6 +7931,16 @@
         }
       }
     },
+    "Labels" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Labels"
+          }
+        }
+      }
+    },
     "Lagon aéré, frais & estival" : {
       "localizations" : {
         "en" : {
@@ -8485,6 +8547,16 @@
         }
       }
     },
+    "Ma note" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "My Rating"
+          }
+        }
+      }
+    },
     "Ma note de la release" : {
       "localizations" : {
         "en" : {
@@ -8621,6 +8693,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Median"
+          }
+        }
+      }
+    },
+    "Médiane de %@ le %@ à %@ le %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Median from %1$@ on %2$@ to %3$@ on %4$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Médiane de %1$@ le %2$@ à %3$@ le %4$@"
           }
         }
       }
@@ -9354,6 +9442,16 @@
         }
       }
     },
+    "Ouvre le lecteur." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Opens the player."
+          }
+        }
+      }
+    },
     "Ouvre le Marketplace Discogs pour cette release" : {
       "localizations" : {
         "en" : {
@@ -10026,6 +10124,16 @@
         }
       }
     },
+    "Position de lecture" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Playback Position"
+          }
+        }
+      }
+    },
     "Possesseurs" : {
       "localizations" : {
         "en" : {
@@ -10638,6 +10746,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Release ID"
+          }
+        }
+      }
+    },
+    "Releases" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Releases"
           }
         }
       }
@@ -11649,8 +11767,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remove From Collection"
+            "state" : "machine_translated",
+            "value" : "Remove from Collection"
           }
         }
       }
@@ -11659,8 +11777,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remove From Collection?"
+            "state" : "machine_translated",
+            "value" : "Remove from Collection?"
           }
         }
       }
@@ -11670,7 +11788,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Remove from wantlist"
+            "value" : "Remove from Wantlist"
           }
         }
       }
@@ -11680,7 +11798,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Remove From Wantlist?"
+            "value" : "Remove from Wantlist?"
           }
         }
       }
@@ -12386,14 +12504,58 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Downloading collection (page %1$lld/%2$lld • %3$lld records)…"
+            "state" : "machine_translated",
+            "value" : "Downloading collection (page %1$lld/%2$lld • %#@records@)…"
+          },
+          "substitutions" : {
+            "records" : {
+              "argNum" : 3,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "machine_translated",
+                      "value" : "%arg record"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "machine_translated",
+                      "value" : "%arg records"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Téléchargement de la collection (page %1$lld/%2$lld • %3$lld disques)…"
+            "state" : "machine_translated",
+            "value" : "Téléchargement de la collection (page %1$lld/%2$lld • %#@records@)…"
+          },
+          "substitutions" : {
+            "records" : {
+              "argNum" : 3,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "machine_translated",
+                      "value" : "%arg disque"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "machine_translated",
+                      "value" : "%arg disques"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -12489,7 +12651,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Your most-played albums and artists on your turntable."
+            "value" : "Your most-listened albums and artists on your turntable."
           }
         }
       }
@@ -12539,7 +12701,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Your ranks reward the size of your collection and your turntable plays. A rank you've earned is never lost, even if you remove records."
+            "value" : "Your ranks reward the size of your collection and your turntable listens. A rank you've earned is never lost, even if you remove records."
           }
         }
       }
@@ -13007,6 +13169,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "All your copies of this album will be removed from your Discogs collection."
+          }
+        }
+      }
+    },
+    "Tout" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "All"
           }
         }
       }
@@ -13829,7 +14001,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Here's your starting rank, already earned. The next ones come with your records and plays."
+            "value" : "Here's your starting rank, already earned. The next ones come with your records and listens."
           }
         }
       }

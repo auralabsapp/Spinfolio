@@ -133,7 +133,7 @@ private struct TrackPlayButton: View {
                     .font(.inlineIcon)
                     .foregroundStyle(appleMusicRed)
                     .symbolEffect(.variableColor.iterative.reversing, options: .repeating)
-                    .transition(
+                    .motionTransition(
                         .asymmetric(
                             insertion: .scale(scale: 0.5).combined(with: .opacity).combined(with: .move(edge: .trailing)),
                             removal: .scale(scale: 0.5).combined(with: .opacity).combined(with: .move(edge: .trailing))

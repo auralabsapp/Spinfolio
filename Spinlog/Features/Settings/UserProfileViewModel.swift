@@ -85,7 +85,7 @@ final class UserProfileViewModel {
         }
 
         if let rank = profile.rank {
-            let formattedRank = rank.truncatingRemainder(dividingBy: 1) == 0 ? "\(Int(rank))" : String(format: "%.1f", rank)
+            let formattedRank = rank.formatted(.number.precision(.fractionLength(0...1)))
             items.append(UserProfileInfoItem(icon: "trophy.fill", title: "Rang contributeur", value: formattedRank))
         }
 
@@ -106,7 +106,7 @@ final class UserProfileViewModel {
         }
 
         if let releasesRated = profile.releasesRated, releasesRated > 0 {
-            let ratingText = profile.ratingAvg.map { String(format: "%.1f", $0) } ?? "—"
+            let ratingText = profile.ratingAvg.map { $0.formatted(.number.precision(.fractionLength(1))) } ?? "—"
             items.append(UserProfileInfoItem(
                 icon: "star.fill",
                 title: "Notes données",
@@ -129,16 +129,22 @@ final class UserProfileViewModel {
         return false
     }
 
+    /// Note Discogs exprimée en pourcentage (ex. 99.5) : séparateur décimal et espace avant « % »
+    /// selon la langue, au lieu d'un `String(format:)` toujours à l'anglaise.
+    private static func formattedPercent(_ value: Double) -> String {
+        (value / 100).formatted(.percent.precision(.fractionLength(0...1)))
+    }
+
     func marketplaceItems(for profile: DiscogsUserProfile) -> [UserProfileInfoItem] {
         var items: [UserProfileInfoItem] = []
 
         if let buyerRating = profile.buyerRating {
-            let ratingStr = buyerRating.truncatingRemainder(dividingBy: 1) == 0 ? "\(Int(buyerRating)) %" : String(format: "%.1f %%", buyerRating)
+            let ratingStr = Self.formattedPercent(buyerRating)
             items.append(UserProfileInfoItem(icon: "bag.fill", title: "Note acheteur", value: ratingStr))
         }
 
         if let stars = profile.buyerRatingStars {
-            let starsStr = String(format: "%.1f ★", stars)
+            let starsStr = "\(stars.formatted(.number.precision(.fractionLength(1)))) ★"
             let starStr: String
             if let count = profile.buyerNumRatings, count > 0 {
                 starStr = "\(starsStr) (\(String(localized: "\(count) avis")))"
@@ -151,7 +157,7 @@ final class UserProfileViewModel {
         if isSellerActive(profile) {
             var sellerDetails: [String] = []
             if let rating = profile.sellerRating {
-                let formatted = rating.truncatingRemainder(dividingBy: 1) == 0 ? "\(Int(rating)) %" : String(format: "%.1f %%", rating)
+                let formatted = Self.formattedPercent(rating)
                 sellerDetails.append(formatted)
             }
             if let count = profile.sellerNumRatings, count > 0 {

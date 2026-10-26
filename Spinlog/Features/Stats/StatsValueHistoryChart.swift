@@ -39,5 +39,28 @@ struct StatsValueHistoryChart: View {
         .onScrollVisibilityChange(threshold: 0.3) { visible in
             if visible { isRevealed = true }
         }
+        // Résumé lu par VoiceOver à la place des marques du graphique, comme les autres
+        // graphiques de Stats : médiane au premier et au dernier point, puis la tendance.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Évolution de la cote")
+        .accessibilityValue(accessibilitySummary)
+    }
+
+    private var accessibilitySummary: Text {
+        guard let first = points.first, let last = points.last else { return Text(verbatim: "") }
+        let start = first.median.formatted(.number.precision(.fractionLength(0...2)))
+        let end = last.median.formatted(.number.precision(.fractionLength(0...2)))
+        let startDate = first.date.formatted(date: .abbreviated, time: .omitted)
+        let endDate = last.date.formatted(date: .abbreviated, time: .omitted)
+        let values = Text("Médiane de \(start) le \(startDate) à \(end) le \(endDate)")
+        guard first.median > 0 else { return values }
+        let change = (last.median - first.median) / first.median
+        let percent = abs(change).formatted(.percent.precision(.fractionLength(0)))
+        if change > 0.005 {
+            return Text("\(values), en hausse de \(percent)")
+        } else if change < -0.005 {
+            return Text("\(values), en baisse de \(percent)")
+        }
+        return Text("\(values), stable")
     }
 }

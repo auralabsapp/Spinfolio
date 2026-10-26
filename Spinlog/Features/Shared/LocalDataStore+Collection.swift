@@ -56,7 +56,7 @@ extension LocalDataStore {
         // widget encore vide. Relire et décoder toute la collection à chaque page (comme avant)
         // rendait la synchro quadratique sur le main actor ; l'instantané complet est écrit une
         // seule fois, en fin de synchro, par `syncCollectionFolder`.
-        if WidgetSnapshotStore.loadCollection().isEmpty {
+        if WidgetSnapshotStore.collectionCount == 0 {
             let all = getAllCollectionItemsSync(username: username)
             if !all.isEmpty {
                 updateWidgetSnapshot(all)
@@ -146,7 +146,7 @@ extension LocalDataStore {
             // dès qu'un disque était possédé en plusieurs exemplaires, et réécrivait le widget à
             // chaque appel. Le décodage complet n'a lieu que si une mise à jour est nécessaire.
             let knownReleaseCount = cachedReleaseCount(username: username)
-            let currentSnapshotCount = WidgetSnapshotStore.loadCollection().count
+            let currentSnapshotCount = WidgetSnapshotStore.collectionCount
             if knownReleaseCount > 0 && (currentSnapshotCount == 0 || knownReleaseCount > currentSnapshotCount) {
                 updateWidgetSnapshot(getAllCollectionItemsSync(username: username))
             }

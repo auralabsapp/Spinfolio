@@ -7,6 +7,20 @@ import Foundation
 /// identifiants StoreKit...), qui doivent rester stables indépendamment du nom affiché.
 nonisolated enum AppInfo {
     static var name: String { String(localized: "Spinfolio") }
+    /// Sous-système commun à tous les `Logger` de l'app, pour filtrer ses journaux d'un coup
+    /// dans Console (trois valeurs différentes coexistaient). L'extension de widgets écrit la
+    /// même valeur en dur, faute d'accès à cette constante.
+    static let logSubsystem = "com.auralabs.Spinlog"
+    /// CLUF standard d'Apple : couvre les conditions d'utilisation de l'app en l'absence de
+    /// conditions personnalisées renseignées dans App Store Connect.
+    static let termsURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
+    static let privacyURL = URL(string: "https://auralabsapp.github.io/Spinfolio/privacy.html")!
+}
+
+/// Clés `UserDefaults` du mode d'affichage (Liste, Mosaïque, Carrousel) de chaque onglet.
+nonisolated enum DisplayPreferenceKeys {
+    static let collection = "collectionDisplayMode"
+    static let wantlist = "wantlistDisplayMode"
 }
 
 /// Identifiants et valeurs Discogs réutilisés à plusieurs endroits, pour éviter les nombres
@@ -66,7 +80,7 @@ nonisolated enum WidgetKinds {
 /// toute donnée qui doit traverser ces cibles. Avant cette constante, cette chaîne était retapée
 /// à la main dans `PremiumStore`, `AppTheme` et `WidgetSnapshotStore`.
 nonisolated enum AppGroup {
-    static let id = "group.com.auralabs.Spinlog"
+    static let id = SharedAppGroup.id
 }
 
 /// Clé UserDefaults (App Group) du statut premium. Avant cette constante, `PremiumStore.storageKey`
@@ -74,7 +88,7 @@ nonisolated enum AppGroup {
 /// même chaîne à la main pour lire le même statut — une faute de frappe dans une seule des copies
 /// aurait désynchronisé silencieusement leur lecture du statut réel de `PremiumStore`.
 nonisolated enum PremiumConstants {
-    static let isPremiumDefaultsKey = "com.spinlog.isPremium"
+    static let isPremiumDefaultsKey = SharedAppGroup.isPremiumKey
 }
 
 /// Contraintes de saisie pour les tags (donnée 100% locale à l'app, non liée à Discogs).

@@ -61,7 +61,7 @@ final class WantlistViewModel {
     }
 
     var hasActiveFilters: Bool {
-        !selectedTags.isEmpty || (selectedFormat != nil && !selectedFormat!.isEmpty)
+        !selectedTags.isEmpty || !(selectedFormat ?? "").isEmpty
     }
 
     func clearFilters() {
@@ -122,7 +122,16 @@ final class WantlistViewModel {
     /// Éléments filtrés et regroupés par section, dans un ordre déterministe — identique au
     /// mécanisme de `CollectionViewModel.sections`. Recalculé par `recomputeSections()`
     /// uniquement quand `items`/tri/filtres changent réellement (voir son commentaire).
-    private(set) var sections: [(key: String, items: [WantlistItem])] = []
+    private(set) var sections: [(key: String, items: [WantlistItem])] = [] {
+        didSet {
+            indexEntries = libraryIndexEntries(for: sections, sort: sortOption)
+            visibleItemCount = sections.reduce(0) { $0 + $1.items.count }
+        }
+    }
+    /// Jetons de la barre de navigation rapide et nombre de disques affichés, recalculés avec
+    /// `sections` plutôt qu'à chaque lecture (plusieurs par passage de `body`).
+    private(set) var indexEntries: [(token: String, sectionKey: String)] = []
+    private(set) var visibleItemCount = 0
     /// Vrai pendant le calcul détaché des sections : voir `CollectionViewModel.isComputingSections`.
     private(set) var isComputingSections = false
     private let sectionsEngine = LibrarySectionsEngine<WantlistItem>()
@@ -153,18 +162,6 @@ final class WantlistViewModel {
                 isComputingSections = false
             }
         )
-    }
-
-    var indexEntries: [(token: String, sectionKey: String)] {
-        var seenTokens = Set<String>()
-        var result: [(token: String, sectionKey: String)] = []
-        for section in sections {
-            let token = indexToken(for: section)
-            guard !seenTokens.contains(token) else { continue }
-            seenTokens.insert(token)
-            result.append((token, section.key))
-        }
-        return result
     }
 
     func indexToken(for section: (key: String, items: [WantlistItem])) -> String {

@@ -254,6 +254,7 @@ struct SettingsView: View {
                         Spacer()
                     }
                 }
+                .accessibilityIdentifier("settingsExitDemoButton")
             }
         } else if authManager.isAuthenticated {
             Section {

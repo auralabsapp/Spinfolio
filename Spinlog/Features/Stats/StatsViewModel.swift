@@ -130,6 +130,7 @@ final class StatsViewModel {
                 releases[item.releaseId] = item
             }
             releaseById = releases
+            styleBreakdownCache = [:]
             let names = allCollectionItems
                 .map { ArtistShelfSortHelper.cleanDiscogsSuffix($0.basicInformation.artistNames) }
                 .filter { !$0.isEmpty }
@@ -151,7 +152,13 @@ final class StatsViewModel {
     /// Nombre d'ajouts par année (date d'ajout dans la collection de l'utilisateur), trié par années décroissantes.
     /// Répartition par genre musical de la collection.
     private(set) var genreDistribution: [GenreDistributionEntry] = []
-    private(set) var otherGenresNames: Set<String> = []
+    private(set) var otherGenresNames: Set<String> = [] {
+        didSet { styleBreakdownCache = [:] }
+    }
+    /// Détail par style de chaque genre déjà sélectionné, vidé quand la collection ou le
+    /// regroupement « Autres » change : lu par `body`, il refiltrait toute la collection à chaque
+    /// rendu de l'écran tant qu'un genre restait sélectionné.
+    @ObservationIgnored private var styleBreakdownCache: [String: [StyleBreakdownEntry]] = [:]
 
     /// Répartition par label (maison de disques) de la collection.
     private(set) var labelDistribution: [LabelDistributionEntry] = []
@@ -328,12 +335,9 @@ final class StatsViewModel {
         isComputingInvested = true
         // Sommé par devise d'abord, puis une seule conversion par devise : auparavant, chaque
         // disque attendait sa propre conversion (un passage par l'acteur, voire une requête).
-        var amountsByCurrency: [String: Double] = [:]
-        for item in allCollectionItems {
-            let raw = item.value(forFieldId: fieldId).trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !raw.isEmpty, let parsed = PurchasePriceParser.parse(raw, defaultCurrency: currency) else { continue }
-            amountsByCurrency[parsed.currency, default: 0] += parsed.amount
-        }
+        let amountsByCurrency = Self.purchaseAmountsByCurrency(
+            of: allCollectionItems, fieldId: fieldId, defaultCurrency: currency
+        )
         var total = 0.0
         for (sourceCurrency, amount) in amountsByCurrency {
             total += await CurrencyConversionService.shared.convert(amount, from: sourceCurrency, to: currency)
@@ -341,6 +345,22 @@ final class StatsViewModel {
         totalInvested = total
         totalInvestedCurrency = currency
         isComputingInvested = false
+    }
+
+    /// Prix d'achat renseignés, additionnés par devise (une devise absente du champ prend celle
+    /// par défaut). Fonction pure, testée dans `StatsCalculationTests`.
+    static func purchaseAmountsByCurrency(
+        of items: [CollectionItem],
+        fieldId: Int,
+        defaultCurrency: String
+    ) -> [String: Double] {
+        var amountsByCurrency: [String: Double] = [:]
+        for item in items {
+            let raw = item.value(forFieldId: fieldId).trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !raw.isEmpty, let parsed = PurchasePriceParser.parse(raw, defaultCurrency: defaultCurrency) else { continue }
+            amountsByCurrency[parsed.currency, default: 0] += parsed.amount
+        }
+        return amountsByCurrency
     }
 
     /// Remplace la collection analysée et recalcule toutes les répartitions qui en dépendent.
@@ -403,63 +423,15 @@ final class StatsViewModel {
 
     /// Calcule la répartition des genres musicaux sur l'ensemble de la collection.
     private func updateGenreDistribution() {
-        guard !allCollectionItems.isEmpty else {
+        let result = Self.genreDistribution(of: allCollectionItems)
+        guard !result.entries.isEmpty else {
             genreDistribution = []
             otherGenresNames = []
             return
         }
-
-        var counts: [String: Int] = [:]
-        for item in allCollectionItems {
-            let rawGenres = item.basicInformation.genres?.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty } ?? []
-            if rawGenres.isEmpty {
-                counts[Self.unspecifiedLabel, default: 0] += 1
-            } else {
-                for genre in rawGenres {
-                    let clean = genre.trimmingCharacters(in: .whitespaces)
-                    counts[clean, default: 0] += 1
-                }
-            }
-        }
-
-        let totalOccurrences = counts.values.reduce(0, +)
-        guard totalOccurrences > 0 else {
-            genreDistribution = []
-            otherGenresNames = []
-            return
-        }
-
-        let sorted = counts.sorted {
-            if $0.value != $1.value {
-                return $0.value > $1.value
-            }
-            return $0.key < $1.key
-        }
-
-        // On garde les 6 genres majeurs et on regroupe les restants dans "Autres"
-        let maxMainSlices = 6
-        var entries: [GenreDistributionEntry] = []
-        var othersCount = 0
-        var othersSet = Set<String>()
-
-        for (index, pair) in sorted.enumerated() {
-            if sorted.count > maxMainSlices && index >= maxMainSlices - 1 {
-                othersCount += pair.value
-                othersSet.insert(pair.key)
-            } else {
-                let pct = (Double(pair.value) / Double(totalOccurrences)) * 100.0
-                entries.append(GenreDistributionEntry(name: pair.key, count: pair.value, percentage: pct))
-            }
-        }
-
-        if othersCount > 0 {
-            let pct = (Double(othersCount) / Double(totalOccurrences)) * 100.0
-            entries.append(GenreDistributionEntry(name: Self.othersLabel, count: othersCount, percentage: pct))
-        }
-
         withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
-            self.otherGenresNames = othersSet
-            self.genreDistribution = entries
+            self.otherGenresNames = result.others
+            self.genreDistribution = result.entries
         }
     }
 
@@ -468,62 +440,15 @@ final class StatsViewModel {
     /// Calcule la répartition par label (maison de disques) sur l'ensemble de la collection,
     /// même mécanique que `updateGenreDistribution`.
     private func updateLabelDistribution() {
-        guard !allCollectionItems.isEmpty else {
+        let result = Self.labelDistribution(of: allCollectionItems)
+        guard !result.entries.isEmpty else {
             labelDistribution = []
             otherLabelsNames = []
             return
         }
-
-        var counts: [String: Int] = [:]
-        for item in allCollectionItems {
-            let rawLabels = item.basicInformation.labels?.map { $0.name.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty } ?? []
-            if rawLabels.isEmpty {
-                counts[Self.unspecifiedLabel, default: 0] += 1
-            } else {
-                for label in rawLabels {
-                    counts[label, default: 0] += 1
-                }
-            }
-        }
-
-        let totalOccurrences = counts.values.reduce(0, +)
-        guard totalOccurrences > 0 else {
-            labelDistribution = []
-            otherLabelsNames = []
-            return
-        }
-
-        let sorted = counts.sorted {
-            if $0.value != $1.value {
-                return $0.value > $1.value
-            }
-            return $0.key < $1.key
-        }
-
-        // On garde les 6 labels majeurs et on regroupe les restants dans "Autres"
-        let maxMainSlices = 6
-        var entries: [LabelDistributionEntry] = []
-        var othersCount = 0
-        var othersSet = Set<String>()
-
-        for (index, pair) in sorted.enumerated() {
-            if sorted.count > maxMainSlices && index >= maxMainSlices - 1 {
-                othersCount += pair.value
-                othersSet.insert(pair.key)
-            } else {
-                let pct = (Double(pair.value) / Double(totalOccurrences)) * 100.0
-                entries.append(LabelDistributionEntry(name: pair.key, count: pair.value, percentage: pct))
-            }
-        }
-
-        if othersCount > 0 {
-            let pct = (Double(othersCount) / Double(totalOccurrences)) * 100.0
-            entries.append(LabelDistributionEntry(name: Self.othersLabel, count: othersCount, percentage: pct))
-        }
-
         withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
-            self.otherLabelsNames = othersSet
-            self.labelDistribution = entries
+            self.otherLabelsNames = result.others
+            self.labelDistribution = result.entries
         }
     }
 
@@ -557,47 +482,15 @@ final class StatsViewModel {
     /// Calcule la répartition Vinyles/CD/Cassettes/Autres, ainsi que le détail par taille au sein
     /// des vinyles (12"/10"/7"), à partir du format Discogs principal de chaque exemplaire.
     private func updateMediaFormatDistribution() {
-        guard !allCollectionItems.isEmpty else {
+        let result = Self.mediaFormatDistribution(of: allCollectionItems)
+        guard !result.formats.isEmpty else {
             mediaFormatDistribution = []
             vinylSizeBreakdown = []
             return
         }
-
-        var broadCounts: [String: Int] = [:]
-        var vinylSizeCounts: [ShelfMediaCategory: Int] = [:]
-
-        for item in allCollectionItems {
-            let category = Release(from: item).shelfMediaCategory
-            broadCounts[category.broadFormatLabel, default: 0] += 1
-            if category == .vinyl12 || category == .vinyl10 || category == .vinyl7 {
-                vinylSizeCounts[category, default: 0] += 1
-            }
-        }
-
-        let total = broadCounts.values.reduce(0, +)
-        guard total > 0 else {
-            mediaFormatDistribution = []
-            vinylSizeBreakdown = []
-            return
-        }
-
-        // Ordre fixe et logique (pas un tri par volume) : Vinyles, CD, Cassettes, Autres.
-        let order = [ShelfMediaCategory.vinyl12, .cd, .cassette, .other].map(\.broadFormatLabel)
-        let entries = order.compactMap { label -> MediaFormatDistributionEntry? in
-            guard let count = broadCounts[label], count > 0 else { return nil }
-            let pct = (Double(count) / Double(total)) * 100.0
-            return MediaFormatDistributionEntry(name: label, count: count, percentage: pct)
-        }
-
-        let sizeOrder: [ShelfMediaCategory] = [.vinyl12, .vinyl10, .vinyl7]
-        let sizeEntries = sizeOrder.compactMap { category -> VinylSizeBreakdownEntry? in
-            guard let count = vinylSizeCounts[category], count > 0 else { return nil }
-            return VinylSizeBreakdownEntry(category: category, count: count)
-        }
-
         withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
-            self.mediaFormatDistribution = entries
-            self.vinylSizeBreakdown = sizeEntries
+            self.mediaFormatDistribution = result.formats
+            self.vinylSizeBreakdown = result.vinylSizes
         }
     }
 
@@ -644,6 +537,17 @@ final class StatsViewModel {
     /// d'occurrences (les 6 styles majeurs). Un disque ayant plusieurs styles compte pour
     /// chacun d'eux, donc la somme des occurrences peut dépasser le nombre de disques du genre.
     func styleBreakdown(forGenre genreName: String) -> [StyleBreakdownEntry] {
+        // Lus même quand le cache répond, pour que la vue reste invalidée par leurs changements
+        // (le cache lui-même n'est pas observé).
+        _ = allCollectionItems
+        _ = otherGenresNames
+        if let cached = styleBreakdownCache[genreName] { return cached }
+        let result = computeStyleBreakdown(forGenre: genreName)
+        styleBreakdownCache[genreName] = result
+        return result
+    }
+
+    private func computeStyleBreakdown(forGenre genreName: String) -> [StyleBreakdownEntry] {
         var counts: [String: Int] = [:]
         for item in unsortedItems(forGenre: genreName) {
             let styles = item.basicInformation.styles?.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty } ?? []
@@ -671,23 +575,11 @@ final class StatsViewModel {
     /// disques possédés), en regroupant comme dans le classement d'écoute "Top Artistes" (le
     /// suffixe de désambiguïsation Discogs, ex. « Artist (2) », est ignoré).
     private func updateTopArtistsByCollectionCount() {
-        guard !allCollectionItems.isEmpty else {
+        let ranked = Self.artistRanking(of: allCollectionItems)
+        guard !ranked.isEmpty else {
             topArtistsByCollectionCount = []
             return
         }
-
-        var counts: [String: Int] = [:]
-        for item in allCollectionItems {
-            let name = ArtistShelfSortHelper.cleanDiscogsSuffix(item.basicInformation.artistNames)
-            guard !name.isEmpty else { continue }
-            counts[name, default: 0] += 1
-        }
-
-        let sorted = counts.sorted {
-            $0.value != $1.value ? $0.value > $1.value : $0.key < $1.key
-        }
-        let ranked = sorted.map { (name: $0.key, count: $0.value) }
-
         withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
             self.topArtistsByCollectionCount = ranked
         }

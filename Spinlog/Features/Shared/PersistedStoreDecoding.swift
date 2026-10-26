@@ -1,7 +1,7 @@
 import Foundation
 import OSLog
 
-private let storeDecodingLogger = Logger(subsystem: "com.auralabs.Spinlog", category: "PersistedStoreDecoding")
+private let storeDecodingLogger = Logger(subsystem: AppInfo.logSubsystem, category: "PersistedStoreDecoding")
 
 /// Chargement tolérant des stores persistés en JSON dans `UserDefaults` (tags, écoutes, alertes,
 /// file hors ligne).

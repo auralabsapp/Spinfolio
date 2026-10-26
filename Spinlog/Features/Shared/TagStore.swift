@@ -25,9 +25,21 @@ final class TagStore {
         let addedAt: Date
     }
 
-    private var timestampedTagsByInstance: [String: [TimestampedTag]] = [:]
-    private(set) var legacyTagsByRelease: [String: [String]] = [:]
-    private(set) var standaloneTags: Set<String> = []
+    private var timestampedTagsByInstance: [String: [TimestampedTag]] = [:] {
+        didSet { cachedSummary = nil }
+    }
+    private(set) var legacyTagsByRelease: [String: [String]] = [:] {
+        didSet { cachedSummary = nil }
+    }
+    private(set) var standaloneTags: Set<String> = [] {
+        didSet { cachedSummary = nil }
+    }
+
+    /// Liste triée des tags et nombre d'exemplaires par tag, calculés une fois puis gardés jusqu'à
+    /// la prochaine modification (les trois propriétés ci-dessus la remettent à `nil`). Avant ce
+    /// cache, chaque ligne des écrans de tags refaisait un parcours complet de tous les
+    /// exemplaires, à chaque frappe dans le champ de recherche.
+    @ObservationIgnored private var cachedSummary: TagSummary?
 
     /// Compte Discogs actuellement actif, ou `nil` si personne n'est connecté.
     /// Piloté exclusivement par `DiscogsAuthManager` via `setActiveUsername`.
@@ -249,15 +261,26 @@ final class TagStore {
         }
     }
 
+    /// Résumé à jour, recalculé seulement après une modification. Lit les trois propriétés
+    /// observées pour que la vue qui l'affiche soit bien invalidée à chaque changement, le cache
+    /// lui-même n'étant pas observé.
+    private var summary: TagSummary {
+        let instances = timestampedTagsByInstance
+        let legacy = legacyTagsByRelease
+        let standalone = standaloneTags
+        if let cachedSummary { return cachedSummary }
+        let computed = TagSummary(
+            instanceTags: instances.values.map { $0.map(\.name) },
+            legacyTags: Array(legacy.values),
+            standaloneTags: standalone
+        )
+        cachedSummary = computed
+        return computed
+    }
+
     /// Nombre d'exemplaires physiques sur lesquels ce tag est appliqué.
     func instanceCount(for tag: String) -> Int {
-        let fromInstances = timestampedTagsByInstance.values.filter { entries in
-            entries.contains { $0.name == tag }
-        }.count
-        if fromInstances > 0 {
-            return fromInstances
-        }
-        return legacyTagsByRelease.values.filter { $0.contains(tag) }.count
+        summary.count(for: tag)
     }
 
     /// Alias pour rétrocompatibilité
@@ -267,10 +290,7 @@ final class TagStore {
 
     /// Tous les tags créés (associés à des exemplaires ou créés de façon autonome), triés alphabétiquement.
     var allTags: [String] {
-        let fromInstances = timestampedTagsByInstance.values.flatMap { $0.map(\.name) }
-        let fromReleases = legacyTagsByRelease.values.flatMap { $0 }
-        return Set(fromInstances).union(fromReleases).union(standaloneTags)
-            .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+        summary.allTags
     }
 
     /// Renvoie le nom exact d'un tag existant correspondant (insensible à la casse).

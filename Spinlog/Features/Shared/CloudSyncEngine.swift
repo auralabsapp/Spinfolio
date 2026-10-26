@@ -4,7 +4,7 @@ import Observation
 import OSLog
 import UIKit
 
-nonisolated let cloudSyncLogger = Logger(subsystem: "com.auralabs.Spinlog", category: "CloudSyncEngine")
+nonisolated let cloudSyncLogger = Logger(subsystem: AppInfo.logSubsystem, category: "CloudSyncEngine")
 
 /// Synchronise les tags, le journal d'écoute, les alertes wantlist et certaines préférences via iCloud (base privée
 /// CloudKit) entre les appareils d'un même compte premium. Une zone `CKRecordZone` dédiée par

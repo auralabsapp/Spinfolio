@@ -5,11 +5,20 @@ import Testing
 /// Comportement du store de grades : isolation par compte, jamais de rétrogradation, silence au
 /// premier comptage. `UserDefaults` dédié à chaque test pour ne rien laisser sur l'appareil.
 @MainActor
-struct GradeStoreTests {
+final class GradeStoreTests {
+    /// Une suite par test (Swift Testing crée une instance par test), effacée à la fin.
+    private let suite = "GradeStoreTests-\(UUID().uuidString)"
+    private let defaults: UserDefaults
+
+    init() throws {
+        defaults = try #require(UserDefaults(suiteName: suite))
+    }
+
+    deinit {
+        UserDefaults(suiteName: suite)?.removePersistentDomain(forName: suite)
+    }
+
     private func makeStore() -> (GradeStore, UserDefaults) {
-        let suite = "GradeStoreTests-\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suite)!
-        defaults.removePersistentDomain(forName: suite)
         let store = GradeStore(defaults: defaults)
         store.setActiveUsername("alice")
         return (store, defaults)
@@ -64,8 +73,7 @@ struct GradeStoreTests {
     }
 
     @Test func demoAccountNeverEarnsGrades() {
-        let suite = "GradeStoreTests-\(UUID().uuidString)"
-        let store = GradeStore(defaults: UserDefaults(suiteName: suite)!)
+        let store = GradeStore(defaults: defaults)
         store.setActiveUsername(DemoMode.username)
         store.evaluate(track: .collection, count: 500, isReliable: true)
         #expect(store.acquiredTiers(for: .collection) == 0)

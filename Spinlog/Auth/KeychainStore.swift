@@ -2,7 +2,7 @@ import Foundation
 import Security
 import OSLog
 
-private nonisolated let keychainLogger = Logger(subsystem: "com.auralabs.Spinlog", category: "KeychainStore")
+private nonisolated let keychainLogger = Logger(subsystem: AppInfo.logSubsystem, category: "KeychainStore")
 
 /// Clés Keychain du compte Discogs, partagées par `DiscogsAuthManager` et la signature des
 /// requêtes d'images (`KingfisherConfig`) : recopiées à la main, elles pouvaient diverger.
