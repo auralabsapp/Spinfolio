@@ -39,36 +39,12 @@ final class ArtistDetailViewModel {
     /// rendu).
     private(set) var isLibrarySnapshotStale = false
 
-    /// Un exemplaire de la collection ou de la wantlist locale (tous artistes confondus : la
-    /// discographie Discogs rapproche par identifiant de master/release, sans dépendre des
-    /// crédits d'artiste du disque).
-    private struct LibraryRecord {
-        let releaseId: Int
-        /// Titre normalisé, seulement pour les disques crédités à cet artiste : compte les albums
-        /// distincts du résumé (`ownedCount`/`wantlistCount`) et aide à identifier l'artiste
-        /// sur Apple Music (voir `prepareAppleMusic`). `nil` pour les disques d'autres artistes.
-        let titleKey: String?
-        let masterId: Int?
-        let coverURL: String?
-        let dateAdded: Date?
-        /// Noms et descriptions de formats du pressage (« Vinyl », « LP », « Album »…) : classent
-        /// sans requête la section Discogs d'un master dont l'utilisateur possède un pressage.
-        let formatTokens: [String]
-    }
+    /// Collection et wantlist locales, avec leurs index dérivés (titres de cet artiste, masters).
+    private var library = ArtistLibraryIndex()
 
-    /// Indexés par identifiant de release : une notification d'ajout/retrait (voir
-    /// `observeLibraryChanges`) met à jour une entrée précise sans tout relire.
-    private var ownedRecords: [Int: LibraryRecord] = [:] { didSet { rebuildMembershipIndex() } }
-    private var wantedRecords: [Int: LibraryRecord] = [:] { didSet { rebuildMembershipIndex() } }
-
-    /// Titres normalisés possédés/désirés de cet artiste, dérivés des exemplaires ci-dessus.
-    private(set) var ownedKeys: Set<String> = []
-    private(set) var wantlistKeys: Set<String> = []
-    /// Exemplaires regroupés par master, pour les badges de la discographie Discogs : calculés
-    /// une fois par changement, pas à chaque rendu (la vue est réévaluée à chaque image du
-    /// défilement).
-    private var ownedByMaster: [Int: [LibraryRecord]] = [:]
-    private var wantedByMaster: [Int: [LibraryRecord]] = [:]
+    /// Titres normalisés possédés/désirés de cet artiste.
+    var ownedKeys: Set<String> { library.ownedKeys }
+    var wantlistKeys: Set<String> { library.wantlistKeys }
 
     /// Nombre d'albums distincts de cet artiste présents dans la collection/wantlist locales,
     /// affiché en résumé sous la photo. Un même album peut compter dans les deux.
@@ -97,29 +73,6 @@ final class ArtistDetailViewModel {
 
     // MARK: - Discographie Discogs
 
-    /// État de la section « Discographie Discogs » : œuvres principales de l'artiste, avec
-    /// possession rapprochée par identifiant de master/release.
-    enum DiscogsDiscographyState: Equatable {
-        /// Aucune page encore reçue.
-        case loading
-        /// Au moins une page reçue. `isLoadingMore` : pages suivantes en cours ; `isTruncated` :
-        /// liste partielle (plafond de pages atteint, ou échec d'une page suivante).
-        case loaded(isLoadingMore: Bool, isTruncated: Bool)
-        /// Échec avant la première page (erreur réseau, hors ligne).
-        case unavailable
-    }
-
-    struct DiscogsWorkEntry: Identifiable {
-        let work: ArtistReleaseItem
-        let isOwned: Bool
-        let isInWantlist: Bool
-        /// Fiche de ton exemplaire (à défaut, de celui en wantlist) ; sinon, pour un master, sa
-        /// fiche master. `nil` pour une release isolée ni possédée ni en wantlist : la ligne reste
-        /// alors purement informative.
-        let destination: SearchDestination?
-        var id: String { work.id }
-    }
-
     /// Page de l'artiste sur discogs.com, pour la mention d'attribution exigée par les CGU de
     /// l'API Discogs sous la section qui affiche leurs données (voir `DiscogsAttributionLink`).
     var discogsArtistURL: URL? {
@@ -134,61 +87,7 @@ final class ArtistDetailViewModel {
     /// Une œuvre absente n'est pas encore classée et n'apparaît dans aucune section.
     private(set) var discogsCategories: [String: DiscogsWorkCategory] = [:]
 
-    /// Choix du sélecteur de la discographie Discogs : une section, ou l'option temporaire
-    /// « Tri en cours » qui regroupe les œuvres pas encore ventilées. Distinct de
-    /// `DiscogsWorkCategory`, dont les valeurs sont persistées (cache, iCloud) : une œuvre n'est
-    /// jamais « classée » en cours de tri.
-    enum DiscogsSectionFilter: Hashable, Identifiable {
-        case category(DiscogsWorkCategory)
-        case pending
-
-        var id: String {
-            switch self {
-            case .category(let category): category.rawValue
-            case .pending: "pending"
-            }
-        }
-    }
-
     var selectedDiscogsFilter: DiscogsSectionFilter = .category(.albums)
-
-    /// Œuvres pas encore ventilées dans une section.
-    var pendingDiscogsCount: Int {
-        discogsWorks.reduce(0) { count, work in discogsCategories[work.id] == nil ? count + 1 : count }
-    }
-
-    /// Les quatre sections, puis « Tri en cours » tant qu'il reste des œuvres à ventiler : elle
-    /// se vide au fil du classement et disparaît une fois vide.
-    var discogsFilterOptions: [DiscogsSectionFilter] {
-        let categories = DiscogsWorkCategory.allCases.map(DiscogsSectionFilter.category)
-        return pendingDiscogsCount > 0 ? categories + [.pending] : categories
-    }
-
-    func title(for filter: DiscogsSectionFilter) -> String {
-        switch filter {
-        case .category(let category):
-            return category.title
-        case .pending:
-            // Après un classement interrompu (erreurs réseau), les œuvres restantes ne sont plus
-            // « en cours » de tri : on le dit plutôt que de laisser croire que ça avance.
-            return isSortingDiscogsWorks ? String(localized: "Tri en cours") : String(localized: "Non classées")
-        }
-    }
-
-    /// Vrai tant que des œuvres peuvent encore être ventilées : pages en cours de chargement, ou
-    /// classement en cours.
-    var isSortingDiscogsWorks: Bool {
-        if discogsClassificationProgress != nil { return true }
-        switch discogsDiscographyState {
-        case .loading, .loaded(isLoadingMore: true, isTruncated: _): return true
-        default: return false
-        }
-    }
-
-    struct ClassificationProgress: Equatable {
-        let done: Int
-        let total: Int
-    }
 
     /// Classement en cours (masters dont il faut lire le pressage principal) ; `nil` sinon.
     private(set) var discogsClassificationProgress: ClassificationProgress?
@@ -199,9 +98,8 @@ final class ArtistDetailViewModel {
     /// app : au-delà de ce plafond (1 000 entrées brutes), la liste est signalée comme partielle.
     private static let maxDiscogsDiscographyPages = 10
 
-    /// Lignes de la discographie Discogs, avec leur statut de possession : un master est
-    /// « possédé » si l'un de tes exemplaires s'y rattache, une release isolée si tu la
-    /// possèdes elle-même.
+    /// Lignes de la discographie Discogs, avec leur statut de possession (voir
+    /// `ArtistLibraryIndex.ownership(of:)`).
     func discogsEntries() -> [DiscogsWorkEntry] {
         discogsWorks.filter { work in
             switch selectedDiscogsFilter {
@@ -209,37 +107,13 @@ final class ArtistDetailViewModel {
             case .pending: discogsCategories[work.id] == nil
             }
         }.map { work in
-            let owned = libraryRecords(for: work, in: ownedRecords, byMaster: ownedByMaster)
-            let wanted = libraryRecords(for: work, in: wantedRecords, byMaster: wantedByMaster)
-            let target = (owned.isEmpty ? wanted : owned)
-                .max { ($0.dateAdded ?? .distantPast) < ($1.dateAdded ?? .distantPast) }
-            let destination: SearchDestination? = if let target {
-                .release(target.releaseId, coverURL: target.coverURL)
-            } else if work.kind == .master {
-                // Œuvre ni possédée ni en wantlist : sa fiche master (la même que depuis une
-                // fiche album), qui liste toutes ses éditions.
-                .master(work.discogsId)
-            } else {
-                nil
-            }
+            let ownership = library.ownership(of: work)
             return DiscogsWorkEntry(
                 work: work,
-                isOwned: !owned.isEmpty,
-                isInWantlist: !wanted.isEmpty,
-                destination: destination
+                isOwned: ownership.isOwned,
+                isInWantlist: ownership.isInWantlist,
+                destination: ownership.destination
             )
-        }
-    }
-
-    private func libraryRecords(
-        for work: ArtistReleaseItem,
-        in records: [Int: LibraryRecord],
-        byMaster: [Int: [LibraryRecord]]
-    ) -> [LibraryRecord] {
-        switch work.kind {
-        case .master: byMaster[work.discogsId] ?? []
-        case .release: records[work.discogsId].map { [$0] } ?? []
-        case nil: []
         }
     }
 
@@ -323,23 +197,11 @@ final class ArtistDetailViewModel {
     }
 
     private func immediateCategory(for work: ArtistReleaseItem) -> DiscogsWorkCategory? {
-        switch work.kind {
-        case .release:
-            return work.format.map(DiscogsDiscography.category(fromFormatSummary:)) ?? .other
-        case .master:
-            if let cached = DiscogsWorkCategoryCache.shared.category(forMasterId: work.discogsId) {
-                return cached
-            }
-            // Pressage local de ce master : son format suffit à classer l'œuvre. Pas mémorisé
-            // dans le cache : il décrit un pressage de l'utilisateur, pas le pressage principal.
-            let localPressings = (ownedByMaster[work.discogsId] ?? []) + (wantedByMaster[work.discogsId] ?? [])
-            if let tokens = localPressings.first(where: { !$0.formatTokens.isEmpty })?.formatTokens {
-                return DiscogsDiscography.category(fromFormatTokens: tokens)
-            }
-            return nil
-        case nil:
-            return .other
-        }
+        ArtistDiscographyRules.immediateCategory(
+            for: work,
+            cachedCategory: work.kind == .master ? DiscogsWorkCategoryCache.shared.category(forMasterId: work.discogsId) : nil,
+            localFormatTokens: work.kind == .master ? library.localFormatTokens(forMasterId: work.discogsId) : nil
+        )
     }
 
     /// Charge la discographie page par page : la liste s'affiche et s'enrichit à chaque page
@@ -375,10 +237,10 @@ final class ArtistDetailViewModel {
                 rawItems += response.releases
                 discogsWorks = DiscogsDiscography.mainWorks(from: rawItems)
                 applyImmediateCategories()
-                let lastPage = min(totalPages, Self.maxDiscogsDiscographyPages)
-                discogsDiscographyState = .loaded(
-                    isLoadingMore: page < lastPage,
-                    isTruncated: page >= lastPage && totalPages > Self.maxDiscogsDiscographyPages
+                discogsDiscographyState = ArtistDiscographyRules.stateAfterPage(
+                    page,
+                    totalPages: totalPages,
+                    maxPages: Self.maxDiscogsDiscographyPages
                 )
                 page += 1
             } catch {
@@ -420,7 +282,7 @@ final class ArtistDetailViewModel {
         isLoading = true
         errorMessage = nil
         // Lecture locale lancée tout de suite, en parallèle de la requête Discogs.
-        let library = startLocalLibraryDecoding()
+        let localLibrary = ArtistLocalLibrary.startDecoding(username: DiscogsAuthManager.shared.username)
         refreshLibrarySnapshotStaleness()
         var discogsName: String?
         var discogsError: Error?
@@ -433,8 +295,8 @@ final class ArtistDetailViewModel {
                 discogsError = error
             }
         }
-        let (collection, wantlist) = await library.value
-        guard let name = discogsName ?? Self.localArtistName(id: artistId, in: collection + wantlist) else {
+        let (collection, wantlist) = await localLibrary.value
+        guard let name = discogsName ?? ArtistLocalLibrary.artistName(id: artistId, in: collection + wantlist) else {
             if NetworkMonitor.shared.isConnected, let discogsError {
                 errorMessage = discogsError.localizedDescription
             } else {
@@ -510,7 +372,7 @@ final class ArtistDetailViewModel {
             isLoadingArtwork = false
             return
         }
-        await service.prepareArtist(named: name, knownAlbumTitles: ownedKeys.union(wantlistKeys))
+        await service.prepareArtist(named: name, knownAlbumTitles: library.ownedKeys.union(library.wantlistKeys))
         // Déjà en cache après `prepareArtist` : aucune requête supplémentaire.
         appleMusicName = await service.catalogName(for: name)
         appleMusicURL = await service.catalogURL(for: name)
@@ -550,85 +412,23 @@ final class ArtistDetailViewModel {
         isLibrarySnapshotStale = LocalDataStore.shared.isCollectionStale(username: username, folderId: DiscogsConstants.allFolderId)
     }
 
-    /// Lit la collection et la wantlist locales. Le décodage JSON des payloads se fait hors du
-    /// fil principal : sur une grosse collection, il figeait l'interface à l'ouverture de la page.
-    private func startLocalLibraryDecoding() -> Task<([LibraryPayloadSummary], [LibraryPayloadSummary]), Never> {
-        guard let username = DiscogsAuthManager.shared.username else {
-            return Task { ([], []) }
-        }
-        let collectionPayloads = LocalDataStore.shared.collectionPayloads(username: username)
-        let wantlistPayloads = LocalDataStore.shared.wantlistPayloads(username: username)
-        return Task.detached(priority: .userInitiated) {
-            (LibraryPayloadSummary.decodeAll(collectionPayloads), LibraryPayloadSummary.decodeAll(wantlistPayloads))
-        }
-    }
-
-    /// Nom d'un artiste d'après les disques locaux qui le créditent (repli hors ligne).
-    private static func localArtistName(id: Int, in summaries: [LibraryPayloadSummary]) -> String? {
-        for summary in summaries {
-            if let match = summary.artists.first(where: { $0.id == id }) {
-                return match.name
-            }
-        }
-        return nil
-    }
-
-    /// Index de la collection et de la wantlist locales. Les disques crédités à cet artiste sont
-    /// reconnus par son identifiant Discogs plutôt que par son nom : une comparaison de noms par
-    /// inclusion rattachait à tort « Ghostface Killah » à « Ghost », par exemple.
-    private func applyLocalMembership(collection: [LibraryPayloadSummary], wantlist: [LibraryPayloadSummary]) {
-        var owned: [Int: LibraryRecord] = [:]
-        for summary in collection {
-            owned[summary.releaseId] = record(for: summary)
-        }
-        var wanted: [Int: LibraryRecord] = [:]
-        for summary in wantlist {
-            wanted[summary.releaseId] = record(for: summary)
-        }
-        ownedRecords = owned
-        wantedRecords = wanted
-    }
-
-    private func record(for summary: LibraryPayloadSummary) -> LibraryRecord {
-        let credited = isCredited(artistIds: summary.artistIds, artistNames: summary.artistNames)
-        return LibraryRecord(
-            releaseId: summary.releaseId,
-            // Normalisation (expressions régulières) réservée aux disques de cet artiste.
-            titleKey: credited ? AppleMusicArtistArtworkService.normalizeTitle(summary.title) : nil,
-            masterId: summary.masterId,
-            coverURL: summary.thumb,
-            dateAdded: summary.dateAdded,
-            formatTokens: summary.formatTokens
+    /// Index de la collection et de la wantlist locales (voir `ArtistCredit` pour le rattachement
+    /// des disques à cet artiste).
+    private func applyLocalMembership(collection: [ArtistLibraryPayloadSummary], wantlist: [ArtistLibraryPayloadSummary]) {
+        let credit = ArtistCredit(artistId: artistId, artistName: artistName)
+        library.replace(
+            owned: Dictionary(collection.map { ($0.releaseId, ArtistLibraryIndex.Record(summary: $0, credit: credit)) }, uniquingKeysWith: { _, last in last }),
+            wanted: Dictionary(wantlist.map { ($0.releaseId, ArtistLibraryIndex.Record(summary: $0, credit: credit)) }, uniquingKeysWith: { _, last in last })
         )
     }
 
-    private func record(for info: BasicInformation, releaseId: Int, dateAdded: Date?) -> LibraryRecord {
-        let credited = isCredited(artistIds: (info.artists ?? []).map(\.id), artistNames: info.artistNames)
-        return LibraryRecord(
+    private func record(for info: BasicInformation, releaseId: Int, dateAdded: Date?) -> ArtistLibraryIndex.Record {
+        ArtistLibraryIndex.Record(
+            info: info,
             releaseId: releaseId,
-            titleKey: credited ? AppleMusicArtistArtworkService.normalizeTitle(info.title) : nil,
-            masterId: info.masterId,
-            coverURL: info.thumb,
             dateAdded: dateAdded,
-            formatTokens: (info.formats ?? []).flatMap { [$0.name] + ($0.descriptions ?? []) }
+            credit: ArtistCredit(artistId: artistId, artistName: artistName)
         )
-    }
-
-    private func isCredited(artistIds: [Int], artistNames: String) -> Bool {
-        if !artistIds.isEmpty, let artistId {
-            return artistIds.contains(artistId)
-        }
-        // Repli si l'entrée ne porte pas d'identifiants d'artistes : égalité stricte des noms.
-        guard let name = artistName else { return false }
-        let target = AppleMusicArtistArtworkService.comparableArtistName(name)
-        return !target.isEmpty && AppleMusicArtistArtworkService.comparableArtistName(artistNames) == target
-    }
-
-    private func rebuildMembershipIndex() {
-        ownedKeys = Set(ownedRecords.values.compactMap(\.titleKey))
-        wantlistKeys = Set(wantedRecords.values.compactMap(\.titleKey))
-        ownedByMaster = Dictionary(grouping: ownedRecords.values.filter { $0.masterId != nil }) { $0.masterId ?? 0 }
-        wantedByMaster = Dictionary(grouping: wantedRecords.values.filter { $0.masterId != nil }) { $0.masterId ?? 0 }
     }
 
     /// Suit les ajouts/retraits faits ailleurs dans l'app (ex. depuis une fiche album ouverte
@@ -648,15 +448,15 @@ final class ArtistDetailViewModel {
                 guard let self else { return }
                 // Retiré seulement s'il ne reste aucun autre exemplaire de cette release.
                 if !LibraryMembershipStore.shared.isInCollection(releaseId) {
-                    self.ownedRecords[releaseId] = nil
+                    self.library.setOwned(nil, forReleaseId: releaseId)
                 }
             },
             addLibraryObserver(for: .wantlistItemAdded, payloadKey: "item") { [weak self] (item: WantlistItem) in
                 guard let self else { return }
-                self.wantedRecords[item.id] = self.record(for: item.basicInformation, releaseId: item.id, dateAdded: item.dateAddedDate)
+                self.library.setWanted(self.record(for: item.basicInformation, releaseId: item.id, dateAdded: item.dateAddedDate), forReleaseId: item.id)
             },
             addLibraryObserver(for: .wantlistItemRemoved, payloadKey: "releaseId") { [weak self] (releaseId: Int) in
-                self?.wantedRecords[releaseId] = nil
+                self?.library.setWanted(nil, forReleaseId: releaseId)
             },
             addLibraryObserver(for: .networkConnectionRestored) { [weak self] in
                 guard let self else { return }
@@ -666,66 +466,6 @@ final class ArtistDetailViewModel {
     }
 
     private func handleCollectionItemAdded(_ item: CollectionItem) {
-        ownedRecords[item.releaseId] = record(for: item.basicInformation, releaseId: item.releaseId, dateAdded: item.dateAddedDate)
-    }
-}
-
-/// Lecture partielle d'un payload de collection ou de wantlist en cache (même structure JSON
-/// pour les deux : `id` = release, `date_added`, `basic_information`), limitée aux champs utiles
-/// à la page artiste. `nonisolated` : décodée dans une tâche détachée, hors du fil principal.
-nonisolated private struct LibraryPayloadSummary: Decodable, Sendable {
-    nonisolated struct Info: Decodable, Sendable {
-        nonisolated struct ArtistRef: Decodable, Sendable {
-            let id: Int
-            let name: String
-        }
-        nonisolated struct FormatRef: Decodable, Sendable {
-            let name: String
-            let descriptions: [String]?
-        }
-        let title: String
-        let thumb: String?
-        let masterId: Int?
-        let artists: [ArtistRef]?
-        let formats: [FormatRef]?
-
-        private enum CodingKeys: String, CodingKey {
-            case title, thumb, artists, formats
-            case masterId = "master_id"
-        }
-    }
-
-    let releaseId: Int
-    let dateAddedRaw: String?
-    let info: Info
-    /// Renseignée par `decodeAll`, après le décodage JSON.
-    var dateAdded: Date?
-
-    var title: String { info.title }
-    var thumb: String? { info.thumb }
-    var masterId: Int? { info.masterId }
-    var artists: [Info.ArtistRef] { info.artists ?? [] }
-    var formatTokens: [String] { (info.formats ?? []).flatMap { [$0.name] + ($0.descriptions ?? []) } }
-    var artistIds: [Int] { (info.artists ?? []).map(\.id) }
-    var artistNames: String { (info.artists ?? []).map(\.name).joined(separator: ", ") }
-
-    private enum CodingKeys: String, CodingKey {
-        case releaseId = "id"
-        case dateAddedRaw = "date_added"
-        case info = "basic_information"
-    }
-
-    static func decodeAll(_ payloads: [Data]) -> [LibraryPayloadSummary] {
-        let decoder = JSONDecoder()
-        let withFraction = ISO8601DateFormatter()
-        withFraction.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        let withoutFraction = ISO8601DateFormatter()
-        return payloads.compactMap { payload in
-            guard var summary = try? decoder.decode(LibraryPayloadSummary.self, from: payload) else { return nil }
-            if let raw = summary.dateAddedRaw {
-                summary.dateAdded = withoutFraction.date(from: raw) ?? withFraction.date(from: raw)
-            }
-            return summary
-        }
+        library.setOwned(record(for: item.basicInformation, releaseId: item.releaseId, dateAdded: item.dateAddedDate), forReleaseId: item.releaseId)
     }
 }

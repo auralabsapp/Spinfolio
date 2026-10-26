@@ -11,14 +11,9 @@ import UniformTypeIdentifiers
 /// déclenchement de la règle des 6h Discogs, et inspection des files de synchronisation.
 struct DeveloperOptionsView: View {
     @State private var premiumStore = PremiumStore.shared
-    @State private var subscriptionManager = SubscriptionManager.shared
-    @State private var networkMonitor = NetworkMonitor.shared
-    @State private var offlineManager = OfflineDownloadManager.shared
     @State private var authManager = DiscogsAuthManager.shared
-    @State private var syncQueue = OfflineSyncQueue.shared
 
     @State private var tagStore = TagStore.shared
-    @State private var cloudSyncEngine = CloudSyncEngine.shared
     @State private var themeManager = ThemeManager.shared
     @State private var appearancePreferences = AppearancePreferencesStore.shared
 
@@ -40,124 +35,14 @@ struct DeveloperOptionsView: View {
     var body: some View {
         List {
             // MARK: - 1. Statut Premium & Achat
-            Section {
-                Toggle(isOn: $premiumStore.developerOverride) {
-                    HStack(spacing: 12) {
-                        Image(systemName: "crown.fill")
-                            .foregroundStyle(.yellow)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Compte Premium")
-                                .font(.body.weight(.medium))
-                            Text(premiumStore.isPremium ? "Toutes les fonctions débloquées" : "Compte gratuit bridé")
-                                .font(.caption2)
-                                .foregroundStyle(Color.appSecondaryText)
-                        }
-                    }
-                }
-                .tint(Color.spinlogPink)
-
-                Button {
-                    showingPaywall = true
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: "sparkles")
-                            .foregroundStyle(Color.goldAccent)
-                        Text("Afficher l'écran Paywall")
-                            .foregroundStyle(.primary)
-                    }
-                }
-
-                Button {
-                    showingFeaturesSheet = true
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: "list.star")
-                            .foregroundStyle(.blue)
-                        Text("Afficher la fiche des fonctionnalités")
-                            .foregroundStyle(.primary)
-                    }
-                }
-
-                HStack(spacing: 12) {
-                    Image(systemName: "cart.fill")
-                        .foregroundStyle(.purple)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("StoreKit 2")
-                            .font(.body.weight(.medium))
-                        Text(subscriptionManager.products.isEmpty ? "Aucun produit chargé" : "\(subscriptionManager.products.count) forfaits chargés (\(subscriptionManager.yearlyPriceString), \(subscriptionManager.monthlyPriceString))")
-                            .font(.caption2)
-                            .foregroundStyle(Color.appSecondaryText)
-                        // Diagnostic temporaire : permet de voir directement sur l'appareil si
-                        // `introductoryOffer` remonte bien depuis StoreKit (config locale ou réelle).
-                        Text("Essai annuel : \(subscriptionManager.freeTrialText(for: .yearly) ?? "aucun (introductoryOffer = nil)")")
-                            .font(.caption2)
-                            .foregroundStyle(Color.appSecondaryText)
-                        if let errorMessage = subscriptionManager.errorMessage {
-                            Text("Erreur StoreKit : \(errorMessage)")
-                                .font(.caption2)
-                                .foregroundStyle(.red)
-                        }
-                    }
-                    Spacer()
-                    Button("Sync") {
-                        Task {
-                            await subscriptionManager.loadProducts()
-                            await subscriptionManager.updateCustomerProductStatus()
-                            toastMessage = "StoreKit 2 synchronisé"
-                        }
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                }
-
-                if !subscriptionManager.purchasedProductIDs.isEmpty {
-                    HStack(spacing: 12) {
-                        Image(systemName: "checkmark.seal.fill")
-                            .foregroundStyle(.green)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Abonnement actif StoreKit")
-                                .font(.body.weight(.medium))
-                            Text(subscriptionManager.purchasedProductIDs.joined(separator: ", "))
-                                .font(.caption2)
-                                .foregroundStyle(.green)
-                        }
-                    }
-                }
-            } header: {
-                Text("Simulation Premium")
-            } footer: {
-                Text("Permet de basculer instantanément entre l'expérience gratuite et premium pour tester les bridages et paywalls.")
-            }
+            DeveloperPremiumSection(
+                showingPaywall: $showingPaywall,
+                showingFeaturesSheet: $showingFeaturesSheet,
+                showToast: showToast
+            )
 
             // MARK: - 2. Simulation Réseau & Mode Hors Ligne
-            Section {
-                Toggle(isOn: $networkMonitor.simulatedOffline) {
-                    HStack(spacing: 12) {
-                        Image(systemName: networkMonitor.simulatedOffline ? "wifi.slash" : "wifi")
-                            .foregroundStyle(networkMonitor.simulatedOffline ? .orange : .green)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Simuler mode hors ligne")
-                                .font(.body.weight(.medium))
-                            Text(networkMonitor.simulatedOffline ? "Réseau désactivé artificiellement" : "Connectivité réelle")
-                                .font(.caption2)
-                                .foregroundStyle(Color.appSecondaryText)
-                        }
-                    }
-                }
-                .tint(.orange)
-
-                HStack {
-                    Text("État réseau réel")
-                    Spacer()
-                    Text(networkMonitor.isConnected ? "En ligne" : "Hors ligne")
-                        .foregroundStyle(networkMonitor.isConnected ? .green : .red)
-                        .font(.footnote.weight(.medium))
-                }
-            } header: {
-                Text("Simulation Réseau")
-            } footer: {
-                Text("Active ce toggle pour tester le mode hors ligne sans avoir besoin d'activer le mode Avion de ton iPhone.")
-            }
+            DeveloperNetworkSection()
 
             // MARK: - 3. Règle des 6 heures Discogs (Cache Stale)
             Section {
@@ -201,72 +86,10 @@ struct DeveloperOptionsView: View {
             }
 
             // MARK: - 4. File d'attente Hors Ligne (OfflineSyncQueue)
-            Section {
-                HStack {
-                    Text("Actions en attente")
-                    Spacer()
-                    Text("\(syncQueue.pendingActions.count)")
-                        .font(.body.monospacedDigit())
-                        .foregroundStyle(syncQueue.pendingActions.isEmpty ? Color.appSecondaryText : .orange)
-                }
-
-                if !syncQueue.pendingActions.isEmpty {
-                    Button {
-                        Task { await syncQueue.processQueue() }
-                        showToast("Traitement de la file d'attente lancé")
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "arrow.triangle.2.circlepath")
-                            Text("Forcer le traitement de la file")
-                        }
-                    }
-
-                    Button(role: .destructive) {
-                        syncQueue.clearQueue()
-                        showToast("File d'attente vidée")
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "trash")
-                            Text("Vider la file d'attente")
-                        }
-                    }
-                }
-            } header: {
-                Text("File d'attente locale (Sync Queue)")
-            }
+            DeveloperSyncQueueSection(showToast: showToast)
 
             // MARK: - 4bis. Synchronisation iCloud (CloudSyncEngine)
-            Section {
-                HStack {
-                    Text("Compte actif")
-                    Spacer()
-                    Text(cloudSyncEngine.activeUsername ?? "—")
-                        .foregroundStyle(Color.appSecondaryText)
-                }
-
-                Button {
-                    cloudSyncEngine.resetInitialSyncForActiveAccount()
-                    showToast("Poussée initiale relancée pour ce compte sur cet appareil.")
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: "icloud.and.arrow.up")
-                            .foregroundStyle(.blue)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Forcer une nouvelle poussée initiale")
-                                .font(.body.weight(.medium))
-                                .foregroundStyle(cloudSyncEngine.activeUsername == nil ? .secondary : .primary)
-                            Text("Récupère et repousse tags, sessions, préférences et historique de valeur")
-                                .font(.caption2)
-                                .foregroundStyle(Color.appSecondaryText)
-                        }
-                    }
-                }
-                .disabled(cloudSyncEngine.activeUsername == nil)
-            } header: {
-                Text("Synchronisation iCloud")
-            } footer: {
-                Text("Oublie que la synchro initiale a déjà eu lieu sur cet appareil pour ce compte, et la redéclenche immédiatement (récupération puis poussée). Utile pour retester la réconciliation entre deux appareils, ou repousser des données pré-existantes après l'ajout d'un nouveau genre synchronisé.")
-            }
+            DeveloperCloudSyncSection(showToast: showToast)
 
             // MARK: - 5. Caches & Widgets
             Section {
@@ -466,89 +289,20 @@ struct DeveloperOptionsView: View {
         }
     }
 
-    /// Recalcule "Prix d'achat net" (Prix d'achat − Réduction, chaque champ manquant valant 0)
-    /// pour tout exemplaire de la collection possédant au moins l'un des deux champs renseigné,
-    /// et pousse le résultat sur Discogs. Les champs sont retrouvés par nom (insensible à la
-    /// casse/aux accents) plutôt que par un réglage dédié : ce sont deux champs que l'utilisateur
-    /// vient de créer sur discogs.com pour cet outil ponctuel.
     private func runNetPurchasePriceBackfill(username: String, credentials: DiscogsCredentials) async {
-        guard let purchaseFieldId = CollectionPreferencesStore.purchasePriceFieldId(for: username) else {
+        switch await NetPurchasePriceBackfill.run(username: username, credentials: credentials) {
+        case .purchaseFieldNotConfigured:
             showToast("Configure d'abord le champ « Prix d'achat » dans Réglages > Suivi de plus-value.")
-            return
-        }
-        guard let fieldsResponse = try? await DiscogsAPIClient.shared.collectionFields(username: username, credentials: credentials) else {
+        case .fieldsUnavailable:
             showToast("Impossible de récupérer les champs personnalisés Discogs.")
-            return
-        }
-        guard let discountField = matchCollectionField(named: "réduc", in: fieldsResponse.fields) else {
+        case .discountFieldMissing:
             showToast("Champ « Réduc » introuvable sur Discogs. Crée-le d'abord depuis discogs.com.")
-            return
-        }
-        guard let netField = matchCollectionField(named: "prix d'achat net", in: fieldsResponse.fields) else {
+        case .netFieldMissing:
             showToast("Champ « Prix d'achat net » introuvable sur Discogs. Crée-le d'abord depuis discogs.com.")
-            return
+        case .finished(let updated, let failures):
+            let failureSuffix = failures > 0 ? " (\(failures) échec\(failures > 1 ? "s" : ""))" : ""
+            showToast("Prix d'achat net recalculé pour \(updated) exemplaire\(updated > 1 ? "s" : "")\(failureSuffix).")
         }
-
-        let items = await LocalDataStore.shared.getAllCollectionItems(username: username)
-        let defaultCurrency = CollectionPreferencesStore.defaultCurrency(for: username)
-
-        var updatedCount = 0
-        var failureCount = 0
-
-        for item in items {
-            let purchaseRaw = item.value(forFieldId: purchaseFieldId)
-            let discountRaw = item.value(forFieldId: discountField.id)
-            guard !purchaseRaw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                || !discountRaw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { continue }
-
-            let purchase = PurchasePriceParser.parse(purchaseRaw, defaultCurrency: defaultCurrency)
-            let discount = PurchasePriceParser.parse(discountRaw, defaultCurrency: defaultCurrency)
-            let net = (purchase?.amount ?? 0) - (discount?.amount ?? 0)
-            let currency = purchase?.currency ?? discount?.currency ?? defaultCurrency
-            let canonical = PurchasePriceParser.canonicalString(amount: net, currency: currency)
-
-            do {
-                try await DiscogsAPIClient.shared.updateCollectionField(
-                    username: username,
-                    folderId: item.folderId,
-                    releaseId: item.releaseId,
-                    instanceId: item.instanceId,
-                    fieldId: netField.id,
-                    value: canonical,
-                    credentials: credentials
-                )
-                var updatedItem = item
-                if let noteIndex = updatedItem.notes.firstIndex(where: { $0.fieldId == netField.id }) {
-                    updatedItem.notes[noteIndex] = CollectionFieldValue(fieldId: netField.id, value: canonical)
-                } else {
-                    updatedItem.notes.append(CollectionFieldValue(fieldId: netField.id, value: canonical))
-                }
-                await LocalDataStore.shared.saveCollectionItems([updatedItem], username: username, folderId: item.folderId)
-                await LocalDataStore.shared.saveCollectionItems([updatedItem], username: username, folderId: DiscogsConstants.allFolderId)
-                updatedCount += 1
-            } catch {
-                failureCount += 1
-            }
-        }
-
-        let failureSuffix = failureCount > 0 ? " (\(failureCount) échec\(failureCount > 1 ? "s" : ""))" : ""
-        showToast("Prix d'achat net recalculé pour \(updatedCount) exemplaire\(updatedCount > 1 ? "s" : "")\(failureSuffix).")
-    }
-
-    private func matchCollectionField(named target: String, in fields: [CollectionField]) -> CollectionField? {
-        let normalizedTarget = normalizedFieldName(target)
-        return fields.first { normalizedFieldName($0.name) == normalizedTarget }
-    }
-
-    /// Ne garde que lettres/chiffres (repliés sans accent/casse) : insensible aux apostrophes
-    /// (droite ' vs typographique ’) et aux espacements, qui font sinon échouer une comparaison
-    /// stricte alors que le champ existe bel et bien sur Discogs.
-    private func normalizedFieldName(_ name: String) -> String {
-        name.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
-            .unicodeScalars
-            .filter { CharacterSet.alphanumerics.contains($0) }
-            .map(Character.init)
-            .reduce(into: "") { $0.append($1) }
     }
 
     private func showToast(_ msg: String) {
@@ -568,10 +322,7 @@ struct DeveloperOptionsView: View {
     }
 
     private func restoreConfirmationMessage(for backup: SpinlogUserDataBackup) -> String {
-        let dateFormatted = backup.exportDate.formatted(date: .abbreviated, time: .shortened)
-        let tagsSuffix = backup.totalTagsCount > 1 ? "s" : ""
-        let albumsSuffix = backup.totalReleasesTaggedCount > 1 ? "s" : ""
-        return "Sauvegarde du \(dateFormatted) pour le compte Discogs « \(backup.discogsUsername) ».\n\nElle contient \(backup.totalTagsCount) tag\(tagsSuffix) et \(backup.totalReleasesTaggedCount) album\(albumsSuffix) étiqueté\(albumsSuffix).\n\nVos tags actuels seront remplacés par ceux du fichier."
+        DeveloperBackup.confirmationMessage(for: backup)
     }
 
     private func prepareExport() {
@@ -579,42 +330,10 @@ struct DeveloperOptionsView: View {
             showToast("Tu dois être connecté à ton compte Discogs pour générer une sauvegarde de tes données.")
             return
         }
-
-        let lastFolderId = CollectionPreferencesStore.lastConsultedFolderId(for: username) ?? DiscogsConstants.allFolderId
-        let lastFolderName = CollectionPreferencesStore.lastConsultedFolderName(for: username)
-        let sortOption = (CollectionPreferencesStore.sortOption(for: username) ?? .artist).rawValue
-        let filterTags = CollectionPreferencesStore.filterTags(for: username)
-        let filterFormat = CollectionPreferencesStore.filterFormat(for: username) ?? ""
-        let cachedFolders = LocalDataStore.shared.getFolders(username: username)
-        let masterYears = LocalDataStore.shared.getAllMasterYears()
-        let sessions = ListeningLogStore.shared.sessions
-
-        let backup = SpinlogUserDataBackup(
-            version: SpinlogUserDataBackup.currentVersion,
-            exportDate: Date(),
-            discogsUsername: username,
-            tagsByInstance: tagStore.tagsByInstance,
-            tagsByRelease: [:],
-            standaloneTags: Array(tagStore.standaloneTags),
-            appTheme: appearancePreferences.appearance.rawValue,
-            appColorTheme: themeManager.currentTheme.rawValue,
-            masterYears: masterYears.isEmpty ? nil : masterYears,
-            listeningSessions: sessions.isEmpty ? nil : sessions,
-            lastConsultedFolderId: lastFolderId,
-            lastConsultedFolderName: lastFolderName,
-            collectionSortOption: sortOption,
-            collectionFilterTags: filterTags,
-            collectionFilterFormat: filterFormat,
-            collectionFolders: cachedFolders.isEmpty ? nil : cachedFolders,
-            customArtistSortOverrides: ShelfPreferencesStore.shared.customArtistSortOverrides.isEmpty
-                ? nil : ShelfPreferencesStore.shared.customArtistSortOverrides
+        exportDocument = SpinlogBackupDocument(
+            backup: DeveloperBackup.make(username: username, tagStore: tagStore, appearance: appearancePreferences, themeManager: themeManager)
         )
-
-        exportDocument = SpinlogBackupDocument(backup: backup)
-        let dateFormatter = DateFormatter()
-        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-        dateFormatter.dateFormat = "yyyyMMdd-HHmmss"
-        exportFilename = "spinlog-backup-\(username)-\(dateFormatter.string(from: Date())).json"
+        exportFilename = DeveloperBackup.filename(username: username)
         showingFileExporter = true
     }
 
@@ -625,74 +344,26 @@ struct DeveloperOptionsView: View {
         }
         defer { url.stopAccessingSecurityScopedResource() }
 
-        do {
-            let data = try Data(contentsOf: url)
-            let decoder = JSONDecoder()
-            decoder.dateDecodingStrategy = .iso8601
-            let backup = try decoder.decode(SpinlogUserDataBackup.self, from: data)
-
-            guard let currentUsername = authManager.username, authManager.isAuthenticated else {
-                showToast("Connecte-toi à ton compte Discogs avant de restaurer une sauvegarde.")
-                return
-            }
-
-            let backupUser = backup.discogsUsername.trimmingCharacters(in: .whitespacesAndNewlines)
-            let currentUser = currentUsername.trimmingCharacters(in: .whitespacesAndNewlines)
-
-            if backupUser.caseInsensitiveCompare(currentUser) != .orderedSame {
-                showToast("Ce fichier de sauvegarde appartient au compte « \(backupUser) », alors que tu es connecté avec le compte « \(currentUser) ».\n\nLa restauration a été refusée pour éviter toute incohérence.")
-                return
-            }
-
+        guard let data = try? Data(contentsOf: url) else {
+            showToast("Le fichier sélectionné n'est pas une sauvegarde \(AppInfo.name) valide ou est endommagé.")
+            return
+        }
+        switch DeveloperBackup.check(data: data, currentUsername: authManager.username, isAuthenticated: authManager.isAuthenticated) {
+        case .accepted(let backup):
             pendingBackupToRestore = backup
             showingRestoreConfirmation = true
-
-        } catch {
+        case .notSignedIn:
+            showToast("Connecte-toi à ton compte Discogs avant de restaurer une sauvegarde.")
+        case .wrongAccount(let backupUser, let currentUser):
+            showToast("Ce fichier de sauvegarde appartient au compte « \(backupUser) », alors que tu es connecté avec le compte « \(currentUser) ».\n\nLa restauration a été refusée pour éviter toute incohérence.")
+        case .invalidFile:
             showToast("Le fichier sélectionné n'est pas une sauvegarde \(AppInfo.name) valide ou est endommagé.")
         }
     }
 
     private func applyBackup(_ backup: SpinlogUserDataBackup) {
-        tagStore.restoreData(
-            tagsByInstance: backup.tagsByInstance,
-            tagsByRelease: backup.tagsByRelease,
-            standaloneTags: Set(backup.standaloneTags)
-        )
-        if let theme = backup.appTheme, let appTheme = AppTheme(rawValue: theme) {
-            appearancePreferences.appearance = appTheme
-        }
-        if let colorTheme = backup.appColorTheme, let theme = AppColorTheme(rawValue: colorTheme) {
-            themeManager.selectTheme(theme, isPremium: premiumStore.isPremium)
-        }
-        if let folderId = backup.lastConsultedFolderId {
-            CollectionPreferencesStore.setLastConsultedFolderId(folderId, for: backup.discogsUsername)
-        }
-        if let folderName = backup.lastConsultedFolderName {
-            CollectionPreferencesStore.setLastConsultedFolderName(folderName, for: backup.discogsUsername)
-        }
-        if let sortRaw = backup.collectionSortOption, let sort = CollectionSortOption(rawValue: sortRaw) {
-            CollectionPreferencesStore.setSortOption(sort, for: backup.discogsUsername)
-        }
-        if !backup.collectionFilterTags.isEmpty {
-            CollectionPreferencesStore.setFilterTags(backup.collectionFilterTags, for: backup.discogsUsername)
-        }
-        if let format = backup.collectionFilterFormat {
-            CollectionPreferencesStore.setFilterFormat(format, for: backup.discogsUsername)
-        }
-        if let folders = backup.collectionFolders, !folders.isEmpty {
-            LocalDataStore.shared.saveFolders(folders, username: backup.discogsUsername)
-        }
-        if let masterYears = backup.masterYears, !masterYears.isEmpty {
-            LocalDataStore.shared.saveMasterYears(masterYears)
-        }
-        if let sessions = backup.listeningSessions, !sessions.isEmpty {
-            ListeningLogStore.shared.restoreSessions(sessions)
-        }
-        if let overrides = backup.customArtistSortOverrides, !overrides.isEmpty {
-            ShelfPreferencesStore.shared.applyRemoteCustomArtistSortOverrides(overrides)
-        }
-        NotificationCenter.default.post(name: .collectionPreferencesChanged, object: nil)
-        showToast("Tes données ont été restaurées avec succès (\(backup.totalTagsCount) tag\(backup.totalTagsCount > 1 ? "s" : "") et \(backup.totalReleasesTaggedCount) album\(backup.totalReleasesTaggedCount > 1 ? "s" : "") étiqueté\(backup.totalReleasesTaggedCount > 1 ? "s" : "")).")
+        DeveloperBackup.restore(backup, tagStore: tagStore, appearance: appearancePreferences, themeManager: themeManager, isPremium: premiumStore.isPremium)
+        showToast(DeveloperBackup.successMessage(for: backup))
         pendingBackupToRestore = nil
     }
 
