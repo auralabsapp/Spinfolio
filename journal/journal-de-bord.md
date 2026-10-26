@@ -9,6 +9,28 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-10-26 — Audit : lots 12, 8, 9, 11, 13, 14, 15 et 10 ; découpage des gros fichiers
 
+### 19:30 — `a56f875` Audit lot 11 : relecture des traductions anglaises, guillemets typographiques
+- Relecture des 465 traductions automatiques anglaises : 3 chaînes corrigées (indication
+  VoiceOver à la 3ᵉ personne, « Gain hidden », une phrase du rangement).
+- Guillemets et apostrophes droits remplacés par “ ” et ’ dans 115 chaînes anglaises ;
+  pluriels conservés.
+- 2 fichiers, +176 / −176.
+
+### 19:30 — `1240b3e` Audit lot 13 : règles de fusion iCloud extraites et testées
+- Fusion des tags, des tags autonomes, des personnalisations de rangement et des réglages
+  reçus d'iCloud extraite dans des fonctions pures, sans changer le comportement.
+- Tests : union à la première synchro, remplacement ensuite, suppression propagée, valeur
+  inconnue d'une autre version, anciens enregistrements encore lisibles (485 tests au total).
+- 3 fichiers, +220 / −24.
+
+### 19:30 — `f44cdc1` Audit lots 10 et 8 : jetons podium et paywall, PDF à 9 pt, section courante isolée
+- Couleurs du podium des Stats et de l'en-tête du paywall passées en jetons (rendu inchangé).
+- Export PDF de la collection : texte à 9 pt minimum, 13 albums par page au lieu de 15.
+- Le changement de section pendant le défilement ne réévalue plus tout l'écran Collection ou
+  Wantlist, seulement la barre d'index.
+- Recettes P38 (étendue), P39 et M31.
+- 10 fichiers, +54 / −30.
+
 ### 18:58 — `fb09ff2` Audit lot 10 : contraste des boutons pleins et jetons de design
 - Texte des boutons pleins choisi automatiquement selon le thème (contraste ≥ 4,5:1) :
   foncé en mode sombre pour les 10 thèmes, blanc en clair ; violet du thème Violet clair
