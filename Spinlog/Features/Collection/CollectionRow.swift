@@ -155,7 +155,7 @@ struct CollectionRow: View {
     private static let dateFormatStyle = Date.FormatStyle(date: .numeric, time: .omitted)
 
     private var yearAndDateLine: String? {
-        let year = info.year != nil && info.year! > 0 ? "\(info.year!)" : nil
+        let year = info.year.flatMap { $0 > 0 ? "\($0)" : nil }
         let date = item.dateAddedDate?.formatted(Self.dateFormatStyle)
         switch (year, date) {
         case let (.some(y), .some(d)):

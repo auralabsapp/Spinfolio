@@ -82,7 +82,7 @@ extension Release {
     @MainActor
     func effectiveShelfYear(useOriginalYear: Bool = true, masterYears: [Int: Int]? = nil) -> Int? {
         guard useOriginalYear, let masterId, masterId > 0 else {
-            return (year != nil && year! > 0) ? year : nil
+            return year.flatMap { $0 > 0 ? $0 : nil }
         }
         if let masterYears {
             if let mYear = masterYears[masterId], mYear > 0 {
@@ -91,7 +91,7 @@ extension Release {
         } else if let mYear = LocalDataStore.shared.getMasterYear(for: masterId), mYear > 0 {
             return mYear
         }
-        return (year != nil && year! > 0) ? year : nil
+        return year.flatMap { $0 > 0 ? $0 : nil }
     }
 }
 

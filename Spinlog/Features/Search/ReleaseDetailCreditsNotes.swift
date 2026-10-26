@@ -12,7 +12,7 @@ struct CreditsSection: View {
                 ForEach(Array(credits.enumerated()), id: \.element.id) { index, credit in
                     HStack(alignment: .center, spacing: 12) {
                         // 1. Libellé (Rôle) d'abord, standard .subheadline (noir/régulier) identique à Fabrication
-                        Text(credit.role?.isEmpty == false ? credit.role! : String(localized: "Crédit"))
+                        Text(credit.role.flatMap { $0.isEmpty ? nil : $0 } ?? String(localized: "Crédit"))
                             .font(.subheadline)
                             .frame(minWidth: 80, alignment: .leading)
 

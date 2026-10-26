@@ -38,8 +38,14 @@ final class LocalDataStore {
             // lancements, d'où ce log (auparavant silencieux) pour pouvoir diagnostiquer.
             localDataStoreLogger.fault("Échec d'ouverture du store SwiftData, repli en mémoire : \(error, privacy: .public)")
             let inMemoryConfig = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
-            container = (try? ModelContainer(for: schema, configurations: [inMemoryConfig]))
-                ?? (try! ModelContainer(for: Schema([]), configurations: []))
+            do {
+                container = try ModelContainer(for: schema, configurations: [inMemoryConfig])
+            } catch {
+                // Même un store en mémoire refusé : le schéma lui-même est invalide, l'app ne peut
+                // pas fonctionner. Arrêt explicite (et journalisé) plutôt qu'un `try!` muet.
+                localDataStoreLogger.fault("Échec du repli en mémoire : \(error, privacy: .public)")
+                fatalError("Schéma SwiftData invalide : \(error)")
+            }
             context = ModelContext(container)
         }
     }

@@ -158,7 +158,7 @@ nonisolated enum GradeRules {
         var best: (track: GradeTrack, tier: Int)?
         for track in GradeTrack.allCases {
             guard let tier = unlocks.filter({ $0.track == track }).map(\.tier).max() else { continue }
-            if best == nil || tier > best!.tier { best = (track, tier) }
+            if tier > (best?.tier ?? Int.min) { best = (track, tier) }
         }
         return best
     }

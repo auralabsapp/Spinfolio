@@ -104,7 +104,8 @@ struct SettingsView: View {
                 }
                 SettingsAccountSection()
                     .id("accountSection")
-                // Hors App Store seulement (TestFlight, sandbox, Xcode) : voir la section.
+                // Hors App Store seulement (TestFlight, sandbox, Xcode), et après déverrouillage
+                // dans « À propos » : voir la section.
                 SubscriptionDiagnosticSection()
                 collectionGroup
                 listeningGroup

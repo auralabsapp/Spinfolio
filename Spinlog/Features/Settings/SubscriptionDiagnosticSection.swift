@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// Diagnostic de l'abonnement, affiché seulement hors App Store (TestFlight, sandbox, Xcode) :
+/// Diagnostic de l'abonnement, affiché seulement hors App Store (TestFlight, sandbox, Xcode) et
+/// après déverrouillage (voir `SubscriptionDiagnosticUnlock`) :
 /// montre ce que StoreKit renvoie réellement, pour comprendre un écart entre la page
 /// « Gérer mon abonnement » d'Apple et l'accès Premium de l'app. Jamais visible des utilisateurs
 /// de l'App Store ; textes volontairement non traduits (`verbatim`), réservés aux tests.
@@ -12,7 +13,7 @@ struct SubscriptionDiagnosticSection: View {
     private static let dateFormat = Date.FormatStyle(date: .abbreviated, time: .standard)
 
     var body: some View {
-        if subscriptionManager.isTestEnvironment {
+        if subscriptionManager.showsDiagnostic {
             Section {
                 row("Accès Premium", premiumStore.isPremium ? "oui" : "non")
                 row("Abonnement (StoreKit)", premiumStore.hasSubscription ? "actif" : "aucun")

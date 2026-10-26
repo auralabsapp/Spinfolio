@@ -244,7 +244,7 @@ extension SortableLibraryItem {
                 return masterYear
             }
             let year = info.year
-            return (year != nil && year! > 0) ? year : nil
+            return year.flatMap { $0 > 0 ? $0 : nil }
         }
 
         return ShelfPlacementService.compare(

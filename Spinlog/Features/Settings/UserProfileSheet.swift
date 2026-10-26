@@ -191,7 +191,7 @@ struct UserProfileSheet: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(profile.name?.isEmpty == false ? profile.name! : profile.username)
+                Text(profile.name.flatMap { $0.isEmpty ? nil : $0 } ?? profile.username)
                     .font(.title3.weight(.bold))
                     .foregroundStyle(.primary)
 

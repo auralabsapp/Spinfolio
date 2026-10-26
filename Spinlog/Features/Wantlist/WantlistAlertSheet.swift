@@ -131,7 +131,7 @@ struct WantlistAlertSheet: View {
                         }
                     }
                     .bold()
-                    .disabled(viewModel.targetPrice == nil || viewModel.targetPrice! <= 0 || viewModel.isSaving)
+                    .disabled((viewModel.targetPrice ?? 0) <= 0 || viewModel.isSaving)
                 }
             }
             .onChange(of: viewModel.isLoading) { _, isLoading in

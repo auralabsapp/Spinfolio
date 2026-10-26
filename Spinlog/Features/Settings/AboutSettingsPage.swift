@@ -4,6 +4,8 @@ import StoreKit
 /// Page « À propos » de Réglages : site Discogs, gestion de l'abonnement, options développeur
 /// (Debug seulement) et version.
 struct AboutSettingsPage: View {
+    /// Décompte des touchers sur la version (déverrouillage du diagnostic d'abonnement).
+    @State private var diagnosticUnlock = SubscriptionDiagnosticUnlock()
     @State private var showingDiscogsWebsite = false
     @State private var showingManageSubscriptions = false
 
@@ -67,6 +69,15 @@ struct AboutSettingsPage: View {
                     Spacer()
                     Text(AppInfo.versionString)
                         .foregroundStyle(Color.appSecondaryText)
+                }
+                .contentShape(Rectangle())
+                // Hors App Store seulement : 7 touchers affichent ou masquent le diagnostic
+                // d'abonnement (voir `SubscriptionDiagnosticUnlock`). Volontairement sans
+                // équivalent VoiceOver ni indice visuel : réservé aux tests TestFlight.
+                .onTapGesture {
+                    guard diagnosticUnlock.registerTap(),
+                          SubscriptionManager.shared.toggleDiagnosticUnlock() else { return }
+                    UINotificationFeedbackGenerator().notificationOccurred(.success)
                 }
             } header: {
                 SectionEyebrow(title: "À propos", icon: "info.circle.fill")

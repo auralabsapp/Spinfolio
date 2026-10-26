@@ -340,10 +340,10 @@ final class DiscogsAuthManager: NSObject {
     }
 
     private func authorize(requestToken: String) async throws -> String {
-        var components = URLComponents(
+        guard var components = URLComponents(
             url: DiscogsConstants.websiteURL.appendingPathComponent("oauth/authorize"),
             resolvingAgainstBaseURL: false
-        )!
+        ) else { throw AuthError.invalidResponse }
         components.queryItems = [URLQueryItem(name: "oauth_token", value: requestToken)]
         guard let authorizeURL = components.url else { throw AuthError.invalidResponse }
 
@@ -436,7 +436,10 @@ extension DiscogsAuthManager: ASWebAuthenticationPresentationContextProviding {
             return keyWindow
         }
         // Ce delegate n'est appelé que pendant la présentation d'une session web, donc au moins
-        // une scène doit exister à ce moment ; on évite ainsi `ASPresentationAnchor()` (dépréciée).
-        return ASPresentationAnchor(windowScene: windowScenes.first!)
+        // une scène existe à ce moment ; `ASPresentationAnchor()` sans scène est dépréciée.
+        guard let scene = windowScenes.first else {
+            preconditionFailure("Aucune scène connectée pour présenter la connexion Discogs")
+        }
+        return ASPresentationAnchor(windowScene: scene)
     }
 }

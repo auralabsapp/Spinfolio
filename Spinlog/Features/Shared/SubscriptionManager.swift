@@ -41,6 +41,24 @@ final class SubscriptionManager {
 
     /// `true` hors App Store (TestFlight, compte sandbox, fichier StoreKit de Xcode).
     private(set) var isTestEnvironment = false
+
+    /// Diagnostic déverrouillé sur cet appareil (7 touchers sur la version, dans « À propos »).
+    /// Masqué par défaut : la revue App Store tourne elle aussi en sandbox, comme TestFlight, et
+    /// un examinateur ne doit pas tomber sur cette section de test.
+    private(set) var isDiagnosticUnlocked = UserDefaults.standard.bool(forKey: SubscriptionDiagnosticUnlock.defaultsKey)
+
+    /// Le diagnostic d'abonnement est-il affiché dans les Réglages ?
+    var showsDiagnostic: Bool { isTestEnvironment && isDiagnosticUnlocked }
+
+    /// Affiche ou masque le diagnostic ; sans effet en production (App Store).
+    /// - Returns: `true` si l'état a changé.
+    @discardableResult
+    func toggleDiagnosticUnlock() -> Bool {
+        guard isTestEnvironment else { return false }
+        isDiagnosticUnlocked.toggle()
+        UserDefaults.standard.set(isDiagnosticUnlocked, forKey: SubscriptionDiagnosticUnlock.defaultsKey)
+        return true
+    }
     private(set) var lastEntitlementCheck: Date?
     private(set) var lastEntitlements: [EntitlementSnapshot] = []
 

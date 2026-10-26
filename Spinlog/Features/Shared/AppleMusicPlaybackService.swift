@@ -398,7 +398,7 @@ final class AppleMusicPlaybackService {
             logger.debug("  candidat « \(candidate.title, privacy: .private) » — \(candidate.artistName, privacy: .private) — album « \(candidate.albumTitle ?? "?", privacy: .private) » — durée \(candidate.duration ?? -1, privacy: .public)s — titleScore=\(titleScore, privacy: .public) artistScore=\(artistScore, privacy: .public) albumBonus=\(albumBonus, privacy: .public) durationAdj=\(durationAdjustment, privacy: .public) combined=\(combinedScore, privacy: .public) seuilOK=\(passesThreshold, privacy: .public)")
 
             guard passesThreshold else { continue }
-            if best == nil || combinedScore > best!.score {
+            if combinedScore > (best?.score ?? -.infinity) {
                 best = (candidate, combinedScore)
             }
         }

@@ -176,7 +176,7 @@ struct ReleaseCompaniesSection: View {
                             .foregroundStyle(Color.spinlogPink)
                             .frame(width: 20)
                         VStack(alignment: .leading, spacing: 1) {
-                            Text(company.entityTypeName?.isEmpty == false ? company.entityTypeName! : String(localized: "Société"))
+                            Text(company.entityTypeName.flatMap { $0.isEmpty ? nil : $0 } ?? String(localized: "Société"))
                                 .font(.subheadline)
                             Text(company.name)
                                 .font(.caption)
