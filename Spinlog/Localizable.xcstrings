@@ -48,8 +48,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "\"%1$@\" (%2$@) is available from %3$@ on Discogs!"
+            "state" : "machine_translated",
+            "value" : "“%1$@” (%2$@) is available from %3$@ on Discogs!"
           }
         },
         "fr" : {
@@ -65,7 +65,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "\"Theme Color\" opens the palettes."
+            "value" : "“Theme Color” opens the palettes."
           }
         }
       }
@@ -75,7 +75,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "\"Collection Valuation\" is based on Discogs sales history."
+            "value" : "“Collection Valuation” is based on Discogs sales history."
           }
         }
       }
@@ -85,7 +85,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "\"Folder Management\": tap a folder to make it the default folder for new additions."
+            "value" : "“Folder Management”: tap a folder to make it the default folder for new additions."
           }
         }
       }
@@ -95,7 +95,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "\"Tag Management\": swipe or press and hold a tag to rename, merge or delete it."
+            "value" : "“Tag Management”: swipe or press and hold a tag to rename, merge or delete it."
           }
         }
       }
@@ -105,7 +105,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "\"Shelve\" is a Premium feature."
+            "value" : "“Shelve” is a Premium feature."
           }
         }
       }
@@ -115,7 +115,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "\"Sign Out\" is at the bottom of Settings."
+            "value" : "“Sign Out” is at the bottom of Settings."
           }
         }
       }
@@ -125,7 +125,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "\"Delete My Account…\" lets you erase local and iCloud data, or delete the account on Discogs.com."
+            "value" : "“Delete My Account…” lets you erase local and iCloud data, or delete the account on Discogs.com."
           }
         }
       }
@@ -135,7 +135,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "\"Always Ask\" offers you the folder every time you add a record."
+            "value" : "“Always Ask” offers you the folder every time you add a record."
           }
         }
       }
@@ -2333,8 +2333,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "2. Under \"Custom Fields\", create a text-type field (e.g. named \"Purchase Price\")"
+            "state" : "machine_translated",
+            "value" : "2. Under “Custom Fields”, create a text-type field (e.g. named “Purchase Price”)"
           }
         }
       }
@@ -2634,7 +2634,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Turn on \"Limit to Discogs Folder\" if your folders match separate shelving units."
+            "value" : "Turn on “Limit to Discogs Folder” if your folders match separate shelving units."
           }
         }
       }
@@ -2644,7 +2644,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Turn on \"Auto-Sync Over Wi-Fi\" to keep it up to date."
+            "value" : "Turn on “Auto-Sync Over Wi-Fi” to keep it up to date."
           }
         }
       }
@@ -2845,8 +2845,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add records you're looking for from search or scan."
+            "state" : "machine_translated",
+            "value" : "Add records you’re looking for from search or scan."
           }
         }
       }
@@ -3804,7 +3804,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Allow camera access in Settings to scan your records' barcodes."
+            "value" : "Allow camera access in Settings to scan your records’ barcodes."
           }
         }
       }
@@ -3874,7 +3874,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "With last-name sorting on, \"Customize Artist Sorting\" fixes a one-off case."
+            "value" : "With last-name sorting on, “Customize Artist Sorting” fixes a one-off case."
           }
         }
       }
@@ -3893,8 +3893,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Swipe left on the copy in \"My Copies\" to see where to shelve it"
+            "state" : "machine_translated",
+            "value" : "Swipe left on the copy in “My Copies” to see where to shelve it"
           }
         }
       }
@@ -3913,8 +3913,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Based on your turntable listens. Apple Music plays aren't counted."
+            "state" : "machine_translated",
+            "value" : "Based on your turntable listens. Apple Music plays aren’t counted."
           }
         }
       }
@@ -4113,8 +4113,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Some information isn't available offline"
+            "state" : "machine_translated",
+            "value" : "Some information isn’t available offline"
           }
         }
       }
@@ -4133,8 +4133,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Some copies have already reached the maximum of %lld tags and couldn't receive this tag."
+            "state" : "machine_translated",
+            "value" : "Some copies have already reached the maximum of %lld tags and couldn’t receive this tag."
           }
         }
       }
@@ -4164,7 +4164,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "This device can't scan barcodes. You can search for the record by name."
+            "value" : "This device can’t scan barcodes. You can search for the record by name."
           }
         }
       }
@@ -4173,8 +4173,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "This artist isn't in your collection or wantlist: their page requires a network connection."
+            "state" : "machine_translated",
+            "value" : "This artist isn’t in your collection or wantlist: their page requires a network connection."
           }
         }
       }
@@ -4194,7 +4194,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "This can't be undone"
+            "value" : "This can’t be undone"
           }
         }
       }
@@ -4243,8 +4243,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "This release can't currently be sold."
+            "state" : "machine_translated",
+            "value" : "This release can’t currently be sold."
           }
         }
       }
@@ -4466,7 +4466,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Pick \"Album of the Day\" in small, medium or large size."
+            "value" : "Pick “Album of the Day” in small, medium or large size."
           }
         }
       }
@@ -5041,8 +5041,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Create and Add \"%@\""
+            "state" : "machine_translated",
+            "value" : "Create and Add “%@”"
           }
         }
       }
@@ -5051,8 +5051,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Create and Add \"%@\" to Selection"
+            "state" : "machine_translated",
+            "value" : "Create and Add “%@” to Selection"
           }
         }
       }
@@ -5071,8 +5071,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Create Tag \"%@\""
+            "state" : "machine_translated",
+            "value" : "Create Tag “%@”"
           }
         }
       }
@@ -5132,7 +5132,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "In \"Edit\", under \"Copy Tags\": create or pick tags."
+            "value" : "In “Edit”, under “Copy Tags”: create or pick tags."
           }
         }
       }
@@ -5142,7 +5142,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "In \"Original Releases\", switch between years and decades."
+            "value" : "In “Original Releases”, switch between years and decades."
           }
         }
       }
@@ -5162,7 +5162,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "In the Stats tab, tap \"Collection\" or \"Wantlist\" to go to the list."
+            "value" : "In the Stats tab, tap “Collection” or “Wantlist” to go to the list."
           }
         }
       }
@@ -5172,7 +5172,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "In the Wantlist, swipe a row or press and hold it: \"Set Price Alert\"."
+            "value" : "In the Wantlist, swipe a row or press and hold it: “Set Price Alert”."
           }
         }
       }
@@ -5262,7 +5262,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "In Stats, \"Top Charts\" shows the ranking and the podium by period."
+            "value" : "In Stats, “Top Charts” shows the ranking and the podium by period."
           }
         }
       }
@@ -5272,7 +5272,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "In Stats, open \"Invested vs Current Value\"."
+            "value" : "In Stats, open “Invested vs Current Value”."
           }
         }
       }
@@ -5312,8 +5312,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Unlock your collection's full potential"
+            "state" : "machine_translated",
+            "value" : "Unlock your collection’s full potential"
           }
         }
       }
@@ -5398,8 +5398,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Discover your most-listened albums and artists on your turntable, plus your monthly and yearly podiums in Statistics. Apple Music plays aren't counted."
+            "state" : "machine_translated",
+            "value" : "Discover your most-listened albums and artists on your turntable, plus your monthly and yearly podiums in Statistics. Apple Music plays aren’t counted."
           }
         }
       }
@@ -5750,8 +5750,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Discogs doesn't create a \"purchase price\" field by default: it's up to you to create one, once, from the discogs.com website (not from the app)."
+            "state" : "machine_translated",
+            "value" : "Discogs doesn’t create a “purchase price” field by default: it’s up to you to create one, once, from the discogs.com website (not from the app)."
           }
         }
       }
@@ -5761,7 +5761,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Discogs doesn’t provide a \"median price\" for a specific record, only suggestions by condition. %@ uses the one for the declared condition; with no condition, it averages all suggestions, so the estimate is less precise."
+            "value" : "Discogs doesn’t provide a “median price” for a specific record, only suggestions by condition. %@ uses the one for the declared condition; with no condition, it averages all suggestions, so the estimate is less precise."
           }
         }
       }
@@ -5770,8 +5770,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Discogs isn't responding: the change will sync automatically."
+            "state" : "machine_translated",
+            "value" : "Discogs isn’t responding: the change will sync automatically."
           }
         }
       }
@@ -5790,8 +5790,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Available once you're back online."
+            "state" : "machine_translated",
+            "value" : "Available once you’re back online."
           }
         }
       }
@@ -6257,8 +6257,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "This Album's Spot"
+            "state" : "machine_translated",
+            "value" : "This Album’s Spot"
           }
         }
       }
@@ -6297,8 +6297,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "When you're on the move without a network connection, %@ still lets you browse your collection and album covers with complete independence."
+            "state" : "machine_translated",
+            "value" : "When you’re on the move without a network connection, %@ still lets you browse your collection and album covers with complete independence."
           }
         }
       }
@@ -6367,8 +6367,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Log at least %lld turntable listens (I'm Listening button on an album page) to unlock your rankings."
+            "state" : "machine_translated",
+            "value" : "Log at least %lld turntable listens (I’m Listening button on an album page) to unlock your rankings."
           }
         }
       }
@@ -6398,7 +6398,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Then use \"Edit\" on a copy to enter its price."
+            "value" : "Then use “Edit” on a copy to enter its price."
           }
         }
       }
@@ -6579,8 +6579,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "E.g. \"Beatles, The\" if on, otherwise \"The Beatles\""
+            "state" : "machine_translated",
+            "value" : "E.g. “Beatles, The” if on, otherwise “The Beatles”"
           }
         }
       }
@@ -6730,7 +6730,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Scroll down: tracks, \"Photos & Videos\", \"Additional Information\"."
+            "value" : "Scroll down: tracks, “Photos & Videos”, “Additional Information”."
           }
         }
       }
@@ -6900,7 +6900,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Premium feature. A \"≤ price\" badge then appears on the row."
+            "value" : "Premium feature. A “≤ price” badge then appears on the row."
           }
         }
       }
@@ -6960,8 +6960,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Merge with \"%@\""
+            "state" : "machine_translated",
+            "value" : "Merge with “%@”"
           }
         }
       }
@@ -7132,7 +7132,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Swipe a Collection row and tap \"Shelve\", or open \"Physical Shelving\" on the record’s page."
+            "value" : "Swipe a Collection row and tap “Shelve”, or open “Physical Shelving” on the record’s page."
           }
         }
       }
@@ -7292,7 +7292,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Offline: will sync when you're back online"
+            "value" : "Offline: will sync when you’re back online"
           }
         }
       }
@@ -7437,8 +7437,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Couldn't add this record on Discogs."
+            "state" : "machine_translated",
+            "value" : "Couldn’t add this record on Discogs."
           }
         }
       }
@@ -7447,8 +7447,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Couldn't save the rating on Discogs."
+            "state" : "machine_translated",
+            "value" : "Couldn’t save the rating on Discogs."
           }
         }
       }
@@ -7457,8 +7457,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Couldn't save the purchase price on Discogs."
+            "state" : "machine_translated",
+            "value" : "Couldn’t save the purchase price on Discogs."
           }
         }
       }
@@ -7467,8 +7467,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Couldn't save to Discogs: %@"
+            "state" : "machine_translated",
+            "value" : "Couldn’t save to Discogs: %@"
           }
         }
       }
@@ -7477,8 +7477,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Couldn't move this record to another folder on Discogs."
+            "state" : "machine_translated",
+            "value" : "Couldn’t move this record to another folder on Discogs."
           }
         }
       }
@@ -7527,8 +7527,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Couldn't generate the PDF document: %@"
+            "state" : "machine_translated",
+            "value" : "Couldn’t generate the PDF document: %@"
           }
         }
       }
@@ -7537,8 +7537,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Couldn't generate the CSV file: %@"
+            "state" : "machine_translated",
+            "value" : "Couldn’t generate the CSV file: %@"
           }
         }
       }
@@ -7547,8 +7547,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Couldn't connect to Discogs."
+            "state" : "machine_translated",
+            "value" : "Couldn’t connect to Discogs."
           }
         }
       }
@@ -7558,7 +7558,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Couldn't remove this record on Discogs."
+            "value" : "Couldn’t remove this record on Discogs."
           }
         }
       }
@@ -7674,8 +7674,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "I'm Listening"
+            "state" : "machine_translated",
+            "value" : "I’m Listening"
           }
         }
       }
@@ -7684,8 +7684,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "I'm listening to this record on the turntable"
+            "state" : "machine_translated",
+            "value" : "I’m listening to this record on the turntable"
           }
         }
       }
@@ -7835,7 +7835,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "The track list isn't available offline."
+            "value" : "The track list isn’t available offline."
           }
         }
       }
@@ -7845,7 +7845,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "The track list couldn't be loaded."
+            "value" : "The track list couldn’t be loaded."
           }
         }
       }
@@ -7854,8 +7854,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "The artist's photo and biography come from Apple Music. Allow %@ to access it in Settings."
+            "state" : "machine_translated",
+            "value" : "The artist’s photo and biography come from Apple Music. Allow %@ to access it in Settings."
           }
         }
       }
@@ -7864,8 +7864,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "The photo and biography will appear once you're back online."
+            "state" : "machine_translated",
+            "value" : "The photo and biography will appear once you’re back online."
           }
         }
       }
@@ -7966,7 +7966,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "The \"Random Record\" button at the top of the Collection picks one for you."
+            "value" : "The “Random Record” button at the top of the Collection picks one for you."
           }
         }
       }
@@ -7976,7 +7976,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "The button then shows \"In Collection\" or \"In Wantlist\"."
+            "value" : "The button then shows “In Collection” or “In Wantlist”."
           }
         }
       }
@@ -8035,8 +8035,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "The Shelving Guide only compares against the record's folder, rather than your entire collection"
+            "state" : "machine_translated",
+            "value" : "The Shelving Guide only compares against the record’s folder, rather than your entire collection"
           }
         }
       }
@@ -8056,7 +8056,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "The \"Folder\" menu, inside \"···\", switches folder."
+            "value" : "The “Folder” menu, inside “···”, switches folder."
           }
         }
       }
@@ -8127,8 +8127,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "The tag \"%@\" already exists in your library."
+            "state" : "machine_translated",
+            "value" : "The tag “%@” already exists in your library."
           }
         }
       }
@@ -8137,8 +8137,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "The tag \"%@\" already exists. Tap it below to apply it."
+            "state" : "machine_translated",
+            "value" : "The tag “%@” already exists. Tap it below to apply it."
           }
         }
       }
@@ -8147,8 +8147,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "The download runs in batches with a pause between each page to stay within Discogs' quota of 60 requests per minute."
+            "state" : "machine_translated",
+            "value" : "The download runs in batches with a pause between each page to stay within Discogs’ quota of 60 requests per minute."
           }
         }
       }
@@ -8572,7 +8572,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Press and hold \"Collection\" to pick another folder."
+            "value" : "Press and hold “Collection” to pick another folder."
           }
         }
       }
@@ -8582,7 +8582,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Press and hold \"In Collection\" to add a copy."
+            "value" : "Press and hold “In Collection” to add a copy."
           }
         }
       }
@@ -8592,7 +8592,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Touch and hold the Home Screen, tap \"+\" and search for Spinlog."
+            "value" : "Touch and hold the Home Screen, tap “+” and search for Spinlog."
           }
         }
       }
@@ -9467,7 +9467,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Open the actions menu to show an item's records."
+            "value" : "Opens the actions menu to show an item’s records."
           }
         }
       }
@@ -9743,7 +9743,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Go Premium to calculate this album's gain from your purchase price."
+            "value" : "Go Premium to calculate this album’s gain from your purchase price."
           }
         }
       }
@@ -9852,8 +9852,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Plays full tracks from an album page with an active Apple Music subscription. Without connecting, a 30-second preview is still available. These plays don't count as turntable listens."
+            "state" : "machine_translated",
+            "value" : "Plays full tracks from an album page with an active Apple Music subscription. Without connecting, a 30-second preview is still available. These plays don’t count as turntable listens."
           }
         }
       }
@@ -9892,8 +9892,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Personalize the app's look to your taste with 8 exclusive palettes (Cobalt Blue, Emerald Green, Twilight Orange, Ruby Red, Amethyst Purple, Copper & Gold...)."
+            "state" : "machine_translated",
+            "value" : "Personalize the app’s look to your taste with 8 exclusive palettes (Cobalt Blue, Emerald Green, Twilight Orange, Ruby Red, Amethyst Purple, Copper & Gold...)."
           }
         }
       }
@@ -10039,7 +10039,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Value Gain Hidden"
+            "value" : "Gain hidden"
           }
         }
       }
@@ -10168,8 +10168,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "To receive alerts even when %@ is closed, allow notifications in your iPhone's Settings."
+            "state" : "machine_translated",
+            "value" : "To receive alerts even when %@ is closed, allow notifications in your iPhone’s Settings."
           }
         }
       }
@@ -10421,7 +10421,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Four rules, so you can sort just like your shelf."
+            "value" : "Four rules to sort your records the way they sit on your shelf."
           }
         }
       }
@@ -10814,8 +10814,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Enter your purchase price in the custom fields below to track this copy's gain."
+            "state" : "machine_translated",
+            "value" : "Enter your purchase price in the custom fields below to track this copy’s gain."
           }
         }
       }
@@ -11035,7 +11035,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Enter the \"Maximum price\" then tap \"Save\"."
+            "value" : "Enter the “Maximum price” then tap “Save”."
           }
         }
       }
@@ -11224,8 +11224,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "If you deleted the default \"Media Condition\" field, recreate it the same way but as a dropdown-type field, with these values: Mint (M), Near Mint (NM or M-), Very Good Plus (VG+), Very Good (VG), Good Plus (G+), Good (G), Fair (F), Poor (P)."
+            "state" : "machine_translated",
+            "value" : "If you deleted the default “Media Condition” field, recreate it the same way but as a dropdown-type field, with these values: Mint (M), Near Mint (NM or M-), Very Good Plus (VG+), Very Good (VG), Good Plus (G+), Good (G), Fair (F), Poor (P)."
           }
         }
       }
@@ -11728,7 +11728,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Remove this copy (\"%@\" folder) from your Discogs collection?"
+            "value" : "Remove this copy (“%@” folder) from your Discogs collection?"
           }
         }
       }
@@ -11944,7 +11944,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "On a record’s page, or by swiping a Collection row: \"I’m Listening\"."
+            "value" : "On a record’s page, or by swiping a Collection row: “I’m Listening”."
           }
         }
       }
@@ -11954,7 +11954,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "On the record’s page, tap \"Collection\" or \"Wantlist\"."
+            "value" : "On the record’s page, tap “Collection” or “Wantlist”."
           }
         }
       }
@@ -12293,8 +12293,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tag \"%@\""
+            "state" : "machine_translated",
+            "value" : "Tag “%@”"
           }
         }
       }
@@ -12405,7 +12405,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Tags, turntable listens, price alerts, and preferences follow your account across all your devices. Turning sync off doesn't erase anything: when you turn it back on, changes made in the meantime are merged with iCloud."
+            "value" : "Tags, turntable listens, price alerts, and preferences follow your account across all your devices. Turning sync off doesn’t erase anything: when you turn it back on, changes made in the meantime are merged with iCloud."
           }
         }
       }
@@ -12425,7 +12425,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Type in the search bar, or tap \"···\" then \"Filters\" for tag and format."
+            "value" : "Type in the search bar, or tap “···” then “Filters” for tag and format."
           }
         }
       }
@@ -12671,7 +12671,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Your records stay on Discogs: only data specific to the app is erased. You'll be signed out."
+            "value" : "Your records stay on Discogs: only data specific to the app is erased. You’ll be signed out."
           }
         }
       }
@@ -12701,7 +12701,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Your ranks reward the size of your collection and your turntable listens. A rank you've earned is never lost, even if you remove records."
+            "value" : "Your ranks reward the size of your collection and your turntable listens. A rank you’ve earned is never lost, even if you remove records."
           }
         }
       }
@@ -12802,7 +12802,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Your account is managed by Discogs. To permanently delete your account and all of your data, you must complete the request on the official Discogs website.\n\nYou can also erase the app's data (listening history, tags, alerts, preferences) on this device and on iCloud. This can't be undone: you'll confirm it in the next step."
+            "value" : "Your account is managed by Discogs. To permanently delete your account and all of your data, you must complete the request on the official Discogs website.\n\nYou can also erase the app’s data (listening history, tags, alerts, preferences) on this device and on iCloud. This can’t be undone: you’ll confirm it in the next step."
           }
         }
       }
@@ -12832,7 +12832,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Your listening history, tags and alerts will be permanently lost, including on iCloud. They can't be recovered afterwards."
+            "value" : "Your listening history, tags and alerts will be permanently lost, including on iCloud. They can’t be recovered afterwards."
           }
         }
       }
@@ -12882,7 +12882,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Tap \"···\" at the top right, then \"Display\"."
+            "value" : "Tap “···” at the top right, then “Display”."
           }
         }
       }
@@ -12892,7 +12892,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Tap \"···\" then \"Select\" to act on several records at once: folder, tags, deletion."
+            "value" : "Tap “···” then “Select” to act on several records at once: folder, tags, deletion."
           }
         }
       }
@@ -12902,7 +12902,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Tap \"···\", then \"Sort\": pick a criterion and a direction."
+            "value" : "Tap “···”, then “Sort”: pick a criterion and a direction."
           }
         }
       }
@@ -12912,7 +12912,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Tap \"I’m Listening\" when you put a record on your turntable."
+            "value" : "Tap “I’m Listening” when you put a record on your turntable."
           }
         }
       }
@@ -12922,7 +12922,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Tap \"I’m Listening\" on a record when you put it on your turntable."
+            "value" : "Tap “I’m Listening” on a record when you put it on your turntable."
           }
         }
       }
@@ -12932,7 +12932,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Tap \"Edit\" on a copy: folder, tags, Discogs fields."
+            "value" : "Tap “Edit” on a copy: folder, tags, Discogs fields."
           }
         }
       }
@@ -12972,7 +12972,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Tap the stars under \"My Release Rating\" to rate."
+            "value" : "Tap the stars under “My Release Rating” to rate."
           }
         }
       }
@@ -13022,7 +13022,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Tap a condition under \"Recent Average Value by Condition\": its value becomes your target price."
+            "value" : "Tap a condition under “Recent Average Value by Condition”: its value becomes your target price."
           }
         }
       }
@@ -13141,8 +13141,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "All copies associated with \"%1$@\" (%2$lld) will receive the tag \"%3$@\" (%4$lld). The tag \"%5$@\" will be permanently deleted."
+            "state" : "machine_translated",
+            "value" : "All copies associated with “%1$@” (%2$lld) will receive the tag “%3$@” (%4$lld). The tag “%5$@” will be permanently deleted."
           }
         },
         "fr" : {
@@ -13327,8 +13327,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "You've already logged %#@n@. Go premium to reveal your rankings, favorite artists, and podiums!"
+            "state" : "machine_translated",
+            "value" : "You’ve already logged %#@n@. Go premium to reveal your rankings, favorite artists, and podiums!"
           },
           "substitutions" : {
             "n" : {
@@ -13427,8 +13427,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "You're viewing your collection saved on this device. As soon as an Internet connection returns, %@ will automatically refresh your collection and market prices."
+            "state" : "machine_translated",
+            "value" : "You’re viewing your collection saved on this device. As soon as an Internet connection returns, %@ will automatically refresh your collection and market prices."
           }
         }
       }
@@ -13467,8 +13467,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "You're not connected to Wi-Fi. Downloading your entire collection and its album covers may use a significant amount of mobile data."
+            "state" : "machine_translated",
+            "value" : "You’re not connected to Wi-Fi. Downloading your entire collection and its album covers may use a significant amount of mobile data."
           }
         }
       }
@@ -13478,7 +13478,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "You won't be notified about this record anymore."
+            "value" : "You won’t be notified about this record anymore."
           }
         }
       }
@@ -13488,7 +13488,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "You can own a record in several copies: press and hold \"In Collection\" to add another one."
+            "value" : "You can own a record in several copies: press and hold “In Collection” to add another one."
           }
         }
       }
@@ -13530,20 +13530,20 @@
             "plural" : {
               "one" : {
                 "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "A copy can't have more than %lld tag. Remove one to assign another."
+                  "state" : "machine_translated",
+                  "value" : "A copy can’t have more than %lld tag. Remove one to assign another."
                 }
               },
               "other" : {
                 "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "A copy can't have more than %lld tags. Remove one to assign another."
+                  "state" : "machine_translated",
+                  "value" : "A copy can’t have more than %lld tags. Remove one to assign another."
                 }
               },
               "zero" : {
                 "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "A copy can't have more than %lld tags. Remove one to assign another."
+                  "state" : "machine_translated",
+                  "value" : "A copy can’t have more than %lld tags. Remove one to assign another."
                 }
               }
             }
@@ -13610,7 +13610,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "A mini player appears; tap it to open \"Listening on the turntable\" and stop."
+            "value" : "A mini player appears; tap it to open “Listening on the turntable” and stop."
           }
         }
       }
@@ -13731,7 +13731,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Do you want to remove \"%@\" from your Discogs collection?"
+            "value" : "Do you want to remove “%@” from your Discogs collection?"
           }
         }
       }
@@ -13741,7 +13741,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Do you want to remove \"%@\" from your Discogs wantlist?"
+            "value" : "Do you want to remove “%@” from your Discogs wantlist?"
           }
         }
       }
@@ -13770,8 +13770,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Do you really want to delete \"%1$@\"? This tag will be removed from %#@n@."
+            "state" : "machine_translated",
+            "value" : "Do you really want to delete “%1$@”? This tag will be removed from %#@n@."
           },
           "substitutions" : {
             "n" : {
@@ -13830,8 +13830,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Do you really want to permanently delete \"%1$@\"? This tag will be removed from %#@n@ in your library."
+            "state" : "machine_translated",
+            "value" : "Do you really want to permanently delete “%1$@”? This tag will be removed from %#@n@ in your library."
           },
           "substitutions" : {
             "n" : {
@@ -14001,7 +14001,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Here's your starting rank, already earned. The next ones come with your records and listens."
+            "value" : "Here’s your starting rank, already earned. The next ones come with your records and listens."
           }
         }
       }
@@ -14030,8 +14030,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "View this release's details"
+            "state" : "machine_translated",
+            "value" : "View this release’s details"
           }
         }
       }
@@ -14111,7 +14111,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "\"Album of the Day\" Widget"
+            "value" : "“Album of the Day” Widget"
           }
         }
       }
