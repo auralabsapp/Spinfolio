@@ -165,6 +165,17 @@ extension LocalDataStore {
     /// Réduit la collection à un instantané léger (id, titre, artiste, pochette) pour le widget
     /// "Album du jour", dédoublonné par release (plusieurs exemplaires d'un même disque ne
     /// doivent compter qu'une fois dans le tirage aléatoire).
+    /// Alimente le widget avec le cache s'il en sait davantage que l'instantané actuel. En disques
+    /// distincts, comme l'instantané (dédoublonné par release) : comparer le nombre d'exemplaires
+    /// était toujours vrai dès qu'un disque existait en double.
+    func updateWidgetSnapshotIfBehind(_ items: [CollectionItem]) {
+        let snapshotCount = WidgetSnapshotStore.collectionCount
+        let releaseCount = Set(items.map(\.releaseId)).count
+        if !items.isEmpty && (snapshotCount == 0 || releaseCount > snapshotCount) {
+            updateWidgetSnapshot(items)
+        }
+    }
+
     func updateWidgetSnapshot(_ items: [CollectionItem]) {
         // Une synchro terminée après la déconnexion ne doit pas réafficher dans le widget la
         // collection du compte qu'on vient de quitter (vidé par `DiscogsAuthManager.logout`).

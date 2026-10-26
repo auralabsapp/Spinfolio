@@ -120,7 +120,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         #endif
 
         // Au démarrage de l'app, aucun filtre n'est appliqué dans Collection et Wantlist
-        CollectionViewModel.shared.clearFilters()
+        CollectionViewModel.shared.display.clearFilters()
         WantlistViewModel.shared.clearFilters()
         if let username = DiscogsAuthManager.shared.username {
             CollectionPreferencesStore.clearFilterPreferences(for: username)

@@ -53,3 +53,24 @@ struct CollectionMosaicCornerBadges: View {
             }
     }
 }
+
+/// Mise en valeur du disque tiré au hasard (« Disque au hasard »), le temps qu'il soit repéré.
+enum CollectionRandomPickHighlight {
+    /// Fond de la ligne en mode Liste.
+    static var row: some View {
+        Color.spinlogPink.opacity(0.18)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .strokeBorder(Color.spinlogPink.opacity(0.6), lineWidth: 1.5)
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 2)
+            )
+    }
+
+    /// Contour de la pochette en mode Mosaïque.
+    static var cover: some View {
+        RoundedRectangle(cornerRadius: 6, style: .continuous)
+            .strokeBorder(Color.spinlogPink, lineWidth: 3)
+            .shadow(color: Color.spinlogPink.opacity(0.6), radius: 6)
+    }
+}

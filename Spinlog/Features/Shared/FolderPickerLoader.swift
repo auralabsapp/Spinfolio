@@ -29,4 +29,37 @@ enum FolderPickerLoader {
             return .failure(error)
         }
     }
+
+    /// Dossiers pour le sélecteur d'une fiche disque. Réutilise d'abord ceux déjà en mémoire dans
+    /// `CollectionViewModel` (chargés dès le lancement, voir `RootTabView`) plutôt que de refaire
+    /// systématiquement l'appel `GET .../collection/folders` : chaque ouverture de fiche en
+    /// appelait sinon une copie indépendante, alors que cette donnée change rarement.
+    /// - Returns: `nil` si rien n'a pu être chargé.
+    static func foldersForReleasePage(username: String) async -> [CollectionFolder]? {
+        let sharedFolders = CollectionViewModel.shared.folders
+        if !sharedFolders.isEmpty {
+            return sharedFolders
+        }
+        let result = await loadFolders(
+            username: username,
+            networkMonitor: .shared,
+            localStore: .shared,
+            credentials: DiscogsAuthManager.shared.credentials
+        )
+        guard case .success(let fetched) = result, !fetched.isEmpty else { return nil }
+        return fetched
+    }
+}
+
+extension [CollectionFolder] {
+    /// Nom convivial du dossier ; « Uncategorized » ou « Dossier n » s'il n'est pas (encore) connu.
+    func name(forFolderId folderId: Int) -> String {
+        if let folder = first(where: { $0.id == folderId }) {
+            return folder.name
+        }
+        if folderId == DiscogsConstants.uncategorizedFolderId {
+            return "Uncategorized"
+        }
+        return "Dossier \(folderId)"
+    }
 }

@@ -47,3 +47,32 @@ func addLibraryObserver<T>(for name: Notification.Name, payloadKey: String, perf
         }
     }
 }
+
+/// Retrait d'exemplaire de la collection (`LibraryMembershipStore`) : `releaseId`, et
+/// `instanceId` quand un seul exemplaire est concerné.
+@discardableResult
+func addCollectionRemovalObserver(perform action: @escaping @MainActor (_ releaseId: Int, _ instanceId: Int?) -> Void) -> NSObjectProtocol {
+    addLibraryObserver(for: .collectionItemRemoved) { notification in
+        guard let releaseId = notification.userInfo?["releaseId"] as? Int else { return }
+        action(releaseId, notification.userInfo?["instanceId"] as? Int)
+    }
+}
+
+/// Exemplaire remplacé (identifiant temporaire devenu définitif, changement de dossier).
+@discardableResult
+func addCollectionReplacementObserver(perform action: @escaping @MainActor (_ oldInstanceId: Int, _ newItem: CollectionItem) -> Void) -> NSObjectProtocol {
+    addLibraryObserver(for: .collectionInstanceReplaced) { notification in
+        guard let oldId = notification.userInfo?["oldInstanceId"] as? Int,
+              let newItem = notification.userInfo?["newItem"] as? CollectionItem else { return }
+        action(oldId, newItem)
+    }
+}
+
+/// Action hors ligne abandonnée après refus de Discogs (`OfflineSyncQueue`), avec son type.
+@discardableResult
+func addOfflineActionDroppedObserver(perform action: @escaping @MainActor (ActionType) -> Void) -> NSObjectProtocol {
+    addLibraryObserver(for: .offlineActionDropped) { notification in
+        guard let raw = notification.userInfo?["type"] as? String, let type = ActionType(rawValue: raw) else { return }
+        action(type)
+    }
+}

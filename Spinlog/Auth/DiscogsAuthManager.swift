@@ -186,7 +186,7 @@ final class DiscogsAuthManager: NSObject {
         SearchViewModel.shared.reset()
         LibraryMembershipStore.shared.refresh()
         // Les champs personnalisés en cache appartiennent au compte qu'on quitte.
-        ReleaseActions.clearCachedCollectionFields()
+        CollectionFieldsService.clearCache()
         // Vide la session web persistante des `SafariView` (fiches Discogs, marketplace...) :
         // sans ça, si l'utilisateur s'y était connecté manuellement, cette page resterait
         // connectée à ce compte même après connexion à un autre compte dans l'app.
@@ -239,7 +239,7 @@ final class DiscogsAuthManager: NSObject {
         // suivante (et la file gardait des modifications impossibles à envoyer).
         WantlistAlertStore.shared.clearAccountData(for: DemoMode.username)
         OfflineSyncQueue.shared.removeActions(for: DemoMode.username)
-        ReleaseActions.clearCachedCollectionFields()
+        CollectionFieldsService.clearCache()
         OfflineDownloadManager.shared.resetOfflineState(for: DemoMode.username)
         // Sans ça, le widget continuait de proposer des disques de la démo après relancement.
         WidgetSnapshotStore.saveCollection([])

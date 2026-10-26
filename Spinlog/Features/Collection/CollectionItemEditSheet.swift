@@ -296,7 +296,7 @@ struct CollectionItemEditSheet: View {
             }
             .task {
                 if fields.isEmpty, let username = DiscogsAuthManager.shared.username {
-                    let fetched = await ReleaseActions.fetchCollectionFields(username: username, credentials: DiscogsAuthManager.shared.credentials)
+                    let fetched = await CollectionFieldsService.fields(username: username, credentials: DiscogsAuthManager.shared.credentials)
                     if !fetched.isEmpty {
                         fields = fetched
                         for field in fetched {

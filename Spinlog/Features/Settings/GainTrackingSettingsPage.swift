@@ -180,7 +180,7 @@ struct GainTrackingSettingsPage: View {
         mediaConditionFieldId = CollectionPreferencesStore.mediaConditionFieldId(for: username)
 
         guard NetworkMonitor.shared.isConnected else { return }
-        let fields = await ReleaseActions.fetchCollectionFields(username: username, credentials: authManager.credentials)
+        let fields = await CollectionFieldsService.fields(username: username, credentials: authManager.credentials)
         guard !fields.isEmpty else { return }
         availableCollectionFields = fields
 

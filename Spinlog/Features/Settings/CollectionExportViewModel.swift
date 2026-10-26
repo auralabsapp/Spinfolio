@@ -86,7 +86,7 @@ final class CollectionExportViewModel {
 
         var fields: [CollectionField] = []
         if networkMonitor.isConnected, let credentials = authManager.credentials {
-            fields = await ReleaseActions.fetchCollectionFields(username: username, credentials: credentials)
+            fields = await CollectionFieldsService.fields(username: username, credentials: credentials)
         }
         let (folders, items) = await fetchFoldersAndItems(username: username)
 

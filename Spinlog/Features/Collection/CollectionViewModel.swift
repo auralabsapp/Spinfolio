@@ -20,13 +20,12 @@ final class CollectionViewModel {
     private(set) var fields: [CollectionField] = []
     /// Le tri/regroupement (`localizedStandardCompare` sur toute la liste) est coûteux à refaire
     /// à chaque lecture : `sections` est donc recalculé une seule fois par changement réel via
-    /// `recomputeSections()`, plutôt que d'être une computed property réévaluée à chaque accès
+    /// `display.recomputeSections()`, plutôt que d'être une computed property réévaluée à chaque accès
     /// (elle est lue plusieurs fois par passage de vue : la liste elle-même, `indexEntries`...).
     private(set) var items: [CollectionItem] = [] {
         didSet {
-            recomputeSections()
-            recomputeCopiesIndex()
-            resolveMissingMastersIfNeeded()
+            display.itemsChanged()
+            display.resolveMissingMastersIfNeeded()
         }
     }
     private(set) var isLoading = false
@@ -43,87 +42,9 @@ final class CollectionViewModel {
     var actionMessage: String?
     private(set) var isOfflineAndStale: Bool = false
 
-    var searchText = "" {
-        didSet {
-            guard oldValue != searchText else { return }
-            recomputeSections()
-        }
-    }
-    var sortOption: CollectionSortOption = .artist {
-        didSet {
-            guard oldValue != sortOption else { return }
-            // Réinitialise le sens au défaut du nouveau critère sans repasser par le didSet
-            // public de `sortAscending` (qui déclencherait un second rechargement réseau en
-            // plus de celui déjà lancé plus bas pour ce changement de critère).
-            sortAscendingStorage = sortOption.defaultAscending
-            recomputeSections()
-            if let username = authManager.username {
-                CollectionPreferencesStore.setSortOption(sortOption, for: username)
-                CollectionPreferencesStore.setSortAscending(sortAscendingStorage, for: username)
-            }
-            if sortOption == .shelf {
-                resolveMissingMastersIfNeeded()
-            }
-            guard let folderId = selectedFolderId else { return }
-            Task { await loadFirstPage(folderId: folderId) }
-        }
-    }
+    /// Recherche, tri, filtres, sections et valeurs dérivées affichés (voir `CollectionDisplayState`).
+    let display = CollectionDisplayState()
 
-    private var sortAscendingStorage: Bool = CollectionSortOption.artist.defaultAscending
-
-    /// Sens du tri courant (croissant/décroissant). Se réinitialise au défaut du critère choisi
-    /// à chaque changement de `sortOption` ; peut ensuite être basculé indépendamment.
-    var sortAscending: Bool {
-        get { sortAscendingStorage }
-        set {
-            guard sortAscendingStorage != newValue else { return }
-            sortAscendingStorage = newValue
-            recomputeSections()
-            if let username = authManager.username {
-                CollectionPreferencesStore.setSortAscending(sortAscendingStorage, for: username)
-            }
-            guard let folderId = selectedFolderId else { return }
-            Task { await loadFirstPage(folderId: folderId) }
-        }
-    }
-
-    /// Sémantique ET : un exemplaire n'est affiché que s'il porte tous les tags sélectionnés.
-    /// Les filtres sont volatils (valables pour la session courante) : aucun filtre n'est appliqué au démarrage.
-    var selectedTags: Set<String> = [] {
-        didSet {
-            guard oldValue != selectedTags else { return }
-            recomputeSections()
-        }
-    }
-
-    var selectedFormat: String? = nil {
-        didSet {
-            guard oldValue != selectedFormat else { return }
-            recomputeSections()
-        }
-    }
-
-    var hasActiveFilters: Bool {
-        !selectedTags.isEmpty || !(selectedFormat ?? "").isEmpty
-    }
-
-    func clearFilters() {
-        selectedTags = []
-        selectedFormat = nil
-    }
-
-    func toggleTagFilter(_ tag: String) {
-        if selectedTags.contains(tag) {
-            selectedTags.remove(tag)
-        } else {
-            selectedTags.insert(tag)
-        }
-    }
-
-    /// Vide entièrement l'état en mémoire : appelé à la déconnexion pour qu'aucune donnée du
-    /// compte Discogs qui vient de se déconnecter (items, dossiers, filtres) ne reste affichée
-    /// ni ne se mélange avec celle du compte suivant lors du prochain chargement (`items` est
-    /// fusionné et non remplacé par `loadFoldersAndItems`/`loadFirstPage`, voir leurs commentaires).
     /// Apparition de l'onglet : rechargement depuis Discogs au plus toutes les 5 min (voir
     /// `ReloadThrottle`) ; le cache déjà affiché suffit entre-temps.
     func loadOnAppear() async {
@@ -132,26 +53,24 @@ final class CollectionViewModel {
         await loadFoldersAndItems()
     }
 
+    /// Vide entièrement l'état en mémoire : appelé à la déconnexion pour qu'aucune donnée du
+    /// compte Discogs qui vient de se déconnecter (items, dossiers, filtres) ne reste affichée
+    /// ni ne se mélange avec celle du compte suivant lors du prochain chargement (`items` est
+    /// fusionné et non remplacé par `loadFoldersAndItems`/`loadFirstPage`, voir leurs commentaires).
     func reset() {
         reloadThrottle.reset()
         // Sans cette annulation, la synchro de fond du compte précédent continuait de charger
         // ses pages (avec ses identifiants) et pouvait les mélanger aux items du compte suivant.
-        backgroundSyncTask?.cancel()
-        backgroundSyncTask = nil
-        serverInstanceIdsInCurrentPass = []
+        pagination.reset()
         items = []
         folders = []
         selectedFolderId = nil
         fields = []
-        currentPage = 1
-        totalPages = 1
         errorMessage = nil
         isOfflineAndStale = false
         isLoading = false
         isAwaitingFirstLoad = true
-        searchText = ""
-        selectedTags = []
-        selectedFormat = nil
+        display.resetFilters()
     }
 
     /// Liste ordonnée de tous les formats rencontrés dans le dossier courant (ex: "Vinyl", "CD", etc.)
@@ -165,78 +84,31 @@ final class CollectionViewModel {
     @ObservationIgnored private var reloadThrottle = ReloadThrottle()
 
     init() {
+        connectPagination()
+        connectDisplay()
         addLibraryObserver(for: .collectionItemAdded, payloadKey: "item") { [weak self] (item: CollectionItem) in
             self?.handleCollectionItemAdded(item)
         }
 
-        addLibraryObserver(for: .collectionItemRemoved) { [weak self] notification in
-            guard let self, let releaseId = notification.userInfo?["releaseId"] as? Int else { return }
-            let instanceId = notification.userInfo?["instanceId"] as? Int
-            self.handleCollectionItemRemoved(releaseId: releaseId, instanceId: instanceId)
+        addCollectionRemovalObserver { [weak self] releaseId, instanceId in
+            self?.handleCollectionItemRemoved(releaseId: releaseId, instanceId: instanceId)
         }
-
-        addLibraryObserver(for: .collectionInstanceReplaced) { [weak self] notification in
-            guard let self,
-                  let oldId = notification.userInfo?["oldInstanceId"] as? Int,
-                  let newItem = notification.userInfo?["newItem"] as? CollectionItem else { return }
-            self.handleCollectionInstanceReplaced(oldInstanceId: oldId, newItem: newItem)
-        }
-
-        addLibraryObserver(for: .shelfPreferencesChanged) { [weak self] in
-            guard let self else { return }
-            if self.sortOption == .shelf || self.sortOption == .artist {
-                self.recomputeSections()
-                if self.sortOption == .shelf && ShelfPreferencesStore.shared.sortStrategy.usesMasterYear {
-                    self.resolveMissingMastersIfNeeded()
-                }
-            }
-        }
-
-        addLibraryObserver(for: .masterYearResolved) { [weak self] in
-            guard let self else { return }
-            if self.sortOption == .shelf && ShelfPreferencesStore.shared.sortStrategy.usesMasterYear {
-                self.recomputeSections()
-            }
-        }
-
-        addLibraryObserver(for: .tagsChanged) { [weak self] in
-            self?.recomputeSections()
-            self?.recomputeTagsIndex()
+        addCollectionReplacementObserver { [weak self] oldInstanceId, newItem in
+            self?.handleCollectionInstanceReplaced(oldInstanceId: oldInstanceId, newItem: newItem)
         }
 
         // Action hors ligne refusée par Discogs : l'affichage optimiste est faux, on recharge.
-        addLibraryObserver(for: .offlineActionDropped) { [weak self] notification in
-            guard let self,
-                  let raw = notification.userInfo?["type"] as? String,
-                  let type = ActionType(rawValue: raw),
-                  type != .addToWantlist, type != .removeFromWantlist else { return }
+        addOfflineActionDroppedObserver { [weak self] type in
+            guard let self, type != .addToWantlist, type != .removeFromWantlist else { return }
             Task { await self.refresh() }
-        }
-    }
-
-    private func resolveMissingMastersIfNeeded() {
-        guard sortOption == .shelf, ShelfPreferencesStore.shared.sortStrategy.usesMasterYear else { return }
-        let missing = items.compactMap { item -> Int? in
-            guard let masterId = item.basicInformation.masterId, masterId > 0 else { return nil }
-            // `isMasterResolved` et non `getMasterYear == nil` : un master sans année sur Discogs
-            // est enregistré à 0 (résolu), mais `getMasterYear` renvoie `nil` pour 0 — il était
-            // donc redemandé à Discogs indéfiniment.
-            return localStore.isMasterResolved(masterId) ? nil : masterId
-        }
-        let uniqueMissing = Array(Set(missing))
-        guard !uniqueMissing.isEmpty else { return }
-        Task {
-            // La collection réagit déjà à `.masterYearResolved` : aucun suivi de progression ici.
-            await MasterResolutionService.shared.resolveMasters(missingMasterIds: uniqueMissing, subscriberKey: "collection") { _, _, _, _ in }
         }
     }
 
     private func handleCollectionInstanceReplaced(oldInstanceId: Int, newItem: CollectionItem) {
         // Voir `handleCollectionItemAdded` : protège le nouvel exemplaire de l'élagage en fin de parcours.
-        serverInstanceIdsInCurrentPass.insert(newItem.instanceId)
+        pagination.noteLocallyAdded(instanceId: newItem.instanceId)
         if let index = items.firstIndex(where: { $0.id == oldInstanceId }) {
             items[index] = newItem
-            recomputeSections()
         }
     }
 
@@ -244,181 +116,64 @@ final class CollectionViewModel {
         collectionDebugLogger.debug("RECV collectionItemAdded release=\(item.releaseId, privacy: .private(mask: .hash)) instance=\(item.instanceId, privacy: .private(mask: .hash)) folder=\(item.folderId) selectedFolderId=\(self.selectedFolderId ?? -999) itemsCountBefore=\(self.items.count)")
         // Ajouté localement pendant un parcours des pages : Discogs peut ne pas le renvoyer dans
         // ce parcours (page déjà chargée), il ne doit donc pas être élagué à la fin.
-        serverInstanceIdsInCurrentPass.insert(item.instanceId)
-        if selectedFolderId == nil || selectedFolderId == DiscogsConstants.allFolderId || selectedFolderId == item.folderId {
-            if !items.contains(where: { $0.id == item.id }) {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    items.insert(item, at: 0)
-                }
-            }
+        pagination.noteLocallyAdded(instanceId: item.instanceId)
+        let change = CollectionLocalChanges.afterExternalAdd(of: item, items: items, folders: folders, selectedFolderId: selectedFolderId)
+        if let newItems = change.items {
+            withAnimation(.easeInOut(duration: 0.2)) { items = newItems }
         }
-        folders = folders.map { folder in
-            if folder.id == item.folderId || folder.id == DiscogsConstants.allFolderId {
-                return CollectionFolder(id: folder.id, name: folder.name, count: folder.count + 1, resourceURL: folder.resourceURL)
-            }
-            return folder
-        }
-        recomputeSections()
+        folders = change.folders
     }
-
-    /// Armé juste avant un retrait : le prochain calcul de sections s'applique avec animation.
-    private var animatesNextSectionsUpdate = false
 
     private func handleCollectionItemRemoved(releaseId: Int, instanceId: Int?) {
-        animatesNextSectionsUpdate = true
+        display.animatesNextSectionsUpdate = true
         collectionDebugLogger.debug("RECV collectionItemRemoved release=\(releaseId, privacy: .private(mask: .hash)) instance=\(instanceId ?? -1, privacy: .private(mask: .hash)) itemsCountBefore=\(self.items.count)")
-        withAnimation(.easeInOut(duration: 0.2)) {
-            if let instanceId {
-                items.removeAll { $0.instanceId == instanceId }
-            } else {
-                items.removeAll { $0.releaseId == releaseId }
-            }
-        }
-        folders = folders.map { folder in
-            if folder.id == selectedFolderId || folder.id == DiscogsConstants.allFolderId {
-                return CollectionFolder(id: folder.id, name: folder.name, count: max(0, folder.count - 1), resourceURL: folder.resourceURL)
-            }
-            return folder
-        }
-        recomputeSections()
-    }
-
-    /// Badge « Ex. 2/3 » de chaque exemplaire possédé en plusieurs fois, par `id` d'exemplaire.
-    /// Recalculé une seule fois par changement réel de `items` (comme `sections`) : la vue le
-    /// relisait auparavant en reparcourant toute la collection à chaque passage de `body`, y
-    /// compris à chaque changement de section pendant le défilement.
-    private(set) var copyBadgesByItemId: [Int: String] = [:]
-
-    /// Tags de chaque exemplaire affiché, par `instanceId`, recalculés quand `items` ou les tags
-    /// changent. Les lignes reçoivent ce dictionnaire plutôt que de lire `TagStore` elles-mêmes :
-    /// lu depuis CHAQUE ligne, son dictionnaire observé faisait refaire le rendu de toutes les
-    /// lignes visibles dès qu'un seul disque changeait de tag.
-    private(set) var tagsByInstanceId: [Int: [String]] = [:]
-
-    private func recomputeCopiesIndex() {
-        copyBadgesByItemId = Self.copyBadges(for: items)
-        recomputeTagsIndex()
-    }
-
-    private func recomputeTagsIndex() {
-        var result: [Int: [String]] = [:]
-        for item in items {
-            let tags = TagStore.shared.tags(for: item.instanceId, releaseId: item.releaseId)
-            if !tags.isEmpty {
-                result[item.instanceId] = tags
-            }
-        }
-        tagsByInstanceId = result
-    }
-
-    /// Badge « Ex. n/total » des disques possédés en plusieurs exemplaires, dans l'ordre de
-    /// `items`. Fonction pure, testée dans `CollectionCachesTests`.
-    nonisolated static func copyBadges(for items: [CollectionItem]) -> [Int: String] {
-        var result: [Int: String] = [:]
-        for copies in Dictionary(grouping: items, by: \.releaseId).values where copies.count > 1 {
-            for (index, copy) in copies.enumerated() {
-                result[copy.id] = "Ex. \(index + 1)/\(copies.count)"
-            }
-        }
-        return result
-    }
-
-    /// Pagination paresseuse : la 1re page s'affiche tout de suite (jamais toute la collection
-    /// d'un coup), puis `backgroundSyncTask` continue de charger les pages suivantes en tâche
-    /// de fond — c'est la seconde option explicitement permise par l'API Discogs pour les
-    /// grosses collections, et c'est nécessaire pour que la barre de navigation rapide (lettres/
-    /// années) reflète tout le dossier plutôt que seulement ce qui a déjà défilé à l'écran.
-    private var currentPage = 1
-    private var totalPages = 1
-    private var backgroundSyncTask: Task<Void, Never>?
-    /// Exemplaires effectivement renvoyés par Discogs depuis la dernière page 1 chargée (plus
-    /// ceux ajoutés localement entre-temps). `items` part du cache et ne fait qu'accumuler les
-    /// pages fraîches, pour éviter que la liste se réduise à la seule page 1 : une fois toutes
-    /// les pages parcourues, ce qui n'y figure pas a été supprimé ou déplacé ailleurs (ex: depuis
-    /// discogs.com) et est retiré — sans quoi ces disques restaient affichés indéfiniment.
-    private var serverInstanceIdsInCurrentPass: Set<Int> = []
-
-    /// Éléments filtrés par la recherche et les filtres actifs, regroupés par section dans un ordre
-    /// rigoureusement déterministe (même en cache ou hors-ligne). Recalculé par
-    /// `recomputeSections()` uniquement quand `items`/tri/filtres changent réellement.
-    private(set) var sections: [(key: String, items: [CollectionItem])] = [] {
-        didSet {
-            indexEntries = libraryIndexEntries(for: sections, sort: sortOption)
-            visibleItemCount = sections.reduce(0) { $0 + $1.items.count }
-        }
-    }
-    /// Jetons de la barre de navigation rapide et nombre de disques affichés, recalculés avec
-    /// `sections` plutôt qu'à chaque lecture (plusieurs par passage de `body`).
-    private(set) var indexEntries: [(token: String, sectionKey: String)] = []
-    private(set) var visibleItemCount = 0
-    /// Vrai pendant le calcul détaché des sections (voir `recomputeSections`) : `sections` est
-    /// alors vide ou périmé sans que la recherche soit en cause. Au lancement, la vue affiche un
-    /// indicateur de chargement plutôt que « Aucun résultat » le temps du premier tri.
-    private(set) var isComputingSections = false
-    /// Stockées comme propriétés `@Observable` ci-dessus (pas déléguées au moteur) pour que
-    /// SwiftUI soit bien invalidé à chaque mise à jour — voir le commentaire sur
-    /// `LibrarySectionsEngine`.
-    private let sectionsEngine = LibrarySectionsEngine<CollectionItem>()
-
-    /// Tri + regroupement de la collection, délégués à `LibrarySectionsEngine` (partagé avec
-    /// `WantlistViewModel`). Pendant la synchro de pages en arrière-plan juste après le lancement
-    /// (`startBackgroundSync`), ce recalcul se redéclenchait à chaque page reçue — ~une fois par
-    /// seconde, au rythme du débit imposé par l'API Discogs — pour un coût mesuré de 300-400ms à
-    /// chaque fois, provoquant des saccades si l'utilisateur faisait défiler la liste pendant
-    /// cette fenêtre ; d'où le calcul détaché du moteur. Le tri `.shelf` capture son
-    /// `ShelfSortContext` une seule fois en amont (voir `LibrarySectionsEngine.recompute`) et peut
-    /// donc lui aussi être détaché ; seul le filtrage par tag reste synchrone (lit `TagStore`,
-    /// isolé sur l'acteur principal, mais en O(n) donc déjà bon marché).
-    private func recomputeSections() {
-        sectionsEngine.recompute(
-            items: items, sortOption: sortOption, ascending: sortAscending,
-            tags: selectedTags, format: selectedFormat, searchText: searchText,
-            synchronous: !selectedTags.isEmpty,
-            willStartAsync: { [weak self] in self?.isComputingSections = true },
-            apply: { [weak self] result in
-                guard let self else { return }
-                // Voir `WantlistViewModel` : le recalcul est asynchrone, donc le retrait est animé ici.
-                if animatesNextSectionsUpdate, !UIAccessibility.isReduceMotionEnabled {
-                    withAnimation(.libraryRowRemoval) { sections = result }
-                } else {
-                    sections = result
-                }
-                animatesNextSectionsUpdate = false
-                isComputingSections = false
-            }
+        let change = CollectionLocalChanges.afterExternalRemoval(
+            releaseId: releaseId, instanceId: instanceId, items: items, folders: folders, selectedFolderId: selectedFolderId
         )
+        withAnimation(.easeInOut(duration: 0.2)) { items = change.items }
+        folders = change.folders
     }
 
-    /// Jeton (lettre ou année sur 2 chiffres) pour la 1re ligne de l'en-tête d'une section,
-    /// cohérent avec le jeton affiché dans la barre de navigation rapide.
-    func indexToken(for section: (key: String, items: [CollectionItem])) -> String {
-        libraryIndexToken(for: section, sort: sortOption)
+    /// Pagination paresseuse et synchro de fond des pages (voir `CollectionPagination`).
+    private let pagination = CollectionPagination()
+
+    /// Relie l'affichage à la liste et aux préférences du compte (appelé depuis `init`).
+    private func connectDisplay() {
+        display.currentItems = { [unowned self] in items }
+        display.onSortChanged = { [unowned self] criterionChanged in
+            if let username = authManager.username {
+                if criterionChanged {
+                    CollectionPreferencesStore.setSortOption(display.sortOption, for: username)
+                }
+                CollectionPreferencesStore.setSortAscending(display.sortAscending, for: username)
+            }
+            if criterionChanged, display.sortOption == .shelf {
+                display.resolveMissingMastersIfNeeded()
+            }
+            guard let folderId = selectedFolderId else { return }
+            Task { await loadFirstPage(folderId: folderId) }
+        }
     }
 
-    /// Valeur affichée en 2e ligne de l'en-tête (voir `CollectionItem.sectionDisplayTitle`).
-    func displayTitle(for section: (key: String, items: [CollectionItem])) -> String {
-        section.items.first?.sectionDisplayTitle(for: sortOption) ?? section.key
-    }
-
-    /// Artistes nommés par l'en-tête de la section, cliquables (voir `LibrarySectionHeader.artists`).
-    func headerArtists(for section: (key: String, items: [CollectionItem])) -> [ReleaseArtist] {
-        section.items.first?.sectionHeaderArtists(for: sortOption) ?? []
+    /// Relie la pagination à la liste affichée (appelé depuis `init`).
+    private func connectPagination() {
+        pagination.currentItems = { [unowned self] in items }
+        pagination.applyItems = { [unowned self] in items = $0 }
+        pagination.isCurrent = { [unowned self] context in
+            selectedFolderId == context.folderId && authManager.username == context.username
+        }
+        pagination.sortParameters = { [unowned self] in
+            (display.sortOption.apiSortValue, display.sortOption.apiSortOrder(ascending: display.sortAscending))
+        }
     }
 
     func loadFoldersAndItems(isSilent: Bool = false) async {
         guard let username = authManager.username else { return }
         defer { isAwaitingFirstLoad = false }
 
-        backgroundSyncTask?.cancel()
-        backgroundSyncTask = nil
+        pagination.cancelBackgroundSync()
 
-        // Restauration des critères de tri et de filtre mémorisés
-        if let savedSort = CollectionPreferencesStore.sortOption(for: username) {
-            self.sortOption = savedSort
-        }
-        if let savedAscending = CollectionPreferencesStore.sortAscending(for: username) {
-            self.sortAscendingStorage = savedAscending
-        }
+        restoreSavedSort(username: username)
 
         // Récupération du dernier dossier consulté mémorisé
         let preferredFolderId = selectedFolderId ?? CollectionPreferencesStore.lastConsultedFolderId(for: username) ?? DiscogsConstants.allFolderId
@@ -441,45 +196,33 @@ final class CollectionViewModel {
 
         do {
             async let foldersRequest = DiscogsAPIClient.shared.collectionFolders(username: username, credentials: credentials)
-            async let fieldsRequest = ReleaseActions.fetchCollectionFields(username: username, credentials: credentials)
+            async let fieldsRequest = CollectionFieldsService.fields(username: username, credentials: credentials)
             let foldersResponse = try await foldersRequest
             folders = foldersResponse.folders
             fields = await fieldsRequest
 
             // Sauvegarde des dossiers dans SwiftData
             localStore.saveFolders(folders, username: username)
-            resetDefaultAddFolderIfMissing(username: username)
-            syncQueue.retargetActionsForDeletedFolders(validFolderIds: Set(folders.map(\.id)), username: username)
+            let validFolderIds = Set(folders.map(\.id))
+            CollectionPreferencesStore.resetDefaultAddFolderIfMissing(validFolderIds: validFolderIds, for: username)
+            syncQueue.retargetActionsForDeletedFolders(validFolderIds: validFolderIds, username: username)
 
             // Validation du dossier sélectionné
-            let validFolderId: Int
-            if folders.contains(where: { $0.id == preferredFolderId }) {
-                validFolderId = preferredFolderId
-            } else {
-                validFolderId = folders.first?.id ?? DiscogsConstants.allFolderId
-            }
-            selectedFolderId = validFolderId
-            CollectionPreferencesStore.setLastConsultedFolderId(validFolderId, for: username)
-            if let folderName = folders.first(where: { $0.id == validFolderId })?.name {
-                CollectionPreferencesStore.setLastConsultedFolderName(folderName, for: username)
-            }
+            let validFolderId = folders.contains(where: { $0.id == preferredFolderId })
+                ? preferredFolderId
+                : folders.first?.id ?? DiscogsConstants.allFolderId
+            rememberSelectedFolder(validFolderId, username: username)
 
-            // `append: true` : préserve le plein instantané déjà affiché par `loadFromLocalStore`
-            // (ou par un tri/dossier précédent) plutôt que de l'écraser par la seule page 1 —
-            // sans ça, la liste et la barre de navigation rapide (A-Z) se réduisaient brutalement
-            // à la première page avant de regrossir progressivement au fil de `startBackgroundSync`,
-            // particulièrement visible en tri alphabétique où la page 1 ne couvre qu'un début d'A-Z.
-            try await fetchPage(1, username: username, folderId: validFolderId, credentials: credentials, append: true)
-            isOfflineAndStale = false
-            startBackgroundSync(username: username, folderId: validFolderId, credentials: credentials)
         } catch {
             // Repli gracieux sur le cache local
             await loadFromLocalStore(username: username, folderId: selectedFolderId ?? preferredFolderId)
             if items.isEmpty && !error.isCancellation {
                 errorMessage = error.localizedDescription
             }
+            isLoading = false
+            return
         }
-        isLoading = false
+        await loadFirstPageFromDiscogs(username: username, folderId: selectedFolderId ?? preferredFolderId, credentials: credentials)
     }
 
     private func loadFromLocalStore(username: String, folderId: Int? = nil) async {
@@ -487,29 +230,13 @@ final class CollectionViewModel {
         if !cachedFolders.isEmpty {
             self.folders = cachedFolders
         }
-        if let savedSort = CollectionPreferencesStore.sortOption(for: username) {
-            self.sortOption = savedSort
-        }
-        if let savedAscending = CollectionPreferencesStore.sortAscending(for: username) {
-            self.sortAscendingStorage = savedAscending
-        }
+        restoreSavedSort(username: username)
 
-        let targetFolderId: Int
-        if let folderId {
-            targetFolderId = folderId
-        } else {
-            let preferredFolderId = selectedFolderId ?? CollectionPreferencesStore.lastConsultedFolderId(for: username)
-            if let preferredFolderId, folders.contains(where: { $0.id == preferredFolderId }) {
-                targetFolderId = preferredFolderId
-            } else {
-                targetFolderId = folders.first?.id ?? DiscogsConstants.allFolderId
-            }
-        }
-        self.selectedFolderId = targetFolderId
-        CollectionPreferencesStore.setLastConsultedFolderId(targetFolderId, for: username)
-        if let folderName = folders.first(where: { $0.id == targetFolderId })?.name {
-            CollectionPreferencesStore.setLastConsultedFolderName(folderName, for: username)
-        }
+        let preferredFolderId = folderId ?? selectedFolderId ?? CollectionPreferencesStore.lastConsultedFolderId(for: username)
+        let targetFolderId = folderId
+            ?? preferredFolderId.flatMap { id in folders.contains { $0.id == id } ? id : nil }
+            ?? folders.first?.id ?? DiscogsConstants.allFolderId
+        rememberSelectedFolder(targetFolderId, username: username)
 
         localStore.cleanupPhantomCollectionEntries(username: username)
         let cachedItems = await localStore.getCollectionItems(username: username, folderId: targetFolderId)
@@ -517,14 +244,7 @@ final class CollectionViewModel {
         self.items = cachedItems
         self.isOfflineAndStale = localStore.isCollectionStale(username: username, folderId: targetFolderId)
         self.isLoading = false
-
-        // En disques distincts, comme l'instantané du widget (dédoublonné par release) : comparer
-        // le nombre d'exemplaires était toujours vrai dès qu'un disque existait en double.
-        let currentSnapshotCount = WidgetSnapshotStore.collectionCount
-        let cachedReleaseCount = Set(cachedItems.map(\.releaseId)).count
-        if !cachedItems.isEmpty && (currentSnapshotCount == 0 || cachedReleaseCount > currentSnapshotCount) {
-            localStore.updateWidgetSnapshot(cachedItems)
-        }
+        localStore.updateWidgetSnapshotIfBehind(cachedItems)
     }
 
     /// Dès que la connexion est rétablie et que le TTL est dépassé, lance un rafraîchissement silencieux.
@@ -541,15 +261,11 @@ final class CollectionViewModel {
     }
 
     func selectFolder(_ folderId: Int) async {
-        backgroundSyncTask?.cancel()
-        backgroundSyncTask = nil
+        pagination.cancelBackgroundSync()
 
         selectedFolderId = folderId
         if let username = authManager.username {
-            CollectionPreferencesStore.setLastConsultedFolderId(folderId, for: username)
-            if let folderName = folders.first(where: { $0.id == folderId })?.name {
-                CollectionPreferencesStore.setLastConsultedFolderName(folderName, for: username)
-            }
+            rememberSelectedFolder(folderId, username: username)
             // Charge immédiatement le cache local du nouveau dossier pour éviter toute incohérence d'affichage
             await loadFromLocalStore(username: username, folderId: folderId)
         }
@@ -561,12 +277,7 @@ final class CollectionViewModel {
     /// Réagit à une modification externe des préférences (ex: restauration de sauvegarde).
     func handlePreferencesChanged() async {
         guard let username = authManager.username else { return }
-        if let savedSort = CollectionPreferencesStore.sortOption(for: username) {
-            self.sortOption = savedSort
-        }
-        if let savedAscending = CollectionPreferencesStore.sortAscending(for: username) {
-            self.sortAscendingStorage = savedAscending
-        }
+        restoreSavedSort(username: username)
 
         let savedFolderId = CollectionPreferencesStore.lastConsultedFolderId(for: username)
         if let savedFolderId, savedFolderId != selectedFolderId {
@@ -587,9 +298,10 @@ final class CollectionViewModel {
         guard networkMonitor.isConnected else { return }
         guard let (username, credentials) = authManager.session,
               let folderId = selectedFolderId else { return }
-        guard let last = items.last, last.id == item.id, currentPage < totalPages, backgroundSyncTask == nil else { return }
+        guard let last = items.last, last.id == item.id, pagination.hasMorePages, !pagination.isSyncingInBackground else { return }
         do {
-            try await fetchPage(currentPage + 1, username: username, folderId: folderId, credentials: credentials, append: true)
+            let context = CollectionPagination.Context(username: username, folderId: folderId, credentials: credentials)
+            try await pagination.fetchPage(pagination.currentPage + 1, context: context, append: true)
         } catch {
             // On garde les éléments déjà affichés
         }
@@ -597,8 +309,7 @@ final class CollectionViewModel {
 
     private func loadFirstPage(folderId: Int) async {
         guard let username = authManager.username else { return }
-        backgroundSyncTask?.cancel()
-        backgroundSyncTask = nil
+        pagination.cancelBackgroundSync()
 
         if !networkMonitor.isConnected {
             await loadFromLocalStore(username: username, folderId: folderId)
@@ -609,131 +320,47 @@ final class CollectionViewModel {
             isLoading = true
         }
         errorMessage = nil
+        await loadFirstPageFromDiscogs(username: username, folderId: folderId, credentials: credentials)
+    }
+
+    /// Page 1 puis synchro de fond des suivantes ; repli sur le cache local en cas d'échec.
+    /// `append: true` : préserve le plein instantané déjà affiché par `loadFromLocalStore` (ou par
+    /// un tri/dossier précédent) plutôt que de l'écraser par la seule page 1 — sans ça, la liste et
+    /// la barre de navigation rapide (A-Z) se réduisaient brutalement à la première page avant de
+    /// regrossir progressivement, surtout visible en tri alphabétique.
+    private func loadFirstPageFromDiscogs(username: String, folderId: Int, credentials: DiscogsCredentials) async {
+        defer { isLoading = false }
         do {
-            // Voir `loadFoldersAndItems` : `append: true` évite le même effet de réduction
-            // brutale puis regrossissement progressif de la liste et de la barre A-Z.
-            try await fetchPage(1, username: username, folderId: folderId, credentials: credentials, append: true)
+            let context = CollectionPagination.Context(username: username, folderId: folderId, credentials: credentials)
+            try await pagination.fetchPage(1, context: context, append: true)
             isOfflineAndStale = false
-            startBackgroundSync(username: username, folderId: folderId, credentials: credentials)
+            pagination.startBackgroundSync(context: context)
         } catch {
             await loadFromLocalStore(username: username, folderId: folderId)
             if items.isEmpty && !error.isCancellation {
                 errorMessage = error.localizedDescription
             }
         }
-        isLoading = false
     }
 
-    /// Continue de charger les pages suivantes une par une derrière l'écran (chaque appel
-    /// passe par le throttle Discogs), jusqu'à couvrir tout le dossier ou jusqu'à ce qu'un
-    /// changement de dossier/tri annule cette tâche pour la remplacer par une nouvelle.
-    ///
-    /// `Task(priority: .utility)` ne règle que l'ordonnancement CPU : le throttle Discogs lit un
-    /// `@TaskLocal` différent (`DiscogsRateLimiter.priority`), qui restait à `.normal` faute
-    /// d'être jamais lié à `.background` — la synchro de fond consommait donc le quota exactement
-    /// comme une requête utilisateur (ex: ouverture d'une fiche release), au lieu de lui céder la
-    /// place via `waitForBackgroundSlot()` (déjà écrit, mais jamais déclenché). `withValue`
-    /// propage la valeur à tous les `await` de cette tâche, y compris dans `fetchPage`.
-    private func startBackgroundSync(username: String, folderId: Int, credentials: DiscogsCredentials) {
-        backgroundSyncTask?.cancel()
-        // Renonce si une autre synchronisation complète du même dossier est déjà en cours
-        // (lancement à froid : `StatsViewModel`/`WidgetSnapshotSyncService`/
-        // `OfflineDownloadManager` peuvent aussi vouloir tout recharger en même temps) — la
-        // page 1 déjà affichée reste valide, un prochain passage sur cet onglet réessaiera.
-        guard localStore.beginFullCollectionSync(username: username, folderId: folderId) else { return }
-        backgroundSyncTask = Task(priority: .utility) { [weak self] in
-            defer { self?.localStore.endFullCollectionSync(username: username, folderId: folderId) }
-            await DiscogsRateLimiter.$priority.withValue(.background) {
-                guard let self else { return }
-                var reachedLastPage = false
-                while !Task.isCancelled {
-                    guard self.selectedFolderId == folderId else { break }
-                    let page = self.currentPage
-                    let total = self.totalPages
-                    guard page < total else {
-                        reachedLastPage = true
-                        break
-                    }
-                    do {
-                        try await self.fetchPage(page + 1, username: username, folderId: folderId, credentials: credentials, append: true)
-                    } catch {
-                        break
-                    }
-                }
-                if !Task.isCancelled {
-                    self.backgroundSyncTask = nil
-                    // Élagage seulement après un parcours complet et réussi : après une erreur ou un
-                    // changement de dossier, la liste des exemplaires renvoyés serait incomplète.
-                    if reachedLastPage, self.selectedFolderId == folderId {
-                        let serverIds = self.serverInstanceIdsInCurrentPass
-                        if self.items.contains(where: { !serverIds.contains($0.instanceId) }) {
-                            self.items.removeAll { !serverIds.contains($0.instanceId) }
-                        }
-                    }
-                    await self.localStore.syncCollectionFolder(username: username, folderId: folderId, fullItems: self.items)
-                }
-            }
+    /// Critère et sens de tri mémorisés pour ce compte. Le sens est écrit sans repasser par
+    /// `sortAscending`, qui relancerait un chargement.
+    private func restoreSavedSort(username: String) {
+        if let savedSort = CollectionPreferencesStore.sortOption(for: username) {
+            display.sortOption = savedSort
+        }
+        if let savedAscending = CollectionPreferencesStore.sortAscending(for: username) {
+            display.restoreSortAscending(savedAscending)
         }
     }
 
-    private func fetchPage(
-        _ page: Int,
-        username: String,
-        folderId: Int,
-        credentials: DiscogsCredentials,
-        append: Bool
-    ) async throws {
-        guard selectedFolderId == folderId else { return }
-        let response = try await DiscogsAPIClient.shared.collectionItems(
-            username: username,
-            folderId: folderId,
-            page: page,
-            sort: sortOption.apiSortValue,
-            sortOrder: sortOption.apiSortOrder(ascending: sortAscending),
-            credentials: credentials
-        )
-        // Le compte a pu changer pendant la requête (déconnexion puis connexion à un autre
-        // compte, souvent sur le même dossier "Tous") : la page reçue ne lui appartient pas.
-        guard selectedFolderId == folderId, authManager.username == username else { return }
-        let validReleases = response.releases.filter { $0.instanceId > 0 && $0.instanceId != $0.releaseId }
-        let pageInstanceIds = Set(validReleases.map(\.instanceId))
-        if page == 1 {
-            serverInstanceIdsInCurrentPass = pageInstanceIds
-        } else {
-            serverInstanceIdsInCurrentPass.formUnion(pageInstanceIds)
+    /// Dossier affiché, mémorisé (avec son nom) comme dernier dossier consulté du compte.
+    private func rememberSelectedFolder(_ folderId: Int, username: String) {
+        selectedFolderId = folderId
+        CollectionPreferencesStore.setLastConsultedFolderId(folderId, for: username)
+        if let folderName = folders.first(where: { $0.id == folderId })?.name {
+            CollectionPreferencesStore.setLastConsultedFolderName(folderName, for: username)
         }
-        let newItems: [CollectionItem]
-        if append {
-            var seen = Set<Int>()
-            var combined: [CollectionItem] = []
-            for item in items + validReleases {
-                if item.instanceId > 0 && item.instanceId != item.releaseId && seen.insert(item.instanceId).inserted {
-                    combined.append(item)
-                }
-            }
-            newItems = combined
-        } else {
-            var seen = Set<Int>()
-            newItems = validReleases.filter { seen.insert($0.instanceId).inserted }
-        }
-        items = newItems
-        currentPage = page
-        totalPages = response.pagination.pages
-
-        // Sauvegarde dans le cache local SwiftData avec horodatage : seulement les exemplaires de
-        // cette page (le reste de `newItems` y est déjà). Réencoder et réinsérer toute la liste
-        // cumulée à chaque page rendait la synchro d'une grosse collection quadratique. Le cache
-        // complet du dossier est réécrit une fois, en fin de synchro (`syncCollectionFolder`).
-        await localStore.saveCollectionItems(validReleases, username: username, folderId: folderId)
-    }
-
-    /// Dossier d'ajout par défaut supprimé entre-temps (dans l'app ou sur discogs.com) : on revient
-    /// à « Toujours demander », sinon chaque ajout visait un dossier inexistant et échouait.
-    private func resetDefaultAddFolderIfMissing(username: String) {
-        let defaultId = CollectionPreferencesStore.defaultAddFolderId(for: username)
-        guard defaultId != CollectionPreferencesStore.alwaysAskFolderId,
-              !folders.contains(where: { $0.id == defaultId }) else { return }
-        CollectionPreferencesStore.setDefaultAddFolderId(CollectionPreferencesStore.alwaysAskFolderId, for: username)
     }
 
     /// Déplace plusieurs exemplaires vers un même dossier (édition en lot). Discogs n'expose
@@ -751,10 +378,10 @@ final class CollectionViewModel {
     /// exemplaire après l'autre en arrière-plan : retirer d'abord un exemplaire, attendre le réseau,
     /// puis passer au suivant les faisait disparaître un par un.
     func removeInstances(_ targets: [CollectionItem]) async {
-        guard !targets.isEmpty, let username = beginRemoval() else { return }
+        guard !targets.isEmpty, let username = beginChange(demoMessage: AppMessages.demoRemovalBlocked) else { return }
 
         let targetIds = Set(targets.map(\.id))
-        animatesNextSectionsUpdate = true
+        display.animatesNextSectionsUpdate = true
         items.removeAll { targetIds.contains($0.id) }
         for item in targets {
             removeFromLocalState(item, username: username)
@@ -767,20 +394,14 @@ final class CollectionViewModel {
     }
 
     func remove(_ item: CollectionItem) async {
-        guard let username = beginRemoval() else { return }
-
-        // Optimistic UI : retrait immédiat de la vue locale et du cache SwiftData
-        animatesNextSectionsUpdate = true
-        items.removeAll { $0.id == item.id }
-        removeFromLocalState(item, username: username)
-        await sendRemoval(item, username: username)
+        await removeInstances([item])
     }
 
-    /// Garde commune aux retraits : mode démo, hors ligne avec données périmées. Renvoie le nom
-    /// d'utilisateur du compte actif si le retrait peut avoir lieu.
-    private func beginRemoval() -> String? {
+    /// Garde commune aux retraits et déplacements : mode démo, hors ligne avec données périmées.
+    /// Renvoie le nom d'utilisateur du compte actif si la modification peut avoir lieu.
+    private func beginChange(demoMessage: String) -> String? {
         if DemoMode.isActive {
-            actionMessage = AppMessages.demoRemovalBlocked
+            actionMessage = demoMessage
             return nil
         }
         guard let username = authManager.username else { return nil }
@@ -796,8 +417,7 @@ final class CollectionViewModel {
 
     /// Retrait d'un exemplaire du cache SwiftData et des états partagés ; `items` est déjà à jour.
     private func removeFromLocalState(_ item: CollectionItem, username: String) {
-        localStore.removeCollectionItem(username: username, folderId: item.folderId, instanceId: item.instanceId)
-        localStore.removeCollectionItem(username: username, folderId: DiscogsConstants.allFolderId, instanceId: item.instanceId)
+        localStore.removeCollectionItemFromFolderAndAll(item, username: username)
 
         let remainingCopies = items.filter { $0.releaseId == item.releaseId }
         if remainingCopies.isEmpty {
@@ -806,60 +426,22 @@ final class CollectionViewModel {
         LibraryMembershipStore.shared.notifyCollectionItemRemoved(releaseId: item.releaseId, instanceId: item.instanceId)
     }
 
-    /// Répercute un retrait déjà affiché sur Discogs : appel direct, mise en file (hors ligne ou
-    /// panne passagère) ou réaffichage de l'exemplaire en cas de refus définitif.
+    /// Répercute un retrait déjà affiché sur Discogs (voir `DiscogsWriteService`) ; sur un refus
+    /// définitif, l'exemplaire est réaffiché plutôt que de laisser la file échouer trois fois.
     private func sendRemoval(_ item: CollectionItem, username: String) async {
-        // Exemplaire ajouté hors ligne et pas encore envoyé : il suffit d'annuler son ajout en
-        // attente (voir `OfflineSyncQueue.cancelPendingAdd`).
-        if item.instanceId < 0 {
-            syncQueue.cancelPendingAdd(temporaryInstanceId: item.instanceId)
-            TagStore.shared.removeTags(for: item.instanceId)
-            return
-        }
-
-        if networkMonitor.isConnected, let credentials = authManager.credentials {
-            do {
-                try await DiscogsAPIClient.shared.removeFromCollection(
-                    username: username,
-                    folderId: item.folderId,
-                    releaseId: item.releaseId,
-                    instanceId: item.instanceId,
-                    credentials: credentials
-                )
-            } catch where error.isNotFound {
-                // Déjà absent sur Discogs : le retrait est acquis.
-            } catch where error.isTransientNetworkFailure {
-                let action = PendingAction(
-                    type: .removeFromCollection,
-                    releaseId: item.releaseId,
-                    folderId: item.folderId,
-                    instanceId: item.instanceId
-                )
-                syncQueue.enqueue(action)
-                actionMessage = AppMessages.discogsUnavailableQueued
-            } catch {
-                // Refus définitif : on réaffiche l'exemplaire plutôt que de laisser la file
-                // échouer trois fois pendant qu'il semble retiré.
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    if !items.contains(where: { $0.id == item.id }) {
-                        items.append(item)
-                    }
-                }
-                await localStore.saveCollectionItems([item], username: username, folderId: item.folderId)
-                await localStore.saveCollectionItems([item], username: username, folderId: DiscogsConstants.allFolderId)
-                LibraryMembershipStore.shared.markInCollection(item.releaseId)
-                actionMessage = AppMessages.removalFailed
-            }
-        } else {
-            // Hors ligne : enregistrement dans la file d'attente des mutations
-            let action = PendingAction(
-                type: .removeFromCollection,
-                releaseId: item.releaseId,
-                folderId: item.folderId,
-                instanceId: item.instanceId
-            )
-            syncQueue.enqueue(action)
+        let outcome = await DiscogsWriteService.removeInstance(item, username: username)
+        switch outcome {
+        case .queuedOffline:
             LibraryMembershipStore.shared.noteQueuedOffline(.collectionRemoved)
+        case .refused:
+            if !items.contains(where: { $0.id == item.id }) {
+                withAnimation(.easeInOut(duration: 0.2)) { items.append(item) }
+            }
+            await localStore.saveCollectionItemInFolderAndAll(item, username: username)
+            LibraryMembershipStore.shared.markInCollection(item.releaseId)
+            actionMessage = AppMessages.removalFailed
+        case .queuedAfterFailure, .done:
+            actionMessage = outcome.failureQueuedMessage ?? actionMessage
         }
     }
 
@@ -867,126 +449,33 @@ final class CollectionViewModel {
     /// dossiers concernés. Hors ligne, mis en file pour une synchro différée (même mécanique
     /// que `remove`).
     func moveInstance(_ item: CollectionItem, toFolderId: Int) async {
-        if DemoMode.isActive {
-            actionMessage = AppMessages.demoModificationBlocked
-            return
-        }
-        guard let username = authManager.username, item.folderId != toFolderId else { return }
+        guard item.folderId != toFolderId,
+              let username = beginChange(demoMessage: AppMessages.demoModificationBlocked) else { return }
 
-        if !networkMonitor.isConnected && isOfflineAndStale {
-            actionMessage = AppMessages.offlineStaleModificationBlocked
-            return
-        }
+        let movedItem = item.moved(toFolderId: toFolderId)
+        applyMove(from: item, to: movedItem)
+        await localStore.replaceCollectionItemInCache(item, with: movedItem, username: username)
 
-        let originFolderId = item.folderId
-        let movedItem = CollectionItem(
-            releaseId: item.releaseId,
-            folderId: toFolderId,
-            rating: item.rating,
-            dateAdded: item.dateAdded,
-            basicInformation: item.basicInformation,
-            instanceId: item.instanceId,
-            notes: item.notes
-        )
-
-        withAnimation(.easeInOut(duration: 0.2)) {
-            if let index = items.firstIndex(where: { $0.id == item.id }) {
-                // Si la vue est filtrée sur le dossier de départ, l'exemplaire déplacé n'y
-                // appartient plus ; sinon (vue "Tous" ou déjà filtrée sur le nouveau dossier),
-                // on reflète juste le changement en place.
-                if selectedFolderId == originFolderId {
-                    items.remove(at: index)
-                } else {
-                    items[index] = movedItem
-                }
-            }
-            folders = folders.map { folder in
-                if folder.id == originFolderId {
-                    return CollectionFolder(id: folder.id, name: folder.name, count: max(0, folder.count - 1), resourceURL: folder.resourceURL)
-                } else if folder.id == toFolderId {
-                    return CollectionFolder(id: folder.id, name: folder.name, count: folder.count + 1, resourceURL: folder.resourceURL)
-                }
-                return folder
-            }
-        }
-
-        localStore.removeCollectionItem(username: username, folderId: originFolderId, instanceId: item.instanceId)
-        await localStore.saveCollectionItems([movedItem], username: username, folderId: toFolderId)
-        await localStore.saveCollectionItems([movedItem], username: username, folderId: DiscogsConstants.allFolderId)
-        LibraryMembershipStore.shared.notifyCollectionInstanceReplaced(oldInstanceId: item.instanceId, newInstance: movedItem)
-
-        // Exemplaire ajouté hors ligne et pas encore envoyé : seul le dossier de son ajout en
-        // attente change (voir `OfflineSyncQueue.retargetPendingAdd`).
-        if item.instanceId < 0 {
-            syncQueue.retargetPendingAdd(temporaryInstanceId: item.instanceId, toFolderId: toFolderId)
-            return
-        }
-
-        if networkMonitor.isConnected, let credentials = authManager.credentials {
-            do {
-                try await DiscogsAPIClient.shared.moveCollectionInstance(
-                    username: username,
-                    folderId: originFolderId,
-                    releaseId: item.releaseId,
-                    instanceId: item.instanceId,
-                    toFolderId: toFolderId,
-                    credentials: credentials
-                )
-            } catch where error.isTransientNetworkFailure {
-                syncQueue.enqueue(PendingAction(
-                    type: .moveCollectionInstance,
-                    releaseId: item.releaseId,
-                    folderId: originFolderId,
-                    instanceId: item.instanceId,
-                    targetFolderId: toFolderId
-                ))
-                actionMessage = AppMessages.discogsUnavailableQueued
-            } catch {
-                // Refus définitif : on annule le déplacement optimiste (exemplaire, compteurs des
-                // dossiers, cache) au lieu de laisser la file échouer trois fois.
-                await revertMove(original: item, moved: movedItem, username: username)
-                actionMessage = AppMessages.moveFailed
-            }
-        } else {
-            syncQueue.enqueue(PendingAction(
-                type: .moveCollectionInstance,
-                releaseId: item.releaseId,
-                folderId: originFolderId,
-                instanceId: item.instanceId,
-                targetFolderId: toFolderId
-            ))
+        let outcome = await DiscogsWriteService.moveInstance(item, toFolderId: toFolderId, username: username)
+        if let message = outcome.failureQueuedMessage {
+            actionMessage = message
+        } else if outcome == .refused {
+            // Refus définitif : on annule le déplacement optimiste (exemplaire, compteurs des
+            // dossiers, cache) au lieu de laisser la file échouer trois fois.
+            applyMove(from: movedItem, to: item, reverting: true)
+            await localStore.replaceCollectionItemInCache(movedItem, with: item, username: username)
+            actionMessage = AppMessages.moveFailed
         }
     }
 
-    /// Inverse exact de la mise à jour optimiste faite par `moveInstance`.
-    private func revertMove(original: CollectionItem, moved: CollectionItem, username: String) async {
-        let originFolderId = original.folderId
-        let toFolderId = moved.folderId
+    /// Mise à jour optimiste d'un déplacement (ou son annulation) : liste et compteurs des dossiers.
+    private func applyMove(from source: CollectionItem, to destination: CollectionItem, reverting: Bool = false) {
         withAnimation(.easeInOut(duration: 0.2)) {
-            if let index = items.firstIndex(where: { $0.id == original.id }) {
-                // Vue filtrée sur le dossier de destination : l'exemplaire n'y a plus sa place.
-                if selectedFolderId == toFolderId {
-                    items.remove(at: index)
-                } else {
-                    items[index] = original
-                }
-            } else if selectedFolderId == originFolderId {
-                // Retiré de la vue filtrée sur le dossier de départ : on l'y remet.
-                items.append(original)
-            }
-            folders = folders.map { folder in
-                if folder.id == originFolderId {
-                    return CollectionFolder(id: folder.id, name: folder.name, count: folder.count + 1, resourceURL: folder.resourceURL)
-                } else if folder.id == toFolderId {
-                    return CollectionFolder(id: folder.id, name: folder.name, count: max(0, folder.count - 1), resourceURL: folder.resourceURL)
-                }
-                return folder
-            }
+            items = reverting
+                ? CollectionLocalChanges.itemsAfterRevertingMove(items, original: destination, moved: source, selectedFolderId: selectedFolderId)
+                : CollectionLocalChanges.itemsAfterMove(items, original: source, moved: destination, selectedFolderId: selectedFolderId)
+            folders = CollectionLocalChanges.adjustingCounts(of: folders, by: [source.folderId: -1, destination.folderId: 1])
         }
-        localStore.removeCollectionItem(username: username, folderId: toFolderId, instanceId: original.instanceId)
-        await localStore.saveCollectionItems([original], username: username, folderId: originFolderId)
-        await localStore.saveCollectionItems([original], username: username, folderId: DiscogsConstants.allFolderId)
-        LibraryMembershipStore.shared.notifyCollectionInstanceReplaced(oldInstanceId: original.instanceId, newInstance: original)
     }
 
     /// Reflète localement une note/des champs personnalisés déjà enregistrés par
@@ -997,7 +486,6 @@ final class CollectionViewModel {
         items[index].notes = notes
         guard let username = authManager.username else { return }
         let updated = items[index]
-        await LocalDataStore.shared.saveCollectionItems([updated], username: username, folderId: updated.folderId)
-        await LocalDataStore.shared.saveCollectionItems([updated], username: username, folderId: DiscogsConstants.allFolderId)
+        await localStore.saveCollectionItemInFolderAndAll(updated, username: username)
     }
 }

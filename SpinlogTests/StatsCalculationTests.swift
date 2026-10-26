@@ -32,7 +32,7 @@ struct StatsCalculationTests {
             try item(purchasePrice: "10 EUR", fieldId: 99),
             try item()
         ]
-        let sums = StatsViewModel.purchaseAmountsByCurrency(of: items, fieldId: 4, defaultCurrency: "EUR")
+        let sums = StatsDataService.purchaseAmountsByCurrency(of: items, fieldId: 4, defaultCurrency: "EUR")
         #expect(sums["EUR"] == 32.5)
         #expect(sums["USD"] == 30)
         #expect(sums.count == 2)

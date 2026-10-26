@@ -70,12 +70,22 @@ struct CollectionView: View {
                                 Image(systemName: "shuffle")
                             }
                             .accessibilityLabel("Disque au hasard")
-                            .disabled(viewModel.visibleItemCount == 0)
+                            .disabled(viewModel.display.visibleItemCount == 0)
                         }
                     }
 
                     ToolbarItem(placement: .topBarTrailing) {
-                        trailingToolbarMenu
+                        CollectionOptionsMenu(
+                            viewModel: viewModel,
+                            displayMode: $displayMode,
+                            isSelecting: $isSelecting,
+                            selectedItemIds: $selectedItemIds,
+                            showsRandomButton: horizontalSizeClass == .regular,
+                            currentFolderName: currentFolderName,
+                            hasTags: !tagStore.allTags.isEmpty,
+                            onPickRandom: pickRandomAlbum,
+                            onShowTagFilter: { showingTagFilterSheet = true }
+                        )
                     }
                 }
             }
@@ -98,87 +108,19 @@ struct CollectionView: View {
                     viewModel.actionMessage = message
                 }
             }
-            .confirmationDialog(
-                "Supprimer de la collection ?",
-                isPresented: Binding(
-                    get: { itemPendingDeletion != nil },
-                    set: { if !$0 { itemPendingDeletion = nil } }
-                ),
-                titleVisibility: .visible
-            ) {
-                Button("Supprimer de la collection", role: .destructive) {
-                    if let item = itemPendingDeletion {
-                        Task { await viewModel.remove(item) }
-                    }
-                    itemPendingDeletion = nil
-                }
-                Button("Annuler", role: .cancel) {
-                    itemPendingDeletion = nil
-                }
-            } message: {
-                if let item = itemPendingDeletion {
-                    Text("Veux-tu supprimer « \(item.basicInformation.title) » de ta collection Discogs ?")
-                }
-            }
-            .confirmationDialog(
-                "Supprimer \(selectedItemIds.count) exemplaires de la collection ?",
-                isPresented: $showingBulkDeleteConfirmation,
-                titleVisibility: .visible
-            ) {
-                Button("Supprimer", role: .destructive) {
-                    let targets = selectedItems
-                    // Sortie immédiate du mode sélection : les exemplaires disparaissent de la liste
-                    // d'un coup et Discogs est mis à jour en arrière-plan (voir `removeInstances`).
-                    withAnimation {
-                        isSelecting = false
-                        selectedItemIds.removeAll()
-                    }
-                    Task { await viewModel.removeInstances(targets) }
-                }
-                Button("Annuler", role: .cancel) {}
-            } message: {
-                Text("Cette action supprime définitivement ces exemplaires de ta collection Discogs.")
-            }
-            .confirmationDialog(
-                moveConfirmationTitle,
-                isPresented: Binding(
-                    get: { pendingMoveFolder != nil },
-                    set: { if !$0 { pendingMoveFolder = nil } }
-                ),
-                titleVisibility: .visible
-            ) {
-                if let folder = pendingMoveFolder {
-                    Button("Déplacer") {
-                        let targets = selectedItems
-                        Task {
-                            isBulkProcessing = true
-                            await viewModel.moveInstances(targets, toFolderId: folder.id)
-                            isBulkProcessing = false
-                            withAnimation {
-                                isSelecting = false
-                                selectedItemIds.removeAll()
-                            }
-                        }
-                        pendingMoveFolder = nil
-                    }
-                }
-                Button("Annuler", role: .cancel) {
-                    pendingMoveFolder = nil
-                }
-            }
-            .sheet(isPresented: $showingBulkTagManagement) {
-                BulkTagManagementSheet(
-                    items: selectedItems,
-                    onCompletion: {
-                        withAnimation {
-                            isSelecting = false
-                            selectedItemIds.removeAll()
-                        }
-                    }
-                )
-            }
+            .modifier(CollectionDeletionAndBulkDialogs(
+                viewModel: viewModel,
+                itemPendingDeletion: $itemPendingDeletion,
+                showingBulkDeleteConfirmation: $showingBulkDeleteConfirmation,
+                pendingMoveFolder: $pendingMoveFolder,
+                showingBulkTagManagement: $showingBulkTagManagement,
+                isSelecting: $isSelecting,
+                selectedItemIds: $selectedItemIds,
+                isBulkProcessing: $isBulkProcessing,
+                selectedItems: selectedItems
+            ))
             .sheet(isPresented: $showingTagFilterSheet) {
-                TagFilterSheet(allTags: tagStore.allTags, selectedTags: $viewModel.selectedTags)
+                TagFilterSheet(allTags: tagStore.allTags, selectedTags: Bindable(viewModel.display).selectedTags)
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
@@ -204,130 +146,8 @@ struct CollectionView: View {
             ))
     }
 
-
-    // MARK: - Menus d'options de la barre d'outils
-
-    @ViewBuilder
-    private var foldersMenu: some View {
-        if viewModel.folders.count > 1 {
-            Menu {
-                Picker("Dossier", selection: Binding(
-                    get: { viewModel.selectedFolderId },
-                    set: { newId in if let newId { Task { await viewModel.selectFolder(newId) } } }
-                )) {
-                    ForEach(viewModel.folders.sorted { $0.count > $1.count }) { folder in
-                        Text("\(folder.name) (\(folder.count))")
-                            .tag(folder.id)
-                    }
-                }
-            } label: {
-                Label("Dossier : \(currentFolderName)", systemImage: viewModel.selectedFolderId == DiscogsConstants.allFolderId ? "folder" : "folder.fill")
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var filterMenu: some View {
-        Menu {
-            if viewModel.hasActiveFilters {
-                Button(role: .destructive) {
-                    viewModel.clearFilters()
-                } label: {
-                    Label("Effacer les filtres", systemImage: "xmark.circle")
-                }
-                Divider().overlay(Color.appSeparator)
-            }
-
-            if !tagStore.allTags.isEmpty {
-                Button {
-                    showingTagFilterSheet = true
-                } label: {
-                    Label(tagFilterMenuTitle(viewModel.selectedTags), systemImage: "tag")
-                }
-            }
-
-            let formats = viewModel.availableFormats
-            if !formats.isEmpty {
-                Menu {
-                    LibraryFormatFilterOptions(formats: formats, selectedFormat: $viewModel.selectedFormat)
-                } label: {
-                    Label {
-                        viewModel.selectedFormat.map { Text("Format : \($0)") } ?? Text("Filtrer par format")
-                    } icon: {
-                        Image(systemName: "square.stack.3d.up")
-                    }
-                }
-            }
-        } label: {
-            Label(
-                "Filtres",
-                systemImage: viewModel.hasActiveFilters
-                    ? "line.3.horizontal.decrease.circle.fill"
-                    : "line.3.horizontal.decrease.circle"
-            )
-        }
-    }
-
-    @ViewBuilder
-    private var trailingToolbarMenu: some View {
-        Menu {
-            // Sur iPad uniquement (où l'icône shuffle directe est retirée de la barre pour libérer
-            // l'espace nécessaire à la barre d'onglets flottante). Sur iPhone, l'icône est déjà
-            // directement accessible dans la barre d'outils.
-            if horizontalSizeClass == .regular {
-                Button {
-                    pickRandomAlbum()
-                } label: {
-                    Label("Disque au hasard", systemImage: "shuffle")
-                }
-                .disabled(viewModel.visibleItemCount == 0)
-            }
-
-            Button {
-                withAnimation {
-                    isSelecting.toggle()
-                    if !isSelecting {
-                        selectedItemIds.removeAll()
-                    }
-                }
-            } label: {
-                Label(isSelecting ? "Terminé" : "Sélectionner", systemImage: isSelecting ? "checkmark.circle.fill" : "checkmark.circle")
-            }
-
-            Divider().overlay(Color.appSeparator)
-
-            foldersMenu
-            LibrarySortMenu(sortOption: $viewModel.sortOption, sortAscending: $viewModel.sortAscending)
-            filterMenu
-            LibraryDisplayModeMenu(displayMode: $displayMode)
-        } label: {
-            Image(systemName: "ellipsis")
-        }
-        .accessibilityLabel("Options")
-    }
-
-    private func stopListening(for item: CollectionItem) {
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        Task {
-            await NowPlayingActivityManager.shared.endActivity(for: item.releaseId)
-        }
-    }
-
-    /// Titre de la confirmation de déplacement en lot. Deux littéraux complets plutôt qu'un
-    /// ternaire imbriqué dans une seule interpolation : c'est ce qui permet au catalogue de
-    /// chaînes de les extraire et les traduire correctement (un ternaire imbriqué produirait un
-    /// texte français figé, non traduisible, à l'intérieur d'une chaîne par ailleurs localisée).
-    private var moveConfirmationTitle: LocalizedStringKey {
-        guard let folder = pendingMoveFolder else { return "" }
-        if selectedItemIds.count > 1 {
-            return "Déplacer les \(selectedItemIds.count) exemplaires dans le dossier \(folder.name) ?"
-        } else {
-            return "Déplacer l'exemplaire dans le dossier \(folder.name) ?"
-        }
-    }
-
     private func pickRandomAlbum() {
-        let allItems = viewModel.sections.flatMap(\.items)
+        let allItems = viewModel.display.sections.flatMap(\.items)
         guard !allItems.isEmpty, let randomItem = allItems.randomElement() else { return }
 
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
@@ -350,13 +170,19 @@ struct CollectionView: View {
         }
     }
 
-    private func triggerListeningLog(for item: CollectionItem) {
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        NowPlayingActivityManager.shared.startListening(
-            releaseId: item.releaseId,
-            albumTitle: item.basicInformation.title,
-            artistName: item.basicInformation.artistNames,
-            coverURL: item.basicInformation.coverImage ?? item.basicInformation.thumb
+    /// Actions sur un exemplaire, partagées par la liste, la mosaïque et le carrousel.
+    private var itemActions: CollectionItemActions {
+        CollectionItemActions(
+            isPlaying: { activityManager.isPlaying(releaseId: $0.releaseId) },
+            showShelf: { item in
+                if !premiumStore.isPremium {
+                    showingPremiumSheet = true
+                } else {
+                    shelfTargetRelease = Release(from: item)
+                }
+            },
+            edit: { editingItem = $0 },
+            requestDeletion: { itemPendingDeletion = $0 }
         )
     }
 
@@ -368,20 +194,15 @@ struct CollectionView: View {
         currentFolder?.name ?? "Collection"
     }
 
-    /// Sous-titre sous le titre "Collection" (inchangé) : nom du dossier courant + son nombre
-    /// d'éléments, tiré de `CollectionFolder.count` (valeur totale Discogs), pas de `items.count`
-    /// qui ne reflète que ce qui est déjà chargé par la pagination paresseuse.
-
-
     @ViewBuilder
     private var collectionViewCarousel: some View {
         // Lu une seule fois pour tout ce passage de rendu plutôt qu'une lecture observée par
         // ligne visible — voir `CollectionViewModel.copyBadgesByItemId`.
-        let copyBadges = viewModel.copyBadgesByItemId
+        let copyBadges = viewModel.display.copyBadgesByItemId
         LibraryCarouselView<CollectionItem>(
-            sections: viewModel.sections,
-            indexEntries: viewModel.indexEntries,
-            indexToken: { viewModel.indexToken(for: $0) },
+            sections: viewModel.display.sections,
+            indexEntries: viewModel.display.indexEntries,
+            indexToken: { viewModel.display.indexToken(for: $0) },
             isSelecting: isSelecting,
             selectedItemIds: selectedItemIds,
             onToggleSelection: { toggleSelection($0) },
@@ -395,91 +216,22 @@ struct CollectionView: View {
                 ))
             },
             quickActions: { item in
-                AnyView(CollectionCarouselQuickActions(
-                    isPlaying: activityManager.isPlaying(releaseId: item.releaseId),
+                let actions = itemActions
+                return AnyView(CollectionCarouselQuickActions(
+                    isPlaying: actions.isPlaying(item),
                     isRegularDisplay: isRegularDisplay,
-                    onToggleListening: {
-                        if activityManager.isPlaying(releaseId: item.releaseId) {
-                            stopListening(for: item)
-                        } else {
-                            triggerListeningLog(for: item)
-                        }
-                    },
-                    onShowShelf: {
-                        if !premiumStore.isPremium {
-                            showingPremiumSheet = true
-                        } else {
-                            shelfTargetRelease = Release(from: item)
-                        }
-                    },
-                    onEdit: { editingItem = item }
+                    onToggleListening: { actions.toggleListening(item) },
+                    onShowShelf: { actions.showShelf(item) },
+                    onEdit: { actions.edit(item) }
                 ))
             },
             contextMenuContent: { item in collectionContextMenu(for: item) }
         )
     }
 
-    /// Menu de l'appui long sur une pochette (mosaïque, carrousel) : mêmes actions que le balayage de
-    /// la liste, qui n'existe pas hors `List` sur iOS 26 — voir `LibraryListView`.
     private func collectionContextMenu(for item: CollectionItem) -> AnyView {
-        AnyView(
-            Group {
-                if activityManager.isPlaying(releaseId: item.releaseId) {
-                    Button {
-                        stopListening(for: item)
-                    } label: {
-                        Label("Arrêter l'écoute", systemImage: "stop.fill")
-                    }
-                } else {
-                    Button {
-                        triggerListeningLog(for: item)
-                    } label: {
-                        Label("J'écoute ce disque sur la platine", systemImage: "opticaldisc.fill")
-                    }
-                }
-
-                Button {
-                    if !premiumStore.isPremium {
-                        showingPremiumSheet = true
-                    } else {
-                        shelfTargetRelease = Release(from: item)
-                    }
-                } label: {
-                    Label("Où ranger", systemImage: "books.vertical.fill")
-                }
-
-                // Hors ligne avec des données de plus de 6 h, comme les balayages de la liste :
-                // ni modification ni suppression sur un état peut-être périmé.
-                if !viewModel.isOfflineAndStale {
-                    Button {
-                        editingItem = item
-                    } label: {
-                        Label("Modifier la note et les commentaires", systemImage: "pencil")
-                    }
-
-                    Button(role: .destructive) {
-                        itemPendingDeletion = item
-                    } label: {
-                        Label("Supprimer de la collection", systemImage: "trash")
-                    }
-                }
-            }
-        )
+        AnyView(CollectionItemContextMenu(item: item, actions: itemActions, allowsChanges: !viewModel.isOfflineAndStale))
     }
-
-    @ViewBuilder
-    private func collectionRowHighlight(for item: CollectionItem) -> some View {
-        if highlightedItemId == item.id {
-            Color.spinlogPink.opacity(0.18)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .strokeBorder(Color.spinlogPink.opacity(0.6), lineWidth: 1.5)
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 2)
-                )
-        }
-    }
-
 
     private func toggleSelection(_ item: CollectionItem) {
         toggleLibrarySelection(item, selectedItemIds: &selectedItemIds)
@@ -488,46 +240,19 @@ struct CollectionView: View {
     /// Exemplaires actuellement sélectionnés, dans leur ordre d'apparition (pas celui, non
     /// garanti, de `Set`) — surtout utile pour un message de confirmation stable.
     private var selectedItems: [CollectionItem] {
-        selectedLibraryItems(sections: viewModel.sections, selectedItemIds: selectedItemIds)
+        selectedLibraryItems(sections: viewModel.display.sections, selectedItemIds: selectedItemIds)
     }
 
-    /// Barre d'actions en lot façon app Fichiers : pile flottante en vrai Liquid Glass
-    /// (`glassEffect`) qui remplace la barre d'onglets pendant la sélection (masquée via
-    /// `.toolbar(.hidden, for: .tabBar)`), icônes grisées tant qu'aucun exemplaire n'est
-    /// sélectionné plutôt que la barre entière qui disparaîtrait.
-    @ViewBuilder
     private var bulkActionsBar: some View {
-        LibraryBulkActionsBar(isSelecting: isSelecting, isEmpty: selectedItemIds.isEmpty, isProcessing: isBulkProcessing) {
-            HStack(spacing: 36) {
-                Menu {
-                    ForEach(viewModel.folders.filter { $0.id != DiscogsConstants.allFolderId }) { folder in
-                        Button(folder.name) {
-                            pendingMoveFolder = folder
-                        }
-                    }
-                } label: {
-                    Image(systemName: "folder")
-                        .font(.title3)
-                }
-                .accessibilityLabel("Déplacer la sélection dans un dossier")
-
-                Button {
-                    showingBulkTagManagement = true
-                } label: {
-                    Image(systemName: "tag")
-                        .font(.title3)
-                }
-                .accessibilityLabel("Tags de la sélection")
-
-                Button(role: .destructive) {
-                    showingBulkDeleteConfirmation = true
-                } label: {
-                    Image(systemName: "trash")
-                        .font(.title3)
-                }
-                .accessibilityLabel("Supprimer la sélection")
-            }
-        }
+        CollectionBulkActionsBar(
+            folders: viewModel.folders,
+            isSelecting: isSelecting,
+            isEmpty: selectedItemIds.isEmpty,
+            isProcessing: isBulkProcessing,
+            onMove: { pendingMoveFolder = $0 },
+            onManageTags: { showingBulkTagManagement = true },
+            onDelete: { showingBulkDeleteConfirmation = true }
+        )
     }
 
     /// Barre de navigation rapide, en overlay sur la vue qui défile effectivement (liste ou
@@ -535,10 +260,10 @@ struct CollectionView: View {
     @ViewBuilder
     private func indexBarOverlay(proxy: ScrollViewProxy) -> some View {
         LibraryIndexBarOverlay(
-            indexEntries: viewModel.indexEntries,
+            indexEntries: viewModel.display.indexEntries,
             currentSectionKey: currentSectionKey,
-            sections: viewModel.sections,
-            indexToken: { viewModel.indexToken(for: $0) },
+            sections: viewModel.display.sections,
+            indexToken: { viewModel.display.indexToken(for: $0) },
             proxy: proxy
         )
     }
@@ -547,26 +272,26 @@ struct CollectionView: View {
     private var collectionViewList: some View {
         // Lus une seule fois pour tout ce passage de rendu plutôt qu'une lecture observée par
         // ligne visible — voir `CollectionViewModel.copyBadgesByItemId`/`tagsByInstanceId`.
-        let copyBadges = viewModel.copyBadgesByItemId
-        let allTags = viewModel.tagsByInstanceId
+        let copyBadges = viewModel.display.copyBadgesByItemId
+        let allTags = viewModel.display.tagsByInstanceId
         LibraryListView<CollectionItem>(
-            sections: viewModel.sections,
+            sections: viewModel.display.sections,
             isLoading: isShowingSkeleton,
-            indexToken: { viewModel.indexToken(for: $0) },
-            displayTitle: { viewModel.displayTitle(for: $0) },
-            headerArtists: { viewModel.headerArtists(for: $0) },
-            hasActiveFilters: viewModel.hasActiveFilters,
+            indexToken: { viewModel.display.indexToken(for: $0) },
+            displayTitle: { viewModel.display.displayTitle(for: $0) },
+            headerArtists: { viewModel.display.headerArtists(for: $0) },
+            hasActiveFilters: viewModel.display.hasActiveFilters,
             activeFiltersBar: {
                 AnyView(
                     LibraryActiveFiltersBar(
-                        selectedTags: $viewModel.selectedTags,
-                        selectedFormat: $viewModel.selectedFormat,
-                        onClearAll: viewModel.clearFilters
+                        selectedTags: Bindable(viewModel.display).selectedTags,
+                        selectedFormat: Bindable(viewModel.display).selectedFormat,
+                        onClearAll: viewModel.display.clearFilters
                     )
                 )
             },
             sectionsCoordinateSpace: Self.sectionsCoordinateSpace,
-            hasVerticalIndexBar: viewModel.indexEntries.count > 1,
+            hasVerticalIndexBar: viewModel.display.indexEntries.count > 1,
             isSelecting: isSelecting,
             selectedItemIds: selectedItemIds,
             onToggleSelection: { toggleSelection($0) },
@@ -582,59 +307,14 @@ struct CollectionView: View {
                 )
             },
             rowBackground: { item in
-                highlightedItemId == item.id ? AnyView(collectionRowHighlight(for: item)) : AnyView(Color.clear)
+                highlightedItemId == item.id ? AnyView(CollectionRandomPickHighlight.row) : AnyView(Color.clear)
             },
             leadingSwipeActions: { item in
-                AnyView(
-                    Group {
-                        if activityManager.isPlaying(releaseId: item.releaseId) {
-                            Button {
-                                stopListening(for: item)
-                            } label: {
-                                Label("Arrêter l'écoute", systemImage: "stop.fill")
-                            }
-                            .tint(Color(uiColor: .systemGray))
-                        } else {
-                            Button {
-                                triggerListeningLog(for: item)
-                            } label: {
-                                Label("J'écoute", systemImage: "opticaldisc.fill")
-                            }
-                            .tint(Color.spinlogPink)
-                        }
-
-                        Button {
-                            if !premiumStore.isPremium {
-                                showingPremiumSheet = true
-                            } else {
-                                shelfTargetRelease = Release(from: item)
-                            }
-                        } label: {
-                            Label("Ranger", systemImage: "books.vertical.fill")
-                        }
-                        .tint(.indigo)
-                    }
-                )
+                AnyView(CollectionLeadingSwipeActions(item: item, actions: itemActions))
             },
             trailingSwipeActions: { item in
                 guard !viewModel.isOfflineAndStale else { return AnyView(EmptyView()) }
-                return AnyView(
-                    Group {
-                        Button(role: .destructive) {
-                            itemPendingDeletion = item
-                        } label: {
-                            Label("Supprimer", systemImage: "trash.fill")
-                        }
-                        .tint(.red)
-
-                        Button {
-                            editingItem = item
-                        } label: {
-                            Label("Modifier", systemImage: "pencil")
-                        }
-                        .tint(.orange)
-                    }
-                )
+                return AnyView(CollectionTrailingSwipeActions(item: item, actions: itemActions))
             },
             contextMenuContent: { item in collectionContextMenu(for: item) },
             onLoadMore: { await viewModel.loadMoreIfNeeded(current: $0) },
@@ -642,6 +322,9 @@ struct CollectionView: View {
         )
     }
 
+    /// Sous-titre sous le titre "Collection" (inchangé) : nom du dossier courant + son nombre
+    /// d'éléments, tiré de `CollectionFolder.count` (valeur totale Discogs), pas de `items.count`
+    /// qui ne reflète que ce qui est déjà chargé par la pagination paresseuse.
     private var navigationSubtitle: String {
         // Un sous-titre vide pendant le chargement (dossiers pas encore connus), puis non vide une
         // fois les données arrivées, fait basculer la barre de navigation d'une à deux lignes et
@@ -649,8 +332,8 @@ struct CollectionView: View {
         // Un texte de substitution dès le squelette réserve la place pour que le titre ne bouge
         // plus ensuite.
         guard let currentFolder else { return isShowingSkeleton ? currentFolderName : "" }
-        if viewModel.hasActiveFilters {
-            let filteredCount = viewModel.visibleItemCount
+        if viewModel.display.hasActiveFilters {
+            let filteredCount = viewModel.display.visibleItemCount
             return String(localized: "\(currentFolder.name) · \(filteredCount)/\(currentFolder.count) albums")
         }
         return String(localized: "\(currentFolder.name) · \(currentFolder.count) albums")
@@ -667,13 +350,13 @@ struct CollectionView: View {
                 message: "Ajoute des disques depuis la recherche ou le scan.",
                 symbol: "square.stack.fill"
             ) { await viewModel.refresh() }
-        } else if viewModel.sections.isEmpty && !isShowingSkeleton {
-            LibraryNoResultsState(isOfflineAndStale: viewModel.isOfflineAndStale, searchText: viewModel.searchText) {
-                if viewModel.hasActiveFilters {
+        } else if viewModel.display.sections.isEmpty && !isShowingSkeleton {
+            LibraryNoResultsState(isOfflineAndStale: viewModel.isOfflineAndStale, searchText: viewModel.display.searchText) {
+                if viewModel.display.hasActiveFilters {
                     LibraryActiveFiltersBar(
-                        selectedTags: $viewModel.selectedTags,
-                        selectedFormat: $viewModel.selectedFormat,
-                        onClearAll: viewModel.clearFilters
+                        selectedTags: Bindable(viewModel.display).selectedTags,
+                        selectedFormat: Bindable(viewModel.display).selectedFormat,
+                        onClearAll: viewModel.display.clearFilters
                     )
                 }
             }
@@ -718,29 +401,21 @@ struct CollectionView: View {
                     case .grid:
                         // Lu une seule fois pour tout ce passage de rendu plutôt qu'une lecture
                         // observée par ligne visible — voir `CollectionViewModel.copyBadgesByItemId`.
-                        let copyBadges = viewModel.copyBadgesByItemId
+                        let copyBadges = viewModel.display.copyBadgesByItemId
                         LibraryMosaicView<CollectionItem>(
-                            sections: viewModel.sections,
+                            sections: viewModel.display.sections,
                             isLoading: isShowingSkeleton,
-                            indexToken: { viewModel.indexToken(for: $0) },
-                            displayTitle: { viewModel.displayTitle(for: $0) },
-                            headerArtists: { viewModel.headerArtists(for: $0) },
-                            hasVerticalIndexBar: viewModel.indexEntries.count > 1,
+                            indexToken: { viewModel.display.indexToken(for: $0) },
+                            displayTitle: { viewModel.display.displayTitle(for: $0) },
+                            headerArtists: { viewModel.display.headerArtists(for: $0) },
+                            hasVerticalIndexBar: viewModel.display.indexEntries.count > 1,
                             sectionsCoordinateSpace: Self.sectionsCoordinateSpace,
                             isSelecting: isSelecting,
                             selectedItemIds: selectedItemIds,
                             onToggleSelection: { toggleSelection($0) },
                             onLoadMore: { await viewModel.loadMoreIfNeeded(current: $0) },
                             borderOverlay: { item in
-                                if highlightedItemId == item.id {
-                                    AnyView(
-                                        RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                            .strokeBorder(Color.spinlogPink, lineWidth: 3)
-                                            .shadow(color: Color.spinlogPink.opacity(0.6), radius: 6)
-                                    )
-                                } else {
-                                    AnyView(EmptyView())
-                                }
+                                highlightedItemId == item.id ? AnyView(CollectionRandomPickHighlight.cover) : AnyView(EmptyView())
                             },
                             cornerBadges: { item in
                                 AnyView(CollectionMosaicCornerBadges(
@@ -761,7 +436,7 @@ struct CollectionView: View {
                             .overlay(alignment: .bottomTrailing) { indexBarOverlay(proxy: proxy) }
                     }
                 }
-                .animation(.easeInOut(duration: 0.2), value: viewModel.indexEntries.count > 1)
+                .animation(.easeInOut(duration: 0.2), value: viewModel.display.indexEntries.count > 1)
                 // Section actuellement épinglée en haut, pour la pastille de position de
                 // `SectionIndexBar` : ne déclenche un nouveau rendu que lorsqu'elle change
                 // réellement, pas à chaque image du défilement (voir `currentSectionKey`).
@@ -772,18 +447,18 @@ struct CollectionView: View {
                 .safeAreaInset(edge: .top) {
                     // Mode liste exclu : sa propre `List` intègre déjà la barre de filtres
                     // comme ligne (voir `collectionViewList`).
-                    if displayMode != .list, viewModel.hasActiveFilters {
+                    if displayMode != .list, viewModel.display.hasActiveFilters {
                         LibraryActiveFiltersBar(
-                            selectedTags: $viewModel.selectedTags,
-                            selectedFormat: $viewModel.selectedFormat,
-                            onClearAll: viewModel.clearFilters
+                            selectedTags: Bindable(viewModel.display).selectedTags,
+                            selectedFormat: Bindable(viewModel.display).selectedFormat,
+                            onClearAll: viewModel.display.clearFilters
                         )
                     }
                 }
                 // Changer de critère de tri réordonne la liste : on remonte en haut plutôt que de
                 // laisser le scroll à une position qui n'a plus de sens.
-                .onChange(of: viewModel.sortOption) {
-                    withAnimation { proxy.scrollTo(viewModel.sections.first?.key, anchor: .top) }
+                .onChange(of: viewModel.display.sortOption) {
+                    withAnimation { proxy.scrollTo(viewModel.display.sections.first?.key, anchor: .top) }
                 }
                 // Pas de scroll-to-top automatique au changement de filtre (tags/support) : chaque
                 // variante tentée (animée, non animée, recréation de liste via `.id()`, forçage de
@@ -794,7 +469,7 @@ struct CollectionView: View {
                 .onChange(of: tabCoordinator.scrollToTopOfCollectionTrigger) {
                     Task { @MainActor in
                         try? await Task.sleep(for: AppTiming.scrollSettleDelay)
-                        withAnimation { proxy.scrollTo(viewModel.sections.first?.key, anchor: .top) }
+                        withAnimation { proxy.scrollTo(viewModel.display.sections.first?.key, anchor: .top) }
                     }
                 }
                 .onChange(of: randomScrollTrigger) { _, newTrigger in
@@ -816,8 +491,8 @@ struct CollectionView: View {
     /// qui faisait disparaître puis réapparaître le grand titre de navigation.
     private var isShowingSkeleton: Bool {
         ((viewModel.isLoading || viewModel.isAwaitingFirstLoad) && viewModel.items.isEmpty)
-            || (viewModel.sections.isEmpty && viewModel.isComputingSections
-                && viewModel.searchText.isEmpty && !viewModel.hasActiveFilters)
+            || (viewModel.display.sections.isEmpty && viewModel.display.isComputingSections
+                && viewModel.display.searchText.isEmpty && !viewModel.display.hasActiveFilters)
     }
 
 }

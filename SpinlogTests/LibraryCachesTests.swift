@@ -25,7 +25,7 @@ struct LibraryCachesTests {
             try item(instanceId: 3, releaseId: 100),
             try item(instanceId: 4, releaseId: 100)
         ]
-        let badges = CollectionViewModel.copyBadges(for: items)
+        let badges = CollectionDisplayState.copyBadges(for: items)
         #expect(badges[items[0].id] == "Ex. 1/3")
         #expect(badges[items[2].id] == "Ex. 2/3")
         #expect(badges[items[3].id] == "Ex. 3/3")

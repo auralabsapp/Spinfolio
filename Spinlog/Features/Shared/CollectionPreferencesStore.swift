@@ -211,4 +211,25 @@ enum CollectionPreferencesStore {
         setValue(mediaConditionFieldId, forKey: key("mediaConditionFieldId", for: username))
         setValue(defaultAddFolderId, forKey: key("defaultAddFolderId", for: username), notify: true)
     }
+
+    /// Dossier d'ajout par défaut supprimé entre-temps (dans l'app ou sur discogs.com) : retour à
+    /// « Toujours demander », sinon chaque ajout visait un dossier inexistant et échouait.
+    static func resetDefaultAddFolderIfMissing(validFolderIds: Set<Int>, for username: String) {
+        let defaultId = defaultAddFolderId(for: username)
+        guard defaultId != alwaysAskFolderId, !validFolderIds.contains(defaultId) else { return }
+        setDefaultAddFolderId(alwaysAskFolderId, for: username)
+    }
+
+    /// Dossier d'un nouvel ajout sans dossier précisé : le dossier par défaut choisi dans les
+    /// réglages, sinon (« Toujours demander ») le dernier dossier consulté, sinon Uncategorized.
+    static func folderIdForNewAddition(for username: String) -> Int {
+        let defaultId = defaultAddFolderId(for: username)
+        if defaultId != alwaysAskFolderId {
+            return defaultId
+        }
+        if let lastFolderId = lastConsultedFolderId(for: username), lastFolderId > 0 {
+            return lastFolderId
+        }
+        return DiscogsConstants.uncategorizedFolderId
+    }
 }

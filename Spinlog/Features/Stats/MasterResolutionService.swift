@@ -126,3 +126,22 @@ actor MasterResolutionService {
         subscribers.removeAll()
     }
 }
+
+extension MasterResolutionService {
+    /// Demande en fond l'année des masters de ces disques encore jamais résolus. `isMasterResolved`
+    /// et non `getMasterYear == nil` : un master sans année sur Discogs est enregistré à 0
+    /// (résolu), mais `getMasterYear` renvoie `nil` pour 0 — il était donc redemandé indéfiniment.
+    @MainActor
+    static func resolveUnknownMasters(of items: [CollectionItem], subscriberKey: String) {
+        let localStore = LocalDataStore.shared
+        let missing = Set(items.compactMap { item -> Int? in
+            guard let masterId = item.basicInformation.masterId, masterId > 0 else { return nil }
+            return localStore.isMasterResolved(masterId) ? nil : masterId
+        })
+        guard !missing.isEmpty else { return }
+        Task {
+            // Pas de suivi de progression : l'appelant réagit à `.masterYearResolved`.
+            await shared.resolveMasters(missingMasterIds: Array(missing), subscriberKey: subscriberKey) { _, _, _, _ in }
+        }
+    }
+}
