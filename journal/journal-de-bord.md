@@ -7,7 +7,18 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
-## 2026-10-26 — Audit : lots 12, 8, 9, 11, 13, 14 et 15 ; découpage des gros fichiers
+## 2026-10-26 — Audit : lots 12, 8, 9, 11, 13, 14, 15 et 10 ; découpage des gros fichiers
+
+### 18:58 — `fb09ff2` Audit lot 10 : contraste des boutons pleins et jetons de design
+- Texte des boutons pleins choisi automatiquement selon le thème (contraste ≥ 4,5:1) :
+  foncé en mode sombre pour les 10 thèmes, blanc en clair ; violet du thème Violet clair
+  légèrement foncé pour atteindre le seuil.
+- Badges de pochette à 11 pt ; thème verrouillé : ouvre le paywall.
+- Couleurs d'avertissement, hors ligne et de note en jetons ; graphiques sans teinte proche
+  de l'accent ; or, rayons, animations, pastille PREMIUM et cartes unifiés ; tailles fixes
+  remplacées par des styles de texte.
+- Tests du contraste et de la palette (468 au total) ; recette P38.
+- 68 fichiers, +465 / −189.
 
 ### 11:47 — `5bf7419` Audit lot 15 : diagnostic d'abonnement masqué, force unwraps retirés
 - Le diagnostic d'abonnement n'apparaît plus de lui-même sur TestFlight ni en revue App Store :
