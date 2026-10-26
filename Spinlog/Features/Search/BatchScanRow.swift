@@ -54,14 +54,12 @@ struct BatchScanRow: View {
                         .font(.subheadline.weight(.medium))
                         .lineLimit(2)
                     HStack(spacing: 6) {
+                        // Même pastille que sur les autres écrans (vert pour la collection,
+                        // couleur du thème pour la wantlist).
                         if isInCollection {
-                            Label("En collection", systemImage: "checkmark")
-                                .font(.caption2.weight(.medium))
-                                .foregroundStyle(Color.spinlogPink)
+                            StatusBadgeView(status: .collection)
                         } else if isInWantlist {
-                            Label("En wantlist", systemImage: "heart.fill")
-                                .font(.caption2.weight(.medium))
-                                .foregroundStyle(Color.spinlogPink)
+                            StatusBadgeView(status: .wantlist)
                         } else {
                             Text(item.code)
                                 .font(.caption)
