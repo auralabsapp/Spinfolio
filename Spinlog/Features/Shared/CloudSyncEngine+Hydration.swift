@@ -229,12 +229,7 @@ extension CloudSyncEngine {
                 cloudSyncLogger.error("apply(remoteRecord:) — payload illisible pour instance \(instanceId)")
                 return
             }
-            let resolved: [SyncedTag]
-            if allowMerge {
-                resolved = TagMergeLogic.merge(local: TagStore.shared.syncSnapshot(for: instanceId), remote: remoteTags)
-            } else {
-                resolved = remoteTags
-            }
+            let resolved = CloudMergeRules.tags(local: TagStore.shared.syncSnapshot(for: instanceId), remote: remoteTags, allowMerge: allowMerge)
             cloudSyncLogger.log("apply(remoteRecord:) tag instance \(instanceId) — remote=\(remoteTags.count) allowMerge=\(allowMerge) résultat=\(resolved.count)")
             TagStore.shared.applyRemoteTags(instanceId: instanceId, tags: resolved)
 
@@ -265,25 +260,18 @@ extension CloudSyncEngine {
                 cloudSyncLogger.error("apply(remoteRecord:) — payload illisible pour les préférences de rangement")
                 return
             }
-            let resolvedOverrides: [String: String]
-            if allowMerge {
-                // Union : ajoute les personnalisations locales absentes du serveur (l'appareil qui
-                // n'avait encore rien poussé ne perd pas les siennes). En cas de conflit sur un
-                // même artiste (rare), le serveur fait autorité — c'est-à-dire la valeur du
-                // PREMIER appareil à avoir synchronisé ce compte, puisque cette fusion tourne
-                // toujours après un fetch qui récupère l'état déjà poussé par un appareil
-                // précédent (voir `hydrateActiveZone`). Un appareil qui synchronise après un autre
-                // hérite donc de ses personnalisations en cas de désaccord, plutôt que d'imposer
-                // les siennes.
-                resolvedOverrides = remotePrefs.customArtistSortOverrides.merging(ShelfPreferencesStore.shared.customArtistSortOverrides) { remote, _ in remote }
-            } else {
-                resolvedOverrides = remotePrefs.customArtistSortOverrides
-            }
+            // Union à la réconciliation initiale, sinon remplacement : voir `CloudMergeRules.shelfOverrides`
+            // pour l'arbitrage « premier appareil synchronisé = maître » en cas de désaccord.
+            let resolvedOverrides = CloudMergeRules.shelfOverrides(
+                local: ShelfPreferencesStore.shared.customArtistSortOverrides,
+                remote: remotePrefs.customArtistSortOverrides,
+                allowMerge: allowMerge
+            )
             // La règle de tri, "ignorer les articles" et "trier par nom de famille" sont de
             // simples scalaires (comme `CollectionPreferences`) : pas de fusion possible, le
             // serveur fait toujours autorité — voir `hydrateActiveZone` pour l'explication du
             // choix "premier appareil synchronisé = maître" que ça implique en cas de désaccord.
-            let resolvedStrategy = ShelfSortStrategy(rawValue: remotePrefs.sortStrategy) ?? ShelfPreferencesStore.shared.sortStrategy
+            let resolvedStrategy = CloudMergeRules.setting(rawValue: remotePrefs.sortStrategy, fallback: ShelfPreferencesStore.shared.sortStrategy)
             cloudSyncLogger.log("apply(remoteRecord:) préférences de rangement — overrides distants=\(remotePrefs.customArtistSortOverrides.count) allowMerge=\(allowMerge) résultat=\(resolvedOverrides.count)")
             ShelfPreferencesStore.shared.applyRemoteShelfPreferences(
                 sortStrategy: resolvedStrategy,
@@ -329,7 +317,7 @@ extension CloudSyncEngine {
             // Union pure et sans conflit possible (un ensemble de chaînes, contrairement aux
             // personnalisations de tri qui associent une valeur par artiste) : pas besoin de
             // départager quoi que ce soit, contrairement à `.shelfPreferences`.
-            let resolved = allowMerge ? remoteStandaloneTags.union(TagStore.shared.standaloneTags) : remoteStandaloneTags
+            let resolved = CloudMergeRules.standaloneTags(local: TagStore.shared.standaloneTags, remote: remoteStandaloneTags, allowMerge: allowMerge)
             cloudSyncLogger.log("apply(remoteRecord:) tags autonomes — remote=\(remoteStandaloneTags.count) allowMerge=\(allowMerge) résultat=\(resolved.count)")
             TagStore.shared.applyRemoteStandaloneTags(resolved)
 
@@ -352,9 +340,9 @@ extension CloudSyncEngine {
             // Scalaires, comme `.collectionPreferences` : pas de fusion possible, le serveur fait
             // toujours autorité.
             cloudSyncLogger.log("apply(remoteRecord:) préférences d'apparence")
-            ThemeManager.shared.applyRemoteTheme(AppColorTheme(rawValue: prefs.colorTheme) ?? ThemeManager.shared.currentTheme)
+            ThemeManager.shared.applyRemoteTheme(CloudMergeRules.setting(rawValue: prefs.colorTheme, fallback: ThemeManager.shared.currentTheme))
             AppearancePreferencesStore.shared.applyRemotePreferences(
-                appearance: AppTheme(rawValue: prefs.appearance) ?? AppearancePreferencesStore.shared.appearance,
+                appearance: CloudMergeRules.setting(rawValue: prefs.appearance, fallback: AppearancePreferencesStore.shared.appearance),
                 maxListeningDuration: prefs.maxListeningDuration
             )
 
