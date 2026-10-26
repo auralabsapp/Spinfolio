@@ -9,6 +9,18 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-10-26 — Audit : lots 12, 8, 9, 11, 13, 14, 15 et 10 ; découpage des gros fichiers
 
+### 19:41 — `f42c0b5` Découpe ReleaseDetailView, ArtistDetailViewModel et DeveloperOptionsView sous 500 lignes
+- Fiche disque (829 → 432 lignes) : jaquette, crédits d'artistes, squelette de chargement,
+  lignes de rangement et section « Infos Discogs » deviennent des sous-vues à paramètres
+  explicites.
+- Page artiste (731 → 471) : possession locale, rattachement à l'artiste par identifiant et
+  classement sans requête de la discographie en fonctions pures, testées.
+- Options développeur (701 → 375, version de développement seulement) : sections en vues,
+  alimentation du prix d'achat net et sauvegarde JSON en services.
+- Aucun changement de comportement.
+- Tests de la possession et du classement (498 au total) ; recette P40.
+- 14 fichiers, +1503 / −1094.
+
 ### 19:30 — `a56f875` Audit lot 11 : relecture des traductions anglaises, guillemets typographiques
 - Relecture des 465 traductions automatiques anglaises : 3 chaînes corrigées (indication
   VoiceOver à la 3ᵉ personne, « Gain hidden », une phrase du rangement).
