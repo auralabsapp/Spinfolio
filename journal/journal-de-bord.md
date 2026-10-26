@@ -7,7 +7,18 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
-## 2026-10-26 — Audit : lots 12, 8, 9, 11, 13 et 14
+## 2026-10-26 — Audit : lots 12, 8, 9, 11, 13 et 14 ; découpage des gros fichiers
+
+### 11:38 — `12e5fe8` Découpe Collection, Stats et fiche disque sous 500 lignes
+- Les quatre plus gros fichiers (de 820 à 1 000 lignes) passent sous 500, par une vraie
+  extraction : services sans état et fonctions pures, sans élargir l'accès à l'état.
+- **Écritures vers Discogs** regroupées dans un seul service, partagé par la Collection et la
+  fiche disque ; hors ligne ou sans identifiants, une écriture part toujours en file.
+- Collection : affichage (tri, filtres, sections), pagination et mises à jour optimistes séparés ;
+  vue découpée en sous-vues. Stats : calculs en fonctions pures, lectures Discogs dans un service.
+- Résultats ignorés après un changement de compte ou de dossier en cours de chargement.
+- Tests des nouvelles fonctions (436 au total) ; recette P36.
+- 37 fichiers, +2764 / −2291.
 
 ### 10:36 — `e3b3e11` Audit lots 8, 9, 11, 13, 14 : fluidité, accessibilité, localisation, tests, factorisation
 - **Fluidité** : tags, badges d'exemplaires, barre d'index et Tri des artistes calculés une fois
