@@ -9,6 +9,12 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-10-26 — Audit : lots 12, 8, 9, 11, 13, 14, 15 et 10 ; découpage des gros fichiers
 
+### 19:55 — `c954b41` Scan par lot : pastilles Collection et Wantlist comme sur les autres écrans
+- Dans la liste du scan par lot, les pastilles « Collection » (verte) et « Wantlist » (couleur
+  du thème) sont celles des autres écrans, au lieu d'un texte rose.
+- Recette G28.
+- 3 fichiers.
+
 ### 19:41 — `f42c0b5` Découpe ReleaseDetailView, ArtistDetailViewModel et DeveloperOptionsView sous 500 lignes
 - Fiche disque (829 → 432 lignes) : jaquette, crédits d'artistes, squelette de chargement,
   lignes de rangement et section « Infos Discogs » deviennent des sous-vues à paramètres
