@@ -7,7 +7,23 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
-## 2026-10-26 — Audit lot 12 : cohérence de l'interface
+## 2026-10-26 — Audit : lots 12, 8, 9, 11, 13 et 14
+
+### 10:36 — `e3b3e11` Audit lots 8, 9, 11, 13, 14 : fluidité, accessibilité, localisation, tests, factorisation
+- **Fluidité** : tags, badges d'exemplaires, barre d'index et Tri des artistes calculés une fois
+  et gardés en cache au lieu d'être refaits à chaque rendu ou à chaque frappe.
+- **Accessibilité** : zones de toucher de 44 pt sans changer le dessin ; note en étoiles réglable
+  avec VoiceOver ; résumé du graphique de cote ; progression du mini-lecteur réglable ; fondus à
+  la place des mouvements avec « Réduire les animations ».
+- **Localisation** : sélecteur de recherche traduit, nombres et montants selon la langue,
+  « listen(s) » pour la platine en anglais.
+- **Tests** : 53 tests de plus (rangement, alertes, grades, Stats, devises, export CSV, écoutes
+  iCloud), tests existants nettoyés ; 421 au total.
+- **Factorisation** : types déplacés dans leurs fichiers, états vides partagés entre Collection et
+  Wantlist, répartitions des Stats en fonctions pures ; App Group et attributs de la Live
+  Activity dans un seul fichier commun à l'app et au widget.
+- Recettes P32 à P35.
+- 100 fichiers, +2917 / −1869.
 
 ### 00:52 — `a294c2a` Audit lot 12 : cohérence de l'interface
 - **Appui long** : menus en mode Liste (Collection, Wantlist), dans la Recherche et le Tri des artistes,
