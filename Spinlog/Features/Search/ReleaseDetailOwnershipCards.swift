@@ -201,11 +201,7 @@ struct MyItemCard: View {
             }
         }
         .sheet(item: $priceEditTarget) { item in
-            PurchasePriceEditSheet(
-                instanceId: item.instanceId,
-                currentValue: purchasePriceFieldId.map { item.value(forFieldId: $0) } ?? "",
-                actions: actions
-            )
+            PriceAndConditionSheet(item: item, actions: actions)
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
         }

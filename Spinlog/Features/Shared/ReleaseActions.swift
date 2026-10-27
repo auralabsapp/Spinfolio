@@ -180,12 +180,20 @@ final class ReleaseActions {
     /// Discogs entre tous les exemplaires d'une release), le prix d'achat est un champ personnalisé
     /// propre à chaque exemplaire physique : deux copies peuvent avoir été achetées à des prix différents.
     func updatePurchasePrice(_ canonicalValue: String, for instanceId: Int) async {
+        guard let username = authManager.username,
+              let fieldId = CollectionPreferencesStore.purchasePriceFieldId(for: username) else { return }
+        await updateInstanceField(fieldId, value: canonicalValue, for: instanceId)
+    }
+
+    /// Écrit un champ personnalisé (prix d'achat, état du média…) sur un exemplaire précis, avec
+    /// mise à jour immédiate de l'affichage et du cache, file hors ligne en cas de panne, et
+    /// retour en arrière si Discogs refuse.
+    func updateInstanceField(_ fieldId: Int, value canonicalValue: String, for instanceId: Int) async {
         if DemoMode.isActive {
             message = AppMessages.demoModificationBlocked
             return
         }
         guard let username = authManager.username,
-              let fieldId = CollectionPreferencesStore.purchasePriceFieldId(for: username),
               let index = collectionInstances.firstIndex(where: { $0.instanceId == instanceId }) else { return }
 
         let instance = collectionInstances[index]
@@ -199,7 +207,7 @@ final class ReleaseActions {
               let current = collectionInstances.firstIndex(where: { $0.instanceId == instanceId }) else { return }
         collectionInstances[current].notes = instance.notes
         await localStore.saveCollectionItemInFolderAndAll(collectionInstances[current], username: username)
-        message = String(localized: "Impossible d'enregistrer le prix d'achat sur Discogs.")
+        message = String(localized: "Impossible d'enregistrer ces informations sur Discogs.")
     }
 
     /// Écrit un champ personnalisé Discogs sur un exemplaire précis, dont l'appelant (ex:

@@ -49,6 +49,10 @@ final class BatchScanViewModel {
     var message: String?
     /// Onglet où mener l'utilisateur une fois le bilan de l'ajout acquitté (`nil` : rien d'ajouté).
     private(set) var destinationAfterAdd: AppTab?
+    /// Disques tout juste ajoutés en ligne, dont le prix d'achat et l'état peuvent être renseignés
+    /// tout de suite : `nil` si rien à proposer (rien d'ajouté, ajouts en attente du réseau, ou
+    /// aucun des deux champs configuré dans Réglages).
+    private(set) var completionOffer: BatchCompletionRequest?
 
     private let membership = LibraryMembershipStore.shared
     /// Codes dont la recherche a échoué faute de réseau : relancés au retour de la connexion.
@@ -239,6 +243,8 @@ final class BatchScanViewModel {
         var count = 0
         var queuedCount = 0
         var failedIds: Set<BatchScanItem.ID> = []
+        var addedItems: [CollectionItem] = []
+        completionOffer = nil
         for target in targets {
             guard case let .found(result) = target.status else { continue }
             count += 1
@@ -250,7 +256,10 @@ final class BatchScanViewModel {
             let release = try? await DiscogsAPIClient.shared.release(id: result.id, credentials: DiscogsAuthManager.shared.credentials)
             await actions.addToCollection(releaseId: result.id, release: release, targetFolderId: folderId)
             switch Self.addOutcome(forActionMessage: actions.message, isOffline: !NetworkMonitor.shared.isConnected) {
-            case .added: break
+            case .added:
+                // Identifiant définitif seulement : un ajout en file n'a qu'un identifiant temporaire,
+                // sur lequel une écriture de champ ne pourrait pas être rejouée.
+                if let item = actions.collectionInstances.last, item.instanceId > 0 { addedItems.append(item) }
             case .queued: queuedCount += 1
             case .failed: failedIds.insert(target.id)
             }
@@ -264,6 +273,29 @@ final class BatchScanViewModel {
         message = String(localized: "\(addedCount) disques ajoutés à la collection.")
         destinationAfterAdd = addedCount > 0 ? .collection : nil
         appendOutcomeDetails(queuedCount: queuedCount, failedCount: failedIds.count, purgedCount: purgeUnrecognizedIfFinished())
+        offerCompletion(for: addedItems)
+    }
+
+    /// Propose de renseigner tout de suite prix d'achat et état des disques ajoutés (voir
+    /// `BatchCompletionSheet`) : la question est ajoutée au bilan, dont l'alerte porte alors deux
+    /// boutons. Rien n'est proposé si aucun des deux champs n'est configuré.
+    private func offerCompletion(for added: [CollectionItem]) {
+        guard !added.isEmpty, let username = DiscogsAuthManager.shared.username else { return }
+        let question: String
+        switch BatchCompletion.configuredFields(for: username) {
+        case []: return
+        case [.purchasePrice]: question = String(localized: "Renseigner le prix d'achat maintenant ?")
+        case [.mediaCondition]: question = String(localized: "Renseigner l'état du média maintenant ?")
+        default: question = String(localized: "Renseigner prix et état maintenant ?")
+        }
+        completionOffer = BatchCompletionRequest(items: added, username: username)
+        message = ([message].compactMap { $0 } + [question]).joined(separator: "\n\n")
+    }
+
+    /// Prend la proposition en cours (acceptée ou refusée : elle ne se représente pas).
+    func takeCompletionOffer() -> BatchCompletionRequest? {
+        defer { completionOffer = nil }
+        return completionOffer
     }
 
     func addSelectedToWantlist() async {

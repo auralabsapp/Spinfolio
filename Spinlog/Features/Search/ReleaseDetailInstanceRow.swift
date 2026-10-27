@@ -159,6 +159,13 @@ struct SwipeableInstanceRow: View {
     /// notes) : `Button` conserve sa propre priorité de toucher au sein de son cadre.
     /// La saisie est ouverte à tous ; sans Premium, la pastille garde son aspect mais masque le
     /// montant (le calcul de la plus-value est la fonction Premium).
+    /// Le champ « état du média » est aussi configuré : la feuille ouverte par la pastille demande
+    /// les deux informations, la pastille le dit.
+    private var hasMediaConditionField: Bool {
+        guard let username = DiscogsAuthManager.shared.username else { return false }
+        return CollectionPreferencesStore.mediaConditionFieldId(for: username) != nil
+    }
+
     @ViewBuilder
     private var purchasePriceBadge: some View {
         if let fieldId = purchasePriceFieldId {
@@ -187,7 +194,11 @@ struct SwipeableInstanceRow: View {
                     HStack(spacing: 3) {
                         Image(systemName: "plus")
                             .font(.inlineIcon)
-                        Text("Prix d'achat")
+                        if hasMediaConditionField {
+                            Text("Prix et état")
+                        } else {
+                            Text("Prix d'achat")
+                        }
                     }
                     .font(.footnote.weight(.medium))
                     .padding(.horizontal, 6)

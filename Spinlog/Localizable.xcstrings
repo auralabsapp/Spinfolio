@@ -2469,6 +2469,26 @@
         }
       }
     },
+    "À compléter" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "To Complete"
+          }
+        }
+      }
+    },
+    "À compléter (%lld)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "To Complete (%lld)"
+          }
+        }
+      }
+    },
     "À créer sur Discogs" : {
       "localizations" : {
         "en" : {
@@ -4657,6 +4677,16 @@
         }
       }
     },
+    "Compléter les disques" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Complete Records"
+          }
+        }
+      }
+    },
     "Compte Discogs" : {
       "localizations" : {
         "en" : {
@@ -5063,6 +5093,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Create the Purchase Price Field"
+          }
+        }
+      }
+    },
+    "Créer le dossier" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Create the folder"
           }
         }
       }
@@ -6173,6 +6213,16 @@
         }
       }
     },
+    "Effacer le filtre « %@ »" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Clear the “%@” filter"
+          }
+        }
+      }
+    },
     "Effacer le filtre de format" : {
       "localizations" : {
         "en" : {
@@ -6393,6 +6443,56 @@
         }
       }
     },
+    "Enregistrer l'alerte" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Save the alert"
+          }
+        }
+      }
+    },
+    "Enregistrer le nom du dossier" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Save the folder name"
+          }
+        }
+      }
+    },
+    "Enregistrer le nouveau nom du tag" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Save the tag’s new name"
+          }
+        }
+      }
+    },
+    "Enregistrer le prix et l'état" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Save the price and condition"
+          }
+        }
+      }
+    },
+    "Enregistrer le tri" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Save the sort order"
+          }
+        }
+      }
+    },
     "Ensuite, « Modifier » sur un exemplaire pour saisir son prix." : {
       "localizations" : {
         "en" : {
@@ -6551,6 +6651,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Condition"
+          }
+        }
+      }
+    },
+    "État du média" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Media Condition"
           }
         }
       }
@@ -7443,6 +7553,16 @@
         }
       }
     },
+    "Impossible d'enregistrer ces informations sur Discogs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Couldn’t save this information to Discogs."
+          }
+        }
+      }
+    },
     "Impossible d'enregistrer la note sur Discogs." : {
       "localizations" : {
         "en" : {
@@ -7454,6 +7574,7 @@
       }
     },
     "Impossible d'enregistrer le prix d'achat sur Discogs." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8119,6 +8240,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "How It Works"
+          }
+        }
+      }
+    },
+    "Le prix d'achat et l'état du média servent à calculer la plus-value de cet exemplaire." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The purchase price and media condition are used to calculate this copy’s gain."
           }
         }
       }
@@ -9818,6 +9949,16 @@
         }
       }
     },
+    "Passer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Skip"
+          }
+        }
+      }
+    },
     "Passionné" : {
       "localizations" : {
         "en" : {
@@ -10000,6 +10141,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Turntablist"
+          }
+        }
+      }
+    },
+    "Plus tard" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Later"
           }
         }
       }
@@ -10352,6 +10503,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Purchase price, record condition and currency"
+          }
+        }
+      }
+    },
+    "Prix et état" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Price & Condition"
           }
         }
       }
@@ -10820,6 +10981,46 @@
         }
       }
     },
+    "Renseigner" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Fill In"
+          }
+        }
+      }
+    },
+    "Renseigner l'état du média maintenant ?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Fill in the media condition now?"
+          }
+        }
+      }
+    },
+    "Renseigner le prix d'achat maintenant ?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Fill in the purchase price now?"
+          }
+        }
+      }
+    },
+    "Renseigner prix et état maintenant ?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Fill in price and condition now?"
+          }
+        }
+      }
+    },
     "Répartition par genre" : {
       "localizations" : {
         "en" : {
@@ -11050,12 +11251,32 @@
         }
       }
     },
+    "Sans état du média" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "No media condition"
+          }
+        }
+      }
+    },
     "Sans note" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Unrated"
+          }
+        }
+      }
+    },
+    "Sans prix d'achat" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "No purchase price"
           }
         }
       }

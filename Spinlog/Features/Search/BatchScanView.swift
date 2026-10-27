@@ -21,6 +21,7 @@ struct BatchScanView: View {
     @State private var lastScannedCode: String?
     @State private var recentFound: SearchResult?
     @State private var recentFoundHideTask: Task<Void, Never>?
+    @State private var completionRequest: BatchCompletionRequest?
 
     private enum Phase {
         case scanning
@@ -68,12 +69,36 @@ struct BatchScanView: View {
         } message: {
             Text("Les \(viewModel.items.count) codes scannés sont conservés : tu les retrouveras à la prochaine ouverture du scan par lot.")
         }
-        .messageAlert(Text(verbatim: "Discogs"), message: $viewModel.message) {
-            // Lot terminé : on ferme le scan et on montre là où les disques viennent d'arriver.
-            if let tab = viewModel.takeDestinationAfterAdd() {
-                dismiss()
-                TabNavigationCoordinator.shared.selectedTab = tab
+        .alert(
+            Text(verbatim: "Discogs"),
+            isPresented: Binding(
+                get: { viewModel.message != nil },
+                set: { if !$0 { viewModel.message = nil } }
+            )
+        ) {
+            if viewModel.completionOffer != nil {
+                Button("Renseigner") { completionRequest = viewModel.takeCompletionOffer() }
+                Button("Plus tard", role: .cancel) {
+                    _ = viewModel.takeCompletionOffer()
+                    finishBatch()
+                }
+            } else {
+                Button("OK", role: .cancel, action: finishBatch)
             }
+        } message: {
+            Text(viewModel.message ?? "")
+        }
+        // Saisie rapide proposée après l'ajout : le lot n'est refermé qu'à sa fin.
+        .sheet(item: $completionRequest, onDismiss: finishBatch) { request in
+            BatchCompletionSheet(request: request)
+        }
+    }
+
+    /// Lot terminé : on ferme le scan et on montre là où les disques viennent d'arriver.
+    private func finishBatch() {
+        if let tab = viewModel.takeDestinationAfterAdd() {
+            dismiss()
+            TabNavigationCoordinator.shared.selectedTab = tab
         }
     }
 
