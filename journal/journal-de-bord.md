@@ -7,6 +7,30 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
+## 2026-10-27 — Prix d'achat et état du média : filtre, saisie rapide, feuille « Prix et état »
+
+### 10:34 — `f098c84` Prix d'achat et état du média : saisie après un scan par lot et feuille « Prix et état »
+- Après un scan par lot, le bilan propose de renseigner prix et état tout de suite : une feuille
+  saisit disque par disque, avec « Passer » (disques ajoutés en ligne, champs configurés).
+- La feuille de la fiche disque devient « Prix et état » : prix d'achat et état du média
+  ensemble, seuls les champs modifiés sont envoyés.
+- Recettes G29, H34 et P41.
+- 13 fichiers, +782 / −54.
+
+### 10:34 — `3a4bdfa` Feuilles de saisie : bouton de validation « OK » au lieu d'« Enregistrer »
+- Alerte de prix, renommage de tag, tri d'un artiste, renommage de dossier : « OK » (libellé
+  VoiceOver explicite) ; bouton du clavier de l'alerte renommé « Terminé ».
+- Le bouton des dossiers n'était pas traduit en anglais : corrigé.
+- 4 fichiers, +14 / −5.
+
+### 10:34 — `a39def5` Collection : filtre « À compléter » (sans prix d'achat, sans état du média)
+- Menu Filtres > « À compléter » : « Sans prix d'achat » et « Sans état du média », pour les champs
+  configurés ; cumulables entre eux et avec les autres filtres, pastille par filtre.
+- Tests du filtre (510 au total) ; recette B52.
+- 11 fichiers, +259 / −21.
+
+---
+
 ## 2026-10-26 — Audit : lots 12, 8, 9, 11, 13, 14, 15 et 10 ; découpage des gros fichiers
 
 ### 19:55 — `c954b41` Scan par lot : pastilles Collection et Wantlist comme sur les autres écrans
