@@ -114,7 +114,8 @@ struct WantlistAlertSheet: View {
                 // Le clavier décimal n'a pas de touche de validation.
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
-                    Button("OK") { isTargetPriceFocused = false }
+                    // « Terminé » : « OK » est le bouton qui enregistre l'alerte, en haut de la feuille.
+                    Button("Terminé") { isTargetPriceFocused = false }
                         .fontWeight(.semibold)
                         .tint(Color.spinlogPink)
                 }
@@ -124,7 +125,7 @@ struct WantlistAlertSheet: View {
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Enregistrer") {
+                    Button("OK") {
                         Task {
                             let saved = await viewModel.saveAlert(for: item)
                             if saved {
@@ -134,6 +135,7 @@ struct WantlistAlertSheet: View {
                             }
                         }
                     }
+                    .accessibilityLabel("Enregistrer l'alerte")
                     .bold()
                     .disabled((viewModel.targetPrice ?? 0) <= 0 || viewModel.isSaving)
                 }

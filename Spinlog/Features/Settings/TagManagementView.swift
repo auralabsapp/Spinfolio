@@ -109,13 +109,14 @@ struct TagRenameSheet: View {
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Enregistrer") {
+                    Button("OK") {
                         if !isCollision && !trimmedNewName.isEmpty && !isSameName {
                             store.renameTag(sourceTag, to: trimmedNewName)
                             dismiss()
                         }
                     }
                     .disabled(trimmedNewName.isEmpty || isSameName || isCollision)
+                    .accessibilityLabel("Enregistrer le nouveau nom du tag")
                     .fontWeight(.semibold)
                     .tint(Color.spinlogPink)
                 }

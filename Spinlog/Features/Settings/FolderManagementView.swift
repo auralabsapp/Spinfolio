@@ -405,7 +405,12 @@ struct FolderNameSheet: View {
                     Button("Annuler") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(folder == nil ? "Créer" : "Enregistrer", action: save)
+                    // `Text` dans chaque branche : un ternaire de littéraux deviendrait une `String`
+                    // non traduite.
+                    Button(action: save) {
+                        folder == nil ? Text("Créer") : Text("OK")
+                    }
+                        .accessibilityLabel(folder == nil ? Text("Créer le dossier") : Text("Enregistrer le nom du dossier"))
                         .disabled(!canSave)
                         .fontWeight(.semibold)
                         .tint(Color.spinlogPink)

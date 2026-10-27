@@ -113,9 +113,10 @@ struct ArtistSortEditSheet: View {
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Enregistrer") {
+                    Button("OK") {
                         save()
                     }
+                    .accessibilityLabel("Enregistrer le tri")
                     .fontWeight(.semibold)
                     .foregroundStyle(Color.spinlogPink)
                 }
