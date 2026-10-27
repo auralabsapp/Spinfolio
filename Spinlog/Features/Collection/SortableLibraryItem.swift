@@ -10,9 +10,21 @@ protocol SortableLibraryItem: Identifiable {
     nonisolated var rating: Int { get }
     nonisolated var dateAddedDate: Date? { get }
     nonisolated var libraryItemTags: [String] { get }
+    /// Vrai si le champ personnalisé Discogs est vide ou absent (filtres « Sans prix d'achat » et
+    /// « Sans état du média »). Sans objet pour la wantlist, qui n'a pas de champs : jamais vrai.
+    nonisolated func isFieldEmpty(_ fieldId: Int) -> Bool
+}
+
+extension SortableLibraryItem {
+    nonisolated func isFieldEmpty(_ fieldId: Int) -> Bool { false }
 }
 
 extension CollectionItem: SortableLibraryItem {
+    nonisolated func isFieldEmpty(_ fieldId: Int) -> Bool {
+        guard let note = notes.first(where: { $0.fieldId == fieldId }) else { return true }
+        return LibraryMissingField.isBlank(note.value)
+    }
+
     /// `nonisolated` + `assumeIsolated` : accédé depuis la tâche détachée de
     /// `CollectionViewModel.computeSections()`, mais seulement quand aucun filtre de tag n'est
     /// actif (ce code est alors mort au runtime dans ce contexte) — voir le garde-fou dans
@@ -360,7 +372,11 @@ func libraryIndexToken<Item: SortableLibraryItem>(for section: (key: String, ite
 
 extension SortableLibraryItem {
     /// `nonisolated` : voir le commentaire sur `libraryItemTags`.
-    nonisolated func matchesLibraryFilters(tags: Set<String> = [], format: String?, searchText: String) -> Bool {
+    /// `missingFieldIds` : l'exemplaire doit avoir vide chacun de ces champs (sémantique ET, comme
+    /// les tags).
+    nonisolated func matchesLibraryFilters(tags: Set<String> = [], format: String?, searchText: String, missingFieldIds: [Int] = []) -> Bool {
+        guard missingFieldIds.allSatisfy(isFieldEmpty) else { return false }
+
         if !tags.isEmpty {
             let itemTags = Set(libraryItemTags.map { $0.folding(options: .diacriticInsensitive, locale: .current).lowercased() })
             let normalizedSelectedTags = Set(tags.map { $0.folding(options: .diacriticInsensitive, locale: .current).lowercased() })

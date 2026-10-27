@@ -30,6 +30,9 @@ final class CollectionDisplayState {
             self?.recomputeSections()
             self?.recomputeTagsIndex()
         }
+        addLibraryObserver(for: .collectionPreferencesChanged) { [weak self] in
+            self?.refreshAvailableMissingFields()
+        }
     }
 
     /// Tri « meuble » rangé selon l'année du master.
@@ -98,13 +101,46 @@ final class CollectionDisplayState {
         }
     }
 
+    /// Champs à compléter : n'affiche que les exemplaires où chacun de ces champs est vide
+    /// (sémantique ET, comme les tags). Volatil, comme les autres filtres.
+    var missingFields: Set<LibraryMissingField> = [] {
+        didSet {
+            guard oldValue != missingFields else { return }
+            recomputeSections()
+        }
+    }
+
+    /// Identifiant Discogs du champ pour le compte actif, fourni par `CollectionViewModel`.
+    @ObservationIgnored var fieldIdProvider: (LibraryMissingField) -> Int? = { _ in nil }
+
+    /// Champs proposés par le menu de filtres : seulement ceux configurés dans Réglages. Mis en
+    /// cache (lecture de `UserDefaults`), rafraîchi au chargement de la collection et à chaque
+    /// changement de préférences.
+    private(set) var availableMissingFields: [LibraryMissingField] = []
+
+    func refreshAvailableMissingFields() {
+        availableMissingFields = LibraryMissingField.allCases.filter { fieldIdProvider($0) != nil }
+        // Un champ déconfiguré entre-temps ne peut plus filtrer : on le retire de la sélection.
+        let stillAvailable = missingFields.intersection(availableMissingFields)
+        if stillAvailable != missingFields { missingFields = stillAvailable }
+    }
+
     var hasActiveFilters: Bool {
-        !selectedTags.isEmpty || !(selectedFormat ?? "").isEmpty
+        !selectedTags.isEmpty || !(selectedFormat ?? "").isEmpty || !missingFields.isEmpty
     }
 
     func clearFilters() {
         selectedTags = []
         selectedFormat = nil
+        missingFields = []
+    }
+
+    func toggleMissingField(_ field: LibraryMissingField) {
+        if missingFields.contains(field) {
+            missingFields.remove(field)
+        } else {
+            missingFields.insert(field)
+        }
     }
 
     func toggleTagFilter(_ tag: String) {
@@ -120,6 +156,8 @@ final class CollectionDisplayState {
         searchText = ""
         selectedTags = []
         selectedFormat = nil
+        missingFields = []
+        availableMissingFields = []
     }
 
     // MARK: - Sections
@@ -161,6 +199,7 @@ final class CollectionDisplayState {
         sectionsEngine.recompute(
             items: currentItems(), sortOption: sortOption, ascending: sortAscending,
             tags: selectedTags, format: selectedFormat, searchText: searchText,
+            missingFieldIds: missingFields.compactMap(fieldIdProvider),
             synchronous: !selectedTags.isEmpty,
             willStartAsync: { [weak self] in self?.isComputingSections = true },
             apply: { [weak self] result in

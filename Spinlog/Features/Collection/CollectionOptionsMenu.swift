@@ -84,6 +84,32 @@ struct CollectionOptionsMenu: View {
                 }
             }
 
+            let missingFields = viewModel.display.availableMissingFields
+            if !missingFields.isEmpty {
+                Menu {
+                    ForEach(missingFields, id: \.self) { field in
+                        Toggle(isOn: Binding(
+                            get: { viewModel.display.missingFields.contains(field) },
+                            set: { _ in viewModel.display.toggleMissingField(field) }
+                        )) {
+                            Label {
+                                Text(field.title)
+                            } icon: {
+                                Image(systemName: field.systemImage)
+                            }
+                        }
+                    }
+                } label: {
+                    Label {
+                        viewModel.display.missingFields.isEmpty
+                            ? Text("À compléter")
+                            : Text("À compléter (\(viewModel.display.missingFields.count))")
+                    } icon: {
+                        Image(systemName: "square.and.pencil")
+                    }
+                }
+            }
+
             let formats = viewModel.availableFormats
             if !formats.isEmpty {
                 Menu {

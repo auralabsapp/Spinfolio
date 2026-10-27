@@ -4,15 +4,19 @@ import SwiftUI
 struct LibraryActiveFiltersBar: View {
     var selectedTags: Binding<Set<String>>? = nil
     var selectedTag: Binding<String?>? = nil
+    /// Champs à compléter (Collection seulement : la wantlist n'a pas de champs personnalisés).
+    var selectedMissingFields: Binding<Set<LibraryMissingField>>? = nil
     @Binding var selectedFormat: String?
     let onClearAll: () -> Void
 
     init(
         selectedTags: Binding<Set<String>>,
         selectedFormat: Binding<String?>,
+        selectedMissingFields: Binding<Set<LibraryMissingField>>? = nil,
         onClearAll: @escaping () -> Void
     ) {
         self.selectedTags = selectedTags
+        self.selectedMissingFields = selectedMissingFields
         self.selectedTag = nil
         self._selectedFormat = selectedFormat
         self.onClearAll = onClearAll
@@ -103,6 +107,29 @@ struct LibraryActiveFiltersBar: View {
                     .background(Color.spinlogPinkBadge, in: Capsule())
                     .overlay(Capsule().strokeBorder(Color.spinlogPink.opacity(0.35), lineWidth: 0.8))
                     .foregroundStyle(Color.spinlogPink)
+                }
+
+                if let selectedMissingFields {
+                    ForEach(LibraryMissingField.allCases.filter { selectedMissingFields.wrappedValue.contains($0) }, id: \.self) { field in
+                        HStack(spacing: 4) {
+                            Image(systemName: field.systemImage)
+                                .font(.caption2)
+                            Text(field.title)
+                                .font(.caption.weight(.semibold))
+                            Button {
+                                selectedMissingFields.wrappedValue.remove(field)
+                            } label: {
+                                Image(systemName: "xmark")
+                                    .font(.caption2.bold())
+                            }
+                            .accessibilityLabel("Effacer le filtre « \(String(localized: field.title)) »")
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(Color.spinlogPinkBadge, in: Capsule())
+                        .overlay(Capsule().strokeBorder(Color.spinlogPink.opacity(0.35), lineWidth: 0.8))
+                        .foregroundStyle(Color.spinlogPink)
+                    }
                 }
 
                 Button("Tout effacer", action: onClearAll)

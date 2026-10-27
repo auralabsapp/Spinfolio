@@ -284,11 +284,7 @@ struct CollectionView: View {
             hasActiveFilters: viewModel.display.hasActiveFilters,
             activeFiltersBar: {
                 AnyView(
-                    LibraryActiveFiltersBar(
-                        selectedTags: Bindable(viewModel.display).selectedTags,
-                        selectedFormat: Bindable(viewModel.display).selectedFormat,
-                        onClearAll: viewModel.display.clearFilters
-                    )
+                    CollectionActiveFiltersBar(display: viewModel.display)
                 )
             },
             sectionsCoordinateSpace: Self.sectionsCoordinateSpace,
@@ -354,11 +350,7 @@ struct CollectionView: View {
         } else if viewModel.display.sections.isEmpty && !isShowingSkeleton {
             LibraryNoResultsState(isOfflineAndStale: viewModel.isOfflineAndStale, searchText: viewModel.display.searchText) {
                 if viewModel.display.hasActiveFilters {
-                    LibraryActiveFiltersBar(
-                        selectedTags: Bindable(viewModel.display).selectedTags,
-                        selectedFormat: Bindable(viewModel.display).selectedFormat,
-                        onClearAll: viewModel.display.clearFilters
-                    )
+                    CollectionActiveFiltersBar(display: viewModel.display)
                 }
             }
         } else {
@@ -448,11 +440,7 @@ struct CollectionView: View {
                     // Mode liste exclu : sa propre `List` intègre déjà la barre de filtres
                     // comme ligne (voir `collectionViewList`).
                     if displayMode != .list, viewModel.display.hasActiveFilters {
-                        LibraryActiveFiltersBar(
-                            selectedTags: Bindable(viewModel.display).selectedTags,
-                            selectedFormat: Bindable(viewModel.display).selectedFormat,
-                            onClearAll: viewModel.display.clearFilters
-                        )
+                        CollectionActiveFiltersBar(display: viewModel.display)
                     }
                 }
                 // Changer de critère de tri réordonne la liste : on remonte en haut plutôt que de
