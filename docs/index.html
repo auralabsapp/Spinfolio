@@ -129,7 +129,9 @@
     .tabs button[aria-pressed="true"] { background: var(--accent); color: #fff; }
 
     /* Grille gratuite */
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
     .card { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 26px; }
     .card h3 { font-family: var(--sans); font-size: 1.08rem; font-weight: 700; letter-spacing: 0; margin-bottom: 8px; }
     .card p { color: var(--ink-2); font-size: .96rem; }
@@ -155,7 +157,7 @@
       .step .inline-shot .phone { --w: 240px; }
     }
     .more { margin-top: 70px; }
-    .more h3 { text-align: center; margin-bottom: 28px; }
+    .more > h3 { text-align: center; margin-bottom: 28px; }
     .more .card .eyebrow { color: var(--gold-ink); }
 
     /* Thèmes */
@@ -170,7 +172,7 @@
     .compare { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; }
     .compare th, .compare td { padding: 15px 20px; text-align: center; border-bottom: 1px solid var(--line); font-size: .98rem; }
     .compare th:first-child, .compare td:first-child { text-align: left; }
-    .compare thead th { position: sticky; top: 64px; background: var(--surface); font-family: var(--serif); font-size: 1.15rem; z-index: 2; }
+    .compare thead th { background: var(--surface); font-family: var(--serif); font-size: 1.15rem; }
     .compare thead th.pr { color: var(--gold-ink); }
     .compare tbody th { font-weight: 500; text-align: left; }
     .compare tbody th small { display: block; color: var(--ink-2); font-weight: 400; font-size: .84rem; }
@@ -411,7 +413,7 @@
     </div>
     <div class="reveal" style="overflow-x:auto">
       <table class="compare">
-        <thead><tr><th scope="col"><span class="sr" style="position:absolute;left:-9999px">Fonctionnalité</span></th><th scope="col">Gratuit</th><th scope="col" class="pr">Premium</th></tr></thead>
+        <thead><tr><th scope="col"><span style="position:absolute;left:-9999px">Fonctionnalité</span></th><th scope="col">Gratuit</th><th scope="col" class="pr">Premium</th></tr></thead>
         <tbody>
           <tr class="sep"><td colspan="3">Collection</td></tr>
           <tr><th scope="row">Collection et wantlist Discogs, sans limite</th><td class="yes">✓</td><td class="yes">✓</td></tr>
@@ -438,8 +440,8 @@
       </table>
     </div>
     <div class="prices reveal">
-      <div class="price"><h3>Mensuel</h3><div class="amt">2,49&nbsp;€<small> / mois</small></div><p>Sans engagement, résiliable à tout moment.</p></div>
-      <div class="price best"><span class="pill tag">Le plus choisi</span><h3>Annuel</h3><div class="amt">19,99&nbsp;€<small> / an</small></div><p><strong>7 jours d'essai gratuit</strong>, puis 1,67&nbsp;€ par mois.</p></div>
+      <div class="price"><h3>Mensuel</h3><div class="amt">1,99&nbsp;€<small> / mois</small></div><p>Sans engagement, résiliable à tout moment.</p></div>
+      <div class="price best"><span class="pill tag">Le plus choisi</span><h3>Annuel</h3><div class="amt">17,99&nbsp;€<small> / an</small></div><p><strong>7 jours d'essai gratuit</strong>, puis 1,50&nbsp;€ par mois.</p></div>
       <div class="price"><h3>À vie</h3><div class="amt">39,99&nbsp;€</div><p>Un seul paiement, le Premium pour toujours.</p></div>
     </div>
     <p class="fine">Les abonnements se renouvellent automatiquement, sauf résiliation au moins 24 h avant la fin de la période en cours, depuis les réglages de ton compte Apple. Prix TTC, susceptibles de varier selon le pays.</p>
@@ -454,6 +456,182 @@
       <p class="lead">Les réponses aux questions courantes, dans l'ordre où tu en auras besoin. Le même guide est disponible dans l'app.</p>
     </div>
 <!-- MANUEL:DEBUT (généré par docs/update_manual.py à partir de GuideCatalog.swift, ne pas éditer à la main) -->
+    <div class="manual-group reveal"><h3>Premiers pas</h3>
+      <details><summary>Se connecter à Discogs</summary><div class="body">
+        <p>Ta collection vit sur Discogs : Spinfolio en est une belle vitrine.</p>
+        <ol><li>Autorise l'app sur le site Discogs, puis reviens dans Spinfolio.</li><li>Ta collection et ta wantlist se chargent.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Les ajouts, les retraits et les notes sont répercutés sur ton compte Discogs. Les tags, eux, restent propres à Spinfolio.</p>
+      </div></details>
+      <details><summary>Ajouter un disque<span class="badge acc">Compte Discogs</span></summary><div class="body">
+        <p>Cherche par nom ou scanne le code-barres.</p>
+        <ol><li>Onglet Recherche : tape un nom ou touche l'icône de scan.</li><li>Sur la fiche, touche « Collection » ou « Wantlist ».</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Maintiens « Collection » pour choisir un autre dossier.</p>
+      </div></details>
+      <details><summary>Collection ou wantlist ?</summary><div class="body">
+        <p>La collection, ce sont les disques que tu possèdes ; la wantlist, ceux que tu cherches.</p>
+        <ol><li>Le bouton affiche ensuite « En collection » ou « En wantlist ».</li><li>Retrouve tes disques dans les onglets Collection et Wantlist.</li></ol>
+      </div></details>
+      <details><summary>Scan par lot<span class="badge">Premium</span></summary><div class="body">
+        <p>Scanne plusieurs disques à la suite, chez un disquaire ou en brocante.</p>
+        <ol><li>Dans l'onglet Recherche, touche l'icône de scan par lot, à côté de celle du scan.</li><li>Ajoute-les d'un coup à ta collection ou à ta wantlist.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Un lot en cours est conservé : une confirmation te protège si tu fermes l'écran par erreur.</p>
+      </div></details>
+    </div>
+    <div class="manual-group reveal"><h3>Collection et Wantlist</h3>
+      <details><summary>Trois affichages</summary><div class="body">
+        <p>Liste, mosaïque ou carrousel : choisis ce qui te parle.</p>
+        <ol><li>Touche « ··· » en haut à droite, puis « Affichage ».</li><li>Ton choix est retenu, séparément pour la Collection et la Wantlist.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Le bouton « Disque au hasard », en haut de la Collection, t'en propose un.</p>
+      </div></details>
+      <details><summary>Trier et naviguer</summary><div class="body">
+        <p>Jusqu'à dix tris, dans les deux sens, et une barre pour sauter à une lettre.</p>
+        <ol><li>Touche « ··· », puis « Tri » : choisis un critère et le sens.</li><li>Glisse le doigt sur la barre à droite pour sauter à une lettre ou à une année.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Le tri « Meuble » suit ta règle de rangement (Réglages, section Collection &amp; Rangement).</p>
+      </div></details>
+      <details><summary>Chercher et filtrer</summary><div class="body">
+        <p>Par texte, dossier, tag ou support. Les filtres se cumulent.</p>
+        <ol><li>Tape dans la barre de recherche, ou touche « ··· » puis « Filtres » pour le tag et le support.</li><li>Le menu « Dossier », dans « ··· », change de dossier.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Avec plusieurs tags, seuls les disques qui les portent tous restent affichés.</p>
+      </div></details>
+      <details><summary>Agir sur un disque</summary><div class="body">
+        <p>Glisse une ligne, ou maintiens-la, pour écouter, ranger, modifier ou supprimer.</p>
+        <ol><li>Touche « ··· » puis « Sélectionner » pour agir sur plusieurs disques à la fois : dossier, tags, suppression.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> « Ranger » est une fonction Premium.</p>
+      </div></details>
+    </div>
+    <div class="manual-group reveal"><h3>Fiche d'un disque</h3>
+      <details><summary>Lire une fiche</summary><div class="body">
+        <p>Titres, crédits, photos, vidéos et infos de pressage, au même endroit.</p>
+        <ol><li>Touche un disque pour ouvrir sa fiche.</li><li>Fais défiler : titres, « Photos et vidéos », « Autres informations ».</li></ol>
+      </div></details>
+      <details><summary>Plusieurs exemplaires<span class="badge acc">Compte Discogs</span></summary><div class="body">
+        <p>Un même disque peut exister en plusieurs exemplaires, chacun avec son dossier.</p>
+        <ol><li>Maintiens « En collection » pour ajouter un exemplaire.</li><li>Touche « Modifier » sur un exemplaire : dossier, tags, champs Discogs.</li></ol>
+      </div></details>
+      <details><summary>Tags et note<span class="badge acc">Compte Discogs</span></summary><div class="body">
+        <p>Classe tes disques avec tes tags et une note sur 5.</p>
+        <ol><li>Dans « Modifier », section « Tags de l'exemplaire » : crée ou choisis des tags.</li><li>Touche les étoiles de « Ma note de la release » pour noter.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Les tags restent dans Spinfolio (synchronisés par iCloud avec Premium), pas sur Discogs.</p>
+      </div></details>
+      <details><summary>Prix d'achat et cote<span class="badge acc">Compte Discogs</span></summary><div class="body">
+        <p>Note ce que tu as payé et compare avec la cote Discogs.</p>
+        <ol><li>Une seule fois : Réglages, section « Prix d'achat et état », puis associe tes champs Discogs.</li><li>Ensuite, « Modifier » sur un exemplaire pour saisir son prix.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> La plus-value (cote moins prix payé) est une fonction Premium, dans Stats.</p>
+      </div></details>
+    </div>
+    <div class="manual-group reveal"><h3>Statistiques</h3>
+      <details><summary>Ta collection en chiffres<span class="badge acc">Compte Discogs</span></summary><div class="body">
+        <p>Compteurs, derniers ajouts et estimation de la valeur de ta collection.</p>
+        <ol><li>Dans l'onglet Stats, touche « Collection » ou « Wantlist » pour aller à la liste.</li><li>« Estimation de la collection » s'appuie sur l'historique des ventes Discogs.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Les compteurs et la cote demandent une connexion réseau ; le reste fonctionne aussi hors ligne.</p>
+      </div></details>
+      <details><summary>Graphiques et répartitions<span class="badge acc">Compte Discogs</span></summary><div class="body">
+        <p>Genres, supports, labels, artistes et années, en graphiques.</p>
+        <ol><li>Touche une portion ou une barre : la liste des disques correspondants s'ouvre.</li><li>Dans « Sorties originales », bascule entre années et décennies.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> L'année de sortie originale est retrouvée disque par disque : sur une grande collection, le calcul prend un moment.</p>
+      </div></details>
+      <details><summary>Plus-value<span class="badge">Premium</span></summary><div class="body">
+        <p>Compare ce que tu as payé à la cote actuelle de ta collection.</p>
+        <ol><li>Renseigne le prix d'achat de tes exemplaires.</li><li>Dans Stats, ouvre « Investi vs Cote actuelle ».</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Le total investi ne compte que les exemplaires dont le prix d'achat est renseigné.</p>
+      </div></details>
+      <details><summary>Palmarès d'écoute<span class="badge">Premium</span></summary><div class="body">
+        <p>Tes albums et artistes les plus écoutés sur ta platine.</p>
+        <ol><li>Touche « J'écoute » sur un disque quand tu le poses sur ta platine.</li><li>Dans Stats, « Tops &amp; Palmarès » montre le classement et le podium par période.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Les lectures Apple Music ne sont pas comptées.</p>
+      </div></details>
+    </div>
+    <div class="manual-group reveal"><h3>Écoute sur platine</h3>
+      <details><summary>Noter une écoute</summary><div class="body">
+        <p>Touche « J'écoute » quand tu poses un disque sur ta platine.</p>
+        <ol><li>Sur la fiche d'un disque, ou en glissant une ligne de la Collection : « J'écoute ».</li><li>Un mini-lecteur apparaît ; touche-le pour ouvrir « Écoute sur platine » et arrêter.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Lancer une nouvelle écoute interrompt celle en cours. La fiche compte tes écoutes et garde la date de la dernière.</p>
+      </div></details>
+      <details><summary>Live Activity et arrêt automatique</summary><div class="body">
+        <p>Ton disque en cours reste visible, et l'écoute s'arrête toute seule.</p>
+        <ol><li>Dans Réglages, section « Écoute sur platine &amp; Live Activity », choisis la durée maximale.</li><li>À la fin de cette durée, l'écoute s'arrête sans que tu aies rien à faire.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Chaque écoute alimente le palmarès de Stats (Premium).</p>
+      </div></details>
+      <details><summary>Écouter avec Apple Music</summary><div class="body">
+        <p>Lis les titres en entier depuis une fiche, avec un abonnement Apple Music.</p>
+        <ol><li>Dans Réglages, section Apple Music, active « Connecter mon compte Apple Music ».</li><li>Sans connexion, un extrait de 30 s reste disponible.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Ces lectures ne comptent pas comme des écoutes sur platine.</p>
+      </div></details>
+      <details><summary>Widget « Album du jour »</summary><div class="body">
+        <p>Un disque de ta collection tiré au hasard chaque jour, sur ton écran d'accueil.</p>
+        <ol><li>Maintiens l'écran d'accueil, touche « + » et cherche Spinfolio.</li><li>Choisis « Album du jour », en petit, moyen ou grand format.</li></ol>
+      </div></details>
+    </div>
+    <div class="manual-group reveal"><h3>Rangement</h3>
+      <details><summary>Où ranger un disque<span class="badge">Premium</span></summary><div class="body">
+        <p>Le guide te donne sa position dans le meuble, entre ses deux voisins.</p>
+        <ol><li>Glisse une ligne de la Collection et touche « Ranger », ou ouvre « Rangement physique » sur la fiche.</li><li>Repère le disque central et ses deux voisins : c'est entre eux qu'il va.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Fonction Premium. Le guide s'ouvre aussi juste après l'ajout d'un disque à la collection.</p>
+      </div></details>
+      <details><summary>Ta méthode de classement</summary><div class="body">
+        <p>Quatre règles, pour classer comme dans ton meuble.</p>
+        <ol><li>Dans Réglages, section « Collection &amp; Rangement », touche « Règle de rangement dans le meuble ».</li><li>Choisis : artiste puis année originale, artiste puis titre, année seule, ou artiste puis année du pressage.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> L'année originale vient du master Discogs ; le pressage peut être une réédition plus récente.</p>
+      </div></details>
+      <details><summary>Noms d'artistes</summary><div class="body">
+        <p>Articles, noms de famille, cas particuliers : tu règles l'ordre artiste par artiste.</p>
+        <ol><li>Dans Réglages, active « Ignorer les articles (The...) » ou « Trier par nom de famille ».</li><li>Avec le nom de famille, « Personnaliser le tri des artistes » corrige un cas isolé.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Ces réglages valent pour le meuble, la Collection et la Wantlist.</p>
+      </div></details>
+      <details><summary>Supports et dossiers</summary><div class="body">
+        <p>Vinyles, CD et cassettes se rangent séparément ; les dossiers Discogs, au choix.</p>
+        <ol><li>Le guide compte chaque support à part : vinyles 12, 10 et 7 pouces, CD, cassettes.</li><li>Active « Limiter au dossier Discogs » si tes dossiers correspondent à des meubles distincts.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Par défaut, le guide compare avec toute ta collection, tous dossiers confondus.</p>
+      </div></details>
+    </div>
+    <div class="manual-group reveal"><h3>Alertes de prix</h3>
+      <details><summary>Définir une alerte<span class="badge">Premium</span></summary><div class="body">
+        <p>Fixe le prix maximum que tu veux payer pour un disque de ta wantlist.</p>
+        <ol><li>Dans la Wantlist, glisse une ligne ou maintiens-la : « Définir une alerte prix ».</li><li>Saisis le « Prix maximum » puis touche « Enregistrer ».</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Fonction Premium. Une pastille « ≤ prix » s'affiche ensuite sur la ligne.</p>
+      </div></details>
+      <details><summary>Choisir le bon seuil<span class="badge">Premium</span></summary><div class="body">
+        <p>La feuille montre la cote récente par état, pour viser juste.</p>
+        <ol><li>Touche un état dans « Cote moyenne récente par état » : sa cote devient ton prix cible.</li><li>Ajuste avec les raccourcis -10 %, -20 % ou -30 %.</li></ol>
+      </div></details>
+      <details><summary>Quand l'alerte se déclenche<span class="badge">Premium</span></summary><div class="body">
+        <p>Tu es prévenu dès qu'une annonce est à ton prix ou moins.</p>
+        <ol><li>La vérification se fait à l'ouverture de l'app et parfois en arrière-plan, pas en temps réel.</li><li>Autorise les notifications pour être prévenu app fermée.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Vérifie l'état exact du disque et les frais de port sur l'annonce Discogs.</p>
+      </div></details>
+    </div>
+    <div class="manual-group reveal"><h3>Réglages</h3>
+      <details><summary>Mode hors ligne<span class="badge">Premium</span></summary><div class="body">
+        <p>Emporte toute ta collection et ses pochettes, même sans réseau.</p>
+        <ol><li>Dans Réglages, ouvre « Mode hors ligne » puis « Télécharger toute ma collection ».</li><li>Active « Synchro auto en Wi-Fi » pour la tenir à jour.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> La synchro auto ne se lance jamais en 4G/5G, et au plus une fois toutes les 6 heures.</p>
+      </div></details>
+      <details><summary>Synchronisation iCloud<span class="badge">Premium</span></summary><div class="body">
+        <p>Tes tags, écoutes, alertes et préférences suivent ton compte sur tous tes appareils.</p>
+        <ol><li>Dans Réglages, active « Synchroniser avec iCloud ».</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Couper la synchro n'efface rien : à la réactivation, tout est fusionné. Elle est coupée pendant la démo.</p>
+      </div></details>
+      <details><summary>Apparence et couleurs</summary><div class="body">
+        <p>Thème clair ou sombre, et palettes de couleurs pour toute l'app.</p>
+        <ol><li>Dans Réglages, section Apparence : « Mode d'affichage » pour clair, sombre ou automatique.</li><li>« Couleur du thème » ouvre les palettes.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Le thème Signature est inclus pour tous ; les 8 autres palettes sont Premium.</p>
+      </div></details>
+      <details><summary>Exporter ta collection<span class="badge">Premium</span></summary><div class="body">
+        <p>Un tableur pour tes outils, ou un PDF à présenter à un assureur.</p>
+        <ol><li>Dans Réglages, section Export : « Exporter la collection en CSV » ou « Déclaration de collection (PDF) ».</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Le CSV inclut métadonnées, tags et notes ; le PDF, l'état et le prix d'achat.</p>
+      </div></details>
+      <details><summary>Tags et dossiers</summary><div class="body">
+        <p>Range ta collection à ta façon, et choisis où atterrissent les nouveaux disques.</p>
+        <ol><li>« Gestion des tags » : glisse ou maintiens un tag pour le renommer, le fusionner ou le supprimer.</li><li>« Gestion des dossiers » : touche un dossier pour en faire le dossier d'ajout par défaut.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> « Toujours demander » te propose le dossier à chaque ajout.</p>
+      </div></details>
+      <details><summary>Compte et données<span class="badge acc">Compte Discogs</span></summary><div class="body">
+        <p>Consulte ton profil, déconnecte-toi ou efface tes données.</p>
+        <ol><li>Touche ton nom en haut de Réglages pour ouvrir ton profil Discogs.</li><li>« Se déconnecter » est en bas de Réglages.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> « Supprimer mon compte… » propose d'effacer les données locales et iCloud, ou de supprimer le compte sur Discogs.com.</p>
+      </div></details>
+    </div>
 <!-- MANUEL:FIN -->
   </div>
 </section>
@@ -466,7 +644,7 @@
       <a href="mailto:auralabs.apps@gmail.com">Contact</a>
     </div>
     <p>Spinfolio utilise l'API publique de Discogs mais n'est ni affilié à ni approuvé par Discogs. Discogs est une marque de Zink Media, LLC. Apple Music est une marque d'Apple Inc.</p>
-    <p>© 2026 Aura Labs. Tous droits réservés.</p>
+    <p>© 2026 Spinfolio. Tous droits réservés.</p>
   </div>
 </footer>
 
@@ -487,12 +665,11 @@
   var layers = [].slice.call(document.querySelectorAll('[data-speed]'));
   if (layers.length && !reduced) {
     var ticking = false;
-    var base = layers.map(function (el) { return getComputedStyle(el).transform; });
+    // `translate` (propriété indépendante de `transform`) : n'interfère pas avec les rotations en CSS
     function frame() {
       var y = Math.min(window.scrollY, 900);
-      layers.forEach(function (el, i) {
-        var t = base[i] === 'none' ? '' : base[i];
-        el.style.transform = t + ' translateY(' + (y * parseFloat(el.dataset.speed) * -1) + 'px)';
+      layers.forEach(function (el) {
+        el.style.translate = '0 ' + (y * parseFloat(el.dataset.speed) * -1) + 'px';
       });
       ticking = false;
     }

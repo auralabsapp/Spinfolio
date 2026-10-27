@@ -47,34 +47,34 @@ PALETTES = {
 }
 
 SLIDES = [
-    {"raw": "02_mosaic.png", "out": "01-collection.png", "palette": "violet",
+    {"raw": "01_mosaic.png", "out": "01-collection.png", "palette": "violet",
      "title": ["Toute ta collection,", "en un coup d'œil"],
      "subtitle": "Vinyles, CD et K7 synchronisés avec Discogs"},
-    {"raw": "03_carousel.png", "out": "02-carrousel.png", "palette": "magenta",
-     "title": ["Feuillette tes disques", "comme chez le disquaire"],
+    {"raw": "02_carousel.png", "out": "02-carrousel.png", "palette": "magenta",
+     "title": ["Parcours tes albums", "comme chez le disquaire"],
      "subtitle": "Le carrousel qui met chaque pochette en scène"},
-    {"raw": "04_release.png", "out": "03-fiche-disque.png", "palette": "indigo",
+    {"raw": "03_release.png", "out": "03-fiche-disque.png", "palette": "indigo",
      "title": ["Une fiche complète", "pour chaque disque"],
      "subtitle": "Exemplaires, notes, rangement et écoutes sur platine"},
-    {"raw": "05_instance.png", "out": "04-plus-value.png", "palette": "violet", "premium": True,
-     "title": ["Suis la valeur", "de chaque exemplaire"],
+    {"raw": "04_instance.png", "out": "04-plus-value.png", "palette": "violet", "premium": True,
+     "title": ["Mesure la plus-value", "de chaque exemplaire"],
      "subtitle": "Plus-value, tags et champs personnalisés"},
-    {"raw": "06_shelf.png", "out": "05-rangement.png", "palette": "magenta", "premium": True,
+    {"raw": "05_shelf.png", "out": "05-rangement.png", "palette": "magenta", "premium": True,
      "title": ["Retrouve la place", "exacte de chaque disque"],
      "subtitle": "Le guide de rangement, entre ses deux voisins"},
-    {"raw": "07_wantlist.png", "out": "06-wantlist.png", "palette": "indigo",
+    {"raw": "06_wantlist.png", "out": "06-wantlist.png", "palette": "indigo",
      "title": ["Ta wantlist,", "toujours sous surveillance"],
      "subtitle": "Active une alerte de prix sur les disques que tu guettes"},
-    {"raw": "08_stats.png", "out": "07-statistiques.png", "palette": "violet",
+    {"raw": "07_stats.png", "out": "07-statistiques.png", "palette": "violet",
      "title": ["Ta discothèque", "en chiffres"],
      "subtitle": "Derniers ajouts, ajouts par année, sorties originales"},
-    {"raw": "09_stats_donuts.png", "out": "08-repartitions.png", "palette": "magenta",
-     "title": ["Genres, supports, labels :", "tout en un graphique"],
-     "subtitle": "Touche une portion pour explorer ta collection"},
-    {"raw": "10_themes.png", "out": "09-themes.png", "palette": "aurore", "premium": True,
+    {"raw": "08_value.png", "out": "08-valeur-palmares.png", "palette": "magenta", "premium": True,
+     "title": ["Suis la valeur", "de ta collection"],
+     "subtitle": "Investi vs cote actuelle, plus-value et palmarès d'écoute"},
+    {"raw": "09_themes.png", "out": "09-themes.png", "palette": "aurore", "premium": True,
      "title": ["8 thèmes de couleur", "pour ton Spinfolio"],
      "subtitle": "Choisis l'ambiance qui te ressemble"},
-    {"raw": "11_dark_mosaic.png", "out": "10-theme-sombre.png", "palette": "nuit",
+    {"raw": "10_dark_list.png", "out": "10-theme-sombre.png", "palette": "nuit",
      "title": ["Clair ou sombre,", "selon ton humeur"],
      "subtitle": "Un thème sombre soigné jusque dans les détails"},
 ]
@@ -119,15 +119,35 @@ def fit_font(draw, lines, path, variation, max_w, start, minimum):
     return font(path, minimum, variation)
 
 
+def draw_text_line(draw, text, f, x, y, fill):
+    """Dessine une ligne de texte. New York Bold (variable) n'a aucun contour pour le trait
+    d'union : sans correctif, « plus-value » s'affiche « plus value ». Quand le glyphe est vide,
+    le trait est dessiné à la main, centré dans l'espace que la police lui réserve."""
+    draw.text((x, y), text, font=f, fill=fill)
+    if f.getmask("-").getbbox() is not None:
+        return
+    advance = f.getlength("-")
+    for i, char in enumerate(text):
+        if char != "-":
+            continue
+        left = x + draw.textlength(text[:i], font=f)
+        bar_w = advance * 0.72
+        bar_h = max(4, f.size * 0.075)
+        cy = y + f.size * 0.62
+        draw.rounded_rectangle(
+            [left + (advance - bar_w) / 2, cy - bar_h / 2, left + (advance + bar_w) / 2, cy + bar_h / 2],
+            radius=bar_h / 2, fill=fill)
+
+
 def draw_centered(canvas, text, f, y, fill, shadow=True):
     draw = ImageDraw.Draw(canvas)
     x = (W - draw.textlength(text, font=f)) / 2
     if shadow:
         layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-        ImageDraw.Draw(layer).text((x, y + 6), text, font=f, fill=(10, 0, 30, 110))
+        draw_text_line(ImageDraw.Draw(layer), text, f, x, y + 6, (10, 0, 30, 110))
         canvas.alpha_composite(layer.filter(ImageFilter.GaussianBlur(10)))
         draw = ImageDraw.Draw(canvas)
-    draw.text((x, y), text, font=f, fill=fill)
+    draw_text_line(draw, text, f, x, y, fill)
 
 
 def star_points(cx, cy, r):
@@ -223,7 +243,7 @@ def make_slide(slide):
     canvas = background(PALETTES[slide["palette"]])
     probe = ImageDraw.Draw(canvas)
 
-    title_font = fit_font(probe, slide["title"], SERIF, "Heavy", W - 140, 112, 70)
+    title_font = fit_font(probe, slide["title"], SERIF, "Bold", W - 140, 112, 70)
     sub_font = fit_font(probe, [slide["subtitle"]], SANS, "Medium", W - 160, 46, 32)
     line_h = round(title_font.size * 1.12)
     pill_h, pill_gap = (84, 36) if slide.get("premium") else (0, 0)
