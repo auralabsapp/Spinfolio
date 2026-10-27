@@ -5,12 +5,25 @@ import OSLog
 
 private nonisolated let logger = Logger(subsystem: AppInfo.logSubsystem, category: "SubscriptionManager")
 
-enum SubscriptionPlanID: String, CaseIterable, Sendable {
+/// Abonnements auto-renouvelables : seuls produits qui ont une offre d'essai, une période et un
+/// groupe (`freeTrialText`, `product(for:)`).
+nonisolated enum SubscriptionPlanID: String, CaseIterable, Sendable {
     case yearly = "com.auralabs.Spinlog.premium.yearly"
     case monthly = "com.auralabs.Spinlog.premium.monthly"
 }
 
-/// Gestionnaire des abonnements Spinlog Premium basé sur StoreKit 2.
+/// Tous les produits qui donnent le Premium. Type à part de `SubscriptionPlanID` : l'achat à vie est
+/// un achat intégré non consommable, sans période ni offre d'essai, et l'ajouter à ce `CaseIterable`
+/// ferait remonter un « forfait » sans abonnement dans tout ce qui parcourt les abonnements.
+nonisolated enum PremiumProductID {
+    /// Achat unique, non consommable : « Premium pour toujours ».
+    static let lifetime = "com.auralabs.Spinlog.premium.lifetime"
+    static let subscriptions = Set(SubscriptionPlanID.allCases.map(\.rawValue))
+    /// Abonnements + achat à vie : un produit hors de cet ensemble ne débloque rien.
+    static let all = subscriptions.union([lifetime])
+}
+
+/// Gestionnaire du Premium Spinlog (abonnements et achat à vie) basé sur StoreKit 2.
 ///
 /// Gère la récupération des produits auprès de l'App Store, l'exécution des achats
 /// sécurisés, la vérification des reçus cryptographiques Apple (JWS), l'écoute des
@@ -102,14 +115,13 @@ final class SubscriptionManager {
         errorMessage = nil
 
         do {
-            let productIDs = Set(SubscriptionPlanID.allCases.map(\.rawValue))
-            let loadedProducts = try await Product.products(for: productIDs)
+            let loadedProducts = try await Product.products(for: PremiumProductID.all)
 
-            // Ordonne : annuel en premier, mensuel en second
+            // Ordonne : annuel, puis mensuel, puis achat à vie. Un produit absent de la réponse
+            // (pas encore approuvé, réseau) n'apparaît simplement pas.
+            let order = [SubscriptionPlanID.yearly.rawValue, SubscriptionPlanID.monthly.rawValue, PremiumProductID.lifetime]
             products = loadedProducts.sorted { p1, p2 in
-                if p1.id == SubscriptionPlanID.yearly.rawValue { return true }
-                if p2.id == SubscriptionPlanID.yearly.rawValue { return false }
-                return p1.id < p2.id
+                (order.firstIndex(of: p1.id) ?? order.count) < (order.firstIndex(of: p2.id) ?? order.count)
             }
             logger.info("StoreKit 2: \(self.products.count, privacy: .public) produits chargés avec succès")
         } catch {
@@ -152,9 +164,9 @@ final class SubscriptionManager {
 
         switch result {
         case .success(let verification):
-            let transaction = try Self.verify(verification)
-            await transaction.finish()
-            await updateCustomerProductStatus()
+            try await completePurchase(verification)
+            // `hasSubscription` : nom conservé, il signifie « possède le Premium » (abonnement ou
+            // achat à vie), pas seulement un abonnement.
             PremiumStore.shared.hasSubscription = true
             return true
 
@@ -167,6 +179,51 @@ final class SubscriptionManager {
 
         @unknown default:
             return false
+        }
+    }
+
+    /// Valide une transaction reçue d'un achat, d'un code d'offre ou de la boutique StoreKit : la
+    /// vérifie (JWS), la termine puis recalcule les droits. Chemin commun du paywall, de la
+    /// saisie d'un code et de `purchase(_:)`.
+    /// - Throws: l'erreur de vérification si la transaction n'est pas authentique.
+    func completePurchase(_ verification: VerificationResult<Transaction>) async throws {
+        let transaction = try Self.verify(verification)
+        await transaction.finish()
+        await updateCustomerProductStatus()
+    }
+
+    /// Issue d'une saisie de code d'offre (feuille système `offerCodeRedemption`) : le message à
+    /// afficher, ou `nil` si la personne a simplement fermé la feuille. La transaction passe par le
+    /// même chemin que tout achat (`completePurchase`).
+    func handleOfferCodeResult(_ result: Result<VerificationResult<Transaction>, Error>) async -> String? {
+        switch result {
+        case .success(let verification):
+            do {
+                try await completePurchase(verification)
+                return AppMessages.offerCodeRedeemed
+            } catch {
+                logger.error("Code d'offre : transaction non vérifiée: \(error.localizedDescription, privacy: .public)")
+                return AppMessages.purchaseVerificationFailed
+            }
+        case .failure(let error):
+            if case StoreKitError.userCancelled = error { return nil }
+            logger.error("Code d'offre : échec: \(error.localizedDescription, privacy: .public)")
+            return AppMessages.offerCodeFailed
+        }
+    }
+
+    /// Avant iOS 27, la feuille de code d'offre ne renvoie pas la transaction : elle arrive par
+    /// `Transaction.updates` (voir `startTransactionListener`, qui la termine). On relit les droits
+    /// pour que le Premium soit déjà actif quand le message s'affiche.
+    func handleLegacyOfferCodeResult(_ result: Result<Void, Error>) async -> String? {
+        switch result {
+        case .success:
+            await updateCustomerProductStatus()
+            return AppMessages.offerCodeRedeemed
+        case .failure(let error):
+            if case StoreKitError.userCancelled = error { return nil }
+            logger.error("Code d'offre : échec: \(error.localizedDescription, privacy: .public)")
+            return AppMessages.offerCodeFailed
         }
     }
 
@@ -192,21 +249,21 @@ final class SubscriptionManager {
 
     func updateCustomerProductStatus() async {
         var activeIDs: Set<String> = []
-        // Seuls les abonnements Premium comptent : un futur achat in-app d'un autre type (ex:
-        // pourboire, pack de thèmes) ne doit pas débloquer le Premium par simple présence.
-        let premiumProductIDs = Set(SubscriptionPlanID.allCases.map(\.rawValue))
-
+        // Seuls les produits Premium comptent (abonnements et achat à vie) : un futur achat in-app
+        // d'un autre type (ex: pourboire, pack de thèmes) ne doit pas débloquer le Premium par
+        // simple présence.
         var snapshots: [EntitlementSnapshot] = []
         let now = Date()
 
         for await result in Transaction.currentEntitlements {
             do {
                 let transaction = try Self.verify(result)
-                // Expiration revérifiée en plus de la révocation : un droit expiré renvoyé par un
-                // cache StoreKit pas encore rafraîchi ne doit pas laisser le Premium actif.
-                let isActive = transaction.revocationDate == nil
-                    && (transaction.expirationDate.map { $0 > now } ?? true)
-                    && premiumProductIDs.contains(transaction.productID)
+                let isActive = Self.isEntitlementActive(
+                    productID: transaction.productID,
+                    expirationDate: transaction.expirationDate,
+                    revocationDate: transaction.revocationDate,
+                    now: now
+                )
                 if isActive {
                     activeIDs.insert(transaction.productID)
                 }
@@ -227,12 +284,28 @@ final class SubscriptionManager {
         lastEntitlementCheck = now
         let hasActivePremium = !activeIDs.isEmpty
 
-        // Reflète l'état réel des droits StoreKit : true si un abonnement est actif, false sinon
-        // (expiration, annulation, remboursement...). Sans le `false`, un utilisateur resterait
-        // premium indéfiniment après la fin de son abonnement. Le forçage développeur (Debug) est
+        // Reflète l'état réel des droits StoreKit : true si un abonnement est actif ou si l'achat à
+        // vie est possédé, false sinon (expiration, annulation, remboursement...). Sans le `false`,
+        // un utilisateur resterait premium indéfiniment après la fin de son abonnement. Le forçage développeur (Debug) est
         // stocké à part (`PremiumStore.developerOverride`) et n'est donc plus écrasé ici.
         PremiumStore.shared.hasSubscription = hasActivePremium
-        logger.info("Droits actifs mis à jour: \(activeIDs.count, privacy: .public) abonnement(s) actif(s)")
+        logger.info("Droits actifs mis à jour: \(activeIDs.count, privacy: .public) droit(s) Premium actif(s)")
+    }
+
+    /// Un droit StoreKit donne-t-il le Premium ? Révocation (remboursement…) et expiration sont
+    /// revérifiées : un droit expiré renvoyé par un cache StoreKit pas encore rafraîchi ne doit pas
+    /// laisser le Premium actif. L'achat à vie n'a pas de date d'expiration : actif tant qu'il n'est
+    /// pas révoqué. Un produit hors `premiumProductIDs` ne débloque rien.
+    nonisolated static func isEntitlementActive(
+        productID: String,
+        expirationDate: Date?,
+        revocationDate: Date?,
+        now: Date,
+        premiumProductIDs: Set<String> = PremiumProductID.all
+    ) -> Bool {
+        revocationDate == nil
+            && (expirationDate.map { $0 > now } ?? true)
+            && premiumProductIDs.contains(productID)
     }
 
     // MARK: - Helpers & Formatage des prix
@@ -247,6 +320,23 @@ final class SubscriptionManager {
 
     var monthlyProduct: Product? {
         product(for: .monthly)
+    }
+
+    /// Achat à vie ; `nil` tant que StoreKit ne le renvoie pas (réseau, produit pas encore approuvé) :
+    /// le paywall masque alors l'offre sans erreur.
+    var lifetimeProduct: Product? {
+        products.first { $0.id == PremiumProductID.lifetime }
+    }
+
+    /// Achat à vie possédé (et non révoqué).
+    var hasLifetime: Bool {
+        purchasedProductIDs.contains(PremiumProductID.lifetime)
+    }
+
+    /// Au moins un abonnement actif (essai compris) : à résilier séparément après un achat à vie,
+    /// Apple ne le résilie pas.
+    var hasActiveSubscription: Bool {
+        !purchasedProductIDs.isDisjoint(with: PremiumProductID.subscriptions)
     }
 
     /// Texte d'essai gratuit pour ce forfait (ex. « 7 jours d'essai gratuit »), lu dynamiquement
@@ -267,24 +357,9 @@ final class SubscriptionManager {
         }
     }
 
-    var yearlyPriceString: String {
-        if let product = yearlyProduct {
-            return String(localized: "\(product.displayPrice) / an")
-        }
-        return String(localized: "24,99 € / an")
-    }
-
-    var monthlyPriceString: String {
-        if let product = monthlyProduct {
-            return String(localized: "\(product.displayPrice) / mois")
-        }
-        return String(localized: "2,99 € / mois")
-    }
-
     /// Prix mensuel le plus bas proposé (équivalent mensuel de l'annuel), formaté dans la devise
     /// de la boutique de l'utilisateur ; `nil` tant que les produits StoreKit ne sont pas chargés.
-    /// Remplace un « À partir de 2,50 € / mois » codé en dur, faux hors zone euro et à chaque
-    /// changement de tarif.
+    /// Remplace un prix codé en dur, faux hors zone euro et à chaque changement de tarif.
     var lowestMonthlyPriceString: String? {
         let candidates = [yearlyProduct.map { ($0.price / 12, $0.priceFormatStyle) },
                           monthlyProduct.map { ($0.price, $0.priceFormatStyle) }]

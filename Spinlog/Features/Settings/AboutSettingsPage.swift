@@ -1,13 +1,17 @@
 import SwiftUI
 import StoreKit
 
-/// Page « À propos » de Réglages : site Discogs, gestion de l'abonnement, options développeur
-/// (Debug seulement) et version.
+/// Page « À propos » de Réglages : site Discogs, gestion de l'abonnement, code d'offre, options
+/// développeur (Debug seulement) et version.
 struct AboutSettingsPage: View {
     /// Décompte des touchers sur la version (déverrouillage du diagnostic d'abonnement).
     @State private var diagnosticUnlock = SubscriptionDiagnosticUnlock()
     @State private var showingDiscogsWebsite = false
     @State private var showingManageSubscriptions = false
+    /// `Bool` plutôt que `sheet(item:)` : feuille système StoreKit, sans donnée associée à présenter.
+    @State private var showingRedeemCode = false
+    @State private var subscriptionManager = SubscriptionManager.shared
+    @State private var redeemMessage: String?
 
     var body: some View {
         SettingsSubPage(title: "À propos") {
@@ -30,18 +34,46 @@ struct AboutSettingsPage: View {
                 // contrairement aux outils du menu développeur) : état réel de l'abonnement, utile
                 // notamment en TestFlight pour vérifier qu'un essai Sandbox précédent n'en a pas
                 // laissé un actif avant d'en retenter un nouveau depuis le paywall.
-                Button {
-                    showingManageSubscriptions = true
-                } label: {
-                    HStack(spacing: 14) {
-                        SettingsIcon(systemName: "creditcard.fill", backgroundColor: .indigo)
-                        Text("Gérer mon abonnement")
-                            .foregroundStyle(.primary)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(Color.appTertiaryText)
+                // Masquée pour qui n'a que l'achat à vie : rien à gérer.
+                if PremiumSettingsVisibility.showsSubscriptionManagement(
+                    hasLifetime: subscriptionManager.hasLifetime,
+                    hasActiveSubscription: subscriptionManager.hasActiveSubscription
+                ) {
+                    Button {
+                        showingManageSubscriptions = true
+                    } label: {
+                        HStack(spacing: 14) {
+                            SettingsIcon(systemName: "creditcard.fill", backgroundColor: .indigo)
+                            Text("Gérer mon abonnement")
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(Color.appTertiaryText)
+                        }
                     }
+                }
+
+                // Codes d'offre (abonnements et achat à vie). Masqué en démo et pour qui a Premium
+                // pour toujours.
+                if PremiumSettingsVisibility.showsCodeRedemption(
+                    hasLifetime: subscriptionManager.hasLifetime,
+                    isDemoMode: DemoMode.isActive
+                ) {
+                    Button {
+                        showingRedeemCode = true
+                    } label: {
+                        HStack(spacing: 14) {
+                            SettingsIcon(systemName: "ticket.fill", backgroundColor: .green)
+                            Text("Utiliser un code")
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(Color.appTertiaryText)
+                        }
+                    }
+                    .accessibilityIdentifier("settings.redeemCode")
                 }
 
                 #if DEBUG
@@ -89,6 +121,8 @@ struct AboutSettingsPage: View {
             SafariView(url: DiscogsConstants.websiteURL)
         }
         .manageSubscriptionsSheet(isPresented: $showingManageSubscriptions)
+        .offerCodeSheet(isPresented: $showingRedeemCode, message: $redeemMessage)
+        .messageAlert(message: $redeemMessage)
     }
 }
 

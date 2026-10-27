@@ -127,4 +127,10 @@ nonisolated enum AppMessages {
     static var demoAddBlocked: String { String(localized: "En mode démo, il n'est pas possible d'ajouter des albums à la collection ou à la wantlist. Connecte ton compte Discogs dans Réglages pour gérer ta propre collection.") }
     static var demoRemovalBlocked: String { String(localized: "En mode démo, il n'est pas possible de supprimer des albums de la collection ou de la wantlist. Connecte ton compte Discogs dans Réglages pour gérer ta propre collection.") }
     static var demoModificationBlocked: String { String(localized: "En mode démo, la collection et la wantlist ne peuvent pas être modifiées. Connecte ton compte Discogs dans Réglages pour gérer ta propre collection.") }
+
+    // Premium (voir `SubscriptionManager`) : achat à vie et codes d'offre.
+    static var lifetimeKeepsSubscription: String { String(localized: "Tu as Premium pour toujours. Ton abonnement n'est pas résilié automatiquement : résilie-le pour ne plus être facturé.") }
+    static var offerCodeRedeemed: String { String(localized: "Code utilisé : ton Premium est activé.") }
+    static var offerCodeFailed: String { String(localized: "Le code n'a pas pu être utilisé. Vérifie-le et réessaie.") }
+    static var purchaseVerificationFailed: String { String(localized: "L'achat n'a pas pu être vérifié auprès de l'App Store.") }
 }

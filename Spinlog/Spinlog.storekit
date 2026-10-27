@@ -13,7 +13,26 @@
 
   ],
   "products" : [
-
+    {
+      "displayPrice" : "39.99",
+      "familyShareable" : false,
+      "internalID" : "6472819003",
+      "localizations" : [
+        {
+          "description" : "Toutes les fonctions Premium, achat unique",
+          "displayName" : "Spinfolio Premium à vie",
+          "locale" : "fr"
+        },
+        {
+          "description" : "All Premium features, one-time purchase",
+          "displayName" : "Spinfolio Premium Lifetime",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.auralabs.Spinlog.premium.lifetime",
+      "referenceName" : "Spinfolio Premium à vie",
+      "type" : "NonConsumable"
+    }
   ],
   "settings" : {
     "_failTransactionsEnabled" : false,
@@ -28,12 +47,17 @@
       "id" : "22419469",
       "localizations" : [
         {
-          "description" : "Débloquez toutes les fonctionnalités de Spinlog",
-          "displayName" : "Spinlog Premium",
+          "description" : "Débloquez toutes les fonctionnalités de Spinfolio",
+          "displayName" : "Spinfolio Premium",
           "locale" : "fr"
+        },
+        {
+          "description" : "Unlock all of Spinfolio's features",
+          "displayName" : "Spinfolio Premium",
+          "locale" : "en_US"
         }
       ],
-      "name" : "Spinlog Premium",
+      "name" : "Spinfolio Premium",
       "subscriptions" : [
         {
           "adHocOffers" : [
@@ -42,7 +66,7 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "24.99",
+          "displayPrice" : "17.99",
           "familyShareable" : true,
           "groupNumber" : 1,
           "internalID" : "6472819001",
@@ -54,14 +78,19 @@
           },
           "localizations" : [
             {
-              "description" : "Accès illimité à toutes les fonctionnalités de Spinlog",
-              "displayName" : "Abonnement Annuel",
+              "description" : "Toutes les fonctions Premium pendant un an",
+              "displayName" : "Spinfolio Premium Annuel",
               "locale" : "fr"
+            },
+            {
+              "description" : "All Premium features for one year",
+              "displayName" : "Spinfolio Premium Yearly",
+              "locale" : "en_US"
             }
           ],
           "productID" : "com.auralabs.Spinlog.premium.yearly",
           "recurringSubscriptionPeriod" : "P1Y",
-          "referenceName" : "Spinlog Premium Annuel",
+          "referenceName" : "Spinfolio Premium Annuel",
           "subscriptionGroupID" : "22419469",
           "type" : "RecurringSubscription"
         },
@@ -72,21 +101,26 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "2.99",
+          "displayPrice" : "1.99",
           "familyShareable" : true,
           "groupNumber" : 2,
           "internalID" : "6472819002",
           "introductoryOffer" : null,
           "localizations" : [
             {
-              "description" : "Accès mensuel à toutes les fonctionnalités de Spinlog",
-              "displayName" : "Abonnement Mensuel",
+              "description" : "Toutes les fonctions Premium pendant un mois",
+              "displayName" : "Spinfolio Premium Mensuel",
               "locale" : "fr"
+            },
+            {
+              "description" : "All Premium features for one month",
+              "displayName" : "Spinfolio Premium Monthly",
+              "locale" : "en_US"
             }
           ],
           "productID" : "com.auralabs.Spinlog.premium.monthly",
           "recurringSubscriptionPeriod" : "P1M",
-          "referenceName" : "Spinlog Premium Mensuel",
+          "referenceName" : "Spinfolio Premium Mensuel",
           "subscriptionGroupID" : "22419469",
           "type" : "RecurringSubscription"
         }

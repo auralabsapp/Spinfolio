@@ -206,7 +206,7 @@ struct SettingsAccountSection: View {
                     Text("Aperçu Premium (mode démo)")
                         .font(.body.weight(.semibold))
                         .foregroundStyle(Color.goldText)
-                    Text("Toutes les fonctions Premium sont débloquées pendant la démo, sans abonnement. Elles se verrouillent en quittant le mode démo.")
+                    Text("Toutes les fonctions Premium sont débloquées pendant la démo, sans abonnement ni achat. Elles se verrouillent en quittant le mode démo.")
                         .font(.footnote)
                         .foregroundStyle(Color.appSecondaryText)
                 }

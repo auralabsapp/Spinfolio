@@ -38,7 +38,13 @@ nonisolated enum SettingsSearchMatcher {
 /// Index des réglages de l'écran d'accueil : une entrée par réglage, qui ouvre la page concernée.
 @MainActor
 enum SettingsSearchIndex {
-    static func entries(isAuthenticated: Bool, isPremium: Bool) -> [SettingsSearchEntry] {
+    /// `showsSubscriptionManagement` et `showsCodeRedemption` : voir `PremiumSettingsVisibility`.
+    static func entries(
+        isAuthenticated: Bool,
+        isPremium: Bool,
+        showsSubscriptionManagement: Bool = true,
+        showsCodeRedemption: Bool = true
+    ) -> [SettingsSearchEntry] {
         let organization = String(localized: "Organisation")
         let shelving = String(localized: "Rangement")
         let gain = String(localized: "Suivi de plus-value")
@@ -98,14 +104,31 @@ enum SettingsSearchIndex {
                   destination: .about, keywords: ["discogs", "site", "web"]),
             .init(id: "subscription", title: String(localized: "Gérer mon abonnement"), location: about, symbol: "creditcard.fill", color: .indigo,
                   destination: .about, keywords: ["abonnement", "subscription", "premium", "facturation", "billing", "résilier", "cancel"]),
+            .init(id: "redeemCode", title: String(localized: "Utiliser un code"), location: about, symbol: "ticket.fill", color: .green,
+                  destination: .about, keywords: ["code", "offre", "offer", "promo", "redeem", "bon", "cadeau", "gift"]),
             .init(id: "version", title: String(localized: "Version"), location: about, symbol: "info.circle.fill", color: .brown,
                   destination: .about, keywords: ["version", "build"])
         ]
-        return all.filter { isAuthenticated || !$0.requiresAccount }
+        return all.filter {
+            (isAuthenticated || !$0.requiresAccount)
+                && ($0.id != "subscription" || showsSubscriptionManagement)
+                && ($0.id != "redeemCode" || showsCodeRedemption)
+        }
     }
 
-    static func results(for query: String, isAuthenticated: Bool, isPremium: Bool) -> [SettingsSearchEntry] {
-        entries(isAuthenticated: isAuthenticated, isPremium: isPremium).filter {
+    static func results(
+        for query: String,
+        isAuthenticated: Bool,
+        isPremium: Bool,
+        showsSubscriptionManagement: Bool = true,
+        showsCodeRedemption: Bool = true
+    ) -> [SettingsSearchEntry] {
+        entries(
+            isAuthenticated: isAuthenticated,
+            isPremium: isPremium,
+            showsSubscriptionManagement: showsSubscriptionManagement,
+            showsCodeRedemption: showsCodeRedemption
+        ).filter {
             SettingsSearchMatcher.matches(query: query, haystack: [$0.title, $0.location] + $0.keywords)
         }
     }
@@ -117,12 +140,21 @@ struct SettingsSearchResultsView: View {
 
     @State private var authManager = DiscogsAuthManager.shared
     @State private var premiumStore = PremiumStore.shared
+    @State private var subscriptionManager = SubscriptionManager.shared
 
     var body: some View {
         let results = SettingsSearchIndex.results(
             for: query,
             isAuthenticated: authManager.isAuthenticated,
-            isPremium: premiumStore.isPremium
+            isPremium: premiumStore.isPremium,
+            showsSubscriptionManagement: PremiumSettingsVisibility.showsSubscriptionManagement(
+                hasLifetime: subscriptionManager.hasLifetime,
+                hasActiveSubscription: subscriptionManager.hasActiveSubscription
+            ),
+            showsCodeRedemption: PremiumSettingsVisibility.showsCodeRedemption(
+                hasLifetime: subscriptionManager.hasLifetime,
+                isDemoMode: DemoMode.isActive
+            )
         )
         if results.isEmpty {
             ContentUnavailableView.search(text: query)

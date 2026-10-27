@@ -1,4 +1,5 @@
 import SwiftUI
+import StoreKit
 
 // Exclu des builds Release/App Store, comme `DeveloperOptionsView` dont il découpe les sections.
 #if DEBUG
@@ -57,7 +58,7 @@ struct DeveloperPremiumSection: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("StoreKit 2")
                             .font(.body.weight(.medium))
-                        Text(subscriptionManager.products.isEmpty ? "Aucun produit chargé" : "\(subscriptionManager.products.count) forfaits chargés (\(subscriptionManager.yearlyPriceString), \(subscriptionManager.monthlyPriceString))")
+                        Text(subscriptionManager.products.isEmpty ? "Aucun produit chargé" : "\(subscriptionManager.products.count) produits chargés (\(subscriptionManager.products.map(\.displayPrice).joined(separator: ", ")))")
                             .font(.caption2)
                             .foregroundStyle(Color.appSecondaryText)
                         // Diagnostic temporaire : permet de voir directement sur l'appareil si
@@ -88,7 +89,7 @@ struct DeveloperPremiumSection: View {
                         Image(systemName: "checkmark.seal.fill")
                             .foregroundStyle(.green)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Abonnement actif StoreKit")
+                            Text("Droit Premium actif StoreKit")
                                 .font(.body.weight(.medium))
                             Text(subscriptionManager.purchasedProductIDs.joined(separator: ", "))
                                 .font(.caption2)

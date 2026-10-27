@@ -342,6 +342,7 @@
       }
     },
     "%@ / an" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -352,6 +353,7 @@
       }
     },
     "%@ / mois" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2319,16 +2321,6 @@
         }
       }
     },
-    "2,99 € / mois" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "€2.99 / month"
-          }
-        }
-      }
-    },
     "2. Dans « Champs personnalisés », crée un champ de type texte (ex. nommé « Prix d'achat »)" : {
       "localizations" : {
         "en" : {
@@ -2345,16 +2337,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "3. Come back to %@: the new field appears in the selector"
-          }
-        }
-      }
-    },
-    "24,99 € / an" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "€24.99 / year"
           }
         }
       }
@@ -2625,6 +2607,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Access denied by Discogs."
+          }
+        }
+      }
+    },
+    "Achat unique" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "One-time purchase"
           }
         }
       }
@@ -4563,6 +4555,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sort key (e.g. Bowie, David)"
+          }
+        }
+      }
+    },
+    "Code utilisé : ton Premium est activé." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Code redeemed: your Premium is now active."
           }
         }
       }
@@ -8112,6 +8114,16 @@
         }
       }
     },
+    "Le code n'a pas pu être utilisé. Vérifie-le et réessaie." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The code couldn’t be redeemed. Check it and try again."
+          }
+        }
+      }
+    },
     "Le comptage apparaîtra une fois ta collection synchronisée." : {
       "localizations" : {
         "en" : {
@@ -8141,6 +8153,9 @@
           }
         }
       }
+    },
+    "Le forfait sélectionné n'est pas encore disponible sur l'App Store." : {
+
     },
     "Le guide compte chaque support à part : vinyles 12, 10 et 7 pouces, CD, cassettes." : {
       "localizations" : {
@@ -10391,6 +10406,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "PREMIUM"
+          }
+        }
+      }
+    },
+    "Premium pour toujours" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Premium forever"
           }
         }
       }
@@ -13434,7 +13459,18 @@
         }
       }
     },
+    "Toutes les fonctions Premium sont débloquées pendant la démo, sans abonnement ni achat. Elles se verrouillent en quittant le mode démo." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "All Premium features are unlocked during the demo, with no subscription or purchase needed. They lock again when you exit demo mode."
+          }
+        }
+      }
+    },
     "Toutes les fonctions Premium sont débloquées pendant la démo, sans abonnement. Elles se verrouillent en quittant le mode démo." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -13640,6 +13676,16 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Tu as Premium pour toujours. Ton abonnement n'est pas résilié automatiquement : résilie-le pour ne plus être facturé." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "You have Premium forever. Your subscription isn’t canceled automatically: cancel it to stop being billed."
           }
         }
       }
@@ -13883,6 +13929,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Used for gain calculation"
+          }
+        }
+      }
+    },
+    "Utiliser un code" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Redeem a Code"
           }
         }
       }

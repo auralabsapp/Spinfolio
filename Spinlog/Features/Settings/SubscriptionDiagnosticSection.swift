@@ -16,7 +16,8 @@ struct SubscriptionDiagnosticSection: View {
         if subscriptionManager.showsDiagnostic {
             Section {
                 row("Accès Premium", premiumStore.isPremium ? "oui" : "non")
-                row("Abonnement (StoreKit)", premiumStore.hasSubscription ? "actif" : "aucun")
+                row("Premium (StoreKit)", premiumStore.hasSubscription ? "actif" : "aucun")
+                row("Achat à vie", subscriptionManager.hasLifetime ? "oui" : "non")
                 row("Aperçu démo", premiumStore.isDemoPreview ? "oui" : "non")
                 if subscriptionManager.lastEntitlements.isEmpty {
                     Text(verbatim: "Aucun droit renvoyé par StoreKit")
