@@ -82,6 +82,11 @@ extension CloudSyncEngine {
             for recordID in sentChanges.deletedRecordIDs {
                 serverSystemFields[recordID] = nil
             }
+            recordSendResult(
+                saved: sentChanges.savedRecords.count,
+                deleted: sentChanges.deletedRecordIDs.count,
+                failed: sentChanges.failedRecordSaves.count + sentChanges.failedRecordDeletes.count
+            )
             if !sentChanges.failedRecordSaves.isEmpty || !sentChanges.failedRecordDeletes.isEmpty {
                 hadRecordLevelFailureInLastSend = true
             }
@@ -108,6 +113,7 @@ extension CloudSyncEngine {
     /// argument invalide…), retentées toutes les 5 secondes indéfiniment.
     private func handleFailedSave(recordID: CKRecord.ID, error: CKError, syncEngine: CKSyncEngine) {
         cloudSyncLogger.error("failedRecordSave \(recordID.recordName, privacy: .private(mask: .hash)) : \(String(describing: error), privacy: .private)")
+        recordFailure("envoi d'un enregistrement", error)
         switch error.code {
         case .serverRecordChanged:
             // Le serveur a une autre version. La plus récente des deux l'emporte (voir

@@ -107,6 +107,7 @@ struct SettingsView: View {
                 // Hors App Store seulement (TestFlight, sandbox, Xcode), et après déverrouillage
                 // dans « À propos » : voir la section.
                 SubscriptionDiagnosticSection()
+                CloudSyncDiagnosticSection()
                 collectionGroup
                 listeningGroup
                 synchronizationGroup

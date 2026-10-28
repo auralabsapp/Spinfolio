@@ -424,6 +424,11 @@ final class CloudSyncEngine: CKSyncEngineDelegate {
                 cloudSyncLogger.log("sendChanges() terminé")
             } catch {
                 didFail = true
+                // Un échec partiel (CKError 2) ne dit rien de plus que les échecs par enregistrement,
+                // déjà mémorisés avec leur vrai motif : ne pas l'écraser dans le diagnostic.
+                if (error as? CKError)?.code != .partialFailure {
+                    recordFailure("sendChanges", error)
+                }
                 cloudSyncLogger.error("sendChanges() a échoué : \(error, privacy: .private)")
             }
             // Annulé par `stop()` : un nouveau moteur (et sa propre tâche d'envoi) a peut-être
@@ -451,6 +456,50 @@ final class CloudSyncEngine: CKSyncEngineDelegate {
                 scheduleSend()
             }
         }
+    }
+
+    // MARK: - Diagnostic (tests hors App Store)
+
+    private(set) var lastSendSummary: String?
+    private(set) var lastSendDate: Date?
+    private(set) var lastFailureMessage: String?
+    private(set) var lastFailureDate: Date?
+
+    /// Mémorise le bilan du dernier lot envoyé, pour `diagnosticSnapshot()`.
+    func recordSendResult(saved: Int, deleted: Int, failed: Int) {
+        lastSendSummary = "\(saved) sauvé(s), \(deleted) supprimé(s), \(failed) échec(s)"
+        lastSendDate = Date()
+    }
+
+    /// Mémorise le dernier échec (envoi ou récupération) : le code CloudKit y figure pour les
+    /// erreurs `CKError`, car la description seule est souvent trop vague pour trancher.
+    func recordFailure(_ context: String, _ error: Error) {
+        let nsError = error as NSError
+        lastFailureMessage = "\(context) — \(nsError.domain) \(nsError.code) : \(error.localizedDescription)"
+        lastFailureDate = Date()
+    }
+
+    func diagnosticSnapshot() -> CloudSyncDiagnostic {
+        let defaults = UserDefaults.standard
+        return CloudSyncDiagnostic(
+            engineRunning: syncEngine != nil,
+            isUserEnabled: isUserEnabled,
+            hasPremiumAccess: PremiumStore.shared.hasAccessOutsideDemo,
+            activeUsername: activeUsername,
+            hydrated: activeUsername.map { defaults.bool(forKey: Self.hydratedFlagKeyPrefix + $0) } ?? false,
+            initialPushDone: activeUsername.map { defaults.bool(forKey: Self.initialPushDoneKeyPrefix + $0) } ?? false,
+            pendingChanges: syncEngine?.state.pendingRecordZoneChanges.count ?? 0,
+            pendingChangesForActiveAccount: syncEngine.map { pendingChangesForActiveZone($0).count } ?? 0,
+            lastSendSummary: lastSendSummary,
+            lastSendDate: lastSendDate,
+            lastFailure: lastFailureMessage,
+            lastFailureDate: lastFailureDate
+        )
+    }
+
+    /// Statut du compte iCloud de l'appareil (connecté, restreint, indisponible…).
+    func iCloudAccountStatus() async -> CKAccountStatus {
+        (try? await container.accountStatus()) ?? .couldNotDetermine
     }
 
     /// Changements en attente appartenant à la zone du compte actif (aucun si personne n'est

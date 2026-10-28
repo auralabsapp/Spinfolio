@@ -191,6 +191,7 @@ extension CloudSyncEngine {
             }
             return true
         } catch {
+            recordFailure("fetchChanges", error)
             cloudSyncLogger.error("fetchChanges() a échoué pour \(activeUsername, privacy: .private(mask: .hash)) : \(error, privacy: .private)")
             return false
         }

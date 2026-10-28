@@ -177,6 +177,13 @@ Pour toute fonctionnalité qui lit ou écrit des données, se poser ces question
    (`DiscogsAuthManager.logout`) ; aucune action rejouée sur le mauvais compte.
 5. **iCloud** : la donnée doit-elle suivre l'utilisateur sur ses appareils ? Si oui, passer par
    `CloudSyncEngine` (nouveau `SyncedRecordKind`), avec fusion et isolation par compte.
+   **Tout nouveau champ ou type CloudKit** créé en Développement doit être déployé en Production
+   (CloudKit Dashboard › « Deploy Schema Changes… », en vérifiant le diff) **avant** d'envoyer le
+   build à TestFlight ou à l'App Store : un build Release écrit dans la base Production, qui refuse
+   tout enregistrement contenant un champ ou un type absent de son schéma, et la synchro échoue
+   alors sans message pour l'utilisateur (cf. `modifiedAt`, ajouté le 18/10 et déployé le 28/10).
+   Le signaler à l'utilisateur dans le compte rendu : le déploiement se fait de son côté, et le
+   diagnostic « Synchro iCloud » (Réglages, hors App Store) permet de le vérifier.
 6. **Widget / Live Activity** : la donnée affichée par le widget doit-elle être mise à jour
    (`WidgetSnapshotStore`, `WidgetCenter.reloadTimelines`) ?
 7. **Arrière-plan** : un minuteur ne tourne pas app suspendue ; prévoir l'état au retour au
