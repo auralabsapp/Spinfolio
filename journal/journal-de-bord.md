@@ -9,6 +9,15 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-10-28 — Premium : grille tarifaire France, achat à vie, codes d'offre
 
+### 19:05 — `3b2a5b9` Paywall : bannière bord à bord et achat à vie en lien discret ; balayage de suppression sans arrêt de l'app
+- Paywall : la bannière devient le fond de l'en-tête (bord à bord) ; l'achat à vie passe en lien
+  « Ou achat unique à … » sous les abonnements.
+- Collection : le bouton « Supprimer » du balayage n'est plus destructif. UIKit retirait la ligne
+  avant la confirmation, et le retrait réel provoquait « invalid number of items in section »
+  (arrêt de l'app).
+- Recettes L32, L36, L37, L40 mises à jour ; L43 et B53 ajoutées.
+- 6 fichiers, +47 / −33.
+
 ### 00:54 — `7026ce5` Page web : prix France, grille 3 colonnes, manuel à jour ; audit du 25 octobre
 - Page web : prix France (1,99 € / 17,99 € / 39,99 €), grille en 3 colonnes, manuel à jour.
 - Ajout du rapport d'audit du 25 octobre et du script des captures App Store.
