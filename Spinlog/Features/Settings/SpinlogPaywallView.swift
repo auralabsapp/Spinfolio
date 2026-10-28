@@ -64,10 +64,17 @@ struct SpinlogPaywallView: View {
         .subscriptionStorePolicyDestination(url: privacyURL, for: .privacyPolicy)
         .tint(goldWarm)
         .background(Color.appBackground)
+        // Bannière en arrière-plan de l'en-tête : le contenu marketing a des marges, pas le fond
+        // (sinon l'illustration n'allait pas bord à bord). Alignée en haut : seule la zone de la
+        // bannière est dorée, pas toute la hauteur de l'en-tête.
+        .containerBackground(for: .subscriptionStoreHeader, alignment: .top) {
+            PaywallHeaderGraphicView()
+                .accessibilityHidden(true)
+        }
         .onInAppPurchaseCompletion { product, result in
             await handlePurchase(of: product, result: result)
         }
-        // Achat à vie : ligne sous les abonnements, masquée si StoreKit ne renvoie pas le produit
+        // Achat à vie : lien discret sous les abonnements, masquée si StoreKit ne renvoie pas le produit
         // (réseau, pas encore approuvé) ou si la personne l'a déjà.
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if let lifetime = subscriptionManager.lifetimeProduct, !subscriptionManager.hasLifetime {
@@ -75,7 +82,6 @@ struct SpinlogPaywallView: View {
                     purchaseLifetime(lifetime)
                 }
                 .padding(.horizontal, 22)
-                .padding(.vertical, 8)
                 .background(Color.appBackground)
             }
         }
@@ -153,7 +159,8 @@ struct SpinlogPaywallView: View {
 
     private var marketingContent: some View {
         VStack(spacing: 18) {
-            PaywallHeaderGraphicView()
+            // Réserve la place de la bannière, dessinée en fond d'en-tête (voir `containerBackground`).
+            Color.clear.frame(height: PaywallHeaderGraphicView.height)
 
             VStack(spacing: 6) {
                 Text("Obtiens un accès complet")
@@ -236,6 +243,8 @@ struct SpinlogPaywallView: View {
 // MARK: - Illustration graphique du Header en tons Or Hifi / Ambre Collector
 
 private struct PaywallHeaderGraphicView: View {
+    static let height: CGFloat = 205
+
     var body: some View {
         ZStack {
             goldHeaderGradient
@@ -274,7 +283,7 @@ private struct PaywallHeaderGraphicView: View {
                 .frame(height: 60)
             }
         }
-        .frame(height: 205)
+        .frame(height: Self.height)
         .clipShape(PaywallHeaderCurve())
     }
 

@@ -118,7 +118,11 @@ struct CollectionTrailingSwipeActions: View {
     let actions: CollectionItemActions
 
     var body: some View {
-        Button(role: .destructive) {
+        // Pas de `role: .destructive` : dans un balayage, UIKit retire alors lui-même la ligne dès le
+        // toucher, alors qu'ici la suppression attend la confirmation (`requestDeletion`). Le
+        // retrait réel, plus tard, arrivait sur une liste que UIKit croyait déjà amputée d'une
+        // ligne : « invalid number of items in section » et arrêt de l'app. Le rouge vient de `tint`.
+        Button {
             actions.requestDeletion(item)
         } label: {
             Label("Supprimer", systemImage: "trash.fill")

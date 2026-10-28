@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// Ligne secondaire du paywall, sous les abonnements : l'achat unique « Premium pour toujours ».
-/// `SubscriptionStoreView` ne présente que des abonnements, d'où cette ligne à part ; le prix vient
-/// de StoreKit (`Product.displayPrice`), jamais écrit en dur. Aucun texte d'essai : l'achat à vie
-/// n'en a pas.
+/// Lien secondaire du paywall, sous les abonnements : l'achat unique « Premium pour toujours ».
+/// `SubscriptionStoreView` ne présente que des abonnements, d'où ce lien à part, volontairement
+/// discret pour ne pas faire concurrence à l'annuel (et son essai). Le prix vient de StoreKit
+/// (`Product.displayPrice`), jamais écrit en dur. Aucun texte d'essai : l'achat à vie n'en a pas.
 struct PaywallLifetimeRow: View {
     let displayPrice: String
     let isPurchasing: Bool
@@ -11,29 +11,20 @@ struct PaywallLifetimeRow: View {
 
     var body: some View {
         Button(action: onPurchase) {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Achat unique")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                    Text("Premium pour toujours")
-                        .font(.caption)
-                        .foregroundStyle(Color.appSecondaryText)
-                }
-
-                Spacer(minLength: 8)
-
+            VStack(spacing: 2) {
                 if isPurchasing {
                     ProgressView()
                 } else {
-                    Text(displayPrice)
-                        .font(.subheadline.weight(.bold))
+                    Text("Ou achat unique à \(displayPrice)")
+                        .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Color.goldText)
                 }
+                Text("Premium pour toujours")
+                    .font(.caption)
+                    .foregroundStyle(Color.appSecondaryText)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-            .appleMusicGroupedCard()
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .disabled(isPurchasing)

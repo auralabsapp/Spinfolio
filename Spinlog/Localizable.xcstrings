@@ -2612,6 +2612,7 @@
       }
     },
     "Achat unique" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8154,9 +8155,6 @@
         }
       }
     },
-    "Le forfait sélectionné n'est pas encore disponible sur l'App Store." : {
-
-    },
     "Le guide compte chaque support à part : vinyles 12, 10 et 7 pouces, CD, cassettes." : {
       "localizations" : {
         "en" : {
@@ -9524,6 +9522,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Organization"
+          }
+        }
+      }
+    },
+    "Ou achat unique à %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Or a one-time purchase for %@"
           }
         }
       }
