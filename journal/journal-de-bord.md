@@ -7,6 +7,25 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
+## 2026-10-28 — Premium : grille tarifaire France, achat à vie, codes d'offre
+
+### 00:54 — `7026ce5` Page web : prix France, grille 3 colonnes, manuel à jour ; audit du 25 octobre
+- Page web : prix France (1,99 € / 17,99 € / 39,99 €), grille en 3 colonnes, manuel à jour.
+- Ajout du rapport d'audit du 25 octobre et du script des captures App Store.
+- 3 fichiers, +764 / −28.
+
+### 00:51 — `2ebcbab` Premium : achat à vie, codes d'offre et grille tarifaire France
+- Grille : mensuel 1,99 €, annuel 17,99 € (essai d'une semaine conservé), achat à vie 39,99 €
+  (produit non consommable, sans partage familial).
+- Paywall : carte « Premium pour toujours » sous l'offre d'abonnement ; message et accès à la
+  gestion de l'abonnement quand un abonné achète à vie.
+- Codes d'offre : bouton sur le paywall et ligne « Utiliser un code » dans Réglages > À propos
+  (masquée en mode démo et pour un achat à vie) ; « Gérer mon abonnement » masqué sans abonnement actif.
+- Fichier StoreKit local, textes anglais, recettes L11 et L32–L42, 12 tests de droits Premium (522 au total).
+- 16 fichiers, +641 / −129.
+
+---
+
 ## 2026-10-27 — Prix d'achat et état du média : filtre, saisie rapide, feuille « Prix et état »
 
 ### 10:34 — `f098c84` Prix d'achat et état du média : saisie après un scan par lot et feuille « Prix et état »
