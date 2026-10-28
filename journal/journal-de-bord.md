@@ -9,6 +9,18 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-10-28 — Premium : grille tarifaire France, achat à vie, codes d'offre
 
+### 23:58 — `a8b6adc` Diagnostic de la synchro iCloud (hors App Store) et règle de déploiement du schéma CloudKit
+- Réglages : section « Diagnostic synchro iCloud (test) » (après déverrouillage, hors App Store) : moteur,
+  Premium, compte iCloud, fusion et poussée initiales, changements en attente, dernier envoi et dernière
+  erreur ; bouton de relance de la poussée initiale.
+- Le moteur mémorise le dernier bilan d'envoi et la dernière erreur ; l'échec partiel (CKError 2)
+  n'écrase plus le motif de chaque enregistrement.
+- Cause trouvée de la synchro muette en TestFlight : le champ `modifiedAt` (18/10) et les types
+  `AppPreferences` et `Grades` n'étaient pas déployés dans le schéma de Production. Déployé le 28/10 :
+  13 enregistrements envoyés, 0 échec. `CLAUDE.md` §7.5 en tire une règle.
+- Recette K13.
+- 9 fichiers, +193.
+
 ### 19:05 — `3b2a5b9` Paywall : bannière bord à bord et achat à vie en lien discret ; balayage de suppression sans arrêt de l'app
 - Paywall : la bannière devient le fond de l'en-tête (bord à bord) ; l'achat à vie passe en lien
   « Ou achat unique à … » sous les abonnements.
