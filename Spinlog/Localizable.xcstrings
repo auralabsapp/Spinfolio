@@ -6046,6 +6046,16 @@
         }
       }
     },
+    "Économise %lld %% avec l'abonnement annuel" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Save %lld%% with the yearly plan"
+          }
+        }
+      }
+    },
     "Écoute" : {
       "localizations" : {
         "en" : {

@@ -357,6 +357,22 @@ final class SubscriptionManager {
         }
     }
 
+    /// Économie en pourcentage de l'annuel par rapport à douze mensualités, arrondie à l'entier ;
+    /// `nil` si l'annuel ne coûte pas moins cher (aucune économie à annoncer).
+    nonisolated static func yearlySavingsPercent(yearly: Decimal, monthly: Decimal) -> Int? {
+        let twelveMonths = monthly * 12
+        guard twelveMonths > 0, yearly < twelveMonths else { return nil }
+        let ratio = (twelveMonths - yearly) / twelveMonths * 100
+        let percent = Int(truncating: NSDecimalNumber(decimal: ratio).rounding(accordingToBehavior: nil))
+        return percent > 0 ? percent : nil
+    }
+
+    /// Économie de l'annuel face au mensuel, d'après les prix StoreKit chargés.
+    var yearlySavingsPercent: Int? {
+        guard let yearly = yearlyProduct, let monthly = monthlyProduct else { return nil }
+        return Self.yearlySavingsPercent(yearly: yearly.price, monthly: monthly.price)
+    }
+
     /// Prix mensuel le plus bas proposé (équivalent mensuel de l'annuel), formaté dans la devise
     /// de la boutique de l'utilisateur ; `nil` tant que les produits StoreKit ne sont pas chargés.
     /// Remplace un prix codé en dur, faux hors zone euro et à chaque changement de tarif.
