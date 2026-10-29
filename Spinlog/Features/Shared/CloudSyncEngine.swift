@@ -464,6 +464,19 @@ final class CloudSyncEngine: CKSyncEngineDelegate {
     private(set) var lastSendDate: Date?
     private(set) var lastFailureMessage: String?
     private(set) var lastFailureDate: Date?
+    private(set) var lastFetchSummary: String?
+    private(set) var lastFetchDate: Date?
+
+    /// Mémorise le bilan du dernier lot reçu d'iCloud : combien d'enregistrements, combien
+    /// écartés comme périmés, et l'effet sur le nombre d'exemplaires tagués en local.
+    func recordFetchResult(
+        received: Int, deletions: Int, skippedAsStale: Int,
+        tagRecords: (total: Int, empty: Int, unreadable: Int),
+        taggedBefore: Int, taggedAfter: Int
+    ) {
+        lastFetchSummary = "\(received) reçu(s), \(deletions) suppression(s), \(skippedAsStale) écarté(s) · enregistrements de tags : \(tagRecords.total) (\(tagRecords.empty) vide(s), \(tagRecords.unreadable) illisible(s)) · exemplaires tagués \(taggedBefore) → \(taggedAfter)"
+        lastFetchDate = Date()
+    }
 
     /// Mémorise le bilan du dernier lot envoyé, pour `diagnosticSnapshot()`.
     func recordSendResult(saved: Int, deleted: Int, failed: Int) {
@@ -493,8 +506,33 @@ final class CloudSyncEngine: CKSyncEngineDelegate {
             lastSendSummary: lastSendSummary,
             lastSendDate: lastSendDate,
             lastFailure: lastFailureMessage,
-            lastFailureDate: lastFailureDate
+            lastFailureDate: lastFailureDate,
+            lastFetchSummary: lastFetchSummary,
+            lastFetchDate: lastFetchDate,
+            localTaggedInstances: TagStore.shared.allTaggedInstanceIds().count
         )
+    }
+
+    /// Lit tout le contenu d'une zone, sans jeton de changement. `CKSyncEngine` ne livre que les
+    /// changements postérieurs à son propre jeton : des enregistrements reçus quand aucun compte
+    /// Discogs n'était encore actif (moteur démarré par le Premium avant la connexion, après une
+    /// réinstallation) étaient ignorés par `apply(remoteRecord:)`, puis jamais redemandés. Zone
+    /// encore inexistante (compte jamais synchronisé) = rien à lire.
+    func fetchAllRecords(inZone zoneID: CKRecordZone.ID) async throws -> [CKRecord] {
+        var records: [CKRecord] = []
+        var token: CKServerChangeToken?
+        while !Task.isCancelled {
+            let page: (modificationResultsByID: [CKRecord.ID: Result<CKDatabase.RecordZoneChange.Modification, any Error>], deletions: [CKDatabase.RecordZoneChange.Deletion], changeToken: CKServerChangeToken, moreComing: Bool)
+            do {
+                page = try await container.privateCloudDatabase.recordZoneChanges(inZoneWith: zoneID, since: token)
+            } catch let error as CKError where error.code == .zoneNotFound {
+                return records
+            }
+            records += page.modificationResultsByID.values.compactMap { try? $0.get().record }
+            token = page.changeToken
+            guard page.moreComing else { break }
+        }
+        return records
     }
 
     /// Statut du compte iCloud de l'appareil (connecté, restreint, indisponible…).

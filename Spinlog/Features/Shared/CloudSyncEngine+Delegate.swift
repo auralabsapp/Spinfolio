@@ -44,28 +44,11 @@ extension CloudSyncEngine {
 
         case .fetchedRecordZoneChanges(let fetchedChanges):
             cloudSyncLogger.log("fetchedRecordZoneChanges — \(fetchedChanges.modifications.count) modification(s), \(fetchedChanges.deletions.count) suppression(s)")
-            // Voir le commentaire sur `isApplyingRemoteChange` : couvre toute cette réapplication,
-            // pour que `markDirty`/`markDeleted` refusent bruyamment d'être appelées entre-temps.
-            isApplyingRemoteChange = true
-            defer { endApplyingRemoteChange() }
-            // Un lot peut contenir des centaines d'enregistrements (première synchro) : regroupés
-            // pour que chaque store n'écrive sur disque et ne notifie l'UI qu'une fois par lot.
-            TagStore.shared.performBatchUpdate {
-                ListeningLogStore.shared.performBatchUpdate {
-                    for modification in fetchedChanges.modifications {
-                        rememberSystemFields(of: modification.record)
-                        guard shouldApplyRemote(modification.record) else {
-                            cloudSyncLogger.log("fetchedRecordZoneChanges — \(modification.record.recordID.recordName, privacy: .private(mask: .hash)) ignoré : modification locale plus récente en attente d'envoi")
-                            continue
-                        }
-                        apply(remoteRecord: modification.record, allowMerge: isFirstHydrateForActiveAccount)
-                    }
-                    for deletion in fetchedChanges.deletions {
-                        serverSystemFields[deletion.recordID] = nil
-                        applyDeletion(recordID: deletion.recordID)
-                    }
-                }
-            }
+            applyFetchedChanges(
+                records: fetchedChanges.modifications.map(\.record),
+                deletedRecordIDs: fetchedChanges.deletions.map(\.recordID),
+                allowMerge: isFirstHydrateForActiveAccount
+            )
 
         case .sentRecordZoneChanges(let sentChanges):
             cloudSyncLogger.log("sentRecordZoneChanges — \(sentChanges.savedRecords.count) sauvé(s), \(sentChanges.deletedRecordIDs.count) supprimé(s), \(sentChanges.failedRecordSaves.count) échec(s) de sauvegarde, \(sentChanges.failedRecordDeletes.count) échec(s) de suppression")
@@ -173,6 +156,46 @@ extension CloudSyncEngine {
         default:
             cloudSyncLogger.error("failedRecordDelete \(recordID.recordName, privacy: .private(mask: .hash)) abandonné (erreur définitive \(error.code.rawValue, privacy: .public))")
         }
+    }
+
+    /// Applique un lot d'enregistrements reçus d'iCloud, qu'il vienne du moteur
+    /// (`.fetchedRecordZoneChanges`) ou de la lecture complète de la zone faite à la première
+    /// réconciliation d'un compte (voir `performFetchChanges`).
+    func applyFetchedChanges(records: [CKRecord], deletedRecordIDs: [CKRecord.ID], allowMerge: Bool) {
+        // Voir le commentaire sur `isApplyingRemoteChange` : couvre toute cette réapplication,
+        // pour que `markDirty`/`markDeleted` refusent bruyamment d'être appelées entre-temps.
+        isApplyingRemoteChange = true
+        defer { endApplyingRemoteChange() }
+        let taggedBefore = TagStore.shared.allTaggedInstanceIds().count
+        var skippedAsStale = 0
+        let tagRecords = Self.tagRecordCensus(of: records)
+        // Un lot peut contenir des centaines d'enregistrements (première synchro) : regroupés
+        // pour que chaque store n'écrive sur disque et ne notifie l'UI qu'une fois par lot.
+        TagStore.shared.performBatchUpdate {
+            ListeningLogStore.shared.performBatchUpdate {
+                for record in records {
+                    rememberSystemFields(of: record)
+                    guard shouldApplyRemote(record) else {
+                        skippedAsStale += 1
+                        cloudSyncLogger.log("applyFetchedChanges — \(record.recordID.recordName, privacy: .private(mask: .hash)) ignoré : modification locale plus récente en attente d'envoi")
+                        continue
+                    }
+                    apply(remoteRecord: record, allowMerge: allowMerge)
+                }
+                for recordID in deletedRecordIDs {
+                    serverSystemFields[recordID] = nil
+                    applyDeletion(recordID: recordID)
+                }
+            }
+        }
+        recordFetchResult(
+            received: records.count,
+            deletions: deletedRecordIDs.count,
+            skippedAsStale: skippedAsStale,
+            tagRecords: tagRecords,
+            taggedBefore: taggedBefore,
+            taggedAfter: TagStore.shared.allTaggedInstanceIds().count
+        )
     }
 
     private func rememberSystemFields(of record: CKRecord) {
@@ -283,5 +306,25 @@ extension CloudSyncEngine {
             CloudSyncModificationLog.clear(recordName, username: activeUsername)
         }
         return wins
+    }
+}
+
+extension CloudSyncEngine {
+    /// Recense, dans un lot reçu, les enregistrements de tags : combien, combien portent une liste
+    /// vide et combien ont un contenu illisible. Sert au diagnostic (un lot « reçu » mais sans
+    /// effet sur les tags locaux s'explique par l'un ou l'autre).
+    static func tagRecordCensus(of records: [CKRecord]) -> (total: Int, empty: Int, unreadable: Int) {
+        var total = 0, empty = 0, unreadable = 0
+        for record in records {
+            guard case .tag = SyncedRecordKind.from(recordName: record.recordID.recordName) else { continue }
+            total += 1
+            guard let payload = record[payloadField] as? Data,
+                  let tags = try? JSONDecoder().decode([SyncedTag].self, from: payload) else {
+                unreadable += 1
+                continue
+            }
+            if tags.isEmpty { empty += 1 }
+        }
+        return (total, empty, unreadable)
     }
 }

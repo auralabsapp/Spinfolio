@@ -23,4 +23,9 @@ nonisolated struct CloudSyncDiagnostic: Sendable {
     /// Dernier échec d'envoi ou de récupération, avec l'horaire.
     let lastFailure: String?
     let lastFailureDate: Date?
+    /// Dernier lot reçu d'iCloud (enregistrements reçus et effet sur les tags locaux) et son horaire.
+    let lastFetchSummary: String?
+    let lastFetchDate: Date?
+    /// Exemplaires qui ont au moins un tag sur cet appareil, à l'instant de la lecture.
+    let localTaggedInstances: Int
 }

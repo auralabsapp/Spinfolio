@@ -187,6 +187,12 @@ extension CloudSyncEngine {
             // réconciliation pour le compte actif.
             guard syncEngine === self.syncEngine, activeUsername == self.activeUsername else { return false }
             if isFirstHydrate {
+                // Le moteur ne relivre pas ce qu'il a déjà reçu (voir `fetchAllRecords`) : la
+                // première réconciliation relit toute la zone du compte et la fusionne, sans quoi
+                // une réinstallation pouvait ne retrouver aucun tag malgré des données sur iCloud.
+                let records = try await fetchAllRecords(inZone: zoneID(for: activeUsername))
+                guard syncEngine === self.syncEngine, activeUsername == self.activeUsername else { return false }
+                applyFetchedChanges(records: records, deletedRecordIDs: [], allowMerge: true)
                 UserDefaults.standard.set(true, forKey: hydratedKey)
             }
             return true

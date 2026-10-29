@@ -26,6 +26,12 @@ struct CloudSyncDiagnosticSection: View {
                 row("Fusion initiale faite", yesNo(snapshot.hydrated))
                 row("Poussée initiale faite", yesNo(snapshot.initialPushDone))
                 row("En attente d'envoi", "\(snapshot.pendingChangesForActiveAccount) (tous comptes : \(snapshot.pendingChanges))")
+                row("Exemplaires tagués (local)", "\(snapshot.localTaggedInstances)")
+                if let fetch = snapshot.lastFetchSummary, let date = snapshot.lastFetchDate {
+                    row("Dernière récupération", "\(fetch) · \(date.formatted(Self.dateFormat))")
+                } else {
+                    row("Dernière récupération", "aucune depuis le lancement")
+                }
                 if let summary = snapshot.lastSendSummary, let date = snapshot.lastSendDate {
                     row("Dernier envoi", "\(summary) · \(date.formatted(Self.dateFormat))")
                 } else {
