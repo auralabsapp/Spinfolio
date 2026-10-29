@@ -9,6 +9,14 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-10-29 — Synchro iCloud, connexion et titre de Collection
 
+### 11:48 — Synchro iCloud : mode d'affichage et tri de la Collection et de la Wantlist
+- Mode d'affichage (Liste, Mosaïque, Carrousel) et tri (critère et sens) des deux bibliothèques,
+  synchronisés entre appareils dans l'enregistrement `CollectionPreferences` (champs facultatifs de la
+  charge utile : pas de déploiement de schéma, versions précédentes compatibles).
+- Le tri de la Wantlist est maintenant mémorisé par compte (il repartait sur « Date d'ajout »).
+- Recettes K14 et K15, 4 tests.
+- 9 fichiers, +284 / −6.
+
 ### 11:37 — `7a2eac2` Collection : grand titre qui se réduit à la première connexion, police New York après reconnexion
 - Cause du grand titre figé et de la barre transparente à la première connexion d'une installation neuve :
   le chargement de l'ancienne vue, annulé quand la pile de Collection est recréée, déclarait le premier
