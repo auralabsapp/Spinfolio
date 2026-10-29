@@ -36,7 +36,7 @@ struct PriceAndConditionSheet: View {
         initialCondition = rawCondition
 
         if let parsed = PurchasePriceParser.parse(rawPrice, defaultCurrency: defaultCurrency) {
-            _amountText = State(initialValue: String(format: "%.2f", parsed.amount))
+            _amountText = State(initialValue: PurchasePriceParser.editableAmountString(parsed.amount))
             _currency = State(initialValue: parsed.currency)
             initialCanonicalPrice = PurchasePriceParser.canonicalString(amount: parsed.amount, currency: parsed.currency)
         } else {

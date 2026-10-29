@@ -158,6 +158,10 @@ Code dans `Spinlog/`, widget et Live Activity dans `SpinlogWidgets/`, tests dans
 - Lexique : « écoute (sur platine) » ≠ « lecture (Apple Music) » ; « exemplaire » = copy ;
   « disque »/« album » ; « wantlist » ; garder les noms Discogs All/Uncategorized.
 - Messages réutilisables dans `AppMessages`.
+- **Nombres, prix et dates affichés** : toujours selon les réglages du système (`.formatted(…)`,
+  `Date.FormatStyle`), jamais `String(format:)` ni `Locale` en dur. Un prix StoreKit se formate avec
+  `priceFormatStyle.locale(.autoupdatingCurrent)` (le format brut suit la boutique, pas l'appareil).
+  Les formats techniques (noms de fichier, ISO8601, clés de date) restent en `en_US_POSIX`.
 
 ## 7. Contextes transverses à vérifier pour chaque fonctionnalité
 

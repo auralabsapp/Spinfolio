@@ -50,7 +50,7 @@ final class WantlistAlertViewModel {
     }
 
     func applySuggestion(price: Double) {
-        targetPriceString = String(format: "%.2f", price)
+        targetPriceString = PurchasePriceParser.editableAmountString(price)
     }
 
     func setupInitialValues(for item: WantlistItem) {
@@ -60,7 +60,7 @@ final class WantlistAlertViewModel {
 
         if let existing = existingAlert(for: item) {
             currency = existing.currency
-            targetPriceString = String(format: "%.2f", existing.targetPrice)
+            targetPriceString = PurchasePriceParser.editableAmountString(existing.targetPrice)
         }
     }
 

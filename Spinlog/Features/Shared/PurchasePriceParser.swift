@@ -25,6 +25,13 @@ enum PurchasePriceParser {
         parse(raw, defaultCurrency: defaultCurrency)
     }
 
+    /// Montant pour un champ de saisie : séparateur décimal du système (virgule ou point), deux
+    /// décimales, sans séparateur de milliers. La saisie reste relue par `parse` (qui accepte les deux
+    /// séparateurs) ; seul le format *envoyé à Discogs* reste `canonicalString`.
+    nonisolated static func editableAmountString(_ amount: Double, locale: Locale = .autoupdatingCurrent) -> String {
+        amount.formatted(.number.precision(.fractionLength(2)).grouping(.never).locale(locale))
+    }
+
     /// Formate un montant + devise sous la forme canonique attendue par Discogs à l'écriture
     /// d'un champ personnalisé (ex. `"25.50 EUR"`).
     static func canonicalString(amount: Double, currency: String) -> String {
