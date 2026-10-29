@@ -9,6 +9,10 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-10-29 — Synchro iCloud, connexion et titre de Collection
 
+### 19:54 — Écrans vides : pochettes tirées au hasard et textes de recherche/scan précisés
+
+Les écrans vides de la Collection et de la Wantlist sont mis en scène avec les pochettes embarquées : éventail derrière le disque qui tourne pour la Collection, pochettes et cœurs qui montent doucement pour la Wantlist (`EmptyShelfScene`, `EmptyWishesScene`, figés avec « Réduire les animations »). 15 pochettes ajoutées (`WelcomeCover7` à `21`, 21 au total) ; la liste est partagée (`WelcomeCovers`, jusqu'à `WelcomeCover30`) et tirée au hasard à chaque affichage, écran de connexion compris. Textes précisés (la recherche accepte nom, titre, label et code-barres) et bouton renommé « Cherche ou scanne un album ». Cas manuel E26.
+
 ### 19:03 — Stats : « Sorties originales » se vide avec la collection
 
 Après le retrait du dernier disque de la collection, le graphique « Sorties originales » gardait l'ancienne barre : `StatsMasterYearsResolver.update(for:)` sortait tout de suite sur une liste vide. La répartition est maintenant vidée et la résolution des masters annulée. Test ajouté. Cas manuels E25 et étape 6 de I31. 4 fichiers.
