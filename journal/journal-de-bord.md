@@ -9,6 +9,10 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-10-29 — Synchro iCloud, connexion et titre de Collection
 
+### 14:36 — Paywall : contenu compact, essai gratuit et économie de l'annuel visibles
+
+Le paywall obligeait à défiler pour voir les forfaits. Le contenu marketing (nouveau `PaywallMarketingContent`) est compacté : illustration réduite, trois avantages au lieu de quatre. Deux lignes annoncent l'essai gratuit de l'annuel (seulement si la personne y est éligible) et l'économie face au mensuel, calculée d'après les prix StoreKit (`yearlySavingsPercent`, testé par `YearlySavingsTests`). Cas manuel L43 mis à jour. 7 fichiers, +332 −278.
+
 ### 11:48 — Synchro iCloud : mode d'affichage et tri de la Collection et de la Wantlist
 - Mode d'affichage (Liste, Mosaïque, Carrousel) et tri (critère et sens) des deux bibliothèques,
   synchronisés entre appareils dans l'enregistrement `CollectionPreferences` (champs facultatifs de la
