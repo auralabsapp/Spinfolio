@@ -80,6 +80,8 @@ final class CollectionViewModel {
     private let networkMonitor = NetworkMonitor.shared
     private let localStore = LocalDataStore.shared
     private let syncQueue = OfflineSyncQueue.shared
+    /// Chargements de dossiers et de disques en cours simultanément (voir `ConcurrentLoadCounter`).
+    private var loadCounter = ConcurrentLoadCounter()
     /// Dernier rechargement depuis Discogs (voir `loadOnAppear`).
     @ObservationIgnored private var reloadThrottle = ReloadThrottle()
 
@@ -170,7 +172,11 @@ final class CollectionViewModel {
 
     func loadFoldersAndItems(isSilent: Bool = false) async {
         guard let username = authManager.username else { return }
-        defer { isAwaitingFirstLoad = false }
+        loadCounter.begin()
+        // Seul le dernier chargement en cours déclare le premier chargement terminé (voir `ConcurrentLoadCounter`).
+        defer {
+            if loadCounter.end() { isAwaitingFirstLoad = false }
+        }
 
         pagination.cancelBackgroundSync()
 
@@ -216,6 +222,9 @@ final class CollectionViewModel {
             rememberSelectedFolder(validFolderId, username: username)
 
         } catch {
+            // Chargement interrompu pendant qu'un autre prend le relais (vue recréée) : c'est l'autre qui
+            // fixe l'état, sans repasser par le cache local ni éteindre l'indicateur de chargement.
+            if error.isCancellation, loadCounter.othersInFlight { return }
             // Repli gracieux sur le cache local
             await loadFromLocalStore(username: username, folderId: selectedFolderId ?? preferredFolderId)
             if items.isEmpty && !error.isCancellation {

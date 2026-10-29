@@ -14,6 +14,8 @@ private struct SerifNavigationTitleConfigurator: UIViewControllerRepresentable {
     final class Coordinator {
         weak var configuredBar: UINavigationBar?
         var configuredDynamicTypeSize: DynamicTypeSize?
+        /// Réparations de police déjà faites sur cette barre (plafonnées : voir `configureIfNeeded`).
+        var repairs = 0
     }
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -23,26 +25,67 @@ private struct SerifNavigationTitleConfigurator: UIViewControllerRepresentable {
     }
 
     func makeUIViewController(context: Context) -> UIViewController {
-        UIViewController()
+        let controller = ConfiguratorViewController()
+        let coordinator = context.coordinator
+        controller.onAppearance = { [weak controller] in
+            guard let controller else { return }
+            Self.configureIfNeeded(controller, coordinator: coordinator, dynamicTypeSize: controller.latestDynamicTypeSize)
+        }
+        return controller
     }
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
         let coordinator = context.coordinator
         let dynamicTypeSize = dynamicTypeSize
+        (uiViewController as? ConfiguratorViewController)?.latestDynamicTypeSize = dynamicTypeSize
         DispatchQueue.main.async {
-            guard let navigationBar = uiViewController.navigationController?.navigationBar else { return }
-            guard coordinator.configuredBar !== navigationBar
-                || coordinator.configuredDynamicTypeSize != dynamicTypeSize else { return }
-            Self.applySerifLargeTitle(to: navigationBar)
-            coordinator.configuredBar = navigationBar
-            coordinator.configuredDynamicTypeSize = dynamicTypeSize
+            Self.configureIfNeeded(uiViewController, coordinator: coordinator, dynamicTypeSize: dynamicTypeSize)
         }
     }
 
-    private static func applySerifLargeTitle(to navigationBar: UINavigationBar) {
+    /// Applique la police serif si la barre est nouvelle, si la taille de texte a changé, ou si la barre
+    /// a perdu la police (réécrite depuis par UIKit/SwiftUI, par exemple quand la pile est créée alors
+    /// que l'onglet n'est pas affiché et mise en place à son premier affichage). Sans réécriture
+    /// quand tout est en ordre : voir le commentaire du `Coordinator`.
+    private static func configureIfNeeded(
+        _ viewController: UIViewController,
+        coordinator: Coordinator,
+        dynamicTypeSize: DynamicTypeSize
+    ) {
+        guard let navigationBar = viewController.navigationController?.navigationBar else { return }
+        let isNewBar = coordinator.configuredBar !== navigationBar
+        let needsRepair = !isNewBar && !hasSerifLargeTitle(navigationBar)
+        guard isNewBar || coordinator.configuredDynamicTypeSize != dynamicTypeSize || needsRepair else { return }
+        // Plafond : réécrire sans fin les apparences d'une barre qui les réécrit aussi rompait son suivi
+        // du défilement (voir le commentaire du `Coordinator`).
+        if needsRepair {
+            guard coordinator.repairs < 3 else { return }
+            coordinator.repairs += 1
+        } else if isNewBar {
+            coordinator.repairs = 0
+        }
+        applySerifLargeTitle(to: navigationBar)
+        coordinator.configuredBar = navigationBar
+        coordinator.configuredDynamicTypeSize = dynamicTypeSize
+    }
+
+    private static func hasSerifLargeTitle(_ navigationBar: UINavigationBar) -> Bool {
+        let appearances = [navigationBar.standardAppearance, navigationBar.scrollEdgeAppearance].compactMap { $0 }
+        let expected = serifLargeTitleFont
+        return appearances.allSatisfy { appearance in
+            guard let font = appearance.largeTitleTextAttributes[.font] as? UIFont else { return false }
+            return font.fontName == expected.fontName && abs(font.pointSize - expected.pointSize) < 0.5
+        }
+    }
+
+    private static var serifLargeTitleFont: UIFont {
         let descriptor = UIFontDescriptor.preferredFontDescriptor(withTextStyle: .largeTitle).withDesign(.serif)
             ?? UIFontDescriptor.preferredFontDescriptor(withTextStyle: .largeTitle)
-        let serifLargeTitleFont = UIFont(descriptor: descriptor, size: 0)
+        return UIFont(descriptor: descriptor, size: 0)
+    }
+
+    private static func applySerifLargeTitle(to navigationBar: UINavigationBar) {
+        let serifLargeTitleFont = Self.serifLargeTitleFont
 
         let titleColor = UIColor { @Sendable trait in
             trait.userInterfaceStyle == .dark
@@ -63,6 +106,25 @@ private struct SerifNavigationTitleConfigurator: UIViewControllerRepresentable {
         navigationBar.standardAppearance = appearance
         navigationBar.scrollEdgeAppearance = appearance
         navigationBar.compactAppearance = appearance
+    }
+}
+
+/// Contrôleur de vue du configurateur : prévient aussi quand l'écran apparaît et se met en page, pas
+/// seulement quand SwiftUI met la représentation à jour, pour rattraper une barre dont la police a été
+/// réécrite après la première application.
+private final class ConfiguratorViewController: UIViewController {
+    var onAppearance: (() -> Void)?
+    var latestDynamicTypeSize: DynamicTypeSize = .large
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        onAppearance?()
+        // UIKit peut réécrire l'apparence de la barre peu après l'affichage : on revérifie juste après.
+        for delay in [0.3, 1.0] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.onAppearance?()
+            }
+        }
     }
 }
 
