@@ -221,6 +221,8 @@ final class WantlistViewModel {
     private let syncQueue = OfflineSyncQueue.shared
     /// Dernier rechargement depuis Discogs (voir `loadOnAppear`).
     @ObservationIgnored private var reloadThrottle = ReloadThrottle()
+    /// Retraits récents à écarter des réponses de Discogs encore en retard (voir `WantlistRemovalGrace`).
+    @ObservationIgnored private var removalGrace = WantlistRemovalGrace()
 
     init() {
         addLibraryObserver(for: .wantlistItemAdded, payloadKey: "item") { [weak self] (item: WantlistItem) in
@@ -246,6 +248,7 @@ final class WantlistViewModel {
     }
 
     private func handleWantlistItemAdded(_ item: WantlistItem) {
+        removalGrace.unmark(item.id)
         if !items.contains(where: { $0.id == item.id }) {
             withAnimation(.optimisticToggle) {
                 items.insert(item, at: 0)
@@ -254,6 +257,7 @@ final class WantlistViewModel {
     }
 
     private func handleWantlistItemRemoved(releaseId: Int) {
+        removalGrace.markRemoved(releaseId)
         animatesNextSectionsUpdate = true
         withAnimation(.optimisticToggle) {
             items.removeAll { $0.id == releaseId }
@@ -294,7 +298,7 @@ final class WantlistViewModel {
             // éléments ne le concernent pas, ils ne doivent ni s'afficher ni entrer dans son cache.
             guard authManager.username == username else { return }
             // Fusionné plutôt que remplacé : voir `mergedWantlistItems`.
-            items = Self.mergedWantlistItems(primary: items, secondary: response.wants)
+            items = Self.mergedWantlistItems(primary: items, secondary: removalGrace.filtered(response.wants))
             currentPage = 1
             totalPages = response.pagination.pages
             isOfflineAndStale = false
@@ -330,7 +334,7 @@ final class WantlistViewModel {
             // éléments ne le concernent pas, ils ne doivent ni s'afficher ni entrer dans son cache.
             guard authManager.username == username else { return }
             // Fusionné (nouvel ordre de tri prioritaire) plutôt que remplacé : voir `mergedWantlistItems`.
-            items = Self.mergedWantlistItems(primary: response.wants, secondary: items)
+            items = Self.mergedWantlistItems(primary: removalGrace.filtered(response.wants), secondary: items)
             currentPage = 1
             totalPages = response.pagination.pages
             isOfflineAndStale = false
@@ -388,7 +392,7 @@ final class WantlistViewModel {
             guard authManager.username == username else { isLoading = false; return }
             // Dédoublonné : `load()` fusionne la page 1 avec la liste déjà affichée et repart de
             // la page 1, donc la page suivante peut contenir des disques déjà présents.
-            items = Self.mergedWantlistItems(primary: items, secondary: response.wants)
+            items = Self.mergedWantlistItems(primary: items, secondary: removalGrace.filtered(response.wants))
             currentPage += 1
             totalPages = response.pagination.pages
 
@@ -440,6 +444,7 @@ final class WantlistViewModel {
 
     /// Retrait d'un disque du cache local et des états partagés ; `items` est déjà à jour.
     private func removeFromLocalState(_ item: WantlistItem, username: String) {
+        removalGrace.markRemoved(item.id)
         localStore.removeWantlistItem(username: username, releaseId: item.id)
         LibraryMembershipStore.shared.markRemovedFromWantlist(item.id)
     }
@@ -459,6 +464,7 @@ final class WantlistViewModel {
             } catch {
                 // Refus définitif : on réaffiche le disque plutôt que de mettre en file une action
                 // qui échouerait à l'identique plusieurs fois avant d'être abandonnée.
+                removalGrace.unmark(item.id)
                 if !items.contains(where: { $0.id == item.id }) {
                     items.append(item)
                 }
