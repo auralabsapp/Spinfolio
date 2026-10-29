@@ -9,6 +9,10 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-10-29 — Synchro iCloud, connexion et titre de Collection
 
+### 14:58 — Stats : collection vide, plus de squelette permanent ni de rechargement à chaque visite
+
+Avec un compte sans aucun disque, l'onglet Stats restait sur le squelette gris : il n'était levé que si le cache de la collection contenait des éléments. Il disparaît maintenant dès que les réponses réseau sont arrivées. La fraîcheur du cache est lue sur la date de dernière synchro plutôt que sur son contenu, ce qui évite de recharger toute la collection vide (et d'afficher des spinners) à chaque retour sur l'onglet. Cas manuel I31 ajouté. 3 fichiers.
+
 ### 14:36 — Paywall : contenu compact, essai gratuit et économie de l'annuel visibles
 
 Le paywall obligeait à défiler pour voir les forfaits. Le contenu marketing (nouveau `PaywallMarketingContent`) est compacté : illustration réduite, trois avantages au lieu de quatre. Deux lignes annoncent l'essai gratuit de l'annuel (seulement si la personne y est éligible) et l'économie face au mensuel, calculée d'après les prix StoreKit (`yearlySavingsPercent`, testé par `YearlySavingsTests`). Cas manuel L43 mis à jour. 7 fichiers, +332 −278.
