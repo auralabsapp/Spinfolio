@@ -34,8 +34,18 @@ final class StatsMasterYearsResolver {
     /// Recalcule la répartition pour cette collection, puis lance la résolution des masters
     /// dont l'année manque encore.
     func update(for items: [CollectionItem]) {
-        guard !items.isEmpty else { return }
         self.items = items
+        // Collection vidée (dernier disque retiré) : la répartition précédente ne doit pas rester
+        // affichée. Auparavant, ce cas retournait tout de suite et laissait l'ancien graphique.
+        guard !items.isEmpty else {
+            task?.cancel()
+            task = nil
+            withAnimation(.statsContentChange) { distribution = [] }
+            isResolving = false
+            progress = 1.0
+            missingCount = 0
+            return
+        }
         withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
             distribution = StatsViewModel.originalYears(of: items, masterYears: masterYears)
         }

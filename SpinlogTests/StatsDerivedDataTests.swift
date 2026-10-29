@@ -93,4 +93,18 @@ struct StatsDerivedDataTests {
     @Test func anUnknownWantlistCountStaysUnknown() {
         #expect(StatsCollectionChanges.wantlistCount(nil, adding: 1) == nil)
     }
+
+    // MARK: - Collection vidée
+
+    @Test func originalYearsAreClearedWhenTheCollectionBecomesEmpty() throws {
+        let resolver = StatsMasterYearsResolver()
+        // Sans master : toutes les années sont connues, aucune résolution réseau n'est lancée.
+        resolver.update(for: [try item(1, release: 1, year: 1990)])
+        #expect(resolver.distribution.map(\.year) == [1990])
+
+        resolver.update(for: [])
+        #expect(resolver.distribution.isEmpty)
+        #expect(!resolver.isResolving)
+        #expect(resolver.missingCount == 0)
+    }
 }
