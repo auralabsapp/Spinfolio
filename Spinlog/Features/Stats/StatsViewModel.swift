@@ -228,7 +228,7 @@ final class StatsViewModel {
         // intermédiaire (voir `isLoadingHistogram`, `countersRow`).
         isLoadingOverview = cached.isEmpty
 
-        startHistogramLoad(hasFreshCache: !cached.isEmpty)
+        startHistogramLoad()
 
         // Compteurs et valeur : redemandés à Discogs au plus toutes les 5 min (voir
         // `ReloadThrottle`), au lieu de 4 requêtes à chaque visite de l'onglet.
@@ -241,6 +241,10 @@ final class StatsViewModel {
         } else {
             await computeTotalInvestedIfNeeded()
         }
+        // Une collection réellement vide n'a jamais de cache à appliquer : sans cette ligne, le
+        // squelette restait affiché indéfiniment. Une fois les réponses (ou l'échec) reçues, on
+        // sait que le contenu, même vide, peut s'afficher.
+        isLoadingOverview = false
     }
 
     /// Compteurs Collection/Wantlist + derniers ajouts : 3 appels légers (`per_page` réduit),
@@ -304,11 +308,13 @@ final class StatsViewModel {
 
     /// Recharge toute la collection depuis Discogs si le cache local est périmé (ou vide). Le
     /// cache, lui, a déjà été appliqué par `loadOverview` pour un affichage immédiat.
-    private func startHistogramLoad(hasFreshCache: Bool) {
+    private func startHistogramLoad() {
         histogramTask?.cancel()
         guard let username = authManager.username else { return }
 
-        if hasFreshCache && !localStore.isCollectionStale(username: username, folderId: DiscogsConstants.allFolderId) {
+        // Fraîcheur lue sur la date de dernière synchro, pas sur le contenu du cache : une collection
+        // vide est légitimement « fraîche », sinon elle était rechargée (spinners) à chaque visite.
+        if !localStore.isCollectionStale(username: username, folderId: DiscogsConstants.allFolderId) {
             return
         }
 
