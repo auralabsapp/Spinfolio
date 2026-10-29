@@ -35,12 +35,13 @@ struct LibraryEmptyLibraryState: View {
     let title: LocalizedStringKey
     let message: LocalizedStringKey
     let symbol: String
+    var scene: LibraryEmptyScene? = nil
     let onRefresh: () async -> Void
 
     var body: some View {
         ScrollView {
-            LibraryEmptyState(title: title, message: message, symbol: symbol) {
-                Button("Rechercher un disque") {
+            LibraryEmptyState(title: title, message: message, symbol: symbol, scene: scene) {
+                Button("Cherche ou scanne un album") {
                     TabNavigationCoordinator.shared.selectedTab = .search
                 }
                 .buttonStyle(.glassProminent)

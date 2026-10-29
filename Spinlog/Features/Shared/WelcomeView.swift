@@ -1,14 +1,5 @@
 import SwiftUI
 
-/// Pochettes d'accueil fournies avec l'app (jeu d'images `WelcomeCover1` à `WelcomeCover6` du
-/// catalogue d'assets) : aucune dépendance à Discogs pour l'écran de connexion. Les images absentes
-/// sont ignorées, l'écran fonctionne aussi sans aucune pochette.
-private enum WelcomeCovers {
-    static let names: [String] = (1...6)
-        .map { "WelcomeCover\($0)" }
-        .filter { UIImage(named: $0) != nil }
-}
-
 /// Écran d'accueil plein écran, posé par `RootTabView` par-dessus les onglets (barre d'onglets
 /// comprise) tant que l'utilisateur n'est pas connecté : disque qui tourne entouré de pochettes qui
 /// flottent, nom de l'app, accroches qui défilent et actions de connexion.
@@ -17,6 +8,8 @@ struct WelcomeView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var appeared = false
     @State private var taglineIndex = 0
+    /// Pochettes tirées au hasard à chaque affichage de l'écran, parmi toutes celles embarquées.
+    @State private var covers = Array(WelcomeCovers.names.shuffled().prefix(6))
 
     private static let taglines: [LocalizedStringKey] = [
         "Ta collection, à portée de main",
@@ -111,7 +104,7 @@ struct WelcomeView: View {
             TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: reduceMotion)) { timeline in
                 let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
                 ZStack {
-                    ForEach(Array(zip(WelcomeCovers.names, Self.slots).enumerated()), id: \.offset) { _, pair in
+                    ForEach(Array(zip(covers, Self.slots).enumerated()), id: \.offset) { _, pair in
                         floatingCover(named: pair.0, slot: pair.1, time: time)
                     }
                 }

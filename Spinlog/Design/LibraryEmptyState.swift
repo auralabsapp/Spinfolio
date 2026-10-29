@@ -66,12 +66,14 @@ struct LibraryEmptyState<Actions: View>: View {
     let title: LocalizedStringKey
     let message: LocalizedStringKey
     let symbol: String
+    /// Mise en scène du disque avec les pochettes embarquées ; sans aucune pochette, le disque seul.
+    var scene: LibraryEmptyScene? = nil
     @ViewBuilder let actions: () -> Actions
 
     var body: some View {
         ContentUnavailableView {
             VStack(spacing: 14) {
-                EmptyStateDisc(symbol: symbol)
+                illustration
                     .padding(.bottom, 4)
                 Text(title)
                     .font(.title2.bold())
@@ -80,6 +82,19 @@ struct LibraryEmptyState<Actions: View>: View {
             Text(message)
         } actions: {
             actions()
+        }
+    }
+
+    @ViewBuilder
+    private var illustration: some View {
+        if WelcomeCovers.names.isEmpty {
+            EmptyStateDisc(symbol: symbol)
+        } else {
+            switch scene {
+            case .shelf: EmptyShelfScene(symbol: symbol)
+            case .wishes: EmptyWishesScene(symbol: symbol)
+            case nil: EmptyStateDisc(symbol: symbol)
+            }
         }
     }
 }

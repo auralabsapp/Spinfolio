@@ -2871,6 +2871,7 @@
       }
     },
     "Ajoute des disques depuis la recherche ou le scan." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2880,7 +2881,19 @@
         }
       }
     },
+    "Ajoute des disques en les cherchant par leur nom, ou en scannant leur code-barres." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Add records by searching for their name or scanning their barcode."
+          }
+        }
+      }
+    },
     "Ajoute des disques que tu recherches depuis la recherche ou le scan." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2896,6 +2909,37 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Added on %@"
+          }
+        }
+      }
+    },
+    "Ajoute les albums que tu veux : recherche-les (artiste, titre, label, code-barres) ou scanne-les." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Add the albums you want: search for them (artist, title, label, barcode) or scan them."
+          }
+        }
+      }
+    },
+    "Ajoute les disques que tu cherches, par leur nom ou en scannant leur code-barres." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Add the records you’re looking for by searching their name or scanning their barcode."
+          }
+        }
+      }
+    },
+    "Ajoute tes albums : recherche-les (artiste, titre, label, code-barres) ou scanne-les." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Add your albums: search for them (artist, title, label, barcode) or scan them."
           }
         }
       }
@@ -4374,6 +4418,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Loading Discogs marketplace…"
+          }
+        }
+      }
+    },
+    "Cherche ou scanne un album" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Search or Scan an Album"
           }
         }
       }
@@ -10951,6 +11005,7 @@
       }
     },
     "Rechercher un disque" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

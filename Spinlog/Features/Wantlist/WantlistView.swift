@@ -444,8 +444,9 @@ struct WantlistView: View {
         } else if viewModel.items.isEmpty && !viewModel.isLoading {
             LibraryEmptyLibraryState(
                 title: "Wantlist vide",
-                message: "Ajoute des disques que tu recherches depuis la recherche ou le scan.",
-                symbol: "heart.fill"
+                message: "Ajoute les albums que tu veux : recherche-les (artiste, titre, label, code-barres) ou scanne-les.",
+                symbol: "heart.fill",
+                scene: .wishes
             ) { await viewModel.refresh() }
         } else if viewModel.sections.isEmpty && !isShowingSkeleton {
             LibraryNoResultsState(isOfflineAndStale: viewModel.isOfflineAndStale, searchText: viewModel.searchText) {

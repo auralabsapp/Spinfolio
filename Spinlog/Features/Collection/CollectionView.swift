@@ -348,8 +348,9 @@ struct CollectionView: View {
         } else if viewModel.items.isEmpty && !viewModel.isLoading && !viewModel.isAwaitingFirstLoad {
             LibraryEmptyLibraryState(
                 title: "Collection vide",
-                message: "Ajoute des disques depuis la recherche ou le scan.",
-                symbol: "square.stack.fill"
+                message: "Ajoute tes albums : recherche-les (artiste, titre, label, code-barres) ou scanne-les.",
+                symbol: "square.stack.fill",
+                scene: .shelf
             ) { await viewModel.refresh() }
         } else if viewModel.display.sections.isEmpty && !isShowingSkeleton {
             LibraryNoResultsState(isOfflineAndStale: viewModel.isOfflineAndStale, searchText: viewModel.display.searchText) {
