@@ -163,6 +163,9 @@ final class DiscogsAuthManager: NSObject {
         keychain.remove(Keys.accessTokenSecret)
         keychain.remove(Keys.username)
         keychain.remove(Keys.avatarURL)
+        // Avant de passer à `isAuthenticated = false` : la pile de Collection est recréée à ce
+        // changement (voir `RootTabView`), elle doit l'être sans fiche déjà empilée.
+        TabNavigationCoordinator.shared.resetNavigationPaths()
         isAuthenticated = false
         username = nil
         avatarURL = nil

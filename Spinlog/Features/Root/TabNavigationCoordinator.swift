@@ -41,6 +41,15 @@ final class TabNavigationCoordinator {
     /// Revient à la racine de Collection et vide les piles de navigation des autres onglets.
     func showCollectionRoot() {
         selectedTab = .collection
+        resetNavigationPaths()
+    }
+
+    /// Vide la pile de navigation de chaque onglet, sans changer d'onglet. Appelé à la déconnexion
+    /// (voir `DiscogsAuthManager.logout`) : une fiche restée ouverte (celle d'un disque de la démo,
+    /// par exemple) réapparaissait après la connexion suivante, et la pile de Collection, recréée
+    /// à ce moment-là avec cette fiche déjà empilée, perdait sa police serif, son grand titre qui se
+    /// réduit au défilement et sa barre opaque.
+    func resetNavigationPaths() {
         collectionPath = NavigationPath()
         wantlistPath = NavigationPath()
         statsPath = NavigationPath()
