@@ -9,6 +9,14 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-10-29 — Synchro iCloud, connexion et titre de Collection
 
+### 19:03 — Stats : « Sorties originales » se vide avec la collection
+
+Après le retrait du dernier disque de la collection, le graphique « Sorties originales » gardait l'ancienne barre : `StatsMasterYearsResolver.update(for:)` sortait tout de suite sur une liste vide. La répartition est maintenant vidée et la résolution des masters annulée. Test ajouté. Cas manuels E25 et étape 6 de I31. 4 fichiers.
+
+### 19:03 — Wantlist : un disque retiré ne revient plus dans la liste
+
+Retiré depuis la fiche, un disque réapparaissait dans la liste de l'onglet Wantlist (et n'en repartait qu'au prochain lancement) : un rechargement recevait une réponse de Discogs encore en retard, et la liste fusionne les pages reçues, donc ne retirait jamais rien. Les disques retirés sont écartés des réponses pendant 2 minutes au plus (`WantlistRemovalGrace`, testé). Reproduit et vérifié au simulateur sur un compte vierge. 3 fichiers.
+
 ### 18:31 — Stats : le compteur de la wantlist suit les ajouts et retraits
 
 Le compteur « Wantlist » de l'onglet Stats ne se mettait à jour qu'au rechargement des compteurs (au plus toutes les 5 minutes) : un disque ajouté à la wantlist laissait « 0 album » affiché. Il suit maintenant les ajouts et retraits faits ailleurs dans l'app (`StatsCollectionChanges.wantlistCount`, jamais sous zéro, inconnu tant que les compteurs ne sont pas chargés). Étape 5 ajoutée au cas manuel I31. 5 fichiers.
