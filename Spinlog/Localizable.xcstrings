@@ -551,6 +551,22 @@
         }
       }
     },
+    "%@, puis %@ par an. Renouvelé automatiquement jusqu'à ce que tu l'annules." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "%1$@, then %2$@ per year. Renews automatically until you cancel."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, puis %2$@ par an. Renouvelé automatiquement jusqu'à ce que tu l'annules."
+          }
+        }
+      }
+    },
     "%@, stable" : {
       "localizations" : {
         "en" : {
@@ -2211,6 +2227,16 @@
         }
       }
     },
+    "−%lld %%" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "−%lld%%"
+          }
+        }
+      }
+    },
     "≤ %@" : {
       "localizations" : {
         "en" : {
@@ -3221,6 +3247,16 @@
         }
       }
     },
+    "Annuel" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Yearly"
+          }
+        }
+      }
+    },
     "Annuler" : {
       "localizations" : {
         "en" : {
@@ -3558,6 +3594,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "No active Apple Music subscription: only 30-second previews are played."
+          }
+        }
+      }
+    },
+    "Aucun achat à restaurer pour ce compte Apple." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "There’s no purchase to restore for this Apple account."
           }
         }
       }
@@ -4640,6 +4686,16 @@
         }
       }
     },
+    "Commencer l'essai gratuit" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Start Free Trial"
+          }
+        }
+      }
+    },
     "Comment ça fonctionne ?" : {
       "localizations" : {
         "en" : {
@@ -4726,6 +4782,26 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Counters, recent additions and your collection’s estimated value."
+          }
+        }
+      }
+    },
+    "Conditions d'utilisation" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Terms of Use"
+          }
+        }
+      }
+    },
+    "Confidentialité" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Privacy"
           }
         }
       }
@@ -6047,6 +6123,7 @@
       }
     },
     "Économise %lld %% avec l'abonnement annuel" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8024,6 +8101,16 @@
         }
       }
     },
+    "La restauration a échoué. Vérifie ta connexion et réessaie." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Restoring failed. Check your connection and try again."
+          }
+        }
+      }
+    },
     "La synchro auto ne se lance jamais en 4G/5G, et au plus une fois toutes les 6 heures." : {
       "localizations" : {
         "en" : {
@@ -8425,6 +8512,16 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Les abonnements ne sont pas disponibles pour le moment." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Subscriptions aren’t available right now."
           }
         }
       }
@@ -8873,6 +8970,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Music Lover"
+          }
+        }
+      }
+    },
+    "Mensuel" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Monthly"
           }
         }
       }
@@ -9752,6 +9859,16 @@
         }
       }
     },
+    "par an" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "per year"
+          }
+        }
+      }
+    },
     "Par année" : {
       "localizations" : {
         "en" : {
@@ -9778,6 +9895,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "By default, the guide compares against your whole collection, all folders combined."
+          }
+        }
+      }
+    },
+    "par mois" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "per month"
           }
         }
       }
@@ -11004,6 +11131,26 @@
         }
       }
     },
+    "Renouvelé automatiquement à %@ par an jusqu'à ce que tu l'annules." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Renews automatically at %@ per year until you cancel."
+          }
+        }
+      }
+    },
+    "Renouvelé automatiquement à %@ par mois jusqu'à ce que tu l'annules." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Renews automatically at %@ per month until you cancel."
+          }
+        }
+      }
+    },
     "Renseigne le prix d'achat de tes exemplaires." : {
       "localizations" : {
         "en" : {
@@ -11130,6 +11277,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Premium only. Double-tap to see the offer."
+          }
+        }
+      }
+    },
+    "Restaurer un achat" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Restore Purchase"
           }
         }
       }
@@ -11264,6 +11421,16 @@
         }
       }
     },
+    "S'abonner" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Subscribe"
+          }
+        }
+      }
+    },
     "S'applique à tous les tris par artiste (meuble, Collection, Wantlist)" : {
       "localizations" : {
         "en" : {
@@ -11290,6 +11457,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Without signing in, a 30 s preview is still available."
+          }
+        }
+      }
+    },
+    "sans engagement" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "No commitment"
           }
         }
       }
@@ -11550,6 +11727,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Get alerted when a record on your wantlist drops below your price."
+          }
+        }
+      }
+    },
+    "soit %@ par mois" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "That's %@ per month"
           }
         }
       }
@@ -13041,6 +13228,17 @@
         }
       }
     },
+    "Ton achat a été restauré : Premium est activé." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your purchase has been restored: Premium is now active."
+          }
+        }
+      }
+    },
     "Ton achat est en attente de validation (par exemple si \"Demander à acheter\" est activé sur ce compte). Tu seras averti dès qu'il sera approuvé." : {
       "localizations" : {
         "en" : {
@@ -13956,7 +14154,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Redeem a Code"
+            "value" : "Redeem Code"
           }
         }
       }

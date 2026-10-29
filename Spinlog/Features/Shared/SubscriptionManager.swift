@@ -40,6 +40,7 @@ final class SubscriptionManager {
     private(set) var errorMessage: String? = nil
 
     private var transactionListenerTask: Task<Void, Never>? = nil
+    private var storefrontListenerTask: Task<Void, Never>? = nil
 
     // MARK: - Diagnostic (environnements de test uniquement, voir `SubscriptionDiagnosticSection`)
 
@@ -77,6 +78,7 @@ final class SubscriptionManager {
 
     private init() {
         startTransactionListener()
+        startStorefrontListener()
     }
 
     /// Démarre la surveillance continue des transactions StoreKit 2 et synchronise le statut initial
@@ -91,6 +93,19 @@ final class SubscriptionManager {
     }
 
     // MARK: - Écoute des transactions en arrière-plan
+
+    /// Un prix StoreKit est une photo prise à un instant : si la boutique change (autre pays, autre compte,
+    /// compte de test), les produits déjà chargés gardent l'ancienne devise alors que la feuille d'achat
+    /// d'Apple affiche la nouvelle. On les recharge donc à chaque changement de boutique.
+    private func startStorefrontListener() {
+        storefrontListenerTask?.cancel()
+        storefrontListenerTask = Task { [weak self] in
+            for await _ in Storefront.updates {
+                guard !Task.isCancelled else { return }
+                await self?.loadProducts()
+            }
+        }
+    }
 
     private func startTransactionListener() {
         transactionListenerTask?.cancel()
@@ -373,6 +388,14 @@ final class SubscriptionManager {
         return Self.yearlySavingsPercent(yearly: yearly.price, monthly: monthly.price)
     }
 
+    /// Équivalent mensuel de l'abonnement annuel (prix annuel ÷ 12), dans la devise de la boutique.
+    var yearlyMonthlyEquivalentString: String? {
+        guard let yearly = yearlyProduct else { return nil }
+        // Réglages de nombres de l'appareil (virgule ou point), pas ceux de la boutique de l'App Store :
+        // comme `displayPrice`, qui s'affiche déjà ainsi à côté.
+        return (yearly.price / 12).formatted(yearly.priceFormatStyle.locale(.autoupdatingCurrent))
+    }
+
     /// Prix mensuel le plus bas proposé (équivalent mensuel de l'annuel), formaté dans la devise
     /// de la boutique de l'utilisateur ; `nil` tant que les produits StoreKit ne sont pas chargés.
     /// Remplace un prix codé en dur, faux hors zone euro et à chaque changement de tarif.
@@ -381,7 +404,8 @@ final class SubscriptionManager {
                           monthlyProduct.map { ($0.price, $0.priceFormatStyle) }]
             .compactMap { $0 }
         guard let lowest = candidates.min(by: { $0.0 < $1.0 }) else { return nil }
-        return lowest.0.formatted(lowest.1)
+        // Réglages de nombres de l'appareil, pas ceux de la boutique (voir `yearlyMonthlyEquivalentString`).
+        return lowest.0.formatted(lowest.1.locale(.autoupdatingCurrent))
     }
 
     nonisolated static func verify<T>(_ result: VerificationResult<T>) throws -> T {

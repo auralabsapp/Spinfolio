@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Lien secondaire du paywall, sous les abonnements : l'achat unique « Premium pour toujours ».
-/// `SubscriptionStoreView` ne présente que des abonnements, d'où ce lien à part, volontairement
+/// Ce n'est pas un abonnement (pas de période ni d'essai), d'où ce lien à part, volontairement
 /// discret pour ne pas faire concurrence à l'annuel (et son essai). Le prix vient de StoreKit
 /// (`Product.displayPrice`), jamais écrit en dur. Aucun texte d'essai : l'achat à vie n'en a pas.
 struct PaywallLifetimeRow: View {

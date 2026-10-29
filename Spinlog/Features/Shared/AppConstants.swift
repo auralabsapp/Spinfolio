@@ -132,5 +132,7 @@ nonisolated enum AppMessages {
     static var lifetimeKeepsSubscription: String { String(localized: "Tu as Premium pour toujours. Ton abonnement n'est pas résilié automatiquement : résilie-le pour ne plus être facturé.") }
     static var offerCodeRedeemed: String { String(localized: "Code utilisé : ton Premium est activé.") }
     static var offerCodeFailed: String { String(localized: "Le code n'a pas pu être utilisé. Vérifie-le et réessaie.") }
+    static var restoreNothingFound: String { String(localized: "Aucun achat à restaurer pour ce compte Apple.") }
+    static var restoreFailed: String { String(localized: "La restauration a échoué. Vérifie ta connexion et réessaie.") }
     static var purchaseVerificationFailed: String { String(localized: "L'achat n'a pas pu être vérifié auprès de l'App Store.") }
 }

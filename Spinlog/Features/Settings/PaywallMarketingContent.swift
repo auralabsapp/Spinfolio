@@ -1,14 +1,12 @@
 import SwiftUI
-import StoreKit
 
-/// Contenu marketing du paywall (`SpinlogPaywallView`), posé par `SubscriptionStoreView` au-dessus des
-/// forfaits : illustration, titre et avantages. Les marges viennent du conteneur de StoreKit ; le
-/// fond, lui, est posé par `SpinlogPaywallView` (`containerBackground`).
+/// Contenu marketing du paywall (`SpinlogPaywallView`), au-dessus des forfaits : illustration, titre,
+/// essai gratuit (si éligible) et avantages. Les marges et le fond sont posés par `SpinlogPaywallView`.
 struct PaywallMarketingContent: View {
     @Binding var showsAllFeatures: Bool
-    @State private var subscriptionManager = SubscriptionManager.shared
-    /// L'essai n'est annoncé qu'aux personnes qui y sont éligibles (vérifié auprès de StoreKit).
-    @State private var isEligibleForTrial = false
+    /// Texte d'essai gratuit de l'annuel, `nil` si la personne n'y est pas éligible (vérifié par
+    /// `SpinlogPaywallView` auprès de StoreKit) : jamais annoncé à tort.
+    let trialText: String?
 
     private var isIPad: Bool {
         UIDevice.current.userInterfaceIdiom == .pad
@@ -67,33 +65,18 @@ struct PaywallMarketingContent: View {
             .padding(.horizontal, 6)
         }
         .padding(.bottom, 4)
-        .task(id: subscriptionManager.yearlyProduct?.id) {
-            guard let subscription = subscriptionManager.yearlyProduct?.subscription else { return }
-            isEligibleForTrial = await subscription.isEligibleForIntroOffer
-        }
     }
 
-    /// Ce que les forfaits ne disent pas d'eux-mêmes : l'essai gratuit de l'annuel et l'économie
-    /// face au mensuel. Visibles sans défiler, au-dessus du sélecteur.
+    /// Essai gratuit de l'annuel, visible sans défiler (l'économie, elle, est dans la carte du forfait
+    /// annuel : voir `PaywallPlanCard`).
     @ViewBuilder
     private var offerHighlights: some View {
-        let trial = isEligibleForTrial ? subscriptionManager.freeTrialText(for: .yearly) : nil
-        let savings = subscriptionManager.yearlySavingsPercent
-        if trial != nil || savings != nil {
-            VStack(spacing: 2) {
-                if let trial {
-                    Text(trial)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Color.goldText)
-                }
-                if let savings {
-                    Text("Économise \(savings) % avec l'abonnement annuel")
-                        .font(.footnote)
-                        .foregroundStyle(Color.appSecondaryText)
-                }
-            }
-            .multilineTextAlignment(.center)
-            .padding(.top, 4)
+        if let trialText {
+            Text(trialText)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Color.goldText)
+                .multilineTextAlignment(.center)
+                .padding(.top, 4)
         }
     }
 
@@ -109,7 +92,7 @@ struct PaywallMarketingContent: View {
                 Text(feature.description)
                     .font(.footnote)
                     .foregroundStyle(Color.appSecondaryText)
-                    .lineLimit(2)
+                    .lineLimit(3)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
@@ -268,7 +251,7 @@ struct PaywallHeroArtwork: View {
 
 #Preview {
     ScrollView {
-        PaywallMarketingContent(showsAllFeatures: .constant(false))
+        PaywallMarketingContent(showsAllFeatures: .constant(false), trialText: "1 semaine d'essai gratuit")
             .padding(.horizontal, 20)
     }
     .background(Color.appBackground)
