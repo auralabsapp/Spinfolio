@@ -3,6 +3,8 @@ import Foundation
 extension Notification.Name {
     static let collectionPreferencesChanged = Notification.Name("com.spinlog.collectionPreferencesChanged")
     static let lastConsultedFolderChanged = Notification.Name("com.spinlog.lastConsultedFolderChanged")
+    /// Tri de la Wantlist modifié depuis iCloud (un autre appareil) : `WantlistViewModel` le réapplique.
+    static let wantlistPreferencesChanged = Notification.Name("com.spinlog.wantlistPreferencesChanged")
 }
 
 /// Gère la mémorisation et la persistance des préférences de collection par utilisateur :
@@ -110,7 +112,9 @@ enum CollectionPreferencesStore {
     }
 
     static func setSortOption(_ option: CollectionSortOption?, for username: String) {
+        let changed = option != sortOption(for: username)
         setValue(option?.rawValue, forKey: key("sortOption", for: username))
+        if changed { CloudSyncEngine.shared.markCollectionPreferencesDirty() }
     }
 
     /// `nil` tant que l'utilisateur n'a jamais modifié le sens de tri : l'appelant retombe alors
@@ -121,7 +125,33 @@ enum CollectionPreferencesStore {
     }
 
     static func setSortAscending(_ ascending: Bool, for username: String) {
+        let changed = ascending != sortAscending(for: username)
         setValue(ascending ? 1 : 0, forKey: key("sortAscending", for: username))
+        if changed { CloudSyncEngine.shared.markCollectionPreferencesDirty() }
+    }
+
+    // MARK: - Tri de la Wantlist
+
+    static func wantlistSortOption(for username: String) -> CollectionSortOption? {
+        guard let raw = UserDefaults.standard.string(forKey: key("wantlistSortOption", for: username)) else { return nil }
+        return CollectionSortOption(rawValue: raw)
+    }
+
+    static func setWantlistSortOption(_ option: CollectionSortOption?, for username: String) {
+        let changed = option != wantlistSortOption(for: username)
+        setValue(option?.rawValue, forKey: key("wantlistSortOption", for: username))
+        if changed { CloudSyncEngine.shared.markCollectionPreferencesDirty() }
+    }
+
+    static func wantlistSortAscending(for username: String) -> Bool? {
+        guard let value = intValue(forKey: key("wantlistSortAscending", for: username)) else { return nil }
+        return value == 1
+    }
+
+    static func setWantlistSortAscending(_ ascending: Bool, for username: String) {
+        let changed = ascending != wantlistSortAscending(for: username)
+        setValue(ascending ? 1 : 0, forKey: key("wantlistSortAscending", for: username))
+        if changed { CloudSyncEngine.shared.markCollectionPreferencesDirty() }
     }
 
     // MARK: - Critères de filtre
@@ -210,6 +240,83 @@ enum CollectionPreferencesStore {
         setValue(purchasePriceFieldId, forKey: key("purchasePriceFieldId", for: username))
         setValue(mediaConditionFieldId, forKey: key("mediaConditionFieldId", for: username))
         setValue(defaultAddFolderId, forKey: key("defaultAddFolderId", for: username), notify: true)
+    }
+
+    // MARK: - Mode d'affichage et tri, synchronisés (iCloud)
+
+    /// Modes d'affichage (valeurs brutes) tels que connus d'iCloud en dernier : un changement local
+    /// n'est signalé que s'il diffère, ce qui évite de renvoyer un mode qu'on vient de recevoir.
+    private struct DisplayModes: Equatable {
+        var collection: String?
+        var wantlist: String?
+    }
+    private static var lastSyncedDisplayModes = DisplayModes()
+
+    private static var currentDisplayModes: DisplayModes {
+        DisplayModes(
+            collection: displayModeRawValue(forKey: DisplayPreferenceKeys.collection),
+            wantlist: displayModeRawValue(forKey: DisplayPreferenceKeys.wantlist)
+        )
+    }
+
+    /// Mode d'affichage mémorisé de l'onglet (clé de `DisplayPreferenceKeys`), `nil` s'il n'a jamais été choisi.
+    static func displayModeRawValue(forKey key: String) -> String? {
+        UserDefaults.standard.string(forKey: key)
+    }
+
+    /// Appelé quand l'utilisateur change de mode d'affichage (Collection ou Wantlist).
+    static func displayModesDidChange() {
+        guard currentDisplayModes != lastSyncedDisplayModes else { return }
+        lastSyncedDisplayModes = currentDisplayModes
+        CloudSyncEngine.shared.markCollectionPreferencesDirty()
+    }
+
+    /// Les modes d'affichage actuels viennent d'être envoyés à iCloud (ou reçus de lui).
+    static func noteDisplayModesSynced() {
+        lastSyncedDisplayModes = currentDisplayModes
+    }
+
+    /// Applique le mode d'affichage et le tri reçus d'iCloud. Une valeur absente (appareil sur une version
+    /// antérieure) ou inconnue (réglage d'une version plus récente) laisse la valeur locale en place.
+    /// N'écrit qu'en local, sans renvoi. Le tri de la Collection passe par `.collectionPreferencesChanged`
+    /// (qui relit le tri mémorisé et recharge la page 1), celui de la Wantlist par
+    /// `.wantlistPreferencesChanged`, et chaque notification n'est postée que si quelque chose a changé.
+    static func applyRemoteViewPreferences(_ prefs: SyncedCollectionPreferences, for username: String) {
+        let defaults = UserDefaults.standard
+        for (raw, defaultsKey) in [
+            (prefs.collectionDisplayMode, DisplayPreferenceKeys.collection),
+            (prefs.wantlistDisplayMode, DisplayPreferenceKeys.wantlist)
+        ] {
+            guard let raw, LibraryDisplayMode(rawValue: raw) != nil, defaults.string(forKey: defaultsKey) != raw else { continue }
+            defaults.set(raw, forKey: defaultsKey)
+        }
+        noteDisplayModesSynced()
+
+        var collectionChanged = false
+        if let raw = prefs.collectionSortOption, let option = CollectionSortOption(rawValue: raw), option != sortOption(for: username) {
+            setValue(option.rawValue, forKey: key("sortOption", for: username))
+            collectionChanged = true
+        }
+        if let ascending = prefs.collectionSortAscending, ascending != sortAscending(for: username) {
+            setValue(ascending ? 1 : 0, forKey: key("sortAscending", for: username))
+            collectionChanged = true
+        }
+        if collectionChanged {
+            NotificationCenter.default.post(name: .collectionPreferencesChanged, object: nil)
+        }
+
+        var wantlistChanged = false
+        if let raw = prefs.wantlistSortOption, let option = CollectionSortOption(rawValue: raw), option != wantlistSortOption(for: username) {
+            setValue(option.rawValue, forKey: key("wantlistSortOption", for: username))
+            wantlistChanged = true
+        }
+        if let ascending = prefs.wantlistSortAscending, ascending != wantlistSortAscending(for: username) {
+            setValue(ascending ? 1 : 0, forKey: key("wantlistSortAscending", for: username))
+            wantlistChanged = true
+        }
+        if wantlistChanged {
+            NotificationCenter.default.post(name: .wantlistPreferencesChanged, object: nil)
+        }
     }
 
     /// Dossier d'ajout par défaut supprimé entre-temps (dans l'app ou sur discogs.com) : retour à

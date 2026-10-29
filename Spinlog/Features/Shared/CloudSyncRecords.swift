@@ -117,15 +117,48 @@ nonisolated enum SyncedRecordKind: Equatable {
 }
 
 /// Instantané synchronisable des préférences de collection "durables" (voir
-/// `CollectionPreferencesStore`) : uniquement celles qui ont du sens à retrouver identiques sur
-/// tous les appareils (devise, champs de suivi de cote, dossier d'ajout par défaut) — pas le
-/// tri/filtre actif ni le dernier dossier consulté, qui restent volontairement propres à chaque
-/// appareil.
+/// `CollectionPreferencesStore`) : devise, champs de suivi de cote, dossier d'ajout par défaut, et
+/// l'affichage de chaque bibliothèque (mode Liste/Mosaïque/Carrousel et tri de la Collection et de la
+/// Wantlist). Le filtre actif et le dernier dossier consulté restent propres à chaque appareil.
+///
+/// Les réglages d'affichage sont des champs facultatifs de la même charge utile : aucun nouveau champ ni
+/// type CloudKit (pas de déploiement de schéma), et un appareil sur une version antérieure les ignore à
+/// la lecture, comme un appareil récent lit sans erreur une charge utile qui n'en contient pas.
 struct SyncedCollectionPreferences: Codable, Sendable {
     let defaultCurrency: String
     let purchasePriceFieldId: Int?
     let mediaConditionFieldId: Int?
     let defaultAddFolderId: Int
+    let collectionDisplayMode: String?
+    let collectionSortOption: String?
+    let collectionSortAscending: Bool?
+    let wantlistDisplayMode: String?
+    let wantlistSortOption: String?
+    let wantlistSortAscending: Bool?
+
+    init(
+        defaultCurrency: String,
+        purchasePriceFieldId: Int?,
+        mediaConditionFieldId: Int?,
+        defaultAddFolderId: Int,
+        collectionDisplayMode: String? = nil,
+        collectionSortOption: String? = nil,
+        collectionSortAscending: Bool? = nil,
+        wantlistDisplayMode: String? = nil,
+        wantlistSortOption: String? = nil,
+        wantlistSortAscending: Bool? = nil
+    ) {
+        self.defaultCurrency = defaultCurrency
+        self.purchasePriceFieldId = purchasePriceFieldId
+        self.mediaConditionFieldId = mediaConditionFieldId
+        self.defaultAddFolderId = defaultAddFolderId
+        self.collectionDisplayMode = collectionDisplayMode
+        self.collectionSortOption = collectionSortOption
+        self.collectionSortAscending = collectionSortAscending
+        self.wantlistDisplayMode = wantlistDisplayMode
+        self.wantlistSortOption = wantlistSortOption
+        self.wantlistSortAscending = wantlistSortAscending
+    }
 }
 
 /// Instantané synchronisable des préférences de rangement (voir `ShelfPreferencesStore`) : la

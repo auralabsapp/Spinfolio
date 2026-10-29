@@ -126,6 +126,10 @@ struct CollectionView: View {
                     .presentationDragIndicator(.visible)
             }
 
+            .onChange(of: displayMode) {
+                // Mode d'affichage mémorisé et synchronisé entre appareils (iCloud, Premium).
+                CollectionPreferencesStore.displayModesDidChange()
+            }
             .task(id: authManager.isAuthenticated) {
                 if authManager.isAuthenticated {
                     await viewModel.loadOnAppear()

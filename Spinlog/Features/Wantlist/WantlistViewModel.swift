@@ -32,16 +32,25 @@ final class WantlistViewModel {
     var sortOption: CollectionSortOption = .added {
         didSet {
             guard oldValue != sortOption else { return }
-            sortAscending = sortOption.defaultAscending
+            // Pendant un rétablissement (tri mémorisé ou réinitialisation), le sens est fixé par
+            // l'appelant et rien n'est rechargé ni enregistré : la valeur vient déjà de là.
+            if !isRestoringSort { sortAscending = sortOption.defaultAscending }
             recomputeSections()
+            guard !isRestoringSort else { return }
+            persistSort()
             Task { await loadFirstPage() }
         }
     }
+
+    /// Vrai pendant `restoreSavedSort` et `reset` : le tri change sans être un choix de l'utilisateur.
+    @ObservationIgnored private var isRestoringSort = false
 
     var sortAscending: Bool = CollectionSortOption.added.defaultAscending {
         didSet {
             guard oldValue != sortAscending else { return }
             recomputeSections()
+            guard !isRestoringSort else { return }
+            persistSort()
             Task { await loadFirstPage() }
         }
     }
@@ -98,8 +107,37 @@ final class WantlistViewModel {
         searchText = ""
         selectedTags.removeAll()
         selectedFormat = nil
+        isRestoringSort = true
         sortOption = .added
         sortAscending = CollectionSortOption.added.defaultAscending
+        isRestoringSort = false
+    }
+
+    /// Tri mémorisé pour ce compte (propre à la Wantlist, synchronisé par iCloud) : mémorisé à chaque
+    /// choix de l'utilisateur, envoyé à iCloud par le magasin de préférences.
+    private func persistSort() {
+        guard let username = authManager.username else { return }
+        CollectionPreferencesStore.setWantlistSortOption(sortOption, for: username)
+        CollectionPreferencesStore.setWantlistSortAscending(sortAscending, for: username)
+    }
+
+    /// Rétablit le tri mémorisé du compte, sans enregistrement ni rechargement. Renvoie vrai si le tri a changé.
+    @discardableResult
+    private func restoreSavedSort(username: String) -> Bool {
+        let savedOption = CollectionPreferencesStore.wantlistSortOption(for: username) ?? sortOption
+        let savedAscending = CollectionPreferencesStore.wantlistSortAscending(for: username) ?? savedOption.defaultAscending
+        guard savedOption != sortOption || savedAscending != sortAscending else { return false }
+        isRestoringSort = true
+        sortOption = savedOption
+        sortAscending = savedAscending
+        isRestoringSort = false
+        return true
+    }
+
+    /// Tri de la Wantlist modifié depuis iCloud : réappliqué, puis page 1 rechargée dans le nouvel ordre.
+    private func handleSortPreferencesChanged() async {
+        guard let username = authManager.username, restoreSavedSort(username: username) else { return }
+        await loadFirstPage()
     }
 
     func refresh() async {
@@ -193,6 +231,11 @@ final class WantlistViewModel {
             self?.handleWantlistItemRemoved(releaseId: releaseId)
         }
 
+        addLibraryObserver(for: .wantlistPreferencesChanged) { [weak self] in
+            guard let self else { return }
+            Task { await self.handleSortPreferencesChanged() }
+        }
+
         // Action hors ligne refusée par Discogs : l'affichage optimiste est faux, on recharge.
         addLibraryObserver(for: .offlineActionDropped) { [weak self] notification in
             guard let self,
@@ -228,6 +271,7 @@ final class WantlistViewModel {
 
     func load(isSilent: Bool = false) async {
         guard let username = authManager.username else { return }
+        restoreSavedSort(username: username)
 
         // Si hors ligne : lecture immédiate du cache SwiftData
         if !networkMonitor.isConnected {

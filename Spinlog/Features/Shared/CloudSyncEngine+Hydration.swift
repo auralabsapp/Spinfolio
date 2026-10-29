@@ -261,6 +261,7 @@ extension CloudSyncEngine {
                 defaultAddFolderId: prefs.defaultAddFolderId,
                 for: activeUsername
             )
+            CollectionPreferencesStore.applyRemoteViewPreferences(prefs, for: activeUsername)
 
         case .shelfPreferences:
             guard let remotePrefs = try? JSONDecoder().decode(SyncedShelfPreferences.self, from: payload) else {
@@ -403,8 +404,15 @@ extension CloudSyncEngine {
                 defaultCurrency: CollectionPreferencesStore.defaultCurrency(for: activeUsername),
                 purchasePriceFieldId: CollectionPreferencesStore.purchasePriceFieldId(for: activeUsername),
                 mediaConditionFieldId: CollectionPreferencesStore.mediaConditionFieldId(for: activeUsername),
-                defaultAddFolderId: CollectionPreferencesStore.defaultAddFolderId(for: activeUsername)
+                defaultAddFolderId: CollectionPreferencesStore.defaultAddFolderId(for: activeUsername),
+                collectionDisplayMode: CollectionPreferencesStore.displayModeRawValue(forKey: DisplayPreferenceKeys.collection),
+                collectionSortOption: CollectionPreferencesStore.sortOption(for: activeUsername)?.rawValue,
+                collectionSortAscending: CollectionPreferencesStore.sortAscending(for: activeUsername),
+                wantlistDisplayMode: CollectionPreferencesStore.displayModeRawValue(forKey: DisplayPreferenceKeys.wantlist),
+                wantlistSortOption: CollectionPreferencesStore.wantlistSortOption(for: activeUsername)?.rawValue,
+                wantlistSortAscending: CollectionPreferencesStore.wantlistSortAscending(for: activeUsername)
             )
+            CollectionPreferencesStore.noteDisplayModesSynced()
             return try? JSONEncoder().encode(prefs)
 
         case .shelfPreferences:
