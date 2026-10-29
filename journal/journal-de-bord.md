@@ -7,6 +7,31 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
+## 2026-10-29 — Synchro iCloud, connexion et titre de Collection
+
+### 11:37 — `7a2eac2` Collection : grand titre qui se réduit à la première connexion, police New York après reconnexion
+- Cause du grand titre figé et de la barre transparente à la première connexion d'une installation neuve :
+  le chargement de l'ancienne vue, annulé quand la pile de Collection est recréée, déclarait le premier
+  chargement terminé pendant que celui de la nouvelle vue tournait ; l'écran passait par « Collection
+  vide » (une `ScrollView`) et la barre de navigation ne suivait plus la liste. `ConcurrentLoadCounter`
+  y remédie.
+- Police du titre : le configurateur revérifie à l'apparition et répare la police serif réécrite
+  (plafonné à 3 par barre).
+- Reproduit et vérifié au Simulateur avec un compte de test. Recettes L44 à L46.
+- 6 fichiers, +141 / −10.
+
+### 11:37 — `ef45910` Déconnexion : les piles de navigation sont vidées avant le changement d'état
+- Une fiche ouverte restait dans la pile de Collection et réapparaissait à la connexion suivante.
+- 3 fichiers, +50.
+
+### 11:37 — `2865b1c` Synchro iCloud : lecture complète de la zone à la première fusion, bilan de récupération dans le diagnostic
+- À la première fusion d'un compte, toute la zone iCloud est relue : les enregistrements reçus avant
+  qu'un compte Discogs soit actif n'étaient jamais redemandés (tags absents après réinstallation).
+- Diagnostic de test : dernière récupération et exemplaires tagués en local.
+- 5 fichiers, +121 / −23.
+
+---
+
 ## 2026-10-28 — Premium : grille tarifaire France, achat à vie, codes d'offre
 
 ### 23:58 — `a8b6adc` Diagnostic de la synchro iCloud (hors App Store) et règle de déploiement du schéma CloudKit
