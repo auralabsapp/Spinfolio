@@ -9,6 +9,10 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-10-29 — Synchro iCloud, connexion et titre de Collection
 
+### 18:31 — Stats : le compteur de la wantlist suit les ajouts et retraits
+
+Le compteur « Wantlist » de l'onglet Stats ne se mettait à jour qu'au rechargement des compteurs (au plus toutes les 5 minutes) : un disque ajouté à la wantlist laissait « 0 album » affiché. Il suit maintenant les ajouts et retraits faits ailleurs dans l'app (`StatsCollectionChanges.wantlistCount`, jamais sous zéro, inconnu tant que les compteurs ne sont pas chargés). Étape 5 ajoutée au cas manuel I31. 5 fichiers.
+
 ### 17:47 — Paywall sur mesure à la place de SubscriptionStoreView
 
 `SubscriptionStoreView` imposait ses marges et ses cadres gris autour des forfaits, impossibles à retirer. Le paywall est refait entièrement : contenu défilant (illustration, essai gratuit, avantages) et panneau d'achat épinglé en bas (`PaywallPurchasePanel`) avec des cartes de forfait (badge d'économie, équivalent mensuel), le bouton, les mentions de renouvellement exigées par l'App Review (`PaywallLegalText`, testées), l'achat à vie, « Restaurer un achat · Utiliser un code » et les liens légaux. Les achats passent par l'action `purchase` de StoreKit et le traitement existant. Les produits sont rechargés à l'ouverture du paywall et à chaque changement de boutique (`Storefront.updates`), car les prix chargés au lancement pouvaient garder une ancienne devise. Cas manuel L43 réécrit. 13 fichiers, +744 −92.
