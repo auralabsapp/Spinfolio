@@ -36,6 +36,16 @@ final class StatsViewModel {
             },
             addCollectionReplacementObserver { [weak self] oldInstanceId, newItem in
                 self?.handleCollectionInstanceReplaced(oldInstanceId: oldInstanceId, newItem: newItem)
+            },
+            // Le compteur de la wantlist ne bougeait qu'au prochain rechargement des compteurs (au plus
+            // toutes les 5 min) : un disque ajouté ou retiré ailleurs laissait « 0 album » affiché.
+            addLibraryObserver(for: .wantlistItemAdded) { [weak self] in
+                guard let self else { return }
+                totalWantlistCount = StatsCollectionChanges.wantlistCount(totalWantlistCount, adding: 1)
+            },
+            addLibraryObserver(for: .wantlistItemRemoved) { [weak self] in
+                guard let self else { return }
+                totalWantlistCount = StatsCollectionChanges.wantlistCount(totalWantlistCount, adding: -1)
             }
         ]
     }

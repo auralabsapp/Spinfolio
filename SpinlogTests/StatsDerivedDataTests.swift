@@ -77,4 +77,20 @@ struct StatsDerivedDataTests {
         #expect(breakdown.map(\.name) == ["Disco", "House"])
         #expect(breakdown.map(\.count) == [2, 2])
     }
+
+    // MARK: - Compteur de la wantlist
+
+    @Test func wantlistAdditionIncrementsTheKnownCount() {
+        #expect(StatsCollectionChanges.wantlistCount(0, adding: 1) == 1)
+        #expect(StatsCollectionChanges.wantlistCount(4, adding: 1) == 5)
+    }
+
+    @Test func wantlistRemovalNeverGoesBelowZero() {
+        #expect(StatsCollectionChanges.wantlistCount(2, adding: -1) == 1)
+        #expect(StatsCollectionChanges.wantlistCount(0, adding: -1) == 0)
+    }
+
+    @Test func anUnknownWantlistCountStaysUnknown() {
+        #expect(StatsCollectionChanges.wantlistCount(nil, adding: 1) == nil)
+    }
 }

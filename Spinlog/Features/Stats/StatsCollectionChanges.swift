@@ -4,6 +4,12 @@ import Foundation
 /// ailleurs dans l'app, sans recharger depuis Discogs. Fonctions pures : `StatsViewModel`
 /// applique le résultat.
 enum StatsCollectionChanges {
+    /// Compteur de la wantlist après un ajout (`delta` = +1) ou un retrait (−1) fait ailleurs dans l'app.
+    /// Inconnu (`nil`, pas encore chargé) reste inconnu : le chargement des compteurs l'apportera entier.
+    nonisolated static func wantlistCount(_ count: Int?, adding delta: Int) -> Int? {
+        count.map { max(0, $0 + delta) }
+    }
+
     /// Ce que l'onglet Stats garde de la collection et que ces changements modifient.
     struct State {
         var allItems: [CollectionItem]
