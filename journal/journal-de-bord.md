@@ -9,6 +9,14 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-10-29 — Synchro iCloud, connexion et titre de Collection
 
+### 17:47 — Paywall sur mesure à la place de SubscriptionStoreView
+
+`SubscriptionStoreView` imposait ses marges et ses cadres gris autour des forfaits, impossibles à retirer. Le paywall est refait entièrement : contenu défilant (illustration, essai gratuit, avantages) et panneau d'achat épinglé en bas (`PaywallPurchasePanel`) avec des cartes de forfait (badge d'économie, équivalent mensuel), le bouton, les mentions de renouvellement exigées par l'App Review (`PaywallLegalText`, testées), l'achat à vie, « Restaurer un achat · Utiliser un code » et les liens légaux. Les achats passent par l'action `purchase` de StoreKit et le traitement existant. Les produits sont rechargés à l'ouverture du paywall et à chaque changement de boutique (`Storefront.updates`), car les prix chargés au lancement pouvaient garder une ancienne devise. Cas manuel L43 réécrit. 13 fichiers, +744 −92.
+
+### 17:46 — Nombres affichés ou préremplis selon les réglages du système
+
+Les champs de saisie de prix (prix d'achat, seuil d'alerte de la wantlist) étaient préremplis avec un point en dur : ils suivent maintenant le séparateur décimal du système (`PurchasePriceParser.editableAmountString`, testé), toujours relu par les mêmes parseurs. Règle ajoutée à `CLAUDE.md` §6. 5 fichiers, +33 −3.
+
 ### 14:58 — Stats : collection vide, plus de squelette permanent ni de rechargement à chaque visite
 
 Avec un compte sans aucun disque, l'onglet Stats restait sur le squelette gris : il n'était levé que si le cache de la collection contenait des éléments. Il disparaît maintenant dès que les réponses réseau sont arrivées. La fraîcheur du cache est lue sur la date de dernière synchro plutôt que sur son contenu, ce qui évite de recharger toute la collection vide (et d'afficher des spinners) à chaque retour sur l'onglet. Cas manuel I31 ajouté. 3 fichiers.
