@@ -32,6 +32,12 @@ final class ReleaseActions {
     /// ID de la release venant d'être ajoutée avec succès à la collection (pour proposer le guide de rangement)
     var justAddedReleaseId: Int? = nil
 
+    /// Exemplaire tout juste ajouté en ligne, dont le prix d'achat et l'état peuvent être renseignés
+    /// tout de suite (même feuille que le scan par lot) : `nil` si rien à proposer (ajout en file
+    /// hors ligne, fiche non chargée, ou aucun des deux champs configuré dans Réglages). L'écran qui
+    /// présente la feuille le remet à `nil` en la fermant.
+    var completionOffer: BatchCompletionRequest?
+
     /// Dossiers proposés lors de l'ajout (si l'utilisateur a plusieurs dossiers et souhaite en choisir un).
     private(set) var folders: [CollectionFolder] = []
 
@@ -286,6 +292,10 @@ final class ReleaseActions {
                 }
                 await localStore.saveCollectionItemInFolderAndAll(realItem, username: username)
                 LibraryMembershipStore.shared.notifyCollectionInstanceReplaced(oldInstanceId: tempInstanceId, newInstance: realItem)
+                // Mêmes conditions que le scan par lot : seulement si un champ est configuré dans Réglages.
+                if !BatchCompletion.configuredFields(for: username).isEmpty {
+                    completionOffer = BatchCompletionRequest(items: [realItem], username: username)
+                }
             }
             // Rafraîchir les informations des exemplaires en arrière-plan
             Task { await self.checkIfInCollection(releaseId: releaseId) }

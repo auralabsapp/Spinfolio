@@ -147,6 +147,10 @@ struct ReleaseDetailView: View {
                     ShelfPlacementView(targetRelease: release)
                 }
             }
+            // Saisie rapide du prix d'achat et de l'état après un ajout en ligne (comme le scan par lot).
+            .sheet(item: $actions.completionOffer) { request in
+                BatchCompletionSheet(request: request)
+            }
             .premiumFeaturesSheet(isPresented: $showingPremiumSheet)
             .fullScreenCover(item: $imageViewerRequest) { request in
                 ImageViewerView(images: viewModel.release?.images ?? [], startIndex: request.startIndex)
