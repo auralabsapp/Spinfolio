@@ -111,6 +111,9 @@ final class DiscogsAuthManager: NSObject {
             keychain.set(identity.username, forKey: Keys.username)
             username = identity.username
             credentials = DiscogsCredentials(token: accessToken.token, tokenSecret: accessToken.secret)
+            // Toute connexion (première, ou après la déconnexion d'un autre compte) arrive sur Collection,
+            // jamais sur l'onglet laissé ouvert par la session précédente.
+            TabNavigationCoordinator.shared.showCollectionRoot()
             isAuthenticated = true
             // Bascule les stores isolés par compte (tags, journal d'écoute) sur ce compte : s'il
             // a déjà été utilisé sur cet appareil, ses données sont restaurées immédiatement.
@@ -148,6 +151,7 @@ final class DiscogsAuthManager: NSObject {
         lastError = nil
         username = DemoMode.username
         credentials = DemoMode.credentials
+        TabNavigationCoordinator.shared.showCollectionRoot()
         isAuthenticated = true
         TagStore.shared.setActiveUsername(username)
         ListeningLogStore.shared.setActiveUsername(username)
