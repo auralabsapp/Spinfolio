@@ -45,7 +45,7 @@ enum PremiumFeatureCatalog {
             icon: "bell.fill",
             color: .orange,
             title: "Alertes de prix sur la wantlist",
-            description: "Sois averti quand un disque de ta wantlist apparaît à bon prix sur le marketplace Discogs (vérification à l'ouverture de l'app et occasionnellement en arrière-plan, pas en temps réel)."
+            description: "Sois averti quand un album de ta wantlist apparaît à bon prix sur le marketplace Discogs (vérification à l'ouverture de l'app et occasionnellement en arrière-plan, pas en temps réel)."
         ),
         PremiumFeatureInfo(
             id: "offline",
@@ -75,7 +75,7 @@ enum PremiumFeatureCatalog {
             color: .spinlogPink,
             paywallColor: .goldAccent,
             title: "Thèmes et palettes de couleurs",
-            description: "Personnalise l'ambiance visuelle de l'app selon tes goûts avec 8 palettes exclusives (Bleu Cobalt, Vert Émeraude, Orange Crépuscule, Rouge Rubis, Violet Améthyste, Cuivre & Or...)."
+            description: "Personnalise l'ambiance visuelle de l'app selon tes goûts avec 9 palettes exclusives (Bleu Cobalt, Vert Émeraude, Orange Crépuscule, Rouge Rubis, Violet Améthyste, Cuivre & Or...)."
         ),
         PremiumFeatureInfo(
             id: "exports",

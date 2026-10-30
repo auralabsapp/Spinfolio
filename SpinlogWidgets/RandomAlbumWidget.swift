@@ -213,12 +213,12 @@ struct RandomAlbumWidgetView: View {
                 statusView(
                     icon: "opticaldisc",
                     title: "Ouvre Spinfolio",
-                    message: "Ouvre l'app une fois pour afficher ici un disque de ta collection."
+                    message: "Ouvre l'app une fois pour afficher ici un album de ta collection."
                 )
             case .empty:
                 statusView(
                     icon: "opticaldisc",
-                    title: "Aucun disque",
+                    title: "Aucun album",
                     message: "Ajoute des albums à ta collection Discogs pour activer ce widget."
                 )
             case .album(let album, let coverImageData, let isLightCover):
@@ -423,7 +423,7 @@ struct RandomAlbumWidget: Widget {
             RandomAlbumWidgetView(entry: entry)
         }
         .configurationDisplayName("Album du jour")
-        .description("Un disque de ta collection Discogs tiré au hasard chaque jour.")
+        .description("Un album de ta collection Discogs tiré au hasard chaque jour.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
         .contentMarginsDisabled()
     }

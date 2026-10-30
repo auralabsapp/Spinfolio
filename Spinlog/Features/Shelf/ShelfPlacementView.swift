@@ -96,7 +96,7 @@ struct ShelfPlacementView: View {
 
                         // 2. Triptyque horizontal : Voisin gauche - Disque cible - Voisin droite
                         VStack(alignment: .leading, spacing: 8) {
-                            SectionEyebrow(title: "Disques repères", icon: "square.split.3x1.fill")
+                            SectionEyebrow(title: "Albums repères", icon: "square.split.3x1.fill")
                             horizontalTriptychSection
                         }
 

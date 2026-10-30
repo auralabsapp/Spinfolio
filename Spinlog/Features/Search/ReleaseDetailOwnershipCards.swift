@@ -271,7 +271,7 @@ struct ListeningLogCard: View {
                     .background(isPlayingThisRelease ? Color.spinlogPink : Color.spinlogPinkBadge, in: Circle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("J'écoute ce disque sur la platine")
+            .accessibilityLabel("J'écoute cet album sur la platine")
 
             // Bouton Stop (toujours visible, grisé et désactivé si aucune écoute)
             Button(action: {
@@ -328,7 +328,7 @@ struct ListeningLogCard: View {
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(Color.appSecondaryText)
                         .lineLimit(1)
-                    Text("Touche le disque quand tu l'écoutes")
+                    Text("Touche l'album quand tu l'écoutes")
                         .font(.caption2)
                         .foregroundStyle(Color.appTertiaryText)
                         .lineLimit(1)

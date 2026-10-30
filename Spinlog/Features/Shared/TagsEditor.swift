@@ -306,7 +306,7 @@ struct ReleaseTagSheet: View {
             } message: {
                 if let tag = tagToDelete {
                     let count = store.releaseCount(for: tag)
-                    Text("Veux-tu vraiment supprimer « \(tag) » ? Ce tag sera retiré de \(count) disques.")
+                    Text("Veux-tu vraiment supprimer « \(tag) » ? Ce tag sera retiré de \(count) albums.")
                 }
             }
             .alert("Tag déjà existant", isPresented: Binding(

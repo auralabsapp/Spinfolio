@@ -76,7 +76,7 @@ struct SearchView: View {
                 .textFieldStyle(.plain)
                 .submitLabel(.search)
                 .focused($isSearchFieldFocused)
-                .accessibilityLabel("Artiste, disque, label, code-barre…")
+                .accessibilityLabel("Artiste, album, label, code-barre…")
                 .overlay(alignment: .leading) {
                     if viewModel.query.isEmpty {
                         SearchSuggestion(index: suggestionIndex)
@@ -255,7 +255,7 @@ struct SearchView: View {
             ContentUnavailableView(
                 "Recherche Discogs",
                 systemImage: "magnifyingglass",
-                description: Text("Trouve un disque, un artiste, un label, ou scanne un code-barres.")
+                description: Text("Trouve un album, un artiste, un label, ou scanne un code-barres.")
             )
         } else if viewModel.isLoading && viewModel.results.isEmpty {
             ProgressView()
@@ -362,7 +362,7 @@ private struct SearchSuggestion: View {
         case 2: Text("Cherche un album…")
         case 3: Text("Cherche un label…")
         case 4: Text("Tape un code-barres…")
-        default: Text("Artiste, disque, label, code-barre…")
+        default: Text("Artiste, album, label, code-barre…")
         }
     }
 }

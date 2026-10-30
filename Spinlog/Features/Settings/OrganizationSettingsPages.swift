@@ -157,7 +157,7 @@ struct ShelvingSettingsPage: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Limiter au dossier Discogs")
                                 .foregroundStyle(.primary)
-                            Text("Le guide de rangement ne compare qu'au dossier du disque, plutôt qu'à toute la collection")
+                            Text("Le guide de rangement ne compare qu'au dossier de l'album, plutôt qu'à toute la collection")
                                 .font(.caption2)
                                 .foregroundStyle(Color.appSecondaryText)
                         }

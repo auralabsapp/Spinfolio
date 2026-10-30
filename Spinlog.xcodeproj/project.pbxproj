@@ -515,7 +515,7 @@
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_NSAppleMusicUsageDescription = "Spinfolio utilise Apple Music pour lire les titres de tes albums et afficher la photo des artistes dans tes statistiques.";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Spinfolio utilise l'appareil photo pour scanner le code-barres de tes disques et retrouver leur fiche Discogs.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Spinfolio utilise l'appareil photo pour scanner le code-barres de tes albums et retrouver leur fiche Discogs.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -567,7 +567,7 @@
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_NSAppleMusicUsageDescription = "Spinfolio utilise Apple Music pour lire les titres de tes albums et afficher la photo des artistes dans tes statistiques.";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Spinfolio utilise l'appareil photo pour scanner le code-barres de tes disques et retrouver leur fiche Discogs.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Spinfolio utilise l'appareil photo pour scanner le code-barres de tes albums et retrouver leur fiche Discogs.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;

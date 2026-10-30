@@ -31,7 +31,7 @@ enum GuideCatalog {
             id: "addRecord",
             section: .gettingStarted,
             visual: .searchBar,
-            title: "Ajouter un disque",
+            title: "Ajouter un album",
             summary: "Cherche par nom ou scanne le code-barres.",
             steps: [
                 "Onglet Recherche : tape un nom ou touche l'icône de scan.",
@@ -46,19 +46,19 @@ enum GuideCatalog {
             section: .gettingStarted,
             visual: .collectionAndWantlist,
             title: "Collection ou wantlist ?",
-            summary: "La collection, ce sont les disques que tu possèdes ; la wantlist, ceux que tu cherches.",
+            summary: "La collection, ce sont les albums que tu possèdes ; la wantlist, ceux que tu cherches.",
             steps: [
                 "Le bouton affiche ensuite « En collection » ou « En wantlist ».",
-                "Retrouve tes disques dans les onglets Collection et Wantlist."
+                "Retrouve tes albums dans les onglets Collection et Wantlist."
             ],
-            tip: "Tu peux posséder un disque en plusieurs exemplaires : maintiens « En collection » pour en ajouter un autre."
+            tip: "Tu peux posséder un album en plusieurs exemplaires : maintiens « En collection » pour en ajouter un autre."
         ),
         GuideEntry(
             id: "batchScan",
             section: .gettingStarted,
             visual: .batchScan,
             title: "Scan par lot",
-            summary: "Scanne plusieurs disques à la suite, chez un disquaire ou en brocante.",
+            summary: "Scanne plusieurs albums à la suite, chez un disquaire ou en brocante.",
             steps: [
                 "Dans l'onglet Recherche, touche l'icône de scan par lot, à côté de celle du scan.",
                 "Ajoute-les d'un coup à ta collection ou à ta wantlist."
@@ -82,7 +82,7 @@ enum GuideCatalog {
                 "Touche « ··· » en haut à droite, puis « Affichage ».",
                 "Ton choix est retenu, séparément pour la Collection et la Wantlist."
             ],
-            tip: "Le bouton « Disque au hasard », en haut de la Collection, t'en propose un.",
+            tip: "Le bouton « Album au hasard », en haut de la Collection, t'en propose un.",
             destination: .tab(.collection)
         ),
         GuideEntry(
@@ -108,17 +108,17 @@ enum GuideCatalog {
                 "Tape dans la barre de recherche, ou touche « ··· » puis « Filtres » pour le tag et le support.",
                 "Le menu « Dossier », dans « ··· », change de dossier."
             ],
-            tip: "Avec plusieurs tags, seuls les disques qui les portent tous restent affichés.",
+            tip: "Avec plusieurs tags, seuls les albums qui les portent tous restent affichés.",
             destination: .tab(.collection)
         ),
         GuideEntry(
             id: "rowActions",
             section: .library,
             visual: .rowActions,
-            title: "Agir sur un disque",
+            title: "Agir sur un album",
             summary: "Glisse une ligne, ou maintiens-la, pour écouter, ranger, modifier ou supprimer.",
             steps: [
-                "Touche « ··· » puis « Sélectionner » pour agir sur plusieurs disques à la fois : dossier, tags, suppression."
+                "Touche « ··· » puis « Sélectionner » pour agir sur plusieurs albums à la fois : dossier, tags, suppression."
             ],
             tip: "« Ranger » est une fonction Premium.",
             destination: .tab(.collection)
@@ -135,7 +135,7 @@ enum GuideCatalog {
             title: "Lire une fiche",
             summary: "Titres, crédits, photos, vidéos et infos de pressage, au même endroit.",
             steps: [
-                "Touche un disque pour ouvrir sa fiche.",
+                "Touche un album pour ouvrir sa fiche.",
                 "Fais défiler : titres, « Photos et vidéos », « Autres informations »."
             ],
             tip: "Depuis la fiche, tu peux écouter un titre : extrait de 30 s, ou en entier avec Apple Music (Réglages > Écoute et Apple Music)."
@@ -145,7 +145,7 @@ enum GuideCatalog {
             section: .record,
             visual: .copies,
             title: "Plusieurs exemplaires",
-            summary: "Un même disque peut exister en plusieurs exemplaires, chacun avec son dossier.",
+            summary: "Un même album peut exister en plusieurs exemplaires, chacun avec son dossier.",
             steps: [
                 "Maintiens « En collection » pour ajouter un exemplaire.",
                 "Touche « Modifier » sur un exemplaire : dossier, tags, champs Discogs."
@@ -157,7 +157,7 @@ enum GuideCatalog {
             section: .record,
             visual: .tagsAndRating,
             title: "Tags et note",
-            summary: "Classe tes disques avec tes tags et une note sur 5.",
+            summary: "Classe tes albums avec tes tags et une note sur 5.",
             steps: [
                 "Dans « Modifier », section « Tags de l'exemplaire » : crée ou choisis des tags.",
                 "Touche les étoiles de « Ma note de la release » pour noter."
@@ -205,10 +205,10 @@ enum GuideCatalog {
             title: "Graphiques et répartitions",
             summary: "Genres, supports, labels, artistes et années, en graphiques.",
             steps: [
-                "Touche une portion ou une barre : la liste des disques correspondants s'ouvre.",
+                "Touche une portion ou une barre : la liste des albums correspondants s'ouvre.",
                 "Dans « Sorties originales », bascule entre années et décennies."
             ],
-            tip: "L'année de sortie originale est retrouvée disque par disque : sur une grande collection, le calcul prend un moment.",
+            tip: "L'année de sortie originale est retrouvée album par album : sur une grande collection, le calcul prend un moment.",
             access: .requiresAccount,
             destination: .tab(.stats)
         ),
@@ -234,7 +234,7 @@ enum GuideCatalog {
             title: "Palmarès d'écoute",
             summary: "Tes albums et artistes les plus écoutés sur ta platine.",
             steps: [
-                "Touche « J'écoute » sur un disque quand tu le poses sur ta platine.",
+                "Touche « J'écoute » sur un album quand tu le poses sur ta platine.",
                 "Dans Stats, « Tops & Palmarès » montre le classement et le podium par période."
             ],
             tip: "Les lectures Apple Music ne sont pas comptées.",
@@ -251,9 +251,9 @@ enum GuideCatalog {
             section: .listening,
             visual: .listening,
             title: "Noter une écoute",
-            summary: "Touche « J'écoute » quand tu poses un disque sur ta platine.",
+            summary: "Touche « J'écoute » quand tu poses un album sur ta platine.",
             steps: [
-                "Sur la fiche d'un disque, ou en glissant une ligne de la Collection : « J'écoute ».",
+                "Sur la fiche d'un album, ou en glissant une ligne de la Collection : « J'écoute ».",
                 "Un mini-lecteur apparaît ; touche-le pour ouvrir « Écoute sur platine » et arrêter."
             ],
             tip: "Lancer une nouvelle écoute interrompt celle en cours. La fiche compte tes écoutes et garde la date de la dernière.",
@@ -264,7 +264,7 @@ enum GuideCatalog {
             section: .listening,
             visual: .liveActivity,
             title: "Live Activity et arrêt automatique",
-            summary: "Ton disque en cours reste visible, et l'écoute s'arrête toute seule.",
+            summary: "Ton album en cours reste visible, et l'écoute s'arrête toute seule.",
             steps: [
                 "Dans Réglages, ouvre « Écoute et Apple Music » et choisis la durée maximale.",
                 "À la fin de cette durée, l'écoute s'arrête sans que tu aies rien à faire."
@@ -290,7 +290,7 @@ enum GuideCatalog {
             section: .listening,
             visual: .widget,
             title: "Widget « Album du jour »",
-            summary: "Un disque de ta collection tiré au hasard chaque jour, sur ton écran d'accueil.",
+            summary: "Un album de ta collection tiré au hasard chaque jour, sur ton écran d'accueil.",
             steps: [
                 "Maintiens l'écran d'accueil, touche « + » et cherche Spinlog.",
                 "Choisis « Album du jour », en petit, moyen ou grand format."
@@ -306,13 +306,13 @@ enum GuideCatalog {
             id: "shelfPlacement",
             section: .shelving,
             visual: .shelfPlacement,
-            title: "Où ranger un disque",
+            title: "Où ranger un album",
             summary: "Le guide te donne sa position dans le meuble, entre ses deux voisins.",
             steps: [
                 "Glisse une ligne de la Collection et touche « Ranger », ou ouvre « Rangement physique » sur la fiche.",
-                "Repère le disque central et ses deux voisins : c'est entre eux qu'il va."
+                "Repère l'album central et ses deux voisins : c'est entre eux qu'il va."
             ],
-            tip: "Fonction Premium. Le guide s'ouvre aussi juste après l'ajout d'un disque à la collection.",
+            tip: "Fonction Premium. Le guide s'ouvre aussi juste après l'ajout d'un album à la collection.",
             access: .premium,
             destination: .tab(.collection)
         ),
@@ -365,7 +365,7 @@ enum GuideCatalog {
             section: .alerts,
             visual: .alertRow,
             title: "Définir une alerte",
-            summary: "Fixe le prix maximum que tu veux payer pour un disque de ta wantlist.",
+            summary: "Fixe le prix maximum que tu veux payer pour un album de ta wantlist.",
             steps: [
                 "Dans la Wantlist, glisse une ligne ou maintiens-la : « Définir une alerte prix ».",
                 "Saisis le « Prix maximum » puis touche « Enregistrer »."
@@ -397,7 +397,7 @@ enum GuideCatalog {
                 "La vérification se fait à l'ouverture de l'app et parfois en arrière-plan, pas en temps réel.",
                 "Autorise les notifications pour être prévenu app fermée."
             ],
-            tip: "Vérifie l'état exact du disque et les frais de port sur l'annonce Discogs.",
+            tip: "Vérifie l'état exact de l'album et les frais de port sur l'annonce Discogs.",
             access: .premium,
             destination: .tab(.wantlist)
         )
@@ -443,7 +443,7 @@ enum GuideCatalog {
                 "Dans Réglages > Aide & personnalisation, ouvre « Apparence » : « Mode d'affichage » pour clair, sombre ou automatique.",
                 "« Couleur du thème » ouvre les palettes."
             ],
-            tip: "Le thème Signature est inclus pour tous ; les 8 autres palettes sont Premium.",
+            tip: "Le thème Signature est inclus pour tous ; les 9 autres palettes sont Premium.",
             destination: .tab(.settings)
         ),
         GuideEntry(
@@ -464,7 +464,7 @@ enum GuideCatalog {
             section: .settings,
             visual: .tagsAndFolders,
             title: "Tags et dossiers",
-            summary: "Range ta collection à ta façon, et choisis où atterrissent les nouveaux disques.",
+            summary: "Range ta collection à ta façon, et choisis où atterrissent les nouveaux albums.",
             steps: [
                 "« Gestion des tags » : glisse ou maintiens un tag pour le renommer, le fusionner ou le supprimer.",
                 "« Gestion des dossiers » : touche un dossier pour en faire le dossier d'ajout par défaut."

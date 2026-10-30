@@ -145,7 +145,7 @@ struct EraseAccountDataSheet: View {
 
     private var reassurance: some View {
         Label {
-            Text("Tes disques restent sur Discogs : seules les données propres à l'app sont effacées. Tu seras déconnecté.")
+            Text("Tes albums restent sur Discogs : seules les données propres à l'app sont effacées. Tu seras déconnecté.")
                 .font(.footnote)
                 .foregroundStyle(Color.appSecondaryText)
                 .fixedSize(horizontal: false, vertical: true)

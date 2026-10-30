@@ -78,7 +78,7 @@ enum SettingsSearchIndex {
                   destination: .purchasePriceHelp, keywords: ["plus-value", "gain", "aide", "help", "cote", "valeur", "value"]),
             .init(id: "purchaseField", title: String(localized: "Champ prix d'achat"), location: gain, symbol: "tag.fill", color: .green,
                   destination: .gainTracking, keywords: ["prix", "achat", "payé", "purchase", "price", "paid"], requiresAccount: true),
-            .init(id: "conditionField", title: String(localized: "Champ état du disque"), location: gain, symbol: "opticaldisc.fill", color: .purple,
+            .init(id: "conditionField", title: String(localized: "Champ état de l'album"), location: gain, symbol: "opticaldisc.fill", color: .purple,
                   destination: .gainTracking, keywords: ["état", "condition", "media", "sleeve", "mint", "conservation"], requiresAccount: true),
             .init(id: "currency", title: String(localized: "Devise par défaut"), location: gain, symbol: "eurosign.circle.fill", color: .blue,
                   destination: .gainTracking, keywords: ["devise", "currency", "euro", "dollar", "monnaie"], requiresAccount: true),

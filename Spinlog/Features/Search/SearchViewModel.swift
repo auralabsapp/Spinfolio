@@ -229,7 +229,7 @@ final class SearchViewModel {
             results = prioritizeLibraryResults(response.results)
             totalPages = response.pagination.pages
             if results.isEmpty {
-                errorMessage = String(localized: "Aucun disque trouvé pour le code \(code).")
+                errorMessage = String(localized: "Aucun album trouvé pour le code \(code).")
             }
         } catch {
             errorMessage = error.localizedDescription

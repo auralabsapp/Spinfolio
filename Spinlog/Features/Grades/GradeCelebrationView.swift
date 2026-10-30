@@ -74,7 +74,7 @@ struct GradeCelebrationView: View {
                         .font(.subheadline)
                         .foregroundStyle(Color.appSecondaryText)
                     if celebration.kind == .welcome {
-                        Text("Voici ton grade de départ, déjà mérité. Les suivants se gagnent avec tes disques et tes écoutes.")
+                        Text("Voici ton grade de départ, déjà mérité. Les suivants se gagnent avec tes albums et tes écoutes.")
                             .font(.footnote)
                             .foregroundStyle(Color.appSecondaryText)
                             .multilineTextAlignment(.center)

@@ -24,7 +24,7 @@ struct BatchScanRow: View {
                         .foregroundStyle(item.isSelected ? Color.spinlogPink : Color.appTertiaryText)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(item.isSelected ? "Désélectionner ce disque" : "Sélectionner ce disque")
+                .accessibilityLabel(item.isSelected ? "Désélectionner cet album" : "Sélectionner cet album")
                 AsyncCoverImage(url: result.thumb ?? result.coverImage, cornerRadius: 6, targetSize: 44)
                     .frame(width: 44, height: 44)
                     .overlay(
@@ -69,7 +69,7 @@ struct BatchScanRow: View {
                 case .notFound:
                     Text(item.code)
                         .font(.subheadline)
-                    Text("Aucun disque trouvé")
+                    Text("Aucun album trouvé")
                         .font(.caption)
                         .foregroundStyle(Color.appTertiaryText)
                 }

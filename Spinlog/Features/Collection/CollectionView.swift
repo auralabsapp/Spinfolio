@@ -70,7 +70,7 @@ struct CollectionView: View {
                             } label: {
                                 Image(systemName: "shuffle")
                             }
-                            .accessibilityLabel("Disque au hasard")
+                            .accessibilityLabel("Album au hasard")
                             .disabled(viewModel.display.visibleItemCount == 0)
                         }
                     }

@@ -79,7 +79,7 @@ struct TopArtistsChart: View {
                         .chartSelectionAccessibility(
                             label: Text("Classement des artistes"),
                             entries: entries.map {
-                                ChartAccessibilityEntry(id: $0.name, name: $0.name, valueText: String(localized: "\($0.count) disques"))
+                                ChartAccessibilityEntry(id: $0.name, name: $0.name, valueText: String(localized: "\($0.count) albums"))
                             }
                         ) { artistName in
                             onSelect(artistName)

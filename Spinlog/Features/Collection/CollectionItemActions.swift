@@ -55,7 +55,7 @@ struct CollectionItemContextMenu: View {
             Button {
                 CollectionItemActions.startListening(to: item)
             } label: {
-                Label("J'écoute ce disque sur la platine", systemImage: "opticaldisc.fill")
+                Label("J'écoute cet album sur la platine", systemImage: "opticaldisc.fill")
             }
         }
 

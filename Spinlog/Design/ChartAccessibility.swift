@@ -23,7 +23,7 @@ extension View {
         accessibilityElement()
             .accessibilityLabel(label)
             .accessibilityValue(Text(entries.prefix(5).map { "\($0.name), \($0.valueText)" }.joined(separator: " ; ")))
-            .accessibilityHint(Text("Ouvre le menu des actions pour afficher les disques d'un élément."))
+            .accessibilityHint(Text("Ouvre le menu des actions pour afficher les albums d'un élément."))
             .accessibilityActions {
                 ForEach(entries) { entry in
                     Button(entry.name) { onSelect(entry.id) }

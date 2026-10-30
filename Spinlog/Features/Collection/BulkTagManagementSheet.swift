@@ -300,7 +300,7 @@ struct BulkTagManagementSheet: View {
             } message: {
                 if let tag = tagToDelete {
                     let count = store.releaseCount(for: tag)
-                    Text("Veux-tu vraiment supprimer définitivement « \(tag) » ? Ce tag sera retiré de \(count) disques de ta bibliothèque.")
+                    Text("Veux-tu vraiment supprimer définitivement « \(tag) » ? Ce tag sera retiré de \(count) albums de ta bibliothèque.")
                 }
             }
             .alert("Nom trop long", isPresented: $showingMaxLengthAlert) {

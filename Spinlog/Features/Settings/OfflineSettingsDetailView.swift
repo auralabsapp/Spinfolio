@@ -233,7 +233,7 @@ struct OfflineSettingsDetailView: View {
                     }
 
                     HStack(spacing: 8) {
-                        Text("\(offlineManager.offlineItemCount) disques archivés")
+                        Text("\(offlineManager.offlineItemCount) albums archivés")
                             .animatedCount(offlineManager.offlineItemCount)
                             .font(.caption.weight(.medium))
                             .foregroundStyle(Color.appOffline)

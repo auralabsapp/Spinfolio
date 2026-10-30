@@ -93,7 +93,7 @@ private struct SearchBarMock: View {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(Color.appSecondaryText)
 
-            Text("Artiste, disque, label, code-barre…")
+            Text("Artiste, album, label, code-barre…")
                 .font(.subheadline)
                 .foregroundStyle(Color.appTertiaryText)
                 .lineLimit(1)

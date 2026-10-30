@@ -41,7 +41,7 @@
         }
       }
     },
-    "Aucun disque" : {
+    "Aucun album" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -71,7 +71,7 @@
         }
       }
     },
-    "Ouvre l'app une fois pour afficher ici un disque de ta collection." : {
+    "Ouvre l'app une fois pour afficher ici un album de ta collection." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -91,7 +91,7 @@
         }
       }
     },
-    "Un disque de ta collection Discogs tiré au hasard chaque jour." : {
+    "Un album de ta collection Discogs tiré au hasard chaque jour." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {

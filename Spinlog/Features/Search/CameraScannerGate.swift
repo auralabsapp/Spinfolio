@@ -31,7 +31,7 @@ struct CameraScannerGate<Scanner: View>: View {
                 ContentUnavailableView {
                     Label("Accès à la caméra refusé", systemImage: "camera.fill")
                 } description: {
-                    Text("Autorise l'accès à la caméra dans les Réglages pour scanner les codes-barres de tes disques.")
+                    Text("Autorise l'accès à la caméra dans les Réglages pour scanner les codes-barres de tes albums.")
                 } actions: {
                     Button("Ouvrir les Réglages") {
                         if let url = URL(string: UIApplication.openSettingsURLString) {
@@ -45,7 +45,7 @@ struct CameraScannerGate<Scanner: View>: View {
                 ContentUnavailableView(
                     "Scan indisponible",
                     systemImage: "barcode.viewfinder",
-                    description: Text("Cet appareil ne permet pas de scanner des codes-barres. Tu peux rechercher le disque par son nom.")
+                    description: Text("Cet appareil ne permet pas de scanner des codes-barres. Tu peux rechercher l'album par son nom.")
                 )
             }
         }

@@ -20,7 +20,7 @@ enum GuideSection: Hashable, CaseIterable, Identifiable {
         switch self {
         case .gettingStarted: "Premiers pas"
         case .library: "Collection et Wantlist"
-        case .record: "Fiche d'un disque"
+        case .record: "Fiche d'un album"
         case .stats: "Statistiques"
         case .listening: "Écoute sur platine"
         case .shelving: "Rangement"
@@ -31,13 +31,13 @@ enum GuideSection: Hashable, CaseIterable, Identifiable {
 
     var summary: LocalizedStringResource {
         switch self {
-        case .gettingStarted: "Te connecter, ajouter tes premiers disques et comprendre collection et wantlist."
+        case .gettingStarted: "Te connecter, ajouter tes premiers albums et comprendre collection et wantlist."
         case .library: "Affichages, tris, filtres et actions. La Wantlist fonctionne de la même façon."
-        case .record: "Ce que tu trouves sur la fiche d'un disque, et ce que tu peux y noter."
+        case .record: "Ce que tu trouves sur la fiche d'un album, et ce que tu peux y noter."
         case .stats: "Tes chiffres, tes répartitions, ta plus-value et ton palmarès d'écoute."
-        case .listening: "Suis ce que tu écoutes, et retrouve un disque du jour sur ton écran d'accueil."
-        case .shelving: "Retrouve la place de chaque disque dans ton meuble, selon ta façon de les classer."
-        case .alerts: "Sois prévenu quand un disque de ta wantlist passe sous ton prix."
+        case .listening: "Suis ce que tu écoutes, et retrouve un album du jour sur ton écran d'accueil."
+        case .shelving: "Retrouve la place de chaque album dans ton meuble, selon ta façon de les classer."
+        case .alerts: "Sois prévenu quand un album de ta wantlist passe sous ton prix."
         case .settings: "Hors ligne, iCloud, thèmes, exports, tags, dossiers et compte."
         }
     }

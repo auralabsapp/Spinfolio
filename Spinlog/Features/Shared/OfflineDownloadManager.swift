@@ -30,13 +30,13 @@ final class OfflineDownloadManager {
             case .idle:
                 return String(localized: "Prêt")
             case .downloadingCollection(let page, let totalPages, let itemsCount):
-                return String(localized: "Téléchargement de la collection (page \(page)/\(totalPages) • \(itemsCount) disques)…")
+                return String(localized: "Téléchargement de la collection (page \(page)/\(totalPages) • \(itemsCount) albums)…")
             case .downloadingWantlist(let page, let totalPages):
                 return String(localized: "Téléchargement de la wantlist (page \(page)/\(totalPages))…")
             case .cachingCovers(let current, let total):
                 return String(localized: "Mise en cache des pochettes (\(current)/\(total))…")
             case .completed(_, let count):
-                return String(localized: "Synchronisation terminée avec succès (\(count) disques)")
+                return String(localized: "Synchronisation terminée avec succès (\(count) albums)")
             case .failed(let error):
                 return "Erreur : \(error)"
             }

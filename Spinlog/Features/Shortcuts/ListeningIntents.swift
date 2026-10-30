@@ -7,9 +7,9 @@ import Foundation
 /// l'arrière-plan). Même circuit que le bouton d'écoute des écrans (`startListening`).
 struct StartListeningIntent: LiveActivityIntent {
     static let title: LocalizedStringResource = "Démarrer une écoute"
-    static let description = IntentDescription("Enregistre l'écoute sur platine d'un disque de ta collection et l'affiche sur l'écran verrouillé.")
+    static let description = IntentDescription("Enregistre l'écoute sur platine d'un album de ta collection et l'affiche sur l'écran verrouillé.")
 
-    @Parameter(title: "Disque", requestValueDialog: "Quel disque écoutes-tu ?")
+    @Parameter(title: "Album", requestValueDialog: "Quel album écoutes-tu ?")
     var record: RecordEntity
 
     init() {}
@@ -59,8 +59,8 @@ struct StopListeningIntent: LiveActivityIntent {
 
 /// « Un disque au hasard » : tire un disque de la collection et ouvre sa fiche.
 struct RandomRecordIntent: AppIntent {
-    static let title: LocalizedStringResource = "Disque au hasard"
-    static let description = IntentDescription("Tire un disque au hasard dans ta collection et ouvre sa fiche.")
+    static let title: LocalizedStringResource = "Album au hasard"
+    static let description = IntentDescription("Tire un album au hasard dans ta collection et ouvre sa fiche.")
     static let supportedModes: IntentModes = .foreground(.immediate)
 
     @MainActor
@@ -79,18 +79,18 @@ struct SpinfolioShortcuts: AppShortcutsProvider {
         AppShortcut(
             intent: RandomRecordIntent(),
             phrases: [
-                "Un disque au hasard avec \(.applicationName)",
-                "Tire un disque au hasard dans \(.applicationName)",
+                "Un album au hasard avec \(.applicationName)",
+                "Tire un album au hasard dans \(.applicationName)",
                 "Qu'est-ce que j'écoute avec \(.applicationName)"
             ],
-            shortTitle: "Disque au hasard",
+            shortTitle: "Album au hasard",
             systemImageName: "shuffle"
         )
         AppShortcut(
             intent: StartListeningIntent(),
             phrases: [
                 "Démarre une écoute dans \(.applicationName)",
-                "Je mets un disque sur la platine avec \(.applicationName)"
+                "Je mets un album sur la platine avec \(.applicationName)"
             ],
             shortTitle: "Démarrer une écoute",
             systemImageName: "record.circle"

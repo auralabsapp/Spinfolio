@@ -54,7 +54,7 @@ struct CollectionCarouselQuickActions: View {
                     .background(isPlaying ? Color(uiColor: .systemGray) : Color.spinlogPinkBadge, in: Circle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(isPlaying ? Text("Arrêter l'écoute") : Text("J'écoute ce disque sur la platine"))
+            .accessibilityLabel(isPlaying ? Text("Arrêter l'écoute") : Text("J'écoute cet album sur la platine"))
 
             Button(action: onShowShelf) {
                 Image(systemName: "books.vertical.fill")
@@ -65,7 +65,7 @@ struct CollectionCarouselQuickActions: View {
                     .background(Color.indigo.opacity(0.12), in: Circle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Où ranger ce disque")
+            .accessibilityLabel("Où ranger cet album")
 
             Button(action: onEdit) {
                 Image(systemName: "pencil")

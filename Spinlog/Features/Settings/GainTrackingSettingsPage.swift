@@ -133,7 +133,7 @@ struct GainTrackingSettingsPage: View {
                 } label: {
                     HStack(spacing: 14) {
                         SettingsIcon(systemName: "opticaldisc.fill", backgroundColor: .purple)
-                        Text("Champ état du disque")
+                        Text("Champ état de l'album")
                     }
                 }
                 .pickerStyle(.menu)

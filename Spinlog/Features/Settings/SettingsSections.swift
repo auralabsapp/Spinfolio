@@ -428,7 +428,7 @@ struct SettingsAppearanceSection: View {
                 PremiumLockedCard(
                     icon: "paintpalette.fill",
                     title: "Couleur du thème",
-                    message: "Passe premium pour choisir parmi les 8 palettes de thèmes exclusives."
+                    message: "Passe premium pour choisir parmi les 9 palettes de thèmes exclusives."
                 )
             } else {
                 NavigationLink(value: SettingsDestination.colorTheme) {

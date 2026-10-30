@@ -64,7 +64,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Spinfolio utilise l'appareil photo pour scanner le code-barres de tes disques et retrouver leur fiche Discogs."
+            "value" : "Spinfolio utilise l'appareil photo pour scanner le code-barres de tes albums et retrouver leur fiche Discogs."
           }
         }
       }

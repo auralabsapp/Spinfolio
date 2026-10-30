@@ -42,7 +42,7 @@ struct PurchasePriceHelpSheet: View {
             VStack(spacing: 8) {
                 HStack(spacing: 10) {
                     sourceCard(symbol: "eurosign.circle.fill", color: .green, title: "Ton prix payé")
-                    sourceCard(symbol: "opticaldisc.fill", color: .purple, title: "L'état du disque")
+                    sourceCard(symbol: "opticaldisc.fill", color: .purple, title: "L'état de l'album")
                 }
                 arrow
                 resultCard(symbol: "chart.line.uptrend.xyaxis", color: .blue, title: "La cote Discogs", subtitle: "pour cet état")
@@ -146,7 +146,7 @@ struct PurchasePriceHelpSheet: View {
                 )
                 Divider().overlay(Color.appSeparator).opacity(0.15)
                 statusRow(
-                    title: "Champ état du disque",
+                    title: "Champ état de l'album",
                     isOK: setup.hasConditionField,
                     okText: "Détecté",
                     missingText: "Non détecté : cote moyenne"
@@ -227,7 +227,7 @@ struct PurchasePriceHelpSheet: View {
             }
 
             disclosure(title: "Limites à connaître", icon: "exclamationmark.triangle.fill") {
-                Text("Discogs ne donne pas de « prix médian » pour un disque précis, seulement des suggestions par état. \(AppInfo.name) prend celle de l'état déclaré ; sans état, il fait la moyenne de toutes les suggestions : l'estimation est alors moins précise.")
+                Text("Discogs ne donne pas de « prix médian » pour un album précis, seulement des suggestions par état. \(AppInfo.name) prend celle de l'état déclaré ; sans état, il fait la moyenne de toutes les suggestions : l'estimation est alors moins précise.")
                 Text("• Les prix (cote et prix d'achat) n'incluent jamais les frais de port.")
                 Text("• Une estimation est recalculée au plus une fois par jour (tout de suite si tu changes l'état déclaré).")
                 Text("• Les devises sont converties avec des taux mis à jour toutes les 24 h, approximatifs hors ligne.")

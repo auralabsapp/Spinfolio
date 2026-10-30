@@ -73,7 +73,7 @@ enum OfflineSyncError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .ambiguousInstance:
-            return String(localized: "plusieurs exemplaires de ce disque, supprime-le manuellement")
+            return String(localized: "plusieurs exemplaires de cet album, supprime-le manuellement")
         }
     }
 }

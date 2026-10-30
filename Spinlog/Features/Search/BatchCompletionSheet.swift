@@ -58,7 +58,7 @@ struct BatchCompletionSheet: View {
             }
             .scrollDismissesKeyboard(.interactively)
             .background(Color.appBackground.ignoresSafeArea())
-            .navigationTitle("Compléter les disques")
+            .navigationTitle("Compléter les albums")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {

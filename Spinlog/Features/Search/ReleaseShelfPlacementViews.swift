@@ -17,7 +17,7 @@ struct ReleaseShelfPlacementRow: View {
             PremiumLockedCard(
                 icon: "books.vertical.fill",
                 title: "Emplacement de cet album",
-                message: "Passe premium pour savoir instantanément où intercaler ce disque dans ton meuble."
+                message: "Passe premium pour savoir instantanément où intercaler cet album dans ton meuble."
             )
         } else if let release {
             Button {
@@ -117,11 +117,11 @@ struct ReleasePostAddShelfPlacementCard: View {
                 PremiumLockedCard(
                     icon: "books.vertical.fill",
                     title: "Emplacement de cet album",
-                    message: "Passe premium pour savoir instantanément où intercaler ce disque dans ton meuble."
+                    message: "Passe premium pour savoir instantanément où intercaler cet album dans ton meuble."
                 )
             } else {
                 HStack(spacing: 5) {
-                    Text("\(AppInfo.name) a déterminé l'emplacement exact de ce disque dans ton meuble.")
+                    Text("\(AppInfo.name) a déterminé l'emplacement exact de cet album dans ton meuble.")
                         .font(.caption)
                         .foregroundStyle(Color.appSecondaryText)
                     DemoPremiumBadge()

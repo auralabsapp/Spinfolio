@@ -270,7 +270,7 @@ final class BatchScanViewModel {
         addProgressText = nil
         isAdding = false
         let addedCount = count - failedIds.count
-        message = String(localized: "\(addedCount) disques ajoutés à la collection.")
+        message = String(localized: "\(addedCount) albums ajoutés à la collection.")
         destinationAfterAdd = addedCount > 0 ? .collection : nil
         appendOutcomeDetails(queuedCount: queuedCount, failedCount: failedIds.count, purgedCount: purgeUnrecognizedIfFinished())
         offerCompletion(for: addedItems)
@@ -328,7 +328,7 @@ final class BatchScanViewModel {
         addProgressText = nil
         isAdding = false
         let addedCount = count - failedIds.count
-        message = String(localized: "\(addedCount) disques ajoutés à la wantlist.")
+        message = String(localized: "\(addedCount) albums ajoutés à la wantlist.")
         destinationAfterAdd = addedCount > 0 ? .wantlist : nil
         appendOutcomeDetails(queuedCount: queuedCount, failedCount: failedIds.count, purgedCount: purgeUnrecognizedIfFinished())
     }
@@ -373,10 +373,10 @@ final class BatchScanViewModel {
     private func appendOutcomeDetails(queuedCount: Int, failedCount: Int, purgedCount: Int) {
         var details: [String] = []
         if queuedCount > 0 {
-            details.append(String(localized: "\(queuedCount) disques en attente de synchronisation avec Discogs."))
+            details.append(String(localized: "\(queuedCount) albums en attente de synchronisation avec Discogs."))
         }
         if failedCount > 0 {
-            details.append(String(localized: "\(failedCount) disques n'ont pas pu être ajoutés et restent dans la liste."))
+            details.append(String(localized: "\(failedCount) albums n'ont pas pu être ajoutés et restent dans la liste."))
         }
         if purgedCount > 0 {
             details.append(String(localized: "\(purgedCount) codes non reconnus retirés de la liste."))

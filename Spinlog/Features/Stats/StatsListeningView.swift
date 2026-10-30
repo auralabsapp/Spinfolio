@@ -331,7 +331,7 @@ extension StatsView {
                     .lineLimit(1)
                 // Même unité que le classement des albums (« écoutes », plus « sessions ») ; deux
                 // textes imbriqués pour que chaque nombre ait sa propre règle de pluriel.
-                Text("\(Text("\(entry.totalPlays) écoutes")) · \(Text("\(entry.releaseCount) disques"))")
+                Text("\(Text("\(entry.totalPlays) écoutes")) · \(Text("\(entry.releaseCount) albums"))")
                     .font(.caption)
                     .foregroundStyle(Color.appSecondaryText)
                     .lineLimit(1)

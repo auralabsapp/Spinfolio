@@ -14,7 +14,7 @@ struct SettingsSearchTests {
     }
 
     @Test func matchingIgnoresCaseAndAccents() {
-        #expect(SettingsSearchMatcher.matches(query: "ETAT", haystack: ["Champ état du disque"]))
+        #expect(SettingsSearchMatcher.matches(query: "ETAT", haystack: ["Champ état de l'album"]))
         #expect(SettingsSearchMatcher.matches(query: "theme", haystack: ["Couleur du thème"]))
     }
 

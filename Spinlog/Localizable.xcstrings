@@ -383,7 +383,7 @@
         }
       }
     },
-    "%@ a déterminé l'emplacement exact de ce disque dans ton meuble." : {
+    "%@ a déterminé l'emplacement exact de cet album dans ton meuble." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -679,6 +679,230 @@
         }
       }
     },
+    "%lld albums ajoutés à la collection." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld record added to the collection."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld records added to the collection."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld album ajouté à la collection."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld albums ajoutés à la collection."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld albums ajoutés à la wantlist." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld record added to the wantlist."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld records added to the wantlist."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld album ajouté à la wantlist."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld albums ajoutés à la wantlist."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld albums archivés" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld record archived"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld records archived"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld album archivé"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld albums archivés"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld albums en attente de synchronisation avec Discogs." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld record waiting to sync with Discogs."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld records waiting to sync with Discogs."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld records waiting to sync with Discogs."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld album en attente de synchronisation avec Discogs."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld albums en attente de synchronisation avec Discogs."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld album en attente de synchronisation avec Discogs."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld albums n'ont pas pu être ajoutés et restent dans la liste." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld record couldn’t be added and remains in the list."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld records couldn’t be added and remain in the list."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld records couldn’t be added and remain in the list."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld album n'a pas pu être ajouté et reste dans la liste."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld albums n'ont pas pu être ajoutés et restent dans la liste."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld album n'a pas pu être ajouté et reste dans la liste."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld alertes de prix" : {
       "localizations" : {
         "en" : {
@@ -924,270 +1148,6 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld codes scannés"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "%lld disques" : {
-      "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld record"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld records"
-                }
-              }
-            }
-          }
-        },
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld disque"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld disques"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "%lld disques ajoutés à la collection." : {
-      "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld record added to the collection."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld records added to the collection."
-                }
-              }
-            }
-          }
-        },
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld disque ajouté à la collection."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld disques ajoutés à la collection."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "%lld disques ajoutés à la wantlist." : {
-      "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld record added to the wantlist."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld records added to the wantlist."
-                }
-              }
-            }
-          }
-        },
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld disque ajouté à la wantlist."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld disques ajoutés à la wantlist."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "%lld disques archivés" : {
-      "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "machine_translated",
-                  "value" : "%lld record archived"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "machine_translated",
-                  "value" : "%lld records archived"
-                }
-              }
-            }
-          }
-        },
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "machine_translated",
-                  "value" : "%lld disque archivé"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "machine_translated",
-                  "value" : "%lld disques archivés"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "%lld disques en attente de synchronisation avec Discogs." : {
-      "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "machine_translated",
-                  "value" : "%lld record waiting to sync with Discogs."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "machine_translated",
-                  "value" : "%lld records waiting to sync with Discogs."
-                }
-              },
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "machine_translated",
-                  "value" : "%lld records waiting to sync with Discogs."
-                }
-              }
-            }
-          }
-        },
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "machine_translated",
-                  "value" : "%lld disque en attente de synchronisation avec Discogs."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "machine_translated",
-                  "value" : "%lld disques en attente de synchronisation avec Discogs."
-                }
-              },
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "machine_translated",
-                  "value" : "%lld disque en attente de synchronisation avec Discogs."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "%lld disques n'ont pas pu être ajoutés et restent dans la liste." : {
-      "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "machine_translated",
-                  "value" : "%lld record couldn’t be added and remains in the list."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "machine_translated",
-                  "value" : "%lld records couldn’t be added and remain in the list."
-                }
-              },
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "machine_translated",
-                  "value" : "%lld records couldn’t be added and remain in the list."
-                }
-              }
-            }
-          }
-        },
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "machine_translated",
-                  "value" : "%lld disque n'a pas pu être ajouté et reste dans la liste."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "machine_translated",
-                  "value" : "%lld disques n'ont pas pu être ajoutés et restent dans la liste."
-                }
-              },
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "machine_translated",
-                  "value" : "%lld disque n'a pas pu être ajouté et reste dans la liste."
                 }
               }
             }
@@ -2397,7 +2357,7 @@
         }
       }
     },
-    "À %lld disques" : {
+    "À %lld albums" : {
       "localizations" : {
         "en" : {
           "variations" : {
@@ -2423,13 +2383,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "machine_translated",
-                  "value" : "À %lld disque"
+                  "value" : "À %lld album"
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "machine_translated",
-                  "value" : "À %lld disques"
+                  "value" : "À %lld albums"
                 }
               }
             }
@@ -2758,7 +2718,7 @@
         }
       }
     },
-    "Agir sur un disque" : {
+    "Agir sur un album" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2870,7 +2830,7 @@
         }
       }
     },
-    "Ajoute des disques depuis la recherche ou le scan." : {
+    "Ajoute des albums depuis la recherche ou le scan." : {
       "extractionState" : "stale",
       "localizations" : {
         "en" : {
@@ -2881,7 +2841,7 @@
         }
       }
     },
-    "Ajoute des disques en les cherchant par leur nom, ou en scannant leur code-barres." : {
+    "Ajoute des albums en les cherchant par leur nom, ou en scannant leur code-barres." : {
       "extractionState" : "stale",
       "localizations" : {
         "en" : {
@@ -2892,7 +2852,7 @@
         }
       }
     },
-    "Ajoute des disques que tu recherches depuis la recherche ou le scan." : {
+    "Ajoute des albums que tu recherches depuis la recherche ou le scan." : {
       "extractionState" : "stale",
       "localizations" : {
         "en" : {
@@ -2913,23 +2873,23 @@
         }
       }
     },
-    "Ajoute les albums que tu veux : recherche-les (artiste, titre, label, code-barres) ou scanne-les." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "machine_translated",
-            "value" : "Add the albums you want: search for them (artist, title, label, barcode) or scan them."
-          }
-        }
-      }
-    },
-    "Ajoute les disques que tu cherches, par leur nom ou en scannant leur code-barres." : {
+    "Ajoute les albums que tu cherches, par leur nom ou en scannant leur code-barres." : {
       "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Add the records you’re looking for by searching their name or scanning their barcode."
+          }
+        }
+      }
+    },
+    "Ajoute les albums que tu veux : recherche-les (artiste, titre, label, code-barres) ou scanne-les." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Add the albums you want: search for them (artist, title, label, barcode) or scan them."
           }
         }
       }
@@ -3004,22 +2964,22 @@
         }
       }
     },
+    "Ajouter un album" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Add a Record"
+          }
+        }
+      }
+    },
     "Ajouter un autre exemplaire" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Add Another Copy"
-          }
-        }
-      }
-    },
-    "Ajouter un disque" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "machine_translated",
-            "value" : "Add a Record"
           }
         }
       }
@@ -3100,6 +3060,16 @@
         }
       }
     },
+    "Album au hasard" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Random Record"
+          }
+        }
+      }
+    },
     "Album du jour" : {
       "localizations" : {
         "en" : {
@@ -3160,6 +3130,16 @@
         }
       }
     },
+    "albums distincts" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "different records"
+          }
+        }
+      }
+    },
     "albums en collection" : {
       "localizations" : {
         "en" : {
@@ -3176,6 +3156,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "albums in wantlist"
+          }
+        }
+      }
+    },
+    "Albums repères" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reference Records"
           }
         }
       }
@@ -3582,7 +3572,7 @@
         }
       }
     },
-    "Artiste, disque, label, code-barre…" : {
+    "Artiste, album, label, code-barre…" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3662,6 +3652,16 @@
         }
       }
     },
+    "Aucun album disponible : ouvre ta collection dans %@ une première fois." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "No records available. Open your collection in %@ once first."
+          }
+        }
+      }
+    },
     "Aucun album n'a été trouvé dans ta collection pour l'export." : {
       "localizations" : {
         "en" : {
@@ -3678,6 +3678,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No main releases by this artist on Discogs."
+          }
+        }
+      }
+    },
+    "Aucun album trouvé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No record found"
           }
         }
       }
@@ -3722,6 +3732,16 @@
         }
       }
     },
+    "Aucun album trouvé pour le code %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No record found for barcode %@."
+          }
+        }
+      }
+    },
     "Aucun artiste personnalisé pour l'instant" : {
       "localizations" : {
         "en" : {
@@ -3758,36 +3778,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No barcode scanned"
-          }
-        }
-      }
-    },
-    "Aucun disque disponible : ouvre ta collection dans %@ une première fois." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "machine_translated",
-            "value" : "No records available. Open your collection in %@ once first."
-          }
-        }
-      }
-    },
-    "Aucun disque trouvé" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No record found"
-          }
-        }
-      }
-    },
-    "Aucun disque trouvé pour le code %@." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No record found for barcode %@."
           }
         }
       }
@@ -3902,7 +3892,7 @@
         }
       }
     },
-    "Autorise l'accès à la caméra dans les Réglages pour scanner les codes-barres de tes disques." : {
+    "Autorise l'accès à la caméra dans les Réglages pour scanner les codes-barres de tes albums." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3982,7 +3972,7 @@
         }
       }
     },
-    "Avec plusieurs tags, seuls les disques qui les portent tous restent affichés." : {
+    "Avec plusieurs tags, seuls les albums qui les portent tous restent affichés." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4022,7 +4012,7 @@
         }
       }
     },
-    "Basée sur l'historique réel des ventes Discogs pour les disques de ta collection." : {
+    "Basée sur l'historique réel des ventes Discogs pour les albums de ta collection." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4112,16 +4102,6 @@
         }
       }
     },
-    "Ce disque n'est pas dans ta collection : une écoute sur platine ne se démarre que pour un disque que tu possèdes." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "machine_translated",
-            "value" : "This record isn’t in your collection: a turntable listening can only be started for a record you own."
-          }
-        }
-      }
-    },
     "Ce document liste l'ensemble des albums de la collection à la date d'export ci-dessus, à titre de justificatif (par exemple auprès d'un assureur). Les montants indiqués proviennent des informations renseignées manuellement dans l'application et des cotes publiques Discogs : ils ne constituent pas une expertise officielle." : {
       "localizations" : {
         "en" : {
@@ -4142,7 +4122,7 @@
         }
       }
     },
-    "Ce que tu trouves sur la fiche d'un disque, et ce que tu peux y noter." : {
+    "Ce que tu trouves sur la fiche d'un album, et ce que tu peux y noter." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4262,7 +4242,17 @@
         }
       }
     },
-    "Cet appareil ne permet pas de scanner des codes-barres. Tu peux rechercher le disque par son nom." : {
+    "Cet album n'est pas dans ta collection : une écoute sur platine ne se démarre que pour un album que tu possèdes." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "This record isn’t in your collection: a turntable listening can only be started for a record you own."
+          }
+        }
+      }
+    },
+    "Cet appareil ne permet pas de scanner des codes-barres. Tu peux rechercher l'album par son nom." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4352,7 +4342,7 @@
         }
       }
     },
-    "Champ état du disque" : {
+    "Champ état de l'album" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4604,7 +4594,7 @@
         }
       }
     },
-    "Classe tes disques avec tes tags et une note sur 5." : {
+    "Classe tes albums avec tes tags et une note sur 5." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4790,7 +4780,7 @@
         }
       }
     },
-    "Compléter les disques" : {
+    "Compléter les albums" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5779,7 +5769,7 @@
         }
       }
     },
-    "Désélectionner ce disque" : {
+    "Désélectionner cet album" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5929,7 +5919,7 @@
         }
       }
     },
-    "Discogs ne donne pas de « prix médian » pour un disque précis, seulement des suggestions par état. %@ prend celle de l'état déclaré ; sans état, il fait la moyenne de toutes les suggestions : l'estimation est alors moins précise." : {
+    "Discogs ne donne pas de « prix médian » pour un album précis, seulement des suggestions par état. %@ prend celle de l'état déclaré ; sans état, il fait la moyenne de toutes les suggestions : l'estimation est alors moins précise." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5975,46 +5965,6 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Record Dealer"
-          }
-        }
-      }
-    },
-    "Disque" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "machine_translated",
-            "value" : "Record"
-          }
-        }
-      }
-    },
-    "Disque au hasard" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Random Record"
-          }
-        }
-      }
-    },
-    "disques distincts" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "machine_translated",
-            "value" : "different records"
-          }
-        }
-      }
-    },
-    "Disques repères" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reference Records"
           }
         }
       }
@@ -6567,7 +6517,7 @@
         }
       }
     },
-    "Enregistre l'écoute sur platine d'un disque de ta collection et l'affiche sur l'écran verrouillé." : {
+    "Enregistre l'écoute sur platine d'un album de ta collection et l'affiche sur l'écran verrouillé." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7029,7 +6979,7 @@
         }
       }
     },
-    "Fiche d'un disque" : {
+    "Fiche d'un album" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7109,7 +7059,7 @@
         }
       }
     },
-    "Fixe le prix maximum que tu veux payer pour un disque de ta wantlist." : {
+    "Fixe le prix maximum que tu veux payer pour un album de ta wantlist." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7139,7 +7089,7 @@
         }
       }
     },
-    "Fonction Premium. Le guide s'ouvre aussi juste après l'ajout d'un disque à la collection." : {
+    "Fonction Premium. Le guide s'ouvre aussi juste après l'ajout d'un album à la collection." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7230,7 +7180,7 @@
         }
       }
     },
-    "Gagne ton premier grade en ajoutant un disque." : {
+    "Gagne ton premier grade en ajoutant un album." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7687,7 +7637,7 @@
         }
       }
     },
-    "Impossible d'ajouter ce disque sur Discogs." : {
+    "Impossible d'ajouter cet album sur Discogs." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7738,7 +7688,7 @@
         }
       }
     },
-    "Impossible de changer ce disque de dossier sur Discogs." : {
+    "Impossible de changer cet album de dossier sur Discogs." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7818,7 +7768,7 @@
         }
       }
     },
-    "Impossible de supprimer ce disque sur Discogs." : {
+    "Impossible de supprimer cet album sur Discogs." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7945,7 +7895,7 @@
         }
       }
     },
-    "J'écoute ce disque sur la platine" : {
+    "J'écoute cet album sur la platine" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7995,7 +7945,7 @@
         }
       }
     },
-    "L'alerte se déclenche dès qu'un exemplaire à ce prix ou moins est détecté, lors d'une vérification (à l'ouverture de l'app ou occasionnellement en arrière-plan) — pas nécessairement en temps réel. L'état exact du disque et les frais de port seront à vérifier sur l'annonce Discogs." : {
+    "L'alerte se déclenche dès qu'un exemplaire à ce prix ou moins est détecté, lors d'une vérification (à l'ouverture de l'app ou occasionnellement en arrière-plan) — pas nécessairement en temps réel. L'état exact de l'album et les frais de port seront à vérifier sur l'annonce Discogs." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8005,7 +7955,7 @@
         }
       }
     },
-    "L'année de sortie originale est retrouvée disque par disque : sur une grande collection, le calcul prend un moment." : {
+    "L'année de sortie originale est retrouvée album par album : sur une grande collection, le calcul prend un moment." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8035,7 +7985,7 @@
         }
       }
     },
-    "L'état du disque" : {
+    "L'état de l'album" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8055,7 +8005,7 @@
         }
       }
     },
-    "La collection, ce sont les disques que tu possèdes ; la wantlist, ceux que tu cherches." : {
+    "La collection, ce sont les albums que tu possèdes ; la wantlist, ceux que tu cherches." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8236,7 +8186,7 @@
         }
       }
     },
-    "Le bouton « Disque au hasard », en haut de la Collection, t'en propose un." : {
+    "Le bouton « Album au hasard », en haut de la Collection, t'en propose un." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8306,9 +8256,6 @@
         }
       }
     },
-    "Le forfait sélectionné n'est pas encore disponible sur l'App Store." : {
-
-    },
     "Le guide compte chaque support à part : vinyles 12, 10 et 7 pouces, CD, cassettes." : {
       "localizations" : {
         "en" : {
@@ -8319,7 +8266,7 @@
         }
       }
     },
-    "Le guide de rangement ne compare qu'au dossier du disque, plutôt qu'à toute la collection" : {
+    "Le guide de rangement ne compare qu'au dossier de l'album, plutôt qu'à toute la collection" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8451,22 +8398,22 @@
         }
       }
     },
-    "Le thème %@ Signature est inclus pour tous. Les 8 thèmes alternatifs sont débloqués avec le compte Premium." : {
+    "Le thème %@ Signature est inclus pour tous. Les 9 thèmes alternatifs sont débloqués avec le compte Premium." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The %@ Signature theme is included for everyone. The 8 alternative themes are unlocked with a Premium account."
+            "value" : "The %@ Signature theme is included for everyone. The 9 alternative themes are unlocked with a Premium account."
           }
         }
       }
     },
-    "Le thème Signature est inclus pour tous ; les 8 autres palettes sont Premium." : {
+    "Le thème Signature est inclus pour tous ; les 9 autres palettes sont Premium." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "The Signature theme is included for everyone; the 8 other palettes are Premium."
+            "value" : "The Signature theme is included for everyone; the 9 other palettes are Premium."
           }
         }
       }
@@ -8695,19 +8642,19 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "machine_translated",
-                  "value" : "Les pochettes sont conservées sur le disque %lld jour au plus après leur téléchargement, pour un affichage immédiat hors ligne : synchronise régulièrement pour les garder. Vider le cache libère l'espace sans effacer ta liste d'albums."
+                  "value" : "Les pochettes sont conservées sur l'album %lld jour au plus après leur téléchargement, pour un affichage immédiat hors ligne : synchronise régulièrement pour les garder. Vider le cache libère l'espace sans effacer ta liste d'albums."
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "machine_translated",
-                  "value" : "Les pochettes sont conservées sur le disque %lld jours au plus après leur téléchargement, pour un affichage immédiat hors ligne : synchronise régulièrement pour les garder. Vider le cache libère l'espace sans effacer ta liste d'albums."
+                  "value" : "Les pochettes sont conservées sur l'album %lld jours au plus après leur téléchargement, pour un affichage immédiat hors ligne : synchronise régulièrement pour les garder. Vider le cache libère l'espace sans effacer ta liste d'albums."
                 }
               },
               "zero" : {
                 "stringUnit" : {
                   "state" : "machine_translated",
-                  "value" : "Les pochettes sont conservées sur le disque %lld jour au plus après leur téléchargement, pour un affichage immédiat hors ligne : synchronise régulièrement pour les garder. Vider le cache libère l'espace sans effacer ta liste d'albums."
+                  "value" : "Les pochettes sont conservées sur l'album %lld jour au plus après leur téléchargement, pour un affichage immédiat hors ligne : synchronise régulièrement pour les garder. Vider le cache libère l'espace sans effacer ta liste d'albums."
                 }
               }
             }
@@ -9720,7 +9667,7 @@
         }
       }
     },
-    "Où ranger ce disque" : {
+    "Où ranger cet album" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9750,7 +9697,7 @@
         }
       }
     },
-    "Où ranger un disque" : {
+    "Où ranger un album" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9790,7 +9737,7 @@
         }
       }
     },
-    "Ouvre le menu des actions pour afficher les disques d'un élément." : {
+    "Ouvre le menu des actions pour afficher les albums d'un élément." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9976,6 +9923,16 @@
         }
       }
     },
+    "Parcours" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Grade category"
+          }
+        }
+      }
+    },
     "Partager l'artiste" : {
       "localizations" : {
         "en" : {
@@ -10096,12 +10053,12 @@
         }
       }
     },
-    "Passe premium pour choisir parmi les 8 palettes de thèmes exclusives." : {
+    "Passe premium pour choisir parmi les 9 palettes de thèmes exclusives." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Go Premium to choose from 8 exclusive theme palettes."
+            "value" : "Go Premium to choose from 9 exclusive theme palettes."
           }
         }
       }
@@ -10156,7 +10113,7 @@
         }
       }
     },
-    "Passe premium pour savoir instantanément où intercaler ce disque dans ton meuble." : {
+    "Passe premium pour savoir instantanément où intercaler cet album dans ton meuble." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -10246,12 +10203,12 @@
         }
       }
     },
-    "Personnalise l'ambiance visuelle de l'app selon tes goûts avec 8 palettes exclusives (Bleu Cobalt, Vert Émeraude, Orange Crépuscule, Rouge Rubis, Violet Améthyste, Cuivre & Or...)." : {
+    "Personnalise l'ambiance visuelle de l'app selon tes goûts avec 9 palettes exclusives (Bleu Cobalt, Vert Émeraude, Orange Crépuscule, Rouge Rubis, Violet Améthyste, Cuivre & Or...)." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Personalize the app’s look to your taste with 8 exclusive palettes (Cobalt Blue, Emerald Green, Twilight Orange, Ruby Red, Amethyst Purple, Copper & Gold...)."
+            "value" : "Personalize the app’s look to your taste with 9 exclusive palettes (Cobalt Blue, Emerald Green, Twilight Orange, Ruby Red, Amethyst Purple, Copper & Gold...)."
           }
         }
       }
@@ -10422,7 +10379,7 @@
         }
       }
     },
-    "plusieurs exemplaires de ce disque, supprime-le manuellement" : {
+    "plusieurs exemplaires de cet album, supprime-le manuellement" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -10724,7 +10681,7 @@
         }
       }
     },
-    "Prix d'achat, état du disque et devise" : {
+    "Prix d'achat, état de l'album et devise" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -10814,7 +10771,7 @@
         }
       }
     },
-    "Quel disque écoutes-tu ?" : {
+    "Quel album écoutes-tu ?" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -10867,7 +10824,7 @@
         }
       }
     },
-    "Range ta collection à ta façon, et choisis où atterrissent les nouveaux disques." : {
+    "Range ta collection à ta façon, et choisis où atterrissent les nouveaux albums." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -10997,23 +10954,23 @@
         }
       }
     },
-    "Rechercher un artiste..." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Search for an artist..."
-          }
-        }
-      }
-    },
-    "Rechercher un disque" : {
+    "Rechercher un album" : {
       "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Search for a Record"
+          }
+        }
+      }
+    },
+    "Rechercher un artiste..." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search for an artist..."
           }
         }
       }
@@ -11299,7 +11256,7 @@
         }
       }
     },
-    "Repère le disque central et ses deux voisins : c'est entre eux qu'il va." : {
+    "Repère l'album central et ses deux voisins : c'est entre eux qu'il va." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -11429,7 +11386,7 @@
         }
       }
     },
-    "Retrouve la place de chaque disque dans ton meuble, selon ta façon de les classer." : {
+    "Retrouve la place de chaque album dans ton meuble, selon ta façon de les classer." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -11439,7 +11396,7 @@
         }
       }
     },
-    "Retrouve tes disques dans les onglets Collection et Wantlist." : {
+    "Retrouve tes albums dans les onglets Collection et Wantlist." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -11609,22 +11566,22 @@
         }
       }
     },
+    "Scanne plusieurs albums à la suite, chez un disquaire ou en brocante." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Scan several records in a row, at a record shop or a flea market."
+          }
+        }
+      }
+    },
     "Scanne plusieurs codes-barres à la suite (brocante, disquaire) et ajoute-les en une fois à ta collection ou ta wantlist." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Scan several barcodes in a row (flea market, record store) and add them all at once to your collection or wantlist."
-          }
-        }
-      }
-    },
-    "Scanne plusieurs disques à la suite, chez un disquaire ou en brocante." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "machine_translated",
-            "value" : "Scan several records in a row, at a record shop or a flea market."
           }
         }
       }
@@ -11689,7 +11646,7 @@
         }
       }
     },
-    "Sélectionner ce disque" : {
+    "Sélectionner cet album" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -11769,7 +11726,7 @@
         }
       }
     },
-    "Sois averti quand un disque de ta wantlist apparaît à bon prix sur le marketplace Discogs (vérification à l'ouverture de l'app et occasionnellement en arrière-plan, pas en temps réel)." : {
+    "Sois averti quand un album de ta wantlist apparaît à bon prix sur le marketplace Discogs (vérification à l'ouverture de l'app et occasionnellement en arrière-plan, pas en temps réel)." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -11779,7 +11736,7 @@
         }
       }
     },
-    "Sois prévenu quand un disque de ta wantlist passe sous ton prix." : {
+    "Sois prévenu quand un album de ta wantlist passe sous ton prix." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -11940,7 +11897,7 @@
         }
       }
     },
-    "Suis ce que tu écoutes, et retrouve un disque du jour sur ton écran d'accueil." : {
+    "Suis ce que tu écoutes, et retrouve un album du jour sur ton écran d'accueil." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -12448,7 +12405,7 @@
         }
       }
     },
-    "Sur la fiche d'un disque, ou en glissant une ligne de la Collection : « J'écoute »." : {
+    "Sur la fiche d'un album, ou en glissant une ligne de la Collection : « J'écoute »." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -12518,7 +12475,7 @@
         }
       }
     },
-    "Synchronisation terminée avec succès (%lld disques)" : {
+    "Synchronisation terminée avec succès (%lld albums)" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -12562,13 +12519,13 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg disque"
+                      "value" : "%arg album"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg disques"
+                      "value" : "%arg albums"
                     }
                   }
                 }
@@ -12979,7 +12936,7 @@
         }
       }
     },
-    "Te connecter, ajouter tes premiers disques et comprendre collection et wantlist." : {
+    "Te connecter, ajouter tes premiers albums et comprendre collection et wantlist." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -13009,7 +12966,7 @@
         }
       }
     },
-    "Téléchargement de la collection (page %lld/%lld • %lld disques)…" : {
+    "Téléchargement de la collection (page %lld/%lld • %lld albums)…" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -13053,13 +13010,13 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "machine_translated",
-                      "value" : "%arg disque"
+                      "value" : "%arg album"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "machine_translated",
-                      "value" : "%arg disques"
+                      "value" : "%arg albums"
                     }
                   }
                 }
@@ -13165,22 +13122,22 @@
         }
       }
     },
+    "Tes albums restent sur Discogs : seules les données propres à l'app sont effacées. Tu seras déconnecté." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your records stay on Discogs: only data specific to the app is erased. You’ll be signed out."
+          }
+        }
+      }
+    },
     "Tes chiffres, tes répartitions, ta plus-value et ton palmarès d'écoute." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Your numbers, breakdowns, gain and listening charts."
-          }
-        }
-      }
-    },
-    "Tes disques restent sur Discogs : seules les données propres à l'app sont effacées. Tu seras déconnecté." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "machine_translated",
-            "value" : "Your records stay on Discogs: only data specific to the app is erased. You’ll be signed out."
           }
         }
       }
@@ -13205,7 +13162,7 @@
         }
       }
     },
-    "Tes grades récompensent la taille de ta collection et tes écoutes sur platine. Un grade obtenu ne se perd jamais, même si tu supprimes des disques." : {
+    "Tes grades récompensent la taille de ta collection et tes écoutes sur platine. Un grade obtenu ne se perd jamais, même si tu supprimes des albums." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -13245,7 +13202,7 @@
         }
       }
     },
-    "Tire un disque au hasard dans ta collection et ouvre sa fiche." : {
+    "Tire un album au hasard dans ta collection et ouvre sa fiche." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -13307,6 +13264,16 @@
         }
       }
     },
+    "Ton album en cours reste visible, et l'écoute s'arrête toute seule." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your current record stays visible, and listening stops on its own."
+          }
+        }
+      }
+    },
     "Ton choix est retenu, séparément pour la Collection et la Wantlist." : {
       "localizations" : {
         "en" : {
@@ -13333,16 +13300,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Your account is hosted on Discogs. You can start the permanent deletion of your account or erase local and iCloud-synced data (tags, listening history, preferences)."
-          }
-        }
-      }
-    },
-    "Ton disque en cours reste visible, et l'écoute s'arrête toute seule." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "machine_translated",
-            "value" : "Your current record stays visible, and listening stops on its own."
           }
         }
       }
@@ -13407,7 +13364,7 @@
         }
       }
     },
-    "Touche « ··· » puis « Sélectionner » pour agir sur plusieurs disques à la fois : dossier, tags, suppression." : {
+    "Touche « ··· » puis « Sélectionner » pour agir sur plusieurs albums à la fois : dossier, tags, suppression." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -13427,7 +13384,7 @@
         }
       }
     },
-    "Touche « J'écoute » quand tu poses un disque sur ta platine." : {
+    "Touche « J'écoute » quand tu poses un album sur ta platine." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -13437,7 +13394,7 @@
         }
       }
     },
-    "Touche « J'écoute » sur un disque quand tu le poses sur ta platine." : {
+    "Touche « J'écoute » sur un album quand tu le poses sur ta platine." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -13477,7 +13434,7 @@
         }
       }
     },
-    "Touche le disque quand tu l'écoutes" : {
+    "Touche l'album quand tu l'écoutes" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -13507,7 +13464,7 @@
         }
       }
     },
-    "Touche un disque pour ouvrir sa fiche." : {
+    "Touche un album pour ouvrir sa fiche." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -13587,7 +13544,7 @@
         }
       }
     },
-    "Touche une portion ou une barre : la liste des disques correspondants s'ouvre." : {
+    "Touche une portion ou une barre : la liste des albums correspondants s'ouvre." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -13844,7 +13801,7 @@
         }
       }
     },
-    "Trouve un disque, un artiste, un label, ou scanne un code-barres." : {
+    "Trouve un album, un artiste, un label, ou scanne un code-barres." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -14014,7 +13971,7 @@
         }
       }
     },
-    "Tu ne seras plus prévenu pour ce disque." : {
+    "Tu ne seras plus prévenu pour cet album." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -14024,7 +13981,7 @@
         }
       }
     },
-    "Tu peux posséder un disque en plusieurs exemplaires : maintiens « En collection » pour en ajouter un autre." : {
+    "Tu peux posséder un album en plusieurs exemplaires : maintiens « En collection » pour en ajouter un autre." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -14044,7 +14001,7 @@
         }
       }
     },
-    "Un disque de ta collection tiré au hasard chaque jour, sur ton écran d'accueil." : {
+    "Un album de ta collection tiré au hasard chaque jour, sur ton écran d'accueil." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -14136,7 +14093,7 @@
         }
       }
     },
-    "Un même disque peut exister en plusieurs exemplaires, chacun avec son dossier." : {
+    "Un même album peut exister en plusieurs exemplaires, chacun avec son dossier." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -14237,7 +14194,7 @@
         }
       }
     },
-    "Vérifie l'état exact du disque et les frais de port sur l'annonce Discogs." : {
+    "Vérifie l'état exact de l'album et les frais de port sur l'annonce Discogs." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -14317,7 +14274,7 @@
         }
       }
     },
-    "Veux-tu vraiment supprimer « %@ » ? Ce tag sera retiré de %lld disques." : {
+    "Veux-tu vraiment supprimer « %@ » ? Ce tag sera retiré de %lld albums." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -14361,13 +14318,13 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg disque"
+                      "value" : "%arg album"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg disques"
+                      "value" : "%arg albums"
                     }
                   }
                 }
@@ -14377,7 +14334,7 @@
         }
       }
     },
-    "Veux-tu vraiment supprimer définitivement « %@ » ? Ce tag sera retiré de %lld disques de ta bibliothèque." : {
+    "Veux-tu vraiment supprimer définitivement « %@ » ? Ce tag sera retiré de %lld albums de ta bibliothèque." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -14421,13 +14378,13 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg disque"
+                      "value" : "%arg album"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg disques"
+                      "value" : "%arg albums"
                     }
                   }
                 }
@@ -14547,7 +14504,7 @@
         }
       }
     },
-    "Voici ton grade de départ, déjà mérité. Les suivants se gagnent avec tes disques et tes écoutes." : {
+    "Voici ton grade de départ, déjà mérité. Les suivants se gagnent avec tes albums et tes écoutes." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -14587,7 +14544,7 @@
         }
       }
     },
-    "Voir la fiche du disque" : {
+    "Voir la fiche de l'album" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {

@@ -107,7 +107,7 @@ extension StatsView {
                         selection: chartSelection,
                         valueLabel: "Albums",
                         accessibilityTitle: Text("Sorties originales"),
-                        valueText: { String(localized: "\($0) disques") },
+                        valueText: { String(localized: "\($0) albums") },
                         onSelect: { year, yearText in
                             selectOriginalYear(year, tappedYear: yearText, scrollProxy: scrollProxy)
                         }

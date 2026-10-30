@@ -21,7 +21,7 @@ extension GradeTrack {
     /// premier palier, où le libellé reste correct sans accord).
     var unitCaption: LocalizedStringResource {
         switch self {
-        case .collection: "disques distincts"
+        case .collection: "albums distincts"
         case .listening: "écoutes sur platine"
         }
     }
@@ -64,7 +64,7 @@ extension GradeTrack {
     func condition(forTier tier: Int) -> String {
         let threshold = thresholds[min(max(tier, 0), thresholds.count - 1)]
         switch self {
-        case .collection: return String(localized: "À \(threshold) disques")
+        case .collection: return String(localized: "À \(threshold) albums")
         case .listening: return String(localized: "À \(threshold) écoutes")
         }
     }

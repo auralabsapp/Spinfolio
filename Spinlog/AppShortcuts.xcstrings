@@ -43,13 +43,13 @@
             "state" : "new",
             "values" : [
               "Démarre une écoute dans ${applicationName}",
-              "Je mets un disque sur la platine avec ${applicationName}"
+              "Je mets un album sur la platine avec ${applicationName}"
             ]
           }
         }
       }
     },
-    "Un disque au hasard avec ${applicationName}" : {
+    "Un album au hasard avec ${applicationName}" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
@@ -66,8 +66,8 @@
           "stringSet" : {
             "state" : "new",
             "values" : [
-              "Un disque au hasard avec ${applicationName}",
-              "Tire un disque au hasard dans ${applicationName}",
+              "Un album au hasard avec ${applicationName}",
+              "Tire un album au hasard dans ${applicationName}",
               "Qu'est-ce que j'écoute avec ${applicationName}"
             ]
           }

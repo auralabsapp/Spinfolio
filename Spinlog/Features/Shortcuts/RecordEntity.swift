@@ -5,7 +5,7 @@ import Foundation
 /// Construit depuis le cache local (`LocalDataStore`) : disponible hors ligne et sans requête
 /// Discogs, au prix de ne connaître que les disques déjà chargés au moins une fois dans l'app.
 nonisolated struct RecordEntity: AppEntity, Identifiable, Hashable {
-    static let typeDisplayRepresentation: TypeDisplayRepresentation = "Disque"
+    static let typeDisplayRepresentation: TypeDisplayRepresentation = "Album"
     static let defaultQuery = RecordEntityQuery()
 
     /// Identifiant de release Discogs (plusieurs exemplaires d'un même disque n'en font qu'un).
@@ -47,9 +47,9 @@ nonisolated enum RecordIntentError: Error, CustomLocalizedStringResourceConverti
         case .notSignedIn:
             "Connecte-toi à ton compte Discogs dans \(AppInfo.name) pour utiliser ce raccourci."
         case .emptyLibrary:
-            "Aucun disque disponible : ouvre ta collection dans \(AppInfo.name) une première fois."
+            "Aucun album disponible : ouvre ta collection dans \(AppInfo.name) une première fois."
         case .notInCollection:
-            "Ce disque n'est pas dans ta collection : une écoute sur platine ne se démarre que pour un disque que tu possèdes."
+            "Cet album n'est pas dans ta collection : une écoute sur platine ne se démarre que pour un album que tu possèdes."
         }
     }
 }

@@ -22,7 +22,7 @@ extension StatsView {
                 }
                 .padding(.vertical, 4)
                 .appleMusicGroupedCard()
-                Text("Basée sur l'historique réel des ventes Discogs pour les disques de ta collection.")
+                Text("Basée sur l'historique réel des ventes Discogs pour les albums de ta collection.")
                     .font(.caption)
                     .foregroundStyle(Color.appSecondaryText)
             } else {

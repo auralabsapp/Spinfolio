@@ -165,7 +165,7 @@ struct WantlistAlertSheet: View {
                     dismiss()
                 }
             } message: {
-                Text("Tu ne seras plus prévenu pour ce disque.")
+                Text("Tu ne seras plus prévenu pour cet album.")
             }
             .alert("Notifications désactivées", isPresented: $showPermissionAlert) {
                 Button("Ouvrir Réglages") {
@@ -308,7 +308,7 @@ struct WantlistAlertSheet: View {
     private var alertSettingsSection: some View {
         Section(
             header: SectionEyebrow(title: "Mon seuil d'alerte", icon: "eurosign.circle.fill", isPremiumFeature: true),
-            footer: Text("L'alerte se déclenche dès qu'un exemplaire à ce prix ou moins est détecté, lors d'une vérification (à l'ouverture de l'app ou occasionnellement en arrière-plan) — pas nécessairement en temps réel. L'état exact du disque et les frais de port seront à vérifier sur l'annonce Discogs.")
+            footer: Text("L'alerte se déclenche dès qu'un exemplaire à ce prix ou moins est détecté, lors d'une vérification (à l'ouverture de l'app ou occasionnellement en arrière-plan) — pas nécessairement en temps réel. L'état exact de l'album et les frais de port seront à vérifier sur l'annonce Discogs.")
         ) {
             VStack(spacing: 4) {
                 // Cible du défilement au focus (voir `scrollTo`) : une ligne courte s'aligne de façon

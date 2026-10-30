@@ -29,7 +29,7 @@ struct GradeSummaryRow: View {
             return acquired > 0 ? String(localized: track.tierName(acquired - 1)) : nil
         }
         return names.isEmpty
-            ? String(localized: "Gagne ton premier grade en ajoutant un disque.")
+            ? String(localized: "Gagne ton premier grade en ajoutant un album.")
             : names.joined(separator: " · ")
     }
 

@@ -20,7 +20,7 @@ struct CollectionOptionsMenu: View {
         Menu {
             if showsRandomButton {
                 Button(action: onPickRandom) {
-                    Label("Disque au hasard", systemImage: "shuffle")
+                    Label("Album au hasard", systemImage: "shuffle")
                 }
                 .disabled(viewModel.display.visibleItemCount == 0)
             }

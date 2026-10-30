@@ -223,7 +223,7 @@ struct NowPlayingFullScreenView: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Voir la fiche du disque")
+                .accessibilityLabel("Voir la fiche de l'album")
             }
         }
     }

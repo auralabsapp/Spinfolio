@@ -148,7 +148,7 @@ struct SettingsView: View {
             NavigationLink(value: SettingsDestination.gainTracking) {
                 SettingsHubRow(
                     icon: "chart.line.uptrend.xyaxis", color: .green, title: "Suivi de plus-value",
-                    subtitle: String(localized: "Prix d'achat, état du disque et devise"),
+                    subtitle: String(localized: "Prix d'achat, état de l'album et devise"),
                     isPremiumFeature: true
                 )
             }
