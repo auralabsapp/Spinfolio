@@ -512,6 +512,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Spinlog/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Spinfolio;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_NSAppleMusicUsageDescription = "Spinfolio utilise Apple Music pour lire les titres de tes albums et afficher la photo des artistes dans tes statistiques.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Spinfolio utilise l'appareil photo pour scanner le code-barres de tes disques et retrouver leur fiche Discogs.";
@@ -563,6 +564,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Spinlog/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Spinfolio;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_NSAppleMusicUsageDescription = "Spinfolio utilise Apple Music pour lire les titres de tes albums et afficher la photo des artistes dans tes statistiques.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Spinfolio utilise l'appareil photo pour scanner le code-barres de tes disques et retrouver leur fiche Discogs.";
