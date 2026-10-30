@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Spinfolio — Le carnet de collection des passionnés de vinyles, CD et cassettes</title>
-  <meta name="description" content="Spinfolio : scanne, classe et retrouve chaque disque de ta discothèque. Collection et wantlist synchronisées avec Discogs, trois affichages, écoute sur platine, et un Premium pour aller plus loin.">
+  <meta name="description" content="Spinfolio : scanne, classe et retrouve chaque album de ta discothèque. Collection et wantlist synchronisées avec Discogs, trois affichages, écoute sur platine, et un Premium pour aller plus loin.">
   <meta name="color-scheme" content="light dark">
   <meta property="og:title" content="Spinfolio — Ta discothèque, en un coup d'œil">
   <meta property="og:description" content="Le carnet de collection des passionnés de vinyles, CD et cassettes, synchronisé avec Discogs.">
@@ -32,6 +32,15 @@
       --serif: "New York", ui-serif, "Iowan Old Style", "Palatino Linotype", Georgia, serif;
       --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, sans-serif;
       --shadow: 0 30px 80px -30px rgba(40, 20, 60, .45);
+      /* Nuances de violet dérivées de l'accent (Signature par défaut, change avec le nuancier de thèmes) :
+         du plus lumineux (v1) au plus profond (v3). Mélangées à un noir violacé pour que le texte blanc
+         reste lisible quelle que soit la palette choisie. */
+      --v1: color-mix(in srgb, var(--accent) 84%, #2a0d4a);
+      --v2: color-mix(in srgb, var(--accent) 60%, #2a0d4a);
+      --v3: color-mix(in srgb, var(--accent) 34%, #1f0840);
+      --v4: color-mix(in srgb, var(--accent) 14%, #160632);
+      --tint-1: color-mix(in srgb, var(--accent) 7%, var(--bg));
+      --tint-2: color-mix(in srgb, var(--accent) 16%, var(--bg));
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -66,6 +75,19 @@
     .btn:hover { transform: translateY(-2px); text-decoration: none; }
     .btn.ghost { background: transparent; color: var(--ink); box-shadow: none; border: 1px solid var(--line); }
 
+    /* Sections sur fond violet : texte blanc, cartes en verre dépoli, bouton clair. Chaque section a son
+       propre dégradé (angle et halos différents), comme les images de la fiche App Store. */
+    .on-violet { --ink: #fff; --ink-2: rgba(255, 255, 255, .86); --line: rgba(255, 255, 255, .22); --surface: rgba(255, 255, 255, .10); --surface-2: rgba(255, 255, 255, .14); --accent: #EDC9FF; --accent-soft: rgba(255, 255, 255, .16); --gold-ink: #FFD27A; --shadow: 0 30px 80px -26px rgba(8, 2, 18, .75); color: var(--ink); position: relative; isolation: isolate; }
+    .on-violet .btn { background: #fff; color: #4A1D78; box-shadow: 0 14px 34px -14px rgba(0, 0, 0, .5); }
+    .on-violet .btn.ghost { background: transparent; color: #fff; border: 1px solid rgba(255, 255, 255, .45); box-shadow: none; }
+    .on-violet .card, .on-violet .step + .step { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+    .g-orchid { background: radial-gradient(900px 600px at 88% 8%, rgba(236, 160, 255, .38), transparent 62%), radial-gradient(800px 600px at 4% 96%, rgba(120, 60, 210, .5), transparent 60%), linear-gradient(162deg, var(--v1) 0%, var(--v2) 52%, var(--v3) 100%); }
+    .g-rose { background: radial-gradient(800px 560px at 12% 12%, rgba(255, 160, 222, .34), transparent 62%), radial-gradient(900px 600px at 92% 92%, rgba(130, 64, 220, .45), transparent 60%), linear-gradient(-152deg, var(--v1) 0%, var(--v2) 50%, var(--v3) 100%); }
+    .g-prune { background: radial-gradient(1100px 520px at 50% -8%, rgba(214, 120, 250, .34), transparent 64%), radial-gradient(800px 560px at 100% 64%, rgba(196, 110, 255, .22), transparent 62%), linear-gradient(180deg, var(--v2) 0%, var(--v3) 55%, color-mix(in srgb, var(--accent) 40%, #1f0840) 100%); }
+    .g-aube { background: radial-gradient(800px 600px at 96% 4%, rgba(255, 190, 232, .32), transparent 60%), linear-gradient(48deg, var(--v3) 0%, var(--v2) 46%, var(--v1) 100%); }
+    .t-lilas { background: linear-gradient(180deg, var(--tint-1), var(--tint-2)); }
+    .t-brume { background: radial-gradient(900px 500px at 90% 0%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 65%), linear-gradient(200deg, var(--tint-2), var(--tint-1) 70%); }
+
     /* Navigation */
     nav.top { position: sticky; top: 0; z-index: 50; backdrop-filter: saturate(1.6) blur(16px); -webkit-backdrop-filter: saturate(1.6) blur(16px); background: color-mix(in srgb, var(--bg) 78%, transparent); border-bottom: 1px solid var(--line); }
     nav.top .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 16px; }
@@ -79,7 +101,7 @@
     @media (max-width: 860px) { nav.top ul { display: none; } }
 
     /* Téléphone */
-    .phone { position: relative; width: var(--w, 300px); aspect-ratio: 1206 / 2622; border-radius: calc(var(--w, 300px) * .15); background: #0b0a0d; padding: calc(var(--w, 300px) * .03); box-shadow: var(--shadow), inset 0 0 0 2px #2a2830; }
+    .phone { position: relative; width: var(--w, 300px); aspect-ratio: 1 / 2.1037; /* ratio du cadre = capture + marges de 3 % : l'écran garde exactement celui de l'image, sans rognage */ border-radius: calc(var(--w, 300px) * .15); background: #0b0a0d; padding: calc(var(--w, 300px) * .03); box-shadow: var(--shadow), inset 0 0 0 2px #2a2830; }
     .phone::before { content: ""; position: absolute; z-index: 3; top: calc(var(--w, 300px) * .05); left: 50%; width: 31%; height: 3.4%; background: #000; border-radius: 99px; transform: translateX(-50%); }
     .phone .screen { position: relative; width: 100%; height: 100%; border-radius: calc(var(--w, 300px) * .12); overflow: hidden; background: var(--surface-2); }
     .phone .screen img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .55s ease; }
@@ -87,9 +109,11 @@
 
     /* Héros */
     .hero { position: relative; padding: 70px 0 110px; overflow: hidden; }
+    .hero .wrap { z-index: 1; }
+    .hero .wrap > div:first-child { position: relative; z-index: 2; } /* le texte passe devant le vinyle */
     .hero .glow { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .55; pointer-events: none; }
-    .hero .g1 { width: 520px; height: 520px; background: var(--accent); top: -160px; right: -120px; }
-    .hero .g2 { width: 380px; height: 380px; background: var(--gold-1); opacity: .28; bottom: -120px; left: -80px; }
+    .hero .g1 { width: 520px; height: 520px; background: #E7A8FF; opacity: .42; top: -160px; right: -120px; }
+    .hero .g2 { width: 380px; height: 380px; background: #FF9BDD; opacity: .26; bottom: -120px; left: -80px; }
     .hero .wrap { position: relative; display: grid; grid-template-columns: 1.05fr 1fr; gap: 40px; align-items: center; }
     .hero h1 em { font-style: italic; color: var(--accent); }
     .hero .lead { margin: 22px 0 32px; }
@@ -128,6 +152,48 @@
     .tabs button { font: inherit; font-weight: 600; font-size: .92rem; border: 0; background: transparent; color: var(--ink-2); padding: 9px 20px; border-radius: 999px; cursor: pointer; transition: .2s; }
     .tabs button[aria-pressed="true"] { background: var(--accent); color: #fff; }
 
+
+    /* Écoute sur platine : trois supports, trois écrans */
+    .media-trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; margin-bottom: 90px; }
+    .media-trio figure { text-align: center; }
+    .media-trio img { width: 100%; height: auto; filter: drop-shadow(0 26px 34px rgba(60, 20, 100, .28)); }
+    .media-trio figcaption { margin-top: 18px; font-family: var(--serif); font-weight: 700; font-size: 1.3rem; }
+    .media-trio figcaption small { display: block; font-family: var(--sans); font-weight: 400; font-size: .92rem; color: var(--ink-2); margin-top: 2px; }
+    @media (max-width: 860px) { .media-trio { grid-template-columns: 1fr; max-width: 420px; margin-inline: auto; } }
+
+    /* « Et aussi » : cinq cartes, trois sur la première ligne puis deux plus larges */
+    .more .grid { grid-template-columns: repeat(6, 1fr); }
+    .more .grid .card { grid-column: span 2; }
+    .more .grid .card:nth-child(n+4) { grid-column: span 3; }
+    @media (max-width: 900px) { .more .grid { grid-template-columns: repeat(2, 1fr); } .more .grid .card, .more .grid .card:nth-child(n+4) { grid-column: auto; } .more .grid .card:last-child { grid-column: 1 / -1; } }
+    @media (max-width: 560px) { .more .grid { grid-template-columns: 1fr; } }
+    .shot.duo { gap: 22px; align-items: flex-start; }
+    .shot.duo .phone:nth-child(2) { margin-top: 56px; }
+    @media (max-width: 560px) { .shot.duo .phone { --w: 150px !important; } .shot.duo .phone:nth-child(2) { margin-top: 30px; } }
+
+
+    /* Effets de profondeur et de mouvement (tous coupés si « Réduire les animations » est actif) */
+    .stage, .shot, .sticky, .theme-stage, .inline-shot { perspective: 1100px; }
+    .phone { transition: rotate .3s ease-out; }
+    .phone::after { content: ""; position: absolute; z-index: 4; pointer-events: none; inset: calc(var(--w, 300px) * .03); border-radius: calc(var(--w, 300px) * .12); background: radial-gradient(circle at var(--mx, 50%) var(--my, 30%), rgba(255, 255, 255, .26), transparent 52%); opacity: 0; transition: opacity .3s; }
+    .phone.tilting::after { opacity: 1; }
+    .vinyl { position: absolute; z-index: 0; left: 50%; top: -48px; width: 720px; margin-left: -330px; pointer-events: none; opacity: .95; filter: saturate(1.15) brightness(1.08) drop-shadow(0 40px 50px rgba(20, 4, 40, .45)); }
+    .vinyl img { width: 100%; height: auto; will-change: transform; }
+    @media (max-width: 920px) { .vinyl { width: 520px; margin-left: -260px; top: 10px; opacity: .6; } }
+
+    /* Bande de chiffres : valeurs fixes de l'app, qui montent de 0 à leur valeur à l'apparition */
+    .band { padding: 58px 0; }
+    .band .wrap { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; text-align: center; }
+    .band .n { font-family: var(--serif); font-weight: 700; font-size: clamp(2.6rem, 5vw, 3.8rem); line-height: 1; color: var(--accent); font-variant-numeric: tabular-nums; }
+    .band .l { margin-top: 10px; color: var(--ink-2); font-size: .95rem; }
+    @media (max-width: 700px) { .band .wrap { grid-template-columns: repeat(2, 1fr); gap: 34px 14px; } }
+
+    /* Trio d'écoute : la page s'arrête, les trois écrans défilent d'un côté à l'autre (activé par le script) */
+    .pin.on { width: 100vw; margin-left: calc(50% - 50vw); }
+    .pin.on .pin-sticky { position: sticky; top: 0; height: 100vh; display: flex; align-items: center; overflow: hidden; }
+    .pin.on .media-trio { display: flex; gap: 44px; width: max-content; margin: 0; padding: 0 max(20px, calc((100vw - 1120px) / 2)); will-change: transform; }
+    .pin.on .media-trio figure { flex: none; width: min(520px, 78vw, calc((100vh - 220px) / 1.078)); }
+
     /* Grille gratuite */
     .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
     @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } }
@@ -139,7 +205,6 @@
     .note { margin-top: 18px; font-size: .9rem; color: var(--ink-2); background: var(--accent-soft); border-radius: 14px; padding: 12px 16px; }
 
     /* Premium : le téléphone reste en place, l'écran change pendant le défilement */
-    .premium { background: radial-gradient(1200px 500px at 50% -10%, color-mix(in srgb, var(--gold-1) 22%, transparent), transparent 70%), var(--bg); }
     .steps { display: grid; grid-template-columns: 1fr minmax(260px, 340px); gap: 80px; align-items: start; }
     .steps .col { order: 1; }
     .sticky { order: 2; position: sticky; top: 90px; display: flex; justify-content: center; padding-top: 10px; }
@@ -207,7 +272,7 @@
     .badge.acc { color: var(--ink-2); background: var(--surface-2); }
 
     /* Pied de page */
-    footer { padding: 60px 0 70px; border-top: 1px solid var(--line); color: var(--ink-2); font-size: .9rem; text-align: center; }
+    footer { padding: 60px 0 70px; color: var(--ink-2); font-size: .9rem; text-align: center; }
     footer .links { display: flex; flex-wrap: wrap; justify-content: center; gap: 22px; margin-bottom: 20px; }
     footer p { max-width: 52em; margin: 8px auto 0; }
 
@@ -228,6 +293,7 @@
     <a class="brand" href="#decouvrir"><img src="assets/site/icone.png" alt="" width="32" height="32">Spinfolio</a>
     <ul>
       <li><a href="#collection">Collection</a></li>
+      <li><a href="#platine">Écoute</a></li>
       <li><a href="#gratuit">Gratuit</a></li>
       <li><a href="#premium">Premium</a></li>
       <li><a href="#themes">Thèmes</a></li>
@@ -238,7 +304,7 @@
   </div>
 </nav>
 
-<header class="hero" id="decouvrir">
+<header class="hero on-violet g-orchid" id="decouvrir">
   <div class="glow g1"></div><div class="glow g2"></div>
   <div class="wrap">
     <div>
@@ -252,62 +318,123 @@
       <p class="meta">Pour iPhone · Gratuit, avec un Premium optionnel · Un compte Discogs gratuit suffit</p>
     </div>
     <div class="stage" aria-hidden="true">
-      <div class="phone p-left single" data-speed="-0.06"><div class="screen"><img src="assets/site/mosaique.webp" alt="" width="720" height="1565"></div></div>
-      <div class="phone p-main single" data-speed="0.03"><div class="screen"><img src="assets/site/carrousel.webp" alt="" width="720" height="1565" fetchpriority="high"></div></div>
-      <div class="phone p-right single" data-speed="0.07"><div class="screen"><img src="assets/site/liste-sombre.webp" alt="" width="720" height="1565"></div></div>
+      <div class="vinyl" data-speed="0.02"><img id="vinyl-img" src="assets/site/vinyle.webp" alt="" width="640" height="640"></div>
+      <div class="phone p-left single" data-speed="-0.06"><div class="screen"><img src="assets/site/liste-claire.webp" alt="" width="720" height="1565"></div></div>
+      <div class="phone p-main single" data-speed="0.03"><div class="screen"><img src="assets/site/mosaique.webp" alt="" width="720" height="1565" fetchpriority="high"></div></div>
+      <div class="phone p-right single" data-speed="0.07"><div class="screen"><img src="assets/site/carrousel.webp" alt="" width="720" height="1565"></div></div>
     </div>
   </div>
 </header>
 
-<section class="block alt" id="collection">
+<section class="band" aria-label="Spinfolio en chiffres">
+  <div class="wrap reveal">
+    <div><div class="n" data-count="3">3</div><div class="l">supports : vinyle, CD et cassette</div></div>
+    <div><div class="n" data-count="10">10</div><div class="l">critères de tri, dans les deux sens</div></div>
+    <div><div class="n" data-count="10">10</div><div class="l">palettes de couleurs</div></div>
+    <div><div class="n" data-count="7">7</div><div class="l">grades à gagner, par piste</div></div>
+  </div>
+</section>
+
+<section class="block t-lilas" id="collection">
   <div class="wrap split">
     <div class="text reveal">
       <span class="eyebrow">Collection &amp; wantlist</span>
-      <h2>Trois façons de feuilleter tes disques.</h2>
+      <h2>Trois façons de feuilleter tes albums.</h2>
       <p>Ta collection et ta wantlist Discogs, partout dans ta poche. Choisis l'affichage qui te parle : le choix est retenu séparément pour chacune.</p>
       <div class="tabs" role="group" aria-label="Mode d'affichage">
-        <button type="button" data-shot="mosaique" aria-pressed="true">Mosaïque</button>
+        <button type="button" data-shot="liste-claire" aria-pressed="true">Liste</button>
+        <button type="button" data-shot="mosaique" aria-pressed="false">Mosaïque</button>
         <button type="button" data-shot="carrousel" aria-pressed="false">Carrousel</button>
-        <button type="button" data-shot="liste-sombre" aria-pressed="false">Liste</button>
       </div>
       <ul class="ticks">
         <li>Jusqu'à dix tris, dans les deux sens, et une barre pour sauter à une lettre ou à une année</li>
         <li>Recherche, filtres par dossier, tag ou support, qui se cumulent</li>
-        <li>Plusieurs exemplaires d'un même disque, avec tes tags, ta note et tes champs personnalisés</li>
-        <li>Un bouton « Disque au hasard » pour ne plus jamais hésiter</li>
+        <li>Plusieurs exemplaires d'un même album, avec tes tags, ta note et tes champs personnalisés</li>
+        <li>Un bouton « Album au hasard » pour ne plus jamais hésiter</li>
       </ul>
     </div>
     <div class="shot reveal">
       <div class="phone" id="modes" style="--w:310px" role="img" aria-label="Aperçu de la collection dans l'affichage choisi">
         <div class="screen">
-          <img class="on" data-id="mosaique" src="assets/site/mosaique.webp" alt="" width="720" height="1565" loading="lazy">
+          <img class="on" data-id="liste-claire" src="assets/site/liste-claire.webp" alt="" width="720" height="1565" loading="lazy">
+          <img data-id="mosaique" src="assets/site/mosaique.webp" alt="" width="720" height="1565" loading="lazy">
           <img data-id="carrousel" src="assets/site/carrousel.webp" alt="" width="720" height="1565" loading="lazy">
-          <img data-id="liste-sombre" src="assets/site/liste-sombre.webp" alt="" width="720" height="1565" loading="lazy">
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<section class="block" id="ecoute">
+<section class="block on-violet g-rose" id="ecoute">
   <div class="wrap split rev">
     <div class="text reveal">
       <span class="eyebrow">Fiche &amp; écoute</span>
-      <h2>Chaque disque a sa fiche. Et sa platine.</h2>
-      <p>Titres, crédits, photos, vidéos et infos de pressage au même endroit. Quand tu poses un disque sur ta platine, note l'écoute : elle reste visible sur l'écran verrouillé, et s'arrête toute seule à la fin.</p>
+      <h2>Chaque album a sa fiche. Et sa platine.</h2>
+      <p>Titres, crédits, photos, vidéos et infos de pressage au même endroit. Quand tu poses un album sur ta platine, note l'écoute : elle reste visible sur l'écran verrouillé, et s'arrête toute seule à la fin.</p>
       <ul class="ticks">
         <li>Lecture Apple Music depuis la fiche : titres en entier avec un abonnement Apple Music actif, <strong>sinon un extrait de 30 secondes</strong></li>
         <li>Journal d'écoute, Live Activity et widget « Album du jour » sur ton écran d'accueil</li>
-        <li>Scanne un code-barres pour identifier n'importe quel disque en un instant</li>
+        <li>Scanne un code-barres pour identifier n'importe quel album en un instant</li>
       </ul>
     </div>
     <div class="shot reveal">
-      <div class="phone single" style="--w:310px"><div class="screen"><img src="assets/site/fiche.webp" alt="Fiche d'un disque dans Spinfolio : pochette, exemplaire possédé et emplacement de rangement" width="720" height="1565" loading="lazy"></div></div>
+      <div class="phone single" style="--w:310px"><div class="screen"><img src="assets/site/fiche.webp" alt="Fiche d'un album dans Spinfolio : pochette, exemplaire possédé et emplacement de rangement" width="720" height="1565" loading="lazy"></div></div>
     </div>
   </div>
 </section>
 
-<section class="block alt" id="gratuit">
+<section class="block t-lilas" id="platine">
+  <div class="wrap">
+    <div class="head reveal">
+      <span class="eyebrow">Écoute sur platine</span>
+      <h2>Chaque écoute, sur le bon support.</h2>
+      <p class="lead">Vinyle, CD ou cassette&nbsp;: l'écran d'écoute prend la forme de ton disque. Touche « J'écoute » quand tu le poses, « Arrêter l'écoute » quand tu as fini.</p>
+    </div>
+    <div class="pin" id="pin"><div class="pin-sticky">
+    <div class="media-trio pin-track">
+      <figure class="reveal"><img src="assets/site/ecoute-vinyle.webp" alt="Écran d'écoute d'un vinyle : pochette, platine avec bras de lecture et bouton Arrêter l'écoute" width="720" height="776" loading="lazy"><figcaption>Vinyle<small>La platine et son bras de lecture</small></figcaption></figure>
+      <figure class="reveal"><img src="assets/site/ecoute-cd.webp" alt="Écran d'écoute d'un CD : pochette, disque argenté et bouton Arrêter l'écoute" width="720" height="775" loading="lazy"><figcaption>CD<small>Le disque qui sort de son boîtier</small></figcaption></figure>
+      <figure class="reveal"><img src="assets/site/ecoute-k7.webp" alt="Écran d'écoute d'une cassette : pochette, cassette et bouton Arrêter l'écoute" width="720" height="776" loading="lazy"><figcaption>Cassette<small>Chaque face, à sa place</small></figcaption></figure>
+    </div>
+    </div></div>
+    <div class="split">
+      <div class="shot reveal">
+        <div class="phone single" style="--w:310px"><div class="screen"><img src="assets/site/apple-music.webp" alt="Lecteur Apple Music dans Spinfolio : pochette d'Absolution de Muse, titre en cours, barre de progression et commandes" width="720" height="1565" loading="lazy"></div></div>
+      </div>
+      <div class="text reveal">
+        <span class="eyebrow">Lecture Apple Music</span>
+        <h2>Ou écoute-le tout de suite.</h2>
+        <p>Depuis la fiche d'un album, lance un titre dans Apple Music&nbsp;: pochette en grand, progression et commandes, sans quitter l'app.</p>
+        <ul class="ticks">
+          <li>Avec un abonnement Apple Music actif, les titres se lisent <strong>en entier</strong></li>
+          <li>Sans abonnement actif, tu entends <strong>un extrait de 30 secondes</strong></li>
+          <li>Une lecture Apple Music n'est pas une écoute sur platine : seules tes écoutes sur platine alimentent tes grades et ton palmarès</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="grades">
+  <div class="wrap split">
+    <div class="shot duo reveal">
+      <div class="phone single" style="--w:250px"><div class="screen"><img src="assets/site/grades.webp" alt="Page « Mes grades », piste Collection : grade Disquaire, progression vers le palier suivant et grades déjà obtenus" width="720" height="1565" loading="lazy"></div></div>
+      <div class="phone single" style="--w:250px"><div class="screen"><img src="assets/site/grades-ecoute.webp" alt="Page « Mes grades », piste Écoute sur platine : grade Habitué, progression vers 100 écoutes et paliers suivants" width="720" height="1565" loading="lazy"></div></div>
+    </div>
+    <div class="text reveal">
+      <span class="eyebrow">Grades &amp; badges</span>
+      <h2>Deviens un vrai collectionneur.</h2>
+      <p>Des grades à atteindre, au fil de tes albums et de tes écoutes. De « Premier sillon » jusqu'aux plus hauts paliers, chaque étape se célèbre.</p>
+      <ul class="ticks">
+        <li>Deux pistes : la taille de ta collection (albums distincts) et tes écoutes sur platine</li>
+        <li>Des paliers de 1 à 1&nbsp;000, avec la date d'obtention de chaque grade</li>
+        <li>Un grade obtenu ne se perd jamais, même si tu supprimes des albums</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="block t-brume" id="gratuit">
   <div class="wrap">
     <div class="head reveal">
       <span class="eyebrow">Gratuit</span>
@@ -316,19 +443,19 @@
     </div>
     <div class="grid">
       <div class="card reveal"><span class="eyebrow">Discogs</span><h3>Collection et wantlist</h3><p>Ajouts illimités. Les ajouts, retraits et notes sont répercutés sur ton compte Discogs.</p></div>
-      <div class="card reveal"><span class="eyebrow">Scan</span><h3>Scanner un code-barres</h3><p>Identifie un disque par son code-barres et ajoute-le à ta collection ou à ta wantlist.</p></div>
+      <div class="card reveal"><span class="eyebrow">Scan</span><h3>Scanner un code-barres</h3><p>Identifie un album par son code-barres et ajoute-le à ta collection ou à ta wantlist.</p></div>
       <div class="card reveal"><span class="eyebrow">Affichage</span><h3>Mosaïque, carrousel, liste</h3><p>Trois affichages, dix tris, filtres et barre de navigation alphabétique.</p></div>
       <div class="card reveal"><span class="eyebrow">Classement</span><h3>Tags, notes, dossiers</h3><p>Classe à ta façon, avec tes tags, une note sur 5 et tes dossiers Discogs.</p></div>
-      <div class="card reveal"><span class="eyebrow">Valeur</span><h3>Prix d'achat et cote</h3><p>Note ce que tu as payé et compare avec la cote Discogs, disque par disque.</p></div>
+      <div class="card reveal"><span class="eyebrow">Valeur</span><h3>Prix d'achat et cote</h3><p>Note ce que tu as payé et compare avec la cote Discogs, album par album.</p></div>
       <div class="card reveal"><span class="eyebrow">Statistiques</span><h3>Ta collection en chiffres</h3><p>Compteurs, derniers ajouts, graphiques par genre, support, label et année, et estimation de la valeur.</p></div>
-      <div class="card reveal"><span class="eyebrow">Platine</span><h3>Écoutes et Live Activity</h3><p>Note chaque écoute, retrouve ton disque en cours sur l'écran verrouillé.</p></div>
+      <div class="card reveal"><span class="eyebrow">Platine</span><h3>Écoutes et Live Activity</h3><p>Note chaque écoute, retrouve ton album en cours sur l'écran verrouillé.</p></div>
       <div class="card reveal"><span class="eyebrow">Apple Music</span><h3>Lecture depuis la fiche</h3><p>Titres en entier avec un abonnement actif, extrait de 30 secondes sinon.</p></div>
       <div class="card reveal"><span class="eyebrow">Apparence</span><h3>Clair, sombre, Signature</h3><p>Thème clair ou sombre, et la palette Signature, aux couleurs de l'app.</p></div>
     </div>
   </div>
 </section>
 
-<section class="block premium" id="premium">
+<section class="block premium on-violet g-prune" id="premium">
   <div class="wrap">
     <div class="head reveal">
       <span class="pill">✦ Premium</span>
@@ -340,27 +467,33 @@
       <div class="col">
         <article class="step" data-shot="cote">
           <span class="eyebrow">Suivi de cote</span>
-          <h3>Sais ce que valent vraiment tes disques.</h3>
+          <h3>Suis la valeur de tes albums.</h3>
           <p>Renseigne le prix payé pour chaque exemplaire et compare-le à la cote Discogs : plus-value de chaque album, et pour toute ta collection avec « Investi vs cote actuelle ».</p>
-          <div class="inline-shot"><div class="phone single"><div class="screen"><img src="assets/site/cote.webp" alt="Exemplaire d'un disque avec prix d'achat, cote actuelle et plus-value" width="720" height="1565" loading="lazy"></div></div></div>
+          <div class="inline-shot"><div class="phone single"><div class="screen"><img src="assets/site/cote.webp" alt="Exemplaire d'un album avec prix d'achat, cote actuelle et plus-value" width="720" height="1565" loading="lazy"></div></div></div>
         </article>
         <article class="step" data-shot="rangement">
           <span class="eyebrow">Où ranger l'album</span>
-          <h3>Retrouve la place exacte de chaque disque.</h3>
-          <p>Le guide te donne la position du disque dans ton meuble, entre ses deux voisins, selon ta méthode de classement. Il s'ouvre aussi juste après l'ajout d'un disque.</p>
-          <div class="inline-shot"><div class="phone single"><div class="screen"><img src="assets/site/rangement.webp" alt="Guide de rangement : position dans le meuble entre les deux disques voisins" width="720" height="1565" loading="lazy"></div></div></div>
+          <h3>Retrouve la place exacte de chaque album.</h3>
+          <p>Le guide te donne la position de l'album dans ton meuble, entre ses deux voisins, selon ta méthode de classement. Il s'ouvre aussi juste après l'ajout d'un album.</p>
+          <div class="inline-shot"><div class="phone single"><div class="screen"><img src="assets/site/rangement.webp" alt="Guide de rangement : position dans le meuble entre les deux albums voisins" width="720" height="1565" loading="lazy"></div></div></div>
+        </article>
+        <article class="step" data-shot="scan">
+          <span class="eyebrow">Scan par lot</span>
+          <h3>Scanne toute ta pile, ajoute-la d'un coup.</h3>
+          <p>Enchaîne les codes-barres chez le disquaire ou en brocante, relis la revue, puis envoie le lot en collection ou en wantlist.</p>
+          <div class="inline-shot"><div class="phone single"><div class="screen"><img src="assets/site/scan.webp" alt="Revue du scan par lot : six albums scannés, choix du dossier et boutons Collection et Wantlist" width="720" height="1565" loading="lazy"></div></div></div>
         </article>
         <article class="step" data-shot="palmares">
           <span class="eyebrow">Palmarès d'écoute</span>
           <h3>Tes albums et artistes les plus écoutés.</h3>
           <p>Chaque écoute sur ta platine alimente tes palmarès et tes podiums du mois et de l'année, à côté de l'estimation de ta collection.</p>
-          <div class="inline-shot"><div class="phone single"><div class="screen"><img src="assets/site/palmares.webp" alt="Statistiques : estimation de la collection, investi contre cote actuelle et palmarès d'écoute" width="720" height="1565" loading="lazy"></div></div></div>
+          <div class="inline-shot"><div class="phone single"><div class="screen"><img src="assets/site/palmares.webp" alt="Statistiques, « Tops &amp; Palmarès » : les albums les plus écoutés sur ta platine et le podium de l'année" width="720" height="1565" loading="lazy"></div></div></div>
         </article>
         <article class="step" data-shot="wantlist">
           <span class="eyebrow">Alertes de prix</span>
           <h3>Ta wantlist, sous surveillance.</h3>
-          <p>Fixe le prix maximum que tu veux payer pour un disque de ta wantlist : tu es prévenu dès qu'une annonce du Marketplace Discogs est à ton prix ou moins.</p>
-          <div class="inline-shot"><div class="phone single"><div class="screen"><img src="assets/site/wantlist.webp" alt="Wantlist avec les cloches d'alerte de prix" width="720" height="1565" loading="lazy"></div></div></div>
+          <p>Fixe le prix maximum que tu veux payer pour un album de ta wantlist : tu es prévenu dès qu'une annonce du Marketplace Discogs est à ton prix ou moins.</p>
+          <div class="inline-shot"><div class="phone single"><div class="screen"><img src="assets/site/alerte.webp" alt="Feuille d'alerte de prix : seuil maximum, jauge et raccourcis de réduction" width="720" height="1565" loading="lazy"></div></div></div>
         </article>
       </div>
       <div class="sticky" aria-hidden="true">
@@ -368,8 +501,9 @@
           <div class="screen">
             <img class="on" data-id="cote" src="assets/site/cote.webp" alt="" width="720" height="1565" loading="lazy">
             <img data-id="rangement" src="assets/site/rangement.webp" alt="" width="720" height="1565" loading="lazy">
+            <img data-id="scan" src="assets/site/scan.webp" alt="" width="720" height="1565" loading="lazy">
             <img data-id="palmares" src="assets/site/palmares.webp" alt="" width="720" height="1565" loading="lazy">
-            <img data-id="wantlist" src="assets/site/wantlist.webp" alt="" width="720" height="1565" loading="lazy">
+            <img data-id="wantlist" src="assets/site/alerte.webp" alt="" width="720" height="1565" loading="lazy">
           </div>
         </div>
       </div>
@@ -380,8 +514,7 @@
       <div class="grid">
         <div class="card reveal"><span class="eyebrow">Mode hors ligne</span><h3>Toute ta collection, sans réseau</h3><p>Emporte ta collection et ses pochettes haute résolution pour fouiner en brocante. La synchro automatique ne se lance jamais en 4G/5G.</p></div>
         <div class="card reveal"><span class="eyebrow">Synchro iCloud</span><h3>Sur tous tes appareils</h3><p>Tes tags, écoutes, alertes et préférences suivent ton compte. Couper la synchro n'efface rien.</p></div>
-        <div class="card reveal"><span class="eyebrow">Scan par lot</span><h3>Scanne toute ta pile</h3><p>Enchaîne les codes-barres chez le disquaire ou en brocante, puis ajoute-les d'un coup à ta collection ou ta wantlist.</p></div>
-        <div class="card reveal"><span class="eyebrow">Export CSV</span><h3>Ta discothèque dans un tableur</h3><p>Excel, Numbers ou Sheets : tous tes disques avec métadonnées, tags et notes.</p></div>
+        <div class="card reveal"><span class="eyebrow">Export CSV</span><h3>Ta discothèque dans un tableur</h3><p>Excel, Numbers ou Sheets : tous tes albums avec métadonnées, tags et notes.</p></div>
         <div class="card reveal"><span class="eyebrow">Déclaration de collection</span><h3>Un PDF pour ton assureur</h3><p>La liste de tes albums avec pochette, état et prix d'achat, à présenter comme justificatif.</p></div>
         <div class="card reveal"><span class="eyebrow">Thèmes de couleur</span><h3>Neuf palettes exclusives</h3><p>Donne à ton app l'ambiance qui te ressemble, du bleu électrique au marron espresso.</p></div>
       </div>
@@ -389,7 +522,7 @@
   </div>
 </section>
 
-<section class="block alt" id="themes">
+<section class="block t-lilas" id="themes">
   <div class="wrap">
     <div class="head reveal">
       <span class="pill">✦ Premium</span>
@@ -424,6 +557,7 @@
           <tr><th scope="row">Prix d'achat et cote par exemplaire</th><td class="yes">✓</td><td class="yes">✓</td></tr>
           <tr><th scope="row">Écoutes sur platine, Live Activity, widget</th><td class="yes">✓</td><td class="yes">✓</td></tr>
           <tr><th scope="row">Lecture Apple Music<small>Extrait de 30 s sans abonnement Apple Music actif</small></th><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><th scope="row">Grades et badges</th><td class="yes">✓</td><td class="yes">✓</td></tr>
           <tr><th scope="row">Thème clair ou sombre, palette Signature</th><td class="yes">✓</td><td class="yes">✓</td></tr>
           <tr class="sep"><td colspan="3">Réservé au Premium</td></tr>
           <tr><th scope="row">Suivi de cote<small>Plus-value par exemplaire et pour toute la collection</small></th><td class="no">—</td><td class="yes gold">✓</td></tr>
@@ -448,7 +582,7 @@
   </div>
 </section>
 
-<section class="block alt" id="guide">
+<section class="block t-brume" id="guide">
   <div class="wrap" style="max-width:820px">
     <div class="head reveal">
       <span class="eyebrow">Mini-manuel</span>
@@ -462,17 +596,17 @@
         <ol><li>Autorise l'app sur le site Discogs, puis reviens dans Spinfolio.</li><li>Ta collection et ta wantlist se chargent.</li></ol>
         <p class="tip"><strong>Astuce.</strong> Les ajouts, les retraits et les notes sont répercutés sur ton compte Discogs. Les tags, eux, restent propres à Spinfolio.</p>
       </div></details>
-      <details><summary>Ajouter un disque<span class="badge acc">Compte Discogs</span></summary><div class="body">
+      <details><summary>Ajouter un album<span class="badge acc">Compte Discogs</span></summary><div class="body">
         <p>Cherche par nom ou scanne le code-barres.</p>
         <ol><li>Onglet Recherche : tape un nom ou touche l'icône de scan.</li><li>Sur la fiche, touche « Collection » ou « Wantlist ».</li></ol>
         <p class="tip"><strong>Astuce.</strong> Maintiens « Collection » pour choisir un autre dossier.</p>
       </div></details>
       <details><summary>Collection ou wantlist ?</summary><div class="body">
-        <p>La collection, ce sont les disques que tu possèdes ; la wantlist, ceux que tu cherches.</p>
-        <ol><li>Le bouton affiche ensuite « En collection » ou « En wantlist ».</li><li>Retrouve tes disques dans les onglets Collection et Wantlist.</li></ol>
+        <p>La collection, ce sont les albums que tu possèdes ; la wantlist, ceux que tu cherches.</p>
+        <ol><li>Le bouton affiche ensuite « En collection » ou « En wantlist ».</li><li>Retrouve tes albums dans les onglets Collection et Wantlist.</li></ol>
       </div></details>
       <details><summary>Scan par lot<span class="badge">Premium</span></summary><div class="body">
-        <p>Scanne plusieurs disques à la suite, chez un disquaire ou en brocante.</p>
+        <p>Scanne plusieurs albums à la suite, chez un disquaire ou en brocante.</p>
         <ol><li>Dans l'onglet Recherche, touche l'icône de scan par lot, à côté de celle du scan.</li><li>Ajoute-les d'un coup à ta collection ou à ta wantlist.</li></ol>
         <p class="tip"><strong>Astuce.</strong> Un lot en cours est conservé : une confirmation te protège si tu fermes l'écran par erreur.</p>
       </div></details>
@@ -481,41 +615,41 @@
       <details><summary>Trois affichages</summary><div class="body">
         <p>Liste, mosaïque ou carrousel : choisis ce qui te parle.</p>
         <ol><li>Touche « ··· » en haut à droite, puis « Affichage ».</li><li>Ton choix est retenu, séparément pour la Collection et la Wantlist.</li></ol>
-        <p class="tip"><strong>Astuce.</strong> Le bouton « Disque au hasard », en haut de la Collection, t'en propose un.</p>
+        <p class="tip"><strong>Astuce.</strong> Le bouton « Album au hasard », en haut de la Collection, t'en propose un.</p>
       </div></details>
       <details><summary>Trier et naviguer</summary><div class="body">
         <p>Jusqu'à dix tris, dans les deux sens, et une barre pour sauter à une lettre.</p>
         <ol><li>Touche « ··· », puis « Tri » : choisis un critère et le sens.</li><li>Glisse le doigt sur la barre à droite pour sauter à une lettre ou à une année.</li></ol>
-        <p class="tip"><strong>Astuce.</strong> Le tri « Meuble » suit ta règle de rangement (Réglages, section Collection &amp; Rangement).</p>
+        <p class="tip"><strong>Astuce.</strong> Le tri « Meuble » suit ta règle de rangement (Réglages &gt; Rangement).</p>
       </div></details>
       <details><summary>Chercher et filtrer</summary><div class="body">
         <p>Par texte, dossier, tag ou support. Les filtres se cumulent.</p>
         <ol><li>Tape dans la barre de recherche, ou touche « ··· » puis « Filtres » pour le tag et le support.</li><li>Le menu « Dossier », dans « ··· », change de dossier.</li></ol>
-        <p class="tip"><strong>Astuce.</strong> Avec plusieurs tags, seuls les disques qui les portent tous restent affichés.</p>
+        <p class="tip"><strong>Astuce.</strong> Avec plusieurs tags, seuls les albums qui les portent tous restent affichés.</p>
       </div></details>
-      <details><summary>Agir sur un disque</summary><div class="body">
+      <details><summary>Agir sur un album</summary><div class="body">
         <p>Glisse une ligne, ou maintiens-la, pour écouter, ranger, modifier ou supprimer.</p>
-        <ol><li>Touche « ··· » puis « Sélectionner » pour agir sur plusieurs disques à la fois : dossier, tags, suppression.</li></ol>
+        <ol><li>Touche « ··· » puis « Sélectionner » pour agir sur plusieurs albums à la fois : dossier, tags, suppression.</li></ol>
         <p class="tip"><strong>Astuce.</strong> « Ranger » est une fonction Premium.</p>
       </div></details>
     </div>
-    <div class="manual-group reveal"><h3>Fiche d'un disque</h3>
+    <div class="manual-group reveal"><h3>Fiche d'un album</h3>
       <details><summary>Lire une fiche</summary><div class="body">
         <p>Titres, crédits, photos, vidéos et infos de pressage, au même endroit.</p>
-        <ol><li>Touche un disque pour ouvrir sa fiche.</li><li>Fais défiler : titres, « Photos et vidéos », « Autres informations ».</li></ol>
+        <ol><li>Touche un album pour ouvrir sa fiche.</li><li>Fais défiler : titres, « Photos et vidéos », « Autres informations ».</li></ol>
       </div></details>
       <details><summary>Plusieurs exemplaires<span class="badge acc">Compte Discogs</span></summary><div class="body">
-        <p>Un même disque peut exister en plusieurs exemplaires, chacun avec son dossier.</p>
+        <p>Un même album peut exister en plusieurs exemplaires, chacun avec son dossier.</p>
         <ol><li>Maintiens « En collection » pour ajouter un exemplaire.</li><li>Touche « Modifier » sur un exemplaire : dossier, tags, champs Discogs.</li></ol>
       </div></details>
       <details><summary>Tags et note<span class="badge acc">Compte Discogs</span></summary><div class="body">
-        <p>Classe tes disques avec tes tags et une note sur 5.</p>
+        <p>Classe tes albums avec tes tags et une note sur 5.</p>
         <ol><li>Dans « Modifier », section « Tags de l'exemplaire » : crée ou choisis des tags.</li><li>Touche les étoiles de « Ma note de la release » pour noter.</li></ol>
         <p class="tip"><strong>Astuce.</strong> Les tags restent dans Spinfolio (synchronisés par iCloud avec Premium), pas sur Discogs.</p>
       </div></details>
       <details><summary>Prix d'achat et cote<span class="badge acc">Compte Discogs</span></summary><div class="body">
         <p>Note ce que tu as payé et compare avec la cote Discogs.</p>
-        <ol><li>Une seule fois : Réglages, section « Prix d'achat et état », puis associe tes champs Discogs.</li><li>Ensuite, « Modifier » sur un exemplaire pour saisir son prix.</li></ol>
+        <ol><li>Une seule fois : Réglages &gt; Suivi de plus-value, puis associe tes champs Discogs.</li><li>Ensuite, « Modifier » sur un exemplaire pour saisir son prix.</li></ol>
         <p class="tip"><strong>Astuce.</strong> La plus-value (cote moins prix payé) est une fonction Premium, dans Stats.</p>
       </div></details>
     </div>
@@ -527,8 +661,8 @@
       </div></details>
       <details><summary>Graphiques et répartitions<span class="badge acc">Compte Discogs</span></summary><div class="body">
         <p>Genres, supports, labels, artistes et années, en graphiques.</p>
-        <ol><li>Touche une portion ou une barre : la liste des disques correspondants s'ouvre.</li><li>Dans « Sorties originales », bascule entre années et décennies.</li></ol>
-        <p class="tip"><strong>Astuce.</strong> L'année de sortie originale est retrouvée disque par disque : sur une grande collection, le calcul prend un moment.</p>
+        <ol><li>Touche une portion ou une barre : la liste des albums correspondants s'ouvre.</li><li>Dans « Sorties originales », bascule entre années et décennies.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> L'année de sortie originale est retrouvée album par album : sur une grande collection, le calcul prend un moment.</p>
       </div></details>
       <details><summary>Plus-value<span class="badge">Premium</span></summary><div class="body">
         <p>Compare ce que tu as payé à la cote actuelle de ta collection.</p>
@@ -537,45 +671,45 @@
       </div></details>
       <details><summary>Palmarès d'écoute<span class="badge">Premium</span></summary><div class="body">
         <p>Tes albums et artistes les plus écoutés sur ta platine.</p>
-        <ol><li>Touche « J'écoute » sur un disque quand tu le poses sur ta platine.</li><li>Dans Stats, « Tops &amp; Palmarès » montre le classement et le podium par période.</li></ol>
+        <ol><li>Touche « J'écoute » sur un album quand tu le poses sur ta platine.</li><li>Dans Stats, « Tops &amp; Palmarès » montre le classement et le podium par période.</li></ol>
         <p class="tip"><strong>Astuce.</strong> Les lectures Apple Music ne sont pas comptées.</p>
       </div></details>
     </div>
     <div class="manual-group reveal"><h3>Écoute sur platine</h3>
       <details><summary>Noter une écoute</summary><div class="body">
-        <p>Touche « J'écoute » quand tu poses un disque sur ta platine.</p>
-        <ol><li>Sur la fiche d'un disque, ou en glissant une ligne de la Collection : « J'écoute ».</li><li>Un mini-lecteur apparaît ; touche-le pour ouvrir « Écoute sur platine » et arrêter.</li></ol>
+        <p>Touche « J'écoute » quand tu poses un album sur ta platine.</p>
+        <ol><li>Sur la fiche d'un album, ou en glissant une ligne de la Collection : « J'écoute ».</li><li>Un mini-lecteur apparaît ; touche-le pour ouvrir « Écoute sur platine » et arrêter.</li></ol>
         <p class="tip"><strong>Astuce.</strong> Lancer une nouvelle écoute interrompt celle en cours. La fiche compte tes écoutes et garde la date de la dernière.</p>
       </div></details>
       <details><summary>Live Activity et arrêt automatique</summary><div class="body">
-        <p>Ton disque en cours reste visible, et l'écoute s'arrête toute seule.</p>
-        <ol><li>Dans Réglages, section « Écoute sur platine &amp; Live Activity », choisis la durée maximale.</li><li>À la fin de cette durée, l'écoute s'arrête sans que tu aies rien à faire.</li></ol>
+        <p>Ton album en cours reste visible, et l'écoute s'arrête toute seule.</p>
+        <ol><li>Dans Réglages, ouvre « Écoute et Apple Music » et choisis la durée maximale.</li><li>À la fin de cette durée, l'écoute s'arrête sans que tu aies rien à faire.</li></ol>
         <p class="tip"><strong>Astuce.</strong> Chaque écoute alimente le palmarès de Stats (Premium).</p>
       </div></details>
       <details><summary>Écouter avec Apple Music</summary><div class="body">
         <p>Lis les titres en entier depuis une fiche, avec un abonnement Apple Music.</p>
-        <ol><li>Dans Réglages, section Apple Music, active « Connecter mon compte Apple Music ».</li><li>Sans connexion, un extrait de 30 s reste disponible.</li></ol>
+        <ol><li>Dans Réglages, ouvre « Écoute et Apple Music » et active « Connecter mon compte Apple Music ».</li><li>Sans connexion, un extrait de 30 s reste disponible.</li></ol>
         <p class="tip"><strong>Astuce.</strong> Ces lectures ne comptent pas comme des écoutes sur platine.</p>
       </div></details>
       <details><summary>Widget « Album du jour »</summary><div class="body">
-        <p>Un disque de ta collection tiré au hasard chaque jour, sur ton écran d'accueil.</p>
+        <p>Un album de ta collection tiré au hasard chaque jour, sur ton écran d'accueil.</p>
         <ol><li>Maintiens l'écran d'accueil, touche « + » et cherche Spinfolio.</li><li>Choisis « Album du jour », en petit, moyen ou grand format.</li></ol>
       </div></details>
     </div>
     <div class="manual-group reveal"><h3>Rangement</h3>
-      <details><summary>Où ranger un disque<span class="badge">Premium</span></summary><div class="body">
+      <details><summary>Où ranger un album<span class="badge">Premium</span></summary><div class="body">
         <p>Le guide te donne sa position dans le meuble, entre ses deux voisins.</p>
-        <ol><li>Glisse une ligne de la Collection et touche « Ranger », ou ouvre « Rangement physique » sur la fiche.</li><li>Repère le disque central et ses deux voisins : c'est entre eux qu'il va.</li></ol>
-        <p class="tip"><strong>Astuce.</strong> Fonction Premium. Le guide s'ouvre aussi juste après l'ajout d'un disque à la collection.</p>
+        <ol><li>Glisse une ligne de la Collection et touche « Ranger », ou ouvre « Rangement physique » sur la fiche.</li><li>Repère l'album central et ses deux voisins : c'est entre eux qu'il va.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Fonction Premium. Le guide s'ouvre aussi juste après l'ajout d'un album à la collection.</p>
       </div></details>
       <details><summary>Ta méthode de classement</summary><div class="body">
         <p>Quatre règles, pour classer comme dans ton meuble.</p>
-        <ol><li>Dans Réglages, section « Collection &amp; Rangement », touche « Règle de rangement dans le meuble ».</li><li>Choisis : artiste puis année originale, artiste puis titre, année seule, ou artiste puis année du pressage.</li></ol>
+        <ol><li>Dans Réglages, ouvre « Rangement », puis touche « Règle de rangement dans le meuble ».</li><li>Choisis : artiste puis année originale, artiste puis titre, année seule, ou artiste puis année du pressage.</li></ol>
         <p class="tip"><strong>Astuce.</strong> L'année originale vient du master Discogs ; le pressage peut être une réédition plus récente.</p>
       </div></details>
       <details><summary>Noms d'artistes</summary><div class="body">
         <p>Articles, noms de famille, cas particuliers : tu règles l'ordre artiste par artiste.</p>
-        <ol><li>Dans Réglages, active « Ignorer les articles (The...) » ou « Trier par nom de famille ».</li><li>Avec le nom de famille, « Personnaliser le tri des artistes » corrige un cas isolé.</li></ol>
+        <ol><li>Dans Réglages &gt; Organisation, active « Ignorer les articles (The...) » ou « Trier par nom de famille ».</li><li>Avec le nom de famille, « Personnaliser le tri des artistes » corrige un cas isolé.</li></ol>
         <p class="tip"><strong>Astuce.</strong> Ces réglages valent pour le meuble, la Collection et la Wantlist.</p>
       </div></details>
       <details><summary>Supports et dossiers</summary><div class="body">
@@ -586,43 +720,43 @@
     </div>
     <div class="manual-group reveal"><h3>Alertes de prix</h3>
       <details><summary>Définir une alerte<span class="badge">Premium</span></summary><div class="body">
-        <p>Fixe le prix maximum que tu veux payer pour un disque de ta wantlist.</p>
+        <p>Fixe le prix maximum que tu veux payer pour un album de ta wantlist.</p>
         <ol><li>Dans la Wantlist, glisse une ligne ou maintiens-la : « Définir une alerte prix ».</li><li>Saisis le « Prix maximum » puis touche « Enregistrer ».</li></ol>
         <p class="tip"><strong>Astuce.</strong> Fonction Premium. Une pastille « ≤ prix » s'affiche ensuite sur la ligne.</p>
       </div></details>
       <details><summary>Choisir le bon seuil<span class="badge">Premium</span></summary><div class="body">
         <p>La feuille montre la cote récente par état, pour viser juste.</p>
-        <ol><li>Touche un état dans « Cote moyenne récente par état » : sa cote devient ton prix cible.</li><li>Ajuste avec les raccourcis -10 %, -20 % ou -30 %.</li></ol>
+        <ol><li>Touche un état dans « Cote moyenne récente par état » : sa cote devient ton prix cible.</li><li>Ajuste avec les raccourcis \((-0.1).formatted(.percent)), \((-0.2).formatted(.percent)) ou \((-0.3).formatted(.percent)).</li></ol>
       </div></details>
       <details><summary>Quand l'alerte se déclenche<span class="badge">Premium</span></summary><div class="body">
         <p>Tu es prévenu dès qu'une annonce est à ton prix ou moins.</p>
         <ol><li>La vérification se fait à l'ouverture de l'app et parfois en arrière-plan, pas en temps réel.</li><li>Autorise les notifications pour être prévenu app fermée.</li></ol>
-        <p class="tip"><strong>Astuce.</strong> Vérifie l'état exact du disque et les frais de port sur l'annonce Discogs.</p>
+        <p class="tip"><strong>Astuce.</strong> Vérifie l'état exact de l'album et les frais de port sur l'annonce Discogs.</p>
       </div></details>
     </div>
     <div class="manual-group reveal"><h3>Réglages</h3>
       <details><summary>Mode hors ligne<span class="badge">Premium</span></summary><div class="body">
         <p>Emporte toute ta collection et ses pochettes, même sans réseau.</p>
-        <ol><li>Dans Réglages, ouvre « Mode hors ligne » puis « Télécharger toute ma collection ».</li><li>Active « Synchro auto en Wi-Fi » pour la tenir à jour.</li></ol>
+        <ol><li>Dans Réglages &gt; Synchronisation, ouvre « Données hors ligne » puis « Télécharger toute ma collection ».</li><li>Active « Synchro auto en Wi-Fi » pour la tenir à jour.</li></ol>
         <p class="tip"><strong>Astuce.</strong> La synchro auto ne se lance jamais en 4G/5G, et au plus une fois toutes les 6 heures.</p>
       </div></details>
       <details><summary>Synchronisation iCloud<span class="badge">Premium</span></summary><div class="body">
         <p>Tes tags, écoutes, alertes et préférences suivent ton compte sur tous tes appareils.</p>
-        <ol><li>Dans Réglages, active « Synchroniser avec iCloud ».</li></ol>
+        <ol><li>Dans Réglages &gt; Synchronisation, ouvre « Synchronisation iCloud » et active « Synchroniser avec iCloud ».</li></ol>
         <p class="tip"><strong>Astuce.</strong> Couper la synchro n'efface rien : à la réactivation, tout est fusionné. Elle est coupée pendant la démo.</p>
       </div></details>
       <details><summary>Apparence et couleurs</summary><div class="body">
         <p>Thème clair ou sombre, et palettes de couleurs pour toute l'app.</p>
-        <ol><li>Dans Réglages, section Apparence : « Mode d'affichage » pour clair, sombre ou automatique.</li><li>« Couleur du thème » ouvre les palettes.</li></ol>
-        <p class="tip"><strong>Astuce.</strong> Le thème Signature est inclus pour tous ; les 8 autres palettes sont Premium.</p>
+        <ol><li>Dans Réglages &gt; Aide &amp; personnalisation, ouvre « Apparence » : « Mode d'affichage » pour clair, sombre ou automatique.</li><li>« Couleur du thème » ouvre les palettes.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Le thème Signature est inclus pour tous ; les 9 autres palettes sont Premium.</p>
       </div></details>
       <details><summary>Exporter ta collection<span class="badge">Premium</span></summary><div class="body">
         <p>Un tableur pour tes outils, ou un PDF à présenter à un assureur.</p>
-        <ol><li>Dans Réglages, section Export : « Exporter la collection en CSV » ou « Déclaration de collection (PDF) ».</li></ol>
+        <ol><li>Dans Réglages &gt; Ma collection, ouvre « Export » : « Exporter la collection en CSV » ou « Déclaration de collection (PDF) ».</li></ol>
         <p class="tip"><strong>Astuce.</strong> Le CSV inclut métadonnées, tags et notes ; le PDF, l'état et le prix d'achat.</p>
       </div></details>
       <details><summary>Tags et dossiers</summary><div class="body">
-        <p>Range ta collection à ta façon, et choisis où atterrissent les nouveaux disques.</p>
+        <p>Range ta collection à ta façon, et choisis où atterrissent les nouveaux albums.</p>
         <ol><li>« Gestion des tags » : glisse ou maintiens un tag pour le renommer, le fusionner ou le supprimer.</li><li>« Gestion des dossiers » : touche un dossier pour en faire le dossier d'ajout par défaut.</li></ol>
         <p class="tip"><strong>Astuce.</strong> « Toujours demander » te propose le dossier à chaque ajout.</p>
       </div></details>
@@ -636,7 +770,7 @@
   </div>
 </section>
 
-<footer>
+<footer class="on-violet g-aube">
   <div class="wrap">
     <div class="links">
       <a href="privacy.html">Politique de confidentialité</a>
@@ -674,6 +808,79 @@
       ticking = false;
     }
     window.addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(frame); } }, { passive: true });
+  }
+
+
+  // 1. Vinyle du héros : tourne lentement, accélère quand on fait défiler puis ralentit
+  var vinyl = document.getElementById('vinyl-img');
+  if (vinyl && !reduced && vinyl.animate) {
+    var spin = vinyl.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], { duration: 34000, iterations: Infinity });
+    var lastY = window.scrollY, rate = 1, ticking2 = false;
+    function eased() {
+      var dy = Math.abs(window.scrollY - lastY); lastY = window.scrollY;
+      var target = 1 + Math.min(dy * 0.35, 7);
+      rate += (target - rate) * 0.18;
+      spin.playbackRate = rate;
+      if (rate > 1.02 || dy > 0) requestAnimationFrame(eased); else { spin.playbackRate = 1; ticking2 = false; }
+    }
+    window.addEventListener('scroll', function () { if (!ticking2) { ticking2 = true; requestAnimationFrame(eased); } }, { passive: true });
+  }
+
+  // 2. Chiffres : montent de 0 à leur valeur quand la bande apparaît
+  var counters = document.querySelectorAll('[data-count]');
+  if (counters.length && 'IntersectionObserver' in window && !reduced) {
+    var co = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        co.unobserve(e.target);
+        var end = parseInt(e.target.dataset.count, 10), t0 = performance.now(), dur = 1300;
+        (function step(t) {
+          var k = Math.min(1, (t - t0) / dur), v = 1 - Math.pow(1 - k, 3);
+          e.target.textContent = Math.round(end * v);
+          if (k < 1) requestAnimationFrame(step);
+        })(t0);
+      });
+    }, { threshold: .6 });
+    counters.forEach(function (c) { c.textContent = '0'; co.observe(c); });
+  }
+
+  // 3. Inclinaison 3D des téléphones au survol (souris seulement) + reflet qui suit le pointeur
+  if (!reduced && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    document.querySelectorAll('.phone').forEach(function (ph) {
+      ph.addEventListener('pointermove', function (e) {
+        var r = ph.getBoundingClientRect();
+        var px = (e.clientX - r.left) / r.width * 2 - 1, py = (e.clientY - r.top) / r.height * 2 - 1;
+        var rx = -py * 7, ry = px * 9, a = Math.hypot(rx, ry);
+        ph.style.rotate = a < .05 ? 'none' : rx.toFixed(3) + ' ' + ry.toFixed(3) + ' 0 ' + a.toFixed(2) + 'deg';
+        ph.style.setProperty('--mx', ((px + 1) * 50) + '%');
+        ph.style.setProperty('--my', ((py + 1) * 50) + '%');
+        ph.classList.add('tilting');
+      });
+      ph.addEventListener('pointerleave', function () { ph.style.rotate = 'none'; ph.classList.remove('tilting'); });
+    });
+  }
+
+  // 8. Trio d'écoute épinglé : la page reste en place et les trois écrans défilent horizontalement
+  var pin = document.getElementById('pin');
+  if (pin && !reduced) {
+    var track = pin.querySelector('.pin-track');
+    var measure = function () {
+      pin.classList.add('on'); pin.style.height = '';
+      var dist = track.scrollWidth - window.innerWidth;
+      if (dist < 40) { pin.classList.remove('on'); track.style.transform = ''; pin.dataset.dist = 0; return; }
+      pin.style.height = (window.innerHeight + dist) + 'px'; pin.dataset.dist = dist;
+      slide();
+    };
+    var slide = function () {
+      var dist = +pin.dataset.dist || 0; if (!dist) return;
+      var r = pin.getBoundingClientRect(), total = pin.offsetHeight - window.innerHeight;
+      var p = Math.min(1, Math.max(0, -r.top / total));
+      track.style.transform = 'translate3d(' + (-p * dist) + 'px,0,0)';
+    };
+    window.addEventListener('scroll', slide, { passive: true });
+    window.addEventListener('resize', measure);
+    window.addEventListener('load', measure);
+    measure();
   }
 
   // Sélecteur de mode d'affichage
