@@ -110,7 +110,7 @@ struct SectionIndexBar: View {
                 let bubbleCenterY = min(max(touchY, 30), max((barHeight ?? 0) - 30, 30))
                 Text(activeToken)
                     .font(.system(size: activeToken.count > 2 ? 22 : 30, weight: .bold, design: .rounded))
-                    .foregroundStyle(Color.onAccentGradient)
+                    .foregroundStyle(Color.onAccentGradientLabel)
                     .frame(width: 60, height: 60)
                     .background(
                         Circle()

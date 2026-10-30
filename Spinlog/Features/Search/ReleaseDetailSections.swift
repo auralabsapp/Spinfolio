@@ -49,7 +49,7 @@ struct ReleaseQuickActionsBar: View {
                 .font(.subheadline.weight(.semibold))
                 .lineLimit(1)
         }
-        .foregroundStyle(actions.isInCollection ? Color.onAccentGradient : Color.primary)
+        .foregroundStyle(actions.isInCollection ? Color.onAccentGradientLabel : Color.primary)
         .frame(maxWidth: .infinity)
         .frame(height: 42)
         .background(
@@ -235,7 +235,7 @@ struct ReleaseQuickActionsBar: View {
                         .font(.subheadline.weight(.semibold))
                         .lineLimit(1)
                 }
-                .foregroundStyle(actions.isInWantlist ? Color.onAccentGradient : Color.primary)
+                .foregroundStyle(actions.isInWantlist ? Color.onAccentGradientLabel : Color.primary)
                 .frame(maxWidth: .infinity)
                 .frame(height: 42)
                 .background(

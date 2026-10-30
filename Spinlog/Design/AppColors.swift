@@ -34,6 +34,20 @@ extension Color {
         Color(uiColor: ThemeManager.shared.currentTheme.onAccentGradientUIColor)
     }
 
+    /// Texte posé sur le dégradé des boutons et pastilles (compteur des en-têtes de section, capsule des
+    /// barres d'index, boutons « En collection » / « En wantlist » de la fiche disque, sélection de
+    /// thème, visuels du guide) : en thème clair, la couleur du fond de l'app (choix
+    /// esthétique assumé, contraste AA non garanti) ; en sombre, le choix automatique d'`onAccentGradient`.
+    static var onAccentGradientLabel: Color {
+        let automatic = ThemeManager.shared.currentTheme.onAccentGradientUIColor
+        let background = UIColor(appBackground)
+        return Color(uiColor: UIColor { @Sendable trait in
+            trait.userInterfaceStyle == .dark
+                ? automatic.resolvedColor(with: trait)
+                : background.resolvedColor(with: trait)
+        })
+    }
+
     /// Avertissement (doublon, limite atteinte, accès refusé…) : orange système en sombre, orange
     /// foncé en clair, où l'orange système ne donnait qu'environ 2,2:1 sur fond clair.
     static let appWarning = Color(uiColor: UIColor { @Sendable trait in

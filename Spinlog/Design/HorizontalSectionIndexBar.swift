@@ -78,7 +78,7 @@ struct HorizontalSectionIndexBar: View {
                     let bubbleX = min(max(touchX - width / 2, -width / 2 + 28), width / 2 - 28)
                     Text(displayToken)
                         .font(.system(size: displayToken.count > 2 ? 18 : 24, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color.onAccentGradient)
+                        .foregroundStyle(Color.onAccentGradientLabel)
                         .frame(width: 48, height: 48)
                         .background(
                             Circle()

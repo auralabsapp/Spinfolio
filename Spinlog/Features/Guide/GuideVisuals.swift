@@ -65,7 +65,7 @@ private struct SignInMock: View {
         VStack(spacing: 12) {
             Text("Se connecter")
                 .font(.body.weight(.semibold))
-                .foregroundStyle(Color.onAccentGradient)
+                .foregroundStyle(Color.onAccentGradientLabel)
                 .padding(.horizontal, 32)
                 .padding(.vertical, 10)
                 .background(Capsule().fill(Color.spinlogPinkButtonGradient))
@@ -149,7 +149,7 @@ private struct CollectionAndWantlistMock: View {
                 .font(.subheadline.weight(.semibold))
                 .lineLimit(1)
         }
-        .foregroundStyle(isActive ? Color.onAccentGradient : Color.primary)
+        .foregroundStyle(isActive ? Color.onAccentGradientLabel : Color.primary)
         .frame(maxWidth: .infinity)
         .frame(height: 38)
         .background(
@@ -177,7 +177,7 @@ private struct BatchScanMock: View {
 
             Image(systemName: "rectangle.stack.badge.plus")
                 .font(.title3.weight(.semibold))
-                .foregroundStyle(Color.onAccentGradient)
+                .foregroundStyle(Color.onAccentGradientLabel)
                 .frame(width: 48, height: 48)
                 .background(Circle().fill(Color.spinlogPinkButtonGradient))
         }

@@ -98,7 +98,7 @@ struct ColorThemeSelectionView: View {
                         Text("En écoute")
                             .font(.caption.weight(.semibold))
                     }
-                    .foregroundStyle(Color.onAccentGradient)
+                    .foregroundStyle(Color.onAccentGradientLabel)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 5)
                     .background(Color.spinlogPinkButtonGradient, in: Capsule())
