@@ -221,10 +221,7 @@ struct SpinningRecordArtwork: View {
                     .rotationEffect(.degrees(angle(at: timeline.date)))
             }
 
-            // Zone de lecture : fin anneau plus sombre entre le moyeu et le bord.
-            Circle()
-                .strokeBorder(Color.black.opacity(0.10), lineWidth: diameter * 0.015)
-                .frame(width: diameter * 0.86, height: diameter * 0.86)
+            // Anneau plus sombre autour du moyeu.
             Circle()
                 .strokeBorder(Color.black.opacity(0.08), lineWidth: diameter * 0.01)
                 .frame(width: diameter * 0.40, height: diameter * 0.40)
