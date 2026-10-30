@@ -1,23 +1,35 @@
 import SwiftUI
 
-/// Page « Mes grades » : pour chaque parcours (collection, écoute sur platine), le grade acquis en
-/// grand avec sa date d'obtention, la jauge vers le suivant, puis tous les grades — obtenus en
-/// couleur, à venir en gris avec leur condition. Un grade acquis ne se perd jamais.
+/// Page « Mes grades » : un sélecteur choisit le parcours (collection, écoute sur platine), puis
+/// le grade acquis en grand avec sa date d'obtention, la jauge vers le suivant et tous les
+/// grades — obtenus en couleur, à venir en gris avec leur condition. Un grade acquis ne se perd jamais.
 struct GradesView: View {
     @State private var revealed = false
+    /// À l'ouverture : le parcours du grade obtenu le plus récemment, sinon Collection.
+    @State private var selectedTrack = GradeRules.trackToShow(unlocks: GradeStore.shared.unlocks, now: .now)
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 28) {
-                Text("Tes grades récompensent la taille de ta collection et tes écoutes sur platine. Un grade obtenu ne se perd jamais, même si tu supprimes des disques.")
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Tes grades récompensent la taille de ta collection et tes écoutes sur platine. Un grade obtenu ne se perd jamais, même si tu supprimes des albums.")
                     .font(.footnote)
                     .foregroundStyle(Color.appSecondaryText)
                     .fixedSize(horizontal: false, vertical: true)
 
-                ForEach(Array(GradeTrack.allCases.enumerated()), id: \.element) { index, track in
-                    GradeTrackSection(track: track)
-                        .shelfEntrance(isVisible: revealed, offset: CGSize(width: 0, height: 20), delay: 0.12 * Double(index))
+                Picker("Parcours", selection: $selectedTrack.animation(.easeInOut(duration: 0.2))) {
+                    ForEach(GradeTrack.allCases) { track in
+                        Text(track.title).tag(track)
+                    }
                 }
+                .pickerStyle(.segmented)
+                .accessibilityIdentifier("gradesTrackPicker")
+
+                GradeTrackSection(track: selectedTrack)
+                    // Identité liée au parcours : la carte et la liste sont recréées (le badge rebondit
+                    // de nouveau) au lieu de garder l'état du parcours précédent.
+                    .id(selectedTrack)
+                    .transition(.opacity)
+                    .shelfEntrance(isVisible: revealed, offset: CGSize(width: 0, height: 20), delay: 0.1)
             }
             .padding()
         }
@@ -37,7 +49,6 @@ private struct GradeTrackSection: View {
     var body: some View {
         let acquired = store.acquiredTiers(for: track)
         VStack(alignment: .leading, spacing: 12) {
-            SectionEyebrow(title: track.title, icon: track.symbol)
             GradeHeroCard(track: track, acquiredTiers: acquired)
             GradeTierList(track: track, acquiredTiers: acquired)
         }

@@ -28,6 +28,18 @@ nonisolated struct GradeUnlock: Codable, Hashable, Sendable {
 
 /// Règles pures des grades : tout ce qui se décide sans état ni interface, pour être testé seul.
 nonisolated enum GradeRules {
+    /// Durée pendant laquelle un grade tout juste obtenu décide du parcours ouvert dans « Mes grades ».
+    static let recentUnlockWindow: TimeInterval = 3 * 24 * 3600
+
+    /// Parcours à montrer à l'ouverture de « Mes grades » : celui du grade obtenu le plus récemment
+    /// s'il date de moins de `recentUnlockWindow` (on arrive de la célébration, ou juste après),
+    /// sinon Collection.
+    static func trackToShow(unlocks: [GradeUnlock], now: Date) -> GradeTrack {
+        guard let latest = unlocks.max(by: { $0.date < $1.date }),
+              now.timeIntervalSince(latest.date) < recentUnlockWindow else { return .collection }
+        return latest.track
+    }
+
     /// Nombre de paliers atteints pour ce nombre (0 = aucun). Un nombre négatif ou nul n'en atteint aucun.
     static func reachedTierCount(count: Int, track: GradeTrack) -> Int {
         track.thresholds.filter { count >= $0 }.count

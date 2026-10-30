@@ -162,4 +162,17 @@ struct GradeRulesTests {
         #expect(result.needsResend)
         #expect(result.unlocks.first?.date == day1)
     }
+
+    @Test func openingTrackFollowsTheLatestRecentUnlock() {
+        let now = Date(timeIntervalSince1970: 5_000_000)
+        let hourAgo = now.addingTimeInterval(-3_600)
+        let weekAgo = now.addingTimeInterval(-7 * 24 * 3_600)
+        // Un grade d'écoute tout juste obtenu l'emporte sur un grade de collection plus ancien.
+        let recentListening = [GradeUnlock(track: .collection, tier: 0, date: weekAgo), GradeUnlock(track: .listening, tier: 0, date: hourAgo)]
+        #expect(GradeRules.trackToShow(unlocks: recentListening, now: now) == .listening)
+        // Rien de récent, ou aucun grade : Collection.
+        let stale = [GradeUnlock(track: .listening, tier: 0, date: weekAgo)]
+        #expect(GradeRules.trackToShow(unlocks: stale, now: now) == .collection)
+        #expect(GradeRules.trackToShow(unlocks: [], now: now) == .collection)
+    }
 }
