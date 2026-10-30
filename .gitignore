@@ -7,3 +7,8 @@ xcuserdata/
 
 # Secrets Discogs (identifiants d'app OAuth) — à renseigner localement
 Spinlog/Secrets.swift
+
+# Captures App Store : captures brutes et images générées (montants et compte réels visibles).
+# docs/ est publié par GitHub Pages ; seul docs/appstore-screenshots/generate.py reste versionné.
+docs/appstore-screenshots/raw/
+docs/appstore-screenshots/*.png

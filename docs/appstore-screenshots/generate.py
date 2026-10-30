@@ -38,42 +38,73 @@ PHONE_TOP = 580
 BEZEL = 14
 SCREEN_RADIUS = 142
 
+# Fonds : tous dans la famille de la palette Signature de l'app (violet 158/61/207, clair 210/122/245, foncé
+# 133/46/184 dans AppTheme.swift) et de l'orchidée de l'icône. Chaque image a son propre dégradé : angle
+# (0° = de haut en bas), arrêts de couleur et halos. Les zones sous le texte restent assez sombres pour un
+# texte blanc lisible (contrôlé par `contrast_check`).
 PALETTES = {
-    "violet": {"top": (86, 36, 142), "bottom": (28, 12, 58), "glows": [((214, 96, 210), 0.30, 0.10), ((100, 86, 238), 0.85, 0.55)]},
-    "magenta": {"top": (132, 44, 148), "bottom": (46, 14, 68), "glows": [((255, 128, 184), 0.75, 0.08), ((140, 70, 230), 0.15, 0.60)]},
-    "indigo": {"top": (56, 46, 150), "bottom": (16, 14, 58), "glows": [((90, 170, 255), 0.25, 0.12), ((200, 100, 230), 0.90, 0.62)]},
-    "aurore": {"top": (74, 30, 120), "bottom": (22, 12, 50), "glows": [((250, 190, 70), 0.20, 0.10), ((90, 150, 250), 0.85, 0.30), ((220, 90, 190), 0.50, 0.65)]},
-    "nuit": {"top": (36, 32, 52), "bottom": (6, 6, 10), "glows": [((150, 80, 210), 0.50, 0.12), ((70, 60, 160), 0.10, 0.60)]},
+    "orchidee": {"angle": 20, "stops": [(0.0, (150, 66, 204)), (0.5, (122, 50, 180)), (1.0, (66, 26, 112))],
+                 "glows": [((236, 150, 250), 0.18, 0.34), ((120, 56, 200), 0.85, 0.60)]},
+    "rose": {"angle": -28, "stops": [(0.0, (154, 60, 174)), (0.5, (134, 52, 172)), (1.0, (72, 28, 118))],
+             "glows": [((255, 150, 214), 0.85, 0.34), ((150, 70, 220), 0.12, 0.64)]},
+    "lavande": {"angle": 14, "stops": [(0.0, (92, 42, 152)), (0.55, (128, 76, 198)), (1.0, (178, 132, 238))],
+                "glows": [((226, 184, 255), 0.50, 0.92), ((130, 70, 210), 0.15, 0.40)]},
+    "prune": {"angle": 0, "stops": [(0.0, (116, 46, 170)), (0.5, (70, 26, 116)), (1.0, (34, 12, 64))],
+              "glows": [((196, 100, 240), 0.50, 0.34), ((140, 66, 204), 0.10, 0.62)]},
+    "magenta": {"angle": 36, "stops": [(0.0, (172, 66, 180)), (0.5, (136, 52, 172)), (1.0, (80, 30, 126))],
+                "glows": [((255, 168, 224), 0.92, 0.40), ((130, 60, 210), 0.10, 0.70)]},
+    "amethyste": {"angle": -42, "stops": [(0.0, (146, 84, 214)), (0.5, (110, 58, 184)), (1.0, (60, 26, 112))],
+                  "glows": [((214, 150, 250), 0.10, 0.36), ((100, 50, 180), 0.90, 0.68)]},
+    "lilas": {"angle": -16, "stops": [(0.0, (104, 52, 170)), (0.6, (146, 90, 214)), (1.0, (196, 150, 244))],
+              "glows": [((240, 210, 255), 0.50, 0.80), ((122, 62, 200), 0.80, 0.55)]},
+    "pourpre": {"angle": 12, "stops": [(0.0, (150, 62, 200)), (0.5, (104, 40, 158)), (1.0, (48, 18, 90))],
+                "glows": [((222, 128, 244), 0.80, 0.36), ((96, 46, 168), 0.14, 0.66)]},
+    "aube": {"angle": 52, "stops": [(0.0, (180, 74, 196)), (0.45, (140, 56, 186)), (1.0, (86, 34, 140))],
+             "glows": [((255, 190, 232), 0.90, 0.36), ((150, 74, 222), 0.14, 0.60)]},
+    "nuit": {"angle": 0, "stops": [(0.0, (62, 32, 98)), (0.5, (30, 15, 52)), (1.0, (10, 6, 20))],
+             "glows": [((150, 80, 210), 0.50, 0.12), ((110, 50, 170), 0.10, 0.62)]},
 }
 
+# Conditions de prise de vue (simulateur iPhone 17, compte réel, barre d'état 09:41, apparence claire sauf
+# la 10) et procédure de reprise : voir QA/captures-appstore.md. Une ligne par image ci-dessous.
 SLIDES = [
-    {"raw": "01_mosaic.png", "out": "01-collection.png", "palette": "violet",
+    # 01 : mosaïque, tri Année décroissant (compte réel, 30/10/2026)
+    {"raw": "01_mosaic.png", "out": "01-collection.png", "palette": "orchidee",
      "title": ["Toute ta collection,", "en un coup d'œil"],
      "subtitle": "Vinyles, CD et K7 synchronisés avec Discogs"},
-    {"raw": "02_carousel.png", "out": "02-carrousel.png", "palette": "magenta",
+    # 02 : carrousel centré sur Californication (RHCP), tri Date d'ajout, n° 183/291
+    {"raw": "02_carousel.png", "out": "02-carrousel.png", "palette": "rose",
      "title": ["Parcours tes albums", "comme chez le disquaire"],
      "subtitle": "Le carrousel qui met chaque pochette en scène"},
-    {"raw": "03_release.png", "out": "03-fiche-disque.png", "palette": "indigo",
+    # 03 : fiche de Hurry Up, We're Dreaming (M83), en collection
+    {"raw": "03_release.png", "out": "03-fiche-disque.png", "palette": "lavande",
      "title": ["Une fiche complète", "pour chaque disque"],
      "subtitle": "Exemplaires, notes, rangement et écoutes sur platine"},
-    {"raw": "04_instance.png", "out": "04-plus-value.png", "palette": "violet", "premium": True,
+    # 04 : « Mon exemplaire » de Fallen (Evanescence, 2023), plus-value +57 € (Premium)
+    {"raw": "04_instance.png", "out": "04-plus-value.png", "palette": "prune", "premium": True,
      "title": ["Mesure la plus-value", "de chaque exemplaire"],
      "subtitle": "Plus-value, tags et champs personnalisés"},
+    # 05 : guide de rangement, Garbage n° 90/287 (Premium)
     {"raw": "05_shelf.png", "out": "05-rangement.png", "palette": "magenta", "premium": True,
      "title": ["Retrouve la place", "exacte de chaque disque"],
      "subtitle": "Le guide de rangement, entre ses deux voisins"},
-    {"raw": "06_wantlist.png", "out": "06-wantlist.png", "palette": "indigo",
+    # 06 : feuille « Alerte de prix » de Thriller, alerte à 25 € déjà enregistrée (Premium)
+    {"raw": "06_alert.png", "out": "06-alerte-prix.png", "palette": "amethyste", "premium": True,
      "title": ["Ta wantlist,", "toujours sous surveillance"],
-     "subtitle": "Active une alerte de prix sur les disques que tu guettes"},
-    {"raw": "07_stats.png", "out": "07-statistiques.png", "palette": "violet",
+     "subtitle": "Fixe ton prix maximum, sois prévenu dès qu'une annonce l'atteint"},
+    # 07 : Statistiques, haut de page
+    {"raw": "07_stats.png", "out": "07-statistiques.png", "palette": "lilas",
      "title": ["Ta discothèque", "en chiffres"],
      "subtitle": "Derniers ajouts, ajouts par année, sorties originales"},
-    {"raw": "08_value.png", "out": "08-valeur-palmares.png", "palette": "magenta", "premium": True,
+    # 08 : estimation, investi vs cote et palmarès d'écoute (Premium)
+    {"raw": "08_value.png", "out": "08-valeur-palmares.png", "palette": "pourpre", "premium": True,
      "title": ["Suis la valeur", "de ta collection"],
      "subtitle": "Investi vs cote actuelle, plus-value et palmarès d'écoute"},
-    {"raw": "09_themes.png", "out": "09-themes.png", "palette": "aurore", "premium": True,
-     "title": ["8 thèmes de couleur", "pour ton Spinfolio"],
-     "subtitle": "Choisis l'ambiance qui te ressemble"},
+    # 09 : Réglages › Mes grades, grade Disquaire (gratuit)
+    {"raw": "09_grades.png", "out": "09-grades.png", "palette": "aube",
+     "title": ["Deviens un vrai", "collectionneur"],
+     "subtitle": "Des grades à atteindre, au fil de tes disques et de tes écoutes"},
+    # 10 : collection en liste, apparence sombre, tri Date d'ajout
     {"raw": "10_dark_list.png", "out": "10-theme-sombre.png", "palette": "nuit",
      "title": ["Clair ou sombre,", "selon ton humeur"],
      "subtitle": "Un thème sombre soigné jusque dans les détails"},
@@ -87,19 +118,47 @@ def font(path, size, variation):
 
 
 def background(palette):
-    """Dégradé vertical + halos flous (positions en fraction de la largeur/hauteur)."""
-    strip = Image.new("RGB", (1, H))
-    px = strip.load()
-    for y in range(H):
-        t = y / (H - 1)
-        px[0, y] = tuple(round(palette["top"][i] + (palette["bottom"][i] - palette["top"][i]) * t) for i in range(3))
-    canvas = strip.resize((W, H)).convert("RGBA")
+    """Dégradé linéaire incliné à plusieurs arrêts + halos flous (positions en fraction de la largeur/hauteur).
+    Calculé sur une grille réduite puis agrandi : lisse, sans bandes, sans dépendance à numpy."""
+    scale = 6
+    w, h = W // scale, H // scale
+    angle = math.radians(palette["angle"])
+    dx, dy = math.sin(angle), math.cos(angle)
+    length = abs(w * dx) + abs(h * dy)
+    stops = palette["stops"]
+    small = Image.new("RGB", (w, h))
+    px = small.load()
+    for y in range(h):
+        for x in range(w):
+            t = ((x - w / 2) * dx + (y - h / 2) * dy) / length + 0.5
+            t = min(1.0, max(0.0, t))
+            for (t0, c0), (t1, c1) in zip(stops, stops[1:]):
+                if t <= t1:
+                    k = (t - t0) / (t1 - t0) if t1 > t0 else 0.0
+                    px[x, y] = tuple(round(c0[i] + (c1[i] - c0[i]) * k) for i in range(3))
+                    break
+    canvas = small.resize((W, H), Image.BICUBIC).convert("RGBA")
     for color, fx, fy in palette["glows"]:
         glow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
         cx, cy, r = fx * W, fy * H, 620
         ImageDraw.Draw(glow).ellipse([cx - r, cy - r, cx + r, cy + r], fill=color + (120,))
         canvas = Image.alpha_composite(canvas, glow.filter(ImageFilter.GaussianBlur(260)))
     return canvas
+
+
+def contrast_check(canvas):
+    """Rapport de contraste d'un texte blanc sur le fond, dans la zone du titre (haut de l'image) : renvoie le
+    plus faible des points échantillonnés (WCAG, 3:1 minimum pour un grand texte gras)."""
+    def lin(v):
+        v /= 255
+        return v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
+    worst = 99.0
+    for fx in (0.10, 0.30, 0.50, 0.70, 0.90):
+        for fy in (0.04, 0.10, 0.16, 0.21):
+            r, g, b = canvas.getpixel((int(fx * W), int(fy * H)))[:3]
+            lum = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+            worst = min(worst, 1.05 / (lum + 0.05))
+    return worst
 
 
 def rounded_mask(size, radius):
@@ -241,6 +300,9 @@ def phone(canvas, raw_path):
 
 def make_slide(slide):
     canvas = background(PALETTES[slide["palette"]])
+    ratio = contrast_check(canvas)
+    if ratio < 4.5:
+        print(f"ATTENTION {slide['out']} : contraste du texte blanc {ratio:.1f}:1 (< 4,5:1), assombrir le fond")
     probe = ImageDraw.Draw(canvas)
 
     title_font = fit_font(probe, slide["title"], SERIF, "Bold", W - 140, 112, 70)
