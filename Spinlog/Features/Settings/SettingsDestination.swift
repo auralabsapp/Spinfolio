@@ -18,6 +18,8 @@ enum SettingsDestination: Hashable {
     case organization
     case shelving
     case gainTracking
+    case copyDetailsImport
+    case copyDetailsDiscogsSend
     case export
     case listening
     case iCloud
@@ -57,6 +59,10 @@ enum SettingsDestination: Hashable {
             ShelvingSettingsPage()
         case .gainTracking:
             GainTrackingSettingsPage()
+        case .copyDetailsImport:
+            CopyDetailsImportPage()
+        case .copyDetailsDiscogsSend:
+            CopyDetailsDiscogsSendPage()
         case .export:
             ExportSettingsPage()
         case .listening:

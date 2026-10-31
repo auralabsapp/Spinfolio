@@ -194,6 +194,24 @@ enum CollectionPreferencesStore {
         CloudSyncEngine.shared.markCollectionPreferencesDirty()
     }
 
+    /// Envoi des prix et états saisis dans l'app vers les champs Discogs associés. Désactivé pour un
+    /// compte neuf ; un compte déjà configuré avant cette option (au moins un champ associé à la
+    /// première lecture) garde l'envoi actif, comme avant. La première lecture fixe la valeur : elle a
+    /// lieu à l'activation du compte (`CopyDetailsStore`), avant que l'utilisateur ait pu associer
+    /// un champ.
+    static func sendsCopyDetailsToDiscogs(for username: String) -> Bool {
+        let storageKey = key("sendsCopyDetailsToDiscogs", for: username)
+        if let stored = UserDefaults.standard.object(forKey: storageKey) as? Bool { return stored }
+        let isAlreadyConfigured = purchasePriceFieldId(for: username) != nil || mediaConditionFieldId(for: username) != nil
+        UserDefaults.standard.set(isAlreadyConfigured, forKey: storageKey)
+        return isAlreadyConfigured
+    }
+
+    static func setSendsCopyDetailsToDiscogs(_ value: Bool, for username: String) {
+        UserDefaults.standard.set(value, forKey: key("sendsCopyDetailsToDiscogs", for: username))
+        NotificationCenter.default.post(name: .collectionPreferencesChanged, object: nil)
+    }
+
     /// Identifiant du champ personnalisé Discogs utilisé comme "état du média" (Media Condition),
     /// pour affiner l'estimation de cote. Détecté automatiquement ou choisi manuellement.
     static func mediaConditionFieldId(for username: String) -> Int? {

@@ -14,6 +14,7 @@ struct GainTrackingSettingsPage: View {
     @State private var mediaConditionFieldId: Int?
     @State private var defaultCurrency: String = "EUR"
     @State private var offersCompletionAfterAdd = true
+    @State private var sendsToDiscogs = false
 
     var body: some View {
         SettingsSubPage(title: "Suivi de plus-value") {
@@ -139,10 +140,43 @@ struct GainTrackingSettingsPage: View {
                         }
                     }
                 )
+
+                Toggle(isOn: Binding(
+                    get: { sendsToDiscogs },
+                    set: { newValue in
+                        sendsToDiscogs = newValue
+                        if let user = authManager.username {
+                            CollectionPreferencesStore.setSendsCopyDetailsToDiscogs(newValue, for: user)
+                        }
+                    }
+                )) {
+                    HStack(spacing: 14) {
+                        SettingsIcon(systemName: "arrow.up.circle.fill", backgroundColor: .teal)
+                        Text("Envoyer vers Discogs")
+                    }
+                }
+                .tint(Color.spinlogPink)
+                .disabled(purchasePriceFieldId == nil && mediaConditionFieldId == nil)
+
+                if sendsToDiscogs && (purchasePriceFieldId != nil || mediaConditionFieldId != nil) {
+                    NavigationLink(value: SettingsDestination.copyDetailsDiscogsSend) {
+                        HStack(spacing: 14) {
+                            SettingsIcon(systemName: "icloud.and.arrow.up.fill", backgroundColor: .indigo)
+                            Text("Envoyer tout vers Discogs")
+                        }
+                    }
+                }
+
+                NavigationLink(value: SettingsDestination.copyDetailsImport) {
+                    HStack(spacing: 14) {
+                        SettingsIcon(systemName: "square.and.arrow.down.fill", backgroundColor: .orange)
+                        Text("Importer depuis Discogs")
+                    }
+                }
             } header: {
                 SectionEyebrow(title: "Champs Discogs (facultatif)", icon: "arrow.triangle.2.circlepath")
             } footer: {
-                Text("Associe des champs personnalisés de ton compte Discogs pour reprendre les valeurs qu'ils contiennent et y enregistrer aussi chaque prix et état saisi. Sans champ associé, rien n'est envoyé à Discogs.")
+                Text("Associe des champs personnalisés de ton compte Discogs pour reprendre les valeurs qu'ils contiennent. Avec « Envoyer vers Discogs », chaque prix ou état que tu saisis ensuite y est aussi écrit ; « Envoyer tout vers Discogs » y renvoie ceux déjà enregistrés dans l'app. Sans cette option, rien n'est envoyé à Discogs.")
             }
         }
     }
@@ -182,6 +216,7 @@ struct GainTrackingSettingsPage: View {
         purchasePriceFieldId = CollectionPreferencesStore.purchasePriceFieldId(for: username)
         mediaConditionFieldId = CollectionPreferencesStore.mediaConditionFieldId(for: username)
         offersCompletionAfterAdd = CollectionPreferencesStore.offersCompletionAfterAdd(for: username)
+        sendsToDiscogs = CollectionPreferencesStore.sendsCopyDetailsToDiscogs(for: username)
 
         guard NetworkMonitor.shared.isConnected else { return }
         let fields = await CollectionFieldsService.fields(username: username, credentials: authManager.credentials)

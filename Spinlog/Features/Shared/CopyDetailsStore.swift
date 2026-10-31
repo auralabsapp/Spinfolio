@@ -29,8 +29,25 @@ final class CopyDetailsStore {
     /// préférences : pas de lecture de `UserDefaults` à chaque affichage d'une ligne.
     private(set) var mappedPriceFieldId: Int?
     private(set) var mappedConditionFieldId: Int?
+    /// Réglage « Envoyer vers Discogs » : sans lui, les champs associés ne servent qu'à l'import.
+    private(set) var sendsToDiscogs = false
 
     private static let storageKey = "com.spinlog.copyDetails"
+    private static let lastImportKey = "com.spinlog.copyDetails.lastImport"
+
+    /// Dernier import depuis Discogs, avec de quoi l'annuler : l'état d'avant de chaque exemplaire
+    /// touché. Remplacé par l'import suivant.
+    struct ImportRecord: Codable {
+        struct Previous: Codable {
+            let instanceId: Int
+            let details: CopyDetails?
+        }
+        let date: Date
+        let previous: [Previous]
+        var changedCopies: Int { previous.count }
+    }
+
+    private(set) var lastImport: ImportRecord?
 
     /// Profondeur des `performBatchUpdate` en cours (voir `TagStore.performBatchUpdate`).
     @ObservationIgnored private var batchDepth = 0
@@ -58,11 +75,15 @@ final class CopyDetailsStore {
         activeUsername = normalized
         guard let normalized else {
             entries = [:]
+            lastImport = nil
             mappedPriceFieldId = nil
             mappedConditionFieldId = nil
+            sendsToDiscogs = false
             return
         }
         load(for: normalized)
+        lastImport = defaults.data(forKey: Self.lastImportKey(for: normalized))
+            .flatMap { try? JSONDecoder().decode(ImportRecord.self, from: $0) }
         refreshMapping()
         adoptFromCache()
     }
@@ -77,6 +98,10 @@ final class CopyDetailsStore {
         "\(storageKey)_\(username)"
     }
 
+    private static func lastImportKey(for username: String) -> String {
+        "\(lastImportKey)_\(username)"
+    }
+
     private func load(for username: String) {
         let stored = PersistedStoreDecoding.decodeArray(StoredEntry.self, forKey: Self.key(for: username), defaults: defaults) ?? []
         entries = Dictionary(stored.map { ($0.instanceId, $0.details) }, uniquingKeysWith: { first, second in
@@ -88,8 +113,10 @@ final class CopyDetailsStore {
     func clearAccountData(for username: String) {
         guard let normalized = Self.normalize(username) else { return }
         defaults.removeObject(forKey: Self.key(for: normalized))
+        defaults.removeObject(forKey: Self.lastImportKey(for: normalized))
         if activeUsername == normalized {
             entries = [:]
+            lastImport = nil
         }
     }
 
@@ -236,7 +263,13 @@ final class CopyDetailsStore {
         guard let username = activeUsername else { return }
         let price = CollectionPreferencesStore.purchasePriceFieldId(for: username)
         let condition = CollectionPreferencesStore.mediaConditionFieldId(for: username)
+        sendsToDiscogs = CollectionPreferencesStore.sendsCopyDetailsToDiscogs(for: username)
         applyMapping(price: price, condition: condition)
+    }
+
+    /// Active ou coupe l'envoi vers Discogs (tests ; l'app passe par `refreshMapping`).
+    func applySending(_ enabled: Bool) {
+        sendsToDiscogs = enabled
     }
 
     /// Fixe les champs Discogs associés ; reprend les valeurs déjà en cache si l'un d'eux a changé.
@@ -245,6 +278,50 @@ final class CopyDetailsStore {
         mappedPriceFieldId = price
         mappedConditionFieldId = condition
         adoptFromCache()
+    }
+
+    // MARK: - Import depuis Discogs
+
+    /// Écrit les valeurs d'un import et garde l'état d'avant des exemplaires touchés, pour pouvoir
+    /// l'annuler. Renvoie le nombre d'exemplaires modifiés. Un import remplace le précédent
+    /// enregistrement d'annulation.
+    @discardableResult
+    func applyImport(_ operations: [CopyDetailsImportOperation]) -> Int {
+        guard let username = activeUsername, !operations.isEmpty else { return 0 }
+        var previous: [ImportRecord.Previous] = []
+        performBatchUpdate {
+            for operation in operations {
+                previous.append(ImportRecord.Previous(instanceId: operation.instanceId, details: entries[operation.instanceId]))
+                if let price = operation.price { setPurchasePrice(price, for: operation.instanceId) }
+                if let grade = operation.grade { setMediaCondition(grade, for: operation.instanceId) }
+            }
+        }
+        let record = ImportRecord(date: .now, previous: previous)
+        lastImport = record
+        if let data = try? JSONEncoder().encode(record) {
+            defaults.set(data, forKey: Self.lastImportKey(for: username))
+        }
+        return previous.count
+    }
+
+    /// Remet les exemplaires du dernier import dans l'état d'avant. Un exemplaire modifié depuis
+    /// l'import garde sa modification (la saisie de l'utilisateur prime). Renvoie le nombre
+    /// d'exemplaires restaurés.
+    @discardableResult
+    func undoLastImport() -> Int {
+        guard let username = activeUsername, let record = lastImport else { return 0 }
+        var restored = 0
+        performBatchUpdate {
+            for item in record.previous {
+                if let current = entries[item.instanceId], current.modifiedAt > record.date { continue }
+                entries[item.instanceId] = item.details
+                restored += 1
+            }
+            persist()
+        }
+        lastImport = nil
+        defaults.removeObject(forKey: Self.lastImportKey(for: username))
+        return restored
     }
 
     // MARK: - Cycle de vie des exemplaires
