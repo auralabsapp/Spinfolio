@@ -12,7 +12,6 @@ private let goldWarm = Color.goldWarm
 struct SpinlogPaywallView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.purchase) private var purchase
-    @State private var showsAllFeatures: Bool = false
     @State private var purchaseErrorMessage: String? = nil
     @State private var subscriptionManager = SubscriptionManager.shared
     @State private var premiumStore = PremiumStore.shared
@@ -42,7 +41,7 @@ struct SpinlogPaywallView: View {
 
     var body: some View {
         ScrollView {
-            PaywallMarketingContent(showsAllFeatures: $showsAllFeatures, trialText: trialText)
+            PaywallMarketingContent(trialText: trialText)
                 .padding(.horizontal, 22)
                 .padding(.top, 12)
                 .padding(.bottom, 16)
@@ -195,7 +194,7 @@ struct SpinlogPaywallView: View {
 /// permet de juger la hauteur de l'ensemble sans produits StoreKit.
 #Preview("Mise en page (faux forfaits)") {
     ScrollView {
-        PaywallMarketingContent(showsAllFeatures: .constant(false), trialText: "1 semaine d'essai gratuit")
+        PaywallMarketingContent(trialText: "1 semaine d'essai gratuit")
             .padding(.horizontal, 22)
             .padding(.top, 12)
             .padding(.bottom, 16)
