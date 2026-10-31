@@ -10,8 +10,10 @@
   <meta property="og:description" content="Le carnet de collection des passionnés de vinyles, CD et cassettes, synchronisé avec Discogs.">
   <meta property="og:type" content="website">
   <meta property="og:image" content="assets/site/icone.png">
-  <link rel="icon" type="image/png" href="assets/site/icone.png">
-  <link rel="apple-touch-icon" href="assets/site/icone.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <style>
     /* Jetons repris de l'app (AppColors.swift / AppTheme.swift) : fond crème en clair, anthracite en sombre,
        accent = palette Signature, or Premium. La page suit le réglage « Système » comme l'app. */
@@ -155,8 +157,9 @@
 
     /* Écoute sur platine : trois supports, trois écrans */
     .media-trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; margin-bottom: 90px; }
-    .media-trio figure { text-align: center; }
-    .media-trio img { width: 100%; height: auto; filter: drop-shadow(0 26px 34px rgba(60, 20, 100, .28)); }
+    .media-trio figure { text-align: center; width: 100%; max-width: 300px; justify-self: center; /* même largeur que les téléphones des autres sections */ }
+    /* Ombre en box-shadow (calquée sur les coins arrondis de l'image) et non en `filter: drop-shadow` : le filtre est très coûteux à repeindre sur iPhone */
+    .media-trio img { width: 100%; height: auto; border-radius: 16.4% / 15.2%; box-shadow: 0 26px 34px -14px rgba(60, 20, 100, .36); }
     .media-trio figcaption { margin-top: 18px; font-family: var(--serif); font-weight: 700; font-size: 1.3rem; }
     .media-trio figcaption small { display: block; font-family: var(--sans); font-weight: 400; font-size: .92rem; color: var(--ink-2); margin-top: 2px; }
     @media (max-width: 860px) { .media-trio { grid-template-columns: 1fr; max-width: 420px; margin-inline: auto; } }
@@ -181,18 +184,50 @@
     .vinyl img { width: 100%; height: auto; will-change: transform; }
     @media (max-width: 920px) { .vinyl { width: 520px; margin-left: -260px; top: 10px; opacity: .6; } }
 
-    /* Bande de chiffres : valeurs fixes de l'app, qui montent de 0 à leur valeur à l'apparition */
-    .band { padding: 58px 0; }
-    .band .wrap { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; text-align: center; }
-    .band .n { font-family: var(--serif); font-weight: 700; font-size: clamp(2.6rem, 5vw, 3.8rem); line-height: 1; color: var(--accent); font-variant-numeric: tabular-nums; }
-    .band .l { margin-top: 10px; color: var(--ink-2); font-size: .95rem; }
-    @media (max-width: 700px) { .band .wrap { grid-template-columns: repeat(2, 1fr); gap: 34px 14px; } }
-
     /* Trio d'écoute : la page s'arrête, les trois écrans défilent d'un côté à l'autre (activé par le script) */
-    .pin.on { width: 100vw; margin-left: calc(50% - 50vw); }
-    .pin.on .pin-sticky { position: sticky; top: 0; height: 100vh; display: flex; align-items: center; overflow: hidden; }
-    .pin.on .media-trio { display: flex; gap: 44px; width: max-content; margin: 0; padding: 0 max(20px, calc((100vw - 1120px) / 2)); will-change: transform; }
-    .pin.on .media-trio figure { flex: none; width: min(520px, 78vw, calc((100vh - 220px) / 1.078)); }
+    /* --pin-dist (px) est posé une seule fois par le script ; la hauteur en dépend en CSS pur. `svh` = hauteur de l'écran barre
+       d'adresse dépliée : stable quand Safari replie sa barre en défilant (contrairement à `innerHeight`). */
+    .pin.on { width: 100vw; margin-left: calc(50% - 50vw); height: calc(100vh + var(--pin-dist, 0px)); height: calc(100svh + var(--pin-dist, 0px)); }
+    .pin.on .pin-sticky { position: sticky; top: 0; height: 100vh; height: 100svh; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding-top: 72px; box-sizing: border-box; overflow: hidden; contain: layout paint; }
+    /* Titre resserré contre les images, centré (la piste, plus large que l'écran en mode glissement, reste calée à gauche) */
+    #platine .head { margin-bottom: 30px; }
+    .pin.on .pin-head { width: min(1120px, 100% - 40px); margin: 0 auto; flex: none; }
+    .pin.on .head { margin-bottom: 26px; }
+    @media (max-height: 760px) { .pin.on .head .lead { display: none; } }
+    .pin.on .media-trio { display: flex; gap: 44px; width: max-content; margin: 0; padding: 0 max(20px, calc((100vw - 1120px) / 2)); transform: translate3d(0, 0, 0); will-change: transform; }
+    /* Même largeur que les téléphones des autres sections (300 px, 240 px sur mobile) */
+    .pin.on .media-trio figure { flex: none; width: 300px; }
+    @media (max-width: 860px) { .pin.on .media-trio figure { width: 240px; } }
+    /* Les trois écrans sont déjà là : pas d'apparition animée pendant qu'ils glissent (elle ajoutait des sauts) */
+    .pin.on .media-trio figure.reveal { opacity: 1; transform: none; transition: none; }
+    /* Navigateurs récents (Safari 26+, Chrome 115+) : le glissement suit le défilement par une animation pilotée par la page, sans JavaScript.
+       `contain` = tant que le bloc couvre l'écran, c'est-à-dire pendant qu'il reste épinglé. */
+    @supports (animation-timeline: view()) {
+      /* inset 0 : sinon la chronologie reprend le scroll-padding-top (72 px) de la page et démarre avec de l'avance */
+      .pin.on { view-timeline: --pin block; view-timeline-inset: 0; }
+      .pin.on:not(.spread) .pin-track { animation: pin-slide linear both; animation-timeline: --pin; animation-range: contain 0% contain 100%; }
+    }
+    @keyframes pin-slide { to { transform: translate3d(calc(var(--pin-dist, 0px) * -1), 0, 0); } }
+
+    /* Grands écrans : les trois supports tiennent côte à côte. Ils démarrent empilés (vinyle au-dessus, CD et cassette derrière,
+       légèrement inclinés) puis s'écartent pendant que la page reste épinglée : vinyle à gauche, cassette à droite. */
+    .pin.spread .media-trio { display: flex; justify-content: center; gap: 44px; width: 100%; padding: 0; margin: 0; transform: none; will-change: auto; --spread: 344px; }
+    .pin.spread .media-trio figure { position: relative; will-change: transform; }
+    .pin.spread .media-trio figure:nth-child(1) { z-index: 3; transform: translate3d(var(--spread), 0, 0); }
+    .pin.spread .media-trio figure:nth-child(2) { z-index: 1; transform: rotate(-6deg) scale(.95); }
+    .pin.spread .media-trio figure:nth-child(3) { z-index: 2; transform: translate3d(calc(var(--spread) * -1), 0, 0) rotate(6deg); }
+    .pin.spread .media-trio figcaption { opacity: 0; }
+    @supports (animation-timeline: view()) {
+      .pin.spread .media-trio figure { animation: 1s ease-in-out both; animation-timeline: --pin; animation-range: contain 0% contain 100%; }
+      .pin.spread .media-trio figure:nth-child(1) { animation-name: spread-left; }
+      .pin.spread .media-trio figure:nth-child(3) { animation-name: spread-right; }
+      .pin.spread .media-trio figure:nth-child(2) { animation-name: spread-center; }
+      .pin.spread .media-trio figcaption { animation: spread-caption linear both; animation-timeline: --pin; animation-range: contain 0% contain 100%; }
+    }
+    @keyframes spread-left { to { transform: none; } }
+    @keyframes spread-right { to { transform: none; } }
+    @keyframes spread-center { to { transform: none; } }
+    @keyframes spread-caption { 0%, 60% { opacity: 0; } 100% { opacity: 1; } }
 
     /* Grille gratuite */
     .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
@@ -326,14 +361,6 @@
   </div>
 </header>
 
-<section class="band" aria-label="Spinfolio en chiffres">
-  <div class="wrap reveal">
-    <div><div class="n" data-count="3">3</div><div class="l">supports : vinyle, CD et cassette</div></div>
-    <div><div class="n" data-count="10">10</div><div class="l">critères de tri, dans les deux sens</div></div>
-    <div><div class="n" data-count="10">10</div><div class="l">palettes de couleurs</div></div>
-    <div><div class="n" data-count="7">7</div><div class="l">grades à gagner, par piste</div></div>
-  </div>
-</section>
 
 <section class="block t-lilas" id="collection">
   <div class="wrap split">
@@ -385,16 +412,17 @@
 
 <section class="block t-lilas" id="platine">
   <div class="wrap">
-    <div class="head reveal">
+    <div class="pin" id="pin"><div class="pin-sticky">
+    <!-- Le titre est dans la zone épinglée : il reste à l'écran pendant que les supports s'écartent -->
+    <div class="wrap pin-head"><div class="head reveal">
       <span class="eyebrow">Écoute sur platine</span>
       <h2>Chaque écoute, sur le bon support.</h2>
       <p class="lead">Vinyle, CD ou cassette&nbsp;: l'écran d'écoute prend la forme de ton disque. Touche « J'écoute » quand tu le poses, « Arrêter l'écoute » quand tu as fini.</p>
-    </div>
-    <div class="pin" id="pin"><div class="pin-sticky">
+    </div></div>
     <div class="media-trio pin-track">
-      <figure class="reveal"><img src="assets/site/ecoute-vinyle.webp" alt="Écran d'écoute d'un vinyle : pochette, platine avec bras de lecture et bouton Arrêter l'écoute" width="720" height="776" loading="lazy"><figcaption>Vinyle<small>La platine et son bras de lecture</small></figcaption></figure>
-      <figure class="reveal"><img src="assets/site/ecoute-cd.webp" alt="Écran d'écoute d'un CD : pochette, disque argenté et bouton Arrêter l'écoute" width="720" height="775" loading="lazy"><figcaption>CD<small>Le disque qui sort de son boîtier</small></figcaption></figure>
-      <figure class="reveal"><img src="assets/site/ecoute-k7.webp" alt="Écran d'écoute d'une cassette : pochette, cassette et bouton Arrêter l'écoute" width="720" height="776" loading="lazy"><figcaption>Cassette<small>Chaque face, à sa place</small></figcaption></figure>
+      <figure class="reveal"><img src="assets/site/ecoute-vinyle.webp" alt="Écran d'écoute d'un vinyle : pochette, platine avec bras de lecture et bouton Arrêter l'écoute" width="720" height="776" decoding="async"><figcaption>Vinyle<small>La platine et son bras de lecture</small></figcaption></figure>
+      <figure class="reveal"><img src="assets/site/ecoute-cd.webp" alt="Écran d'écoute d'un CD : pochette, disque argenté et bouton Arrêter l'écoute" width="720" height="775" decoding="async"><figcaption>CD<small>Le disque qui sort de son boîtier</small></figcaption></figure>
+      <figure class="reveal"><img src="assets/site/ecoute-k7.webp" alt="Écran d'écoute d'une cassette : pochette, cassette et bouton Arrêter l'écoute" width="720" height="776" decoding="async"><figcaption>Cassette<small>Chaque face, à sa place</small></figcaption></figure>
     </div>
     </div></div>
     <div class="split">
@@ -796,12 +824,15 @@
     reveals.forEach(function (el) { io.observe(el); });
   } else { reveals.forEach(function (el) { el.classList.add('in'); }); }
 
+  // Héros visible ? Hors écran, ni parallaxe ni vinyle ne travaillent : moins de calculs pendant le défilement ailleurs
+  var heroVisible = true;
   // Parallaxe du héros : chaque téléphone se décale à sa vitesse
   var layers = [].slice.call(document.querySelectorAll('[data-speed]'));
   if (layers.length && !reduced) {
     var ticking = false;
     // `translate` (propriété indépendante de `transform`) : n'interfère pas avec les rotations en CSS
     function frame() {
+      if (!heroVisible) { ticking = false; return; }
       var y = Math.min(window.scrollY, 900);
       layers.forEach(function (el) {
         el.style.translate = '0 ' + (y * parseFloat(el.dataset.speed) * -1) + 'px';
@@ -818,6 +849,7 @@
     var spin = vinyl.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], { duration: 34000, iterations: Infinity });
     var lastY = window.scrollY, rate = 1, ticking2 = false;
     function eased() {
+      if (!heroVisible) { spin.playbackRate = 1; ticking2 = false; return; }
       var dy = Math.abs(window.scrollY - lastY); lastY = window.scrollY;
       var target = 1 + Math.min(dy * 0.35, 7);
       rate += (target - rate) * 0.18;
@@ -827,22 +859,12 @@
     window.addEventListener('scroll', function () { if (!ticking2) { ticking2 = true; requestAnimationFrame(eased); } }, { passive: true });
   }
 
-  // 2. Chiffres : montent de 0 à leur valeur quand la bande apparaît
-  var counters = document.querySelectorAll('[data-count]');
-  if (counters.length && 'IntersectionObserver' in window && !reduced) {
-    var co = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (!e.isIntersecting) return;
-        co.unobserve(e.target);
-        var end = parseInt(e.target.dataset.count, 10), t0 = performance.now(), dur = 1300;
-        (function step(t) {
-          var k = Math.min(1, (t - t0) / dur), v = 1 - Math.pow(1 - k, 3);
-          e.target.textContent = Math.round(end * v);
-          if (k < 1) requestAnimationFrame(step);
-        })(t0);
-      });
-    }, { threshold: .6 });
-    counters.forEach(function (c) { c.textContent = '0'; co.observe(c); });
+  var heroEl = document.querySelector('.hero');
+  if (heroEl && 'IntersectionObserver' in window) {
+    new IntersectionObserver(function (e) {
+      heroVisible = e[0].isIntersecting;
+      if (typeof spin !== 'undefined' && spin) { if (heroVisible) spin.play(); else spin.pause(); }
+    }).observe(heroEl);
   }
 
   // 3. Inclinaison 3D des téléphones au survol (souris seulement) + reflet qui suit le pointeur
@@ -861,25 +883,55 @@
     });
   }
 
-  // 8. Trio d'écoute épinglé : la page reste en place et les trois écrans défilent horizontalement
+  // 8. Trio d'écoute épinglé : la page reste en place et les trois écrans défilent horizontalement.
+  //    Navigateur récent : le CSS pilote tout (voir `animation-timeline`), le script ne fait que mesurer la distance.
+  //    Sinon : repli en JavaScript, un seul calcul par image (aucune lecture de géométrie pendant le défilement).
   var pin = document.getElementById('pin');
   if (pin && !reduced) {
     var track = pin.querySelector('.pin-track');
+    var cssDriven = !!(window.CSS && CSS.supports && CSS.supports('animation-timeline: view()'));
+    var figs = Array.prototype.slice.call(track.querySelectorAll('figure')), spread = false;
+    var pinDist = 0, pinTop = 0, pinFrame = 0, lastWidth = 0;
     var measure = function () {
-      pin.classList.add('on'); pin.style.height = '';
-      var dist = track.scrollWidth - window.innerWidth;
-      if (dist < 40) { pin.classList.remove('on'); track.style.transform = ''; pin.dataset.dist = 0; return; }
-      pin.style.height = (window.innerHeight + dist) + 'px'; pin.dataset.dist = dist;
-      slide();
+      lastWidth = window.innerWidth;
+      // Remise à zéro (changement de largeur : on peut passer d'un mode à l'autre)
+      pin.classList.remove('spread'); track.style.transform = '';
+      figs.forEach(function (f) { f.style.transform = ''; f.querySelector('figcaption').style.opacity = ''; });
+      pin.classList.add('on'); pin.style.removeProperty('--pin-dist');
+      spread = window.innerWidth >= 1100;
+      if (spread) {
+        // Assez large pour les trois côte à côte : l'écart se fait sur une distance de défilement fixe
+        pin.classList.add('spread'); pinDist = 600;
+      } else {
+        pinDist = track.scrollWidth - window.innerWidth;
+        if (pinDist < 40) { pin.classList.remove('on'); pinDist = 0; return; }
+      }
+      pin.style.setProperty('--pin-dist', pinDist + 'px');
+      pinTop = pin.getBoundingClientRect().top + window.scrollY;
+      if (!cssDriven) slide();
     };
     var slide = function () {
-      var dist = +pin.dataset.dist || 0; if (!dist) return;
-      var r = pin.getBoundingClientRect(), total = pin.offsetHeight - window.innerHeight;
-      var p = Math.min(1, Math.max(0, -r.top / total));
-      track.style.transform = 'translate3d(' + (-p * dist) + 'px,0,0)';
+      pinFrame = 0;
+      if (!pinDist) return;
+      var p = Math.min(1, Math.max(0, (window.scrollY - pinTop) / pinDist));
+      if (spread) {
+        // Même courbe que le CSS (ease-in-out), appliquée par figure
+        var e = p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2, d = 344 * (1 - e);
+        figs[0].style.transform = 'translate3d(' + d + 'px,0,0)';
+        figs[1].style.transform = 'rotate(' + (-6 * (1 - e)) + 'deg) scale(' + (.95 + .05 * e) + ')';
+        figs[2].style.transform = 'translate3d(' + (-d) + 'px,0,0) rotate(' + (6 * (1 - e)) + 'deg)';
+        var c = Math.min(1, Math.max(0, (p - .6) / .4));
+        figs.forEach(function (f) { f.querySelector('figcaption').style.opacity = c; });
+        return;
+      }
+      track.style.transform = 'translate3d(' + (-p * pinDist) + 'px,0,0)';
     };
-    window.addEventListener('scroll', slide, { passive: true });
-    window.addEventListener('resize', measure);
+    if (!cssDriven) {
+      window.addEventListener('scroll', function () { if (!pinFrame) pinFrame = requestAnimationFrame(slide); }, { passive: true });
+    }
+    // Seule la largeur compte : la barre d'adresse de Safari qui se replie ne change que la hauteur
+    window.addEventListener('resize', function () { if (window.innerWidth !== lastWidth) measure(); });
+    // Les images au-dessus peuvent changer la position du bloc en se chargeant
     window.addEventListener('load', measure);
     measure();
   }
