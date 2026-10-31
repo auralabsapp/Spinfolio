@@ -107,6 +107,7 @@ struct PaywallPurchasePanel: View {
         HStack(spacing: 16) {
             Link("Conditions d'utilisation", destination: AppInfo.termsURL)
             Link("Confidentialité", destination: AppInfo.privacyURL)
+            Link("Assistance", destination: AppInfo.supportURL)
         }
         .font(.caption)
         .foregroundStyle(Color.appSecondaryText)

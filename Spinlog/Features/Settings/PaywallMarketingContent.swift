@@ -1,21 +1,12 @@
 import SwiftUI
 
 /// Contenu marketing du paywall (`SpinlogPaywallView`), au-dessus des forfaits : illustration, titre,
-/// essai gratuit (si éligible) et avantages. Les marges et le fond sont posés par `SpinlogPaywallView`.
+/// essai gratuit (si éligible) et toutes les fonctionnalités, sans texte tronqué (la page défile).
+/// Les marges et le fond sont posés par `SpinlogPaywallView`.
 struct PaywallMarketingContent: View {
-    @Binding var showsAllFeatures: Bool
     /// Texte d'essai gratuit de l'annuel, `nil` si la personne n'y est pas éligible (vérifié par
     /// `SpinlogPaywallView` auprès de StoreKit) : jamais annoncé à tort.
     let trialText: String?
-
-    private var isIPad: Bool {
-        UIDevice.current.userInterfaceIdiom == .pad
-    }
-
-    private var visibleFeatures: [PremiumFeatureInfo] {
-        let all = PremiumFeatureCatalog.all
-        return (showsAllFeatures || isIPad) ? all : Array(all.prefix(3))
-    }
 
     var body: some View {
         VStack(spacing: 14) {
@@ -38,27 +29,8 @@ struct PaywallMarketingContent: View {
             }
 
             VStack(alignment: .leading, spacing: 10) {
-                ForEach(visibleFeatures) { feature in
+                ForEach(PremiumFeatureCatalog.all) { feature in
                     featureRow(feature)
-                }
-
-                if visibleFeatures.count < PremiumFeatureCatalog.all.count {
-                    Button {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                            showsAllFeatures = true
-                        }
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "plus")
-                                .font(.footnote.weight(.bold))
-                            Text("et \(PremiumFeatureCatalog.all.count - visibleFeatures.count) fonctionnalités supplémentaires")
-                                .font(.subheadline.weight(.medium))
-                        }
-                        .foregroundStyle(Color.goldText)
-                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-                    }
-                    .buttonStyle(.plain)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -92,7 +64,6 @@ struct PaywallMarketingContent: View {
                 Text(feature.description)
                     .font(.footnote)
                     .foregroundStyle(Color.appSecondaryText)
-                    .lineLimit(3)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
@@ -251,7 +222,7 @@ struct PaywallHeroArtwork: View {
 
 #Preview {
     ScrollView {
-        PaywallMarketingContent(showsAllFeatures: .constant(false), trialText: "1 semaine d'essai gratuit")
+        PaywallMarketingContent(trialText: "1 semaine d'essai gratuit")
             .padding(.horizontal, 20)
     }
     .background(Color.appBackground)

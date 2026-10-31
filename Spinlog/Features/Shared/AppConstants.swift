@@ -15,6 +15,9 @@ nonisolated enum AppInfo {
     /// conditions personnalisées renseignées dans App Store Connect.
     static let termsURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
     static let privacyURL = URL(string: "https://auralabsapp.github.io/Spinfolio/privacy.html")!
+    /// Page d'assistance (même site que la confidentialité) : à garder identique à l'« URL d'assistance »
+    /// renseignée dans App Store Connect.
+    static let supportURL = URL(string: "https://auralabsapp.github.io/Spinfolio/support.html")!
 }
 
 /// Clés `UserDefaults` du mode d'affichage (Liste, Mosaïque, Carrousel) de chaque onglet.

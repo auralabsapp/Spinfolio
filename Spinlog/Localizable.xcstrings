@@ -3602,6 +3602,16 @@
         }
       }
     },
+    "Assistance" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Support"
+          }
+        }
+      }
+    },
     "Associe les champs personnalisés Discogs correspondants à ton prix d'achat et à l'état de conservation pour alimenter le suivi de valeur." : {
       "localizations" : {
         "en" : {
@@ -6688,6 +6698,7 @@
       }
     },
     "et %lld fonctionnalités supplémentaires" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "variations" : {
