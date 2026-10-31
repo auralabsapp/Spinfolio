@@ -331,6 +331,14 @@ final class CloudSyncEngine: CKSyncEngineDelegate {
         markDirty(.tag(instanceId: instanceId))
     }
 
+    /// Signale que le prix d'achat ou l'état du disque d'un exemplaire sont à envoyer vers iCloud.
+    /// Un identifiant provisoire négatif (exemplaire en cours d'ajout) n'est jamais envoyé : ses
+    /// données partent sous l'identifiant définitif (`CopyDetailsStore.remapInstanceId`).
+    func markCopyDetailsDirty(instanceId: Int) {
+        guard instanceId > 0 else { return }
+        markDirty(.copyDetails(instanceId: instanceId))
+    }
+
     /// Signale qu'une session d'écoute a été créée/modifiée et doit être envoyée vers iCloud.
     func markSessionDirty(id: UUID) {
         markDirty(.listeningSession(id: id))

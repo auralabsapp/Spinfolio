@@ -49,6 +49,10 @@ final class CopyDetailsStore {
 
     private(set) var lastImport: ImportRecord?
 
+    /// Exemplaires modifiés par l'utilisateur (ou un import) et pas encore signalés à iCloud : envoyés
+    /// d'un coup en fin de lot, pour ne pas dater et réécrire le journal une fois par exemplaire.
+    @ObservationIgnored private var dirtyInstanceIds: Set<Int> = []
+
     /// Profondeur des `performBatchUpdate` en cours (voir `TagStore.performBatchUpdate`).
     @ObservationIgnored private var batchDepth = 0
     @ObservationIgnored private var needsPersistAfterBatch = false
@@ -219,6 +223,7 @@ final class CopyDetailsStore {
         details.modifiedAt = .now
         entries[instanceId] = details
         persist()
+        noteLocalChange(instanceId)
     }
 
     // MARK: - Reprise des valeurs Discogs
@@ -314,7 +319,12 @@ final class CopyDetailsStore {
         performBatchUpdate {
             for item in record.previous {
                 if let current = entries[item.instanceId], current.modifiedAt > record.date { continue }
-                entries[item.instanceId] = item.details
+                // Daté d'aujourd'hui, même pour un retour à « rien » : sinon les autres appareils
+                // garderaient la version importée, plus récente que celle qu'on rétablit.
+                var details = item.details ?? CopyDetails()
+                details.modifiedAt = .now
+                entries[item.instanceId] = details
+                noteLocalChange(item.instanceId)
                 restored += 1
             }
             persist()
@@ -333,6 +343,7 @@ final class CopyDetailsStore {
         entries[oldInstanceId] = nil
         if entries[newInstanceId] == nil {
             entries[newInstanceId] = details
+            noteLocalChange(newInstanceId)
         }
         persist()
     }
@@ -355,6 +366,39 @@ final class CopyDetailsStore {
             needsPersistAfterBatch = false
             persist()
         }
+        flushLocalChanges()
+    }
+
+    private func noteLocalChange(_ instanceId: Int) {
+        dirtyInstanceIds.insert(instanceId)
+        flushLocalChanges()
+    }
+
+    /// Signale à iCloud les exemplaires modifiés, une fois les lots terminés. N'est jamais appelé
+    /// pour une version reçue d'iCloud (`applyRemote`), qui ne doit pas repartir.
+    private func flushLocalChanges() {
+        guard batchDepth == 0, !dirtyInstanceIds.isEmpty else { return }
+        let ids = dirtyInstanceIds
+        dirtyInstanceIds = []
+        for instanceId in ids {
+            CloudSyncEngine.shared.markCopyDetailsDirty(instanceId: instanceId)
+        }
+    }
+
+    // MARK: - Synchronisation iCloud (compte premium)
+
+    /// Exemplaires ayant une entrée, pour la poussée initiale : les données saisies avant
+    /// l'activation de la synchro n'ont jamais été signalées.
+    func allInstanceIds() -> [Int] {
+        entries.keys.filter { $0 > 0 }
+    }
+
+    /// Applique la version reçue d'iCloud si elle est plus récente que la locale (voir
+    /// `CloudMergeRules.copyDetails`). N'écrit qu'en local : ne redéclenche pas d'envoi.
+    func applyRemote(_ remote: CopyDetails, for instanceId: Int) {
+        guard let resolved = CloudMergeRules.copyDetails(local: entries[instanceId], remote: remote) else { return }
+        entries[instanceId] = resolved
+        persist()
     }
 
     private func persist() {

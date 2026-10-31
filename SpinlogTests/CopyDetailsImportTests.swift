@@ -187,7 +187,9 @@ struct CopyDetailsImportTests {
         #expect(store.undoLastImport() == 2)
         #expect(store.purchasePrice(for: 5)?.amount == 50)
         #expect(store.mediaCondition(for: 5) == nil)
-        #expect(store.details(for: 6) == nil)
+        // Retour à « rien » : une entrée vide et datée (et non l'absence d'entrée), pour que l'annulation
+        // se propage aux autres appareils via iCloud.
+        #expect(store.details(for: 6)?.isEmpty ?? true)
         #expect(store.lastImport == nil)
     }
 

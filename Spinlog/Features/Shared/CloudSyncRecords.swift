@@ -40,6 +40,9 @@ nonisolated enum SyncedRecordKind: Equatable {
     /// Grades franchis et leur date (voir `GradeStore`) : un seul enregistrement singleton par
     /// compte, toujours fusionné (jamais remplacé) puisqu'un grade ne se perd pas.
     case grades
+    /// Prix d'achat et état du disque d'un exemplaire (voir `CopyDetailsStore`) : un enregistrement
+    /// par exemplaire, comme les tags. Jamais supprimé : une valeur vidée est envoyée vide, datée.
+    case copyDetails(instanceId: Int)
 
     private static let tagPrefix = "tags_"
     private static let sessionPrefix = "session_"
@@ -51,6 +54,7 @@ nonisolated enum SyncedRecordKind: Equatable {
     private static let discogsWorkCategoriesRecordName = "discogsWorkCategories"
     private static let appPreferencesRecordName = "appPreferences"
     private static let gradesRecordName = "grades"
+    private static let copyDetailsPrefix = "copy_"
 
     /// Toujours fusionné avec la version distante (jamais remplacé) : exclu de la règle « la
     /// modification la plus récente l'emporte » (voir `CloudSyncModificationLog`).
@@ -73,6 +77,7 @@ nonisolated enum SyncedRecordKind: Equatable {
         case .discogsWorkCategories: return Self.discogsWorkCategoriesRecordName
         case .appPreferences: return Self.appPreferencesRecordName
         case .grades: return Self.gradesRecordName
+        case .copyDetails(let instanceId): return "\(Self.copyDetailsPrefix)\(instanceId)"
         }
     }
 
@@ -88,6 +93,7 @@ nonisolated enum SyncedRecordKind: Equatable {
         case .discogsWorkCategories: return "DiscogsWorkCategories"
         case .appPreferences: return "AppPreferences"
         case .grades: return "Grades"
+        case .copyDetails: return "CopyDetails"
         }
     }
 
@@ -112,6 +118,9 @@ nonisolated enum SyncedRecordKind: Equatable {
         if recordName == discogsWorkCategoriesRecordName { return .discogsWorkCategories }
         if recordName == appPreferencesRecordName { return .appPreferences }
         if recordName == gradesRecordName { return .grades }
+        if recordName.hasPrefix(copyDetailsPrefix), let instanceId = Int(recordName.dropFirst(copyDetailsPrefix.count)) {
+            return .copyDetails(instanceId: instanceId)
+        }
         return nil
     }
 }
@@ -135,6 +144,9 @@ struct SyncedCollectionPreferences: Codable, Sendable {
     let wantlistDisplayMode: String?
     let wantlistSortOption: String?
     let wantlistSortAscending: Bool?
+    /// Réglage « Envoyer vers Discogs » (voir `CopyDetailsStore.sendsToDiscogs`). Facultatif : absent
+    /// des enregistrements écrits par une version antérieure, auquel cas la valeur locale est gardée.
+    let sendsCopyDetailsToDiscogs: Bool?
 
     init(
         defaultCurrency: String,
@@ -146,7 +158,8 @@ struct SyncedCollectionPreferences: Codable, Sendable {
         collectionSortAscending: Bool? = nil,
         wantlistDisplayMode: String? = nil,
         wantlistSortOption: String? = nil,
-        wantlistSortAscending: Bool? = nil
+        wantlistSortAscending: Bool? = nil,
+        sendsCopyDetailsToDiscogs: Bool? = nil
     ) {
         self.defaultCurrency = defaultCurrency
         self.purchasePriceFieldId = purchasePriceFieldId
@@ -158,6 +171,7 @@ struct SyncedCollectionPreferences: Codable, Sendable {
         self.wantlistDisplayMode = wantlistDisplayMode
         self.wantlistSortOption = wantlistSortOption
         self.wantlistSortAscending = wantlistSortAscending
+        self.sendsCopyDetailsToDiscogs = sendsCopyDetailsToDiscogs
     }
 }
 

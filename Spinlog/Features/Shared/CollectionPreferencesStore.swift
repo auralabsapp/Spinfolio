@@ -210,6 +210,7 @@ enum CollectionPreferencesStore {
     static func setSendsCopyDetailsToDiscogs(_ value: Bool, for username: String) {
         UserDefaults.standard.set(value, forKey: key("sendsCopyDetailsToDiscogs", for: username))
         NotificationCenter.default.post(name: .collectionPreferencesChanged, object: nil)
+        CloudSyncEngine.shared.markCollectionPreferencesDirty()
     }
 
     /// Identifiant du champ personnalisé Discogs utilisé comme "état du média" (Media Condition),
@@ -253,6 +254,7 @@ enum CollectionPreferencesStore {
         purchasePriceFieldId: Int?,
         mediaConditionFieldId: Int?,
         defaultAddFolderId: Int,
+        sendsCopyDetailsToDiscogs: Bool? = nil,
         for username: String
     ) {
         // Une seule notification, et seulement si quelque chose a réellement changé : chaque
@@ -263,6 +265,11 @@ enum CollectionPreferencesStore {
             || purchasePriceFieldId != self.purchasePriceFieldId(for: username)
             || mediaConditionFieldId != self.mediaConditionFieldId(for: username)
             || defaultAddFolderId != self.defaultAddFolderId(for: username)
+        // Réglage purement local (aucun rechargement de collection) : appliqué sans notification.
+        if let sendsCopyDetailsToDiscogs,
+           sendsCopyDetailsToDiscogs != self.sendsCopyDetailsToDiscogs(for: username) {
+            UserDefaults.standard.set(sendsCopyDetailsToDiscogs, forKey: key("sendsCopyDetailsToDiscogs", for: username))
+        }
         guard changed else { return }
         setValue(currency, forKey: key("defaultCurrency", for: username))
         setValue(purchasePriceFieldId, forKey: key("purchasePriceFieldId", for: username))
