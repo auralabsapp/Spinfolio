@@ -255,7 +255,13 @@ struct CollectionView: View {
             isEmpty: selectedItemIds.isEmpty,
             isProcessing: isBulkProcessing,
             onMove: { pendingMoveFolder = $0 },
-            onManageTags: { showingBulkTagManagement = true },
+            onManageTags: {
+                if premiumStore.isPremium {
+                    showingBulkTagManagement = true
+                } else {
+                    showingPremiumSheet = true
+                }
+            },
             onDelete: { showingBulkDeleteConfirmation = true }
         )
     }

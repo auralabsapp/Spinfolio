@@ -34,6 +34,13 @@ enum PremiumFeatureCatalog {
             description: "Synchronise tags, journal d'écoute sur platine, préférences et personnalisations de tri entre tous tes appareils connectés au même compte."
         ),
         PremiumFeatureInfo(
+            id: "tags",
+            icon: "tag.fill",
+            color: .orange,
+            title: "Tags",
+            description: "Crée tes propres tags, attribue-les à tes albums, gère-les en masse, renomme-les ou fusionne-les. Sans abonnement, tu gardes la lecture et le filtre."
+        ),
+        PremiumFeatureInfo(
             id: "batchScan",
             icon: "rectangle.stack.badge.plus",
             color: .blue,

@@ -129,7 +129,7 @@ struct CollectionItemEditSheet: View {
                     gainSection
 
                     VStack(alignment: .leading, spacing: 10) {
-                        SectionEyebrow(title: "Tags de l'exemplaire", icon: "tag.fill")
+                        SectionEyebrow(title: "Tags de l'exemplaire", icon: "tag.fill", isPremiumFeature: true)
                         TagsEditor(instanceId: item.instanceId, releaseId: item.releaseId)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 12)

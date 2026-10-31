@@ -4604,7 +4604,18 @@
         }
       }
     },
+    "Classe tes albums avec tes propres tags : création, attribution, gestion en masse." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Organize your albums with your own tags: creation, assignment, bulk management."
+          }
+        }
+      }
+    },
     "Classe tes albums avec tes tags et une note sur 5." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5190,6 +5201,16 @@
         }
       }
     },
+    "Crée tes propres tags, attribue-les à tes albums, gère-les en masse, renomme-les ou fusionne-les. Sans abonnement, tu gardes la lecture et le filtre." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Create your own tags, assign them to your albums, manage them in bulk, rename or merge them. Without a subscription, you keep read access and filtering."
+          }
+        }
+      }
+    },
     "Créer" : {
       "localizations" : {
         "en" : {
@@ -5306,6 +5327,17 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "In “Edit”, under “Copy Tags”: create or pick tags."
+          }
+        }
+      }
+    },
+    "Dans « Modifier », section « Tags de l'exemplaire » (Premium) : crée ou choisis des tags." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "In “Edit”, under “Copy Tags” (Premium): create or pick tags."
           }
         }
       }
@@ -7282,6 +7314,16 @@
         }
       }
     },
+    "Gère-les dans Réglages (« Gestion des tags »), ou avec « Sélectionner » dans la Collection." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Manage them in Settings (“Tag Management”), or with “Select” in the Collection."
+          }
+        }
+      }
+    },
     "Gérer les champs sur discogs.com" : {
       "localizations" : {
         "en" : {
@@ -8674,6 +8716,7 @@
       }
     },
     "Les tags restent dans Spinlog (synchronisés par iCloud avec Premium), pas sur Discogs." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8689,6 +8732,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tags are local to the app and are not saved to Discogs."
+          }
+        }
+      }
+    },
+    "Les tags sont une fonction Premium : sans abonnement, ils restent visibles et filtrables, mais ne se modifient plus. Ils restent dans Spinlog (synchronisés par iCloud), pas sur Discogs." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tags are a Premium feature: without a subscription they stay visible and filterable, but can no longer be edited. They stay in Spinlog (synced through iCloud), not on Discogs."
           }
         }
       }
@@ -9466,6 +9520,16 @@
         }
       }
     },
+    "Note tes albums sur 5 étoiles." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Rate your albums out of 5 stars."
+          }
+        }
+      }
+    },
     "Note, tags et infos" : {
       "localizations" : {
         "en" : {
@@ -10090,6 +10154,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Go Premium to browse your entire collection and covers offline at a flea market."
+          }
+        }
+      }
+    },
+    "Passe premium pour créer et attribuer des tags à tes albums." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Go Premium to create tags and assign them to your albums."
+          }
+        }
+      }
+    },
+    "Passe premium pour créer, attribuer, renommer et supprimer tes tags. Tes tags restent visibles." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Go Premium to create, assign, rename and delete your tags. Your tags stay visible."
           }
         }
       }
@@ -10996,6 +11080,16 @@
         }
       }
     },
+    "Rechercher un tag" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Search for a tag"
+          }
+        }
+      }
+    },
     "Récupère tous tes albums, tes dossiers, ta wantlist et les pochettes" : {
       "localizations" : {
         "en" : {
@@ -11473,6 +11567,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Enter the “Maximum price” then tap “Save”."
+          }
+        }
+      }
+    },
+    "Sans abonnement, tes tags restent visibles et filtrables, mais ne se modifient plus. Ils sont synchronisés par iCloud, pas envoyés à Discogs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Without a subscription, your tags stay visible and filterable, but can no longer be edited. They are synced through iCloud, not sent to Discogs."
           }
         }
       }
@@ -12786,6 +12890,16 @@
         }
       }
     },
+    "Tags" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tags"
+          }
+        }
+      }
+    },
     "Tags (%lld)" : {
       "localizations" : {
         "en" : {
@@ -12858,6 +12972,7 @@
       }
     },
     "Tags et note" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -13375,7 +13490,18 @@
         }
       }
     },
+    "Touche « ··· » puis « Sélectionner » pour agir sur plusieurs albums à la fois : dossier, tags (Premium), suppression." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tap “···” then “Select” to act on several records at once: folder, tags (Premium), deletion."
+          }
+        }
+      }
+    },
     "Touche « ··· » puis « Sélectionner » pour agir sur plusieurs albums à la fois : dossier, tags, suppression." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

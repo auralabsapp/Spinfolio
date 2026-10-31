@@ -118,7 +118,7 @@ enum GuideCatalog {
             title: "Agir sur un album",
             summary: "Glisse une ligne, ou maintiens-la, pour écouter, ranger, modifier ou supprimer.",
             steps: [
-                "Touche « ··· » puis « Sélectionner » pour agir sur plusieurs albums à la fois : dossier, tags, suppression."
+                "Touche « ··· » puis « Sélectionner » pour agir sur plusieurs albums à la fois : dossier, tags (Premium), suppression."
             ],
             tip: "« Ranger » est une fonction Premium.",
             destination: .tab(.collection)
@@ -153,16 +153,27 @@ enum GuideCatalog {
             access: .requiresAccount
         ),
         GuideEntry(
-            id: "tagsAndRating",
+            id: "tags",
             section: .record,
-            visual: .tagsAndRating,
-            title: "Tags et note",
-            summary: "Classe tes albums avec tes tags et une note sur 5.",
+            visual: .tags,
+            title: "Tags",
+            summary: "Classe tes albums avec tes propres tags : création, attribution, gestion en masse.",
             steps: [
                 "Dans « Modifier », section « Tags de l'exemplaire » : crée ou choisis des tags.",
+                "Gère-les dans Réglages (« Gestion des tags »), ou avec « Sélectionner » dans la Collection."
+            ],
+            tip: "Sans abonnement, tes tags restent visibles et filtrables, mais ne se modifient plus. Ils sont synchronisés par iCloud, pas envoyés à Discogs.",
+            access: .premium
+        ),
+        GuideEntry(
+            id: "rating",
+            section: .record,
+            visual: .rating,
+            title: "Note",
+            summary: "Note tes albums sur 5 étoiles.",
+            steps: [
                 "Touche les étoiles de « Ma note de la release » pour noter."
             ],
-            tip: "Les tags restent dans Spinlog (synchronisés par iCloud avec Premium), pas sur Discogs.",
             access: .requiresAccount
         ),
         GuideEntry(

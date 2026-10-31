@@ -16,6 +16,7 @@ struct OrganizationSettingsPage: View {
                     HStack(spacing: 14) {
                         SettingsIcon(systemName: "tag.fill", backgroundColor: .orange)
                         Text("Gestion des tags")
+                        DemoPremiumBadge()
                         Spacer()
                         let count = tagStore.allTags.count
                         Text(count == 0 ? "Aucun" : "\(count)")

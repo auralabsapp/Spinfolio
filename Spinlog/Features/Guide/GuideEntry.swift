@@ -125,8 +125,10 @@ enum GuideVisual {
     case tracklist
     /// Plusieurs exemplaires d'un même disque.
     case copies
-    /// Tags et note sur 5.
-    case tagsAndRating
+    /// Pastilles de tags d'un exemplaire.
+    case tags
+    /// Note sur 5 étoiles.
+    case rating
     /// Prix d'achat face à la cote Discogs.
     case price
     /// Les trois compteurs de l'onglet Stats.
