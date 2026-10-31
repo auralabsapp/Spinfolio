@@ -17,10 +17,6 @@ struct CollectionFieldControl: View {
     let isSaving: Bool
     let justSaved: Bool
     let onSave: () -> Void
-    /// Non `nil` si ce champ sert au calcul de la plus-value (choisi dans Réglages) : son nom prend
-    /// la teinte du rôle et une pastille de même teinte, sous son nom, renvoie vers le réglage.
-    var gainRole: SettingsFieldHighlight? = nil
-    var onGainFieldTap: (() -> Void)? = nil
 
     @FocusState private var isFocused: Bool
 
@@ -37,7 +33,8 @@ struct CollectionFieldControl: View {
             if field.isTextArea {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
-                        fieldLabel
+                        Text(field.name)
+                            .font(.subheadline)
                         Spacer()
                         editHintIcon
                         trailingStatusView
@@ -56,7 +53,8 @@ struct CollectionFieldControl: View {
                         get: { value == "1" },
                         set: { value = $0 ? "1" : "0" }
                     )) {
-                        fieldLabel
+                        Text(field.name)
+                            .font(.subheadline)
                     }
                     .tint(Color.spinlogPink)
 
@@ -66,7 +64,8 @@ struct CollectionFieldControl: View {
                 .padding(.vertical, 10)
             } else if field.isDropdown {
                 HStack {
-                    fieldLabel
+                    Text(field.name)
+                        .font(.subheadline)
                     Spacer()
                     Picker("", selection: $value) {
                         Text("—").tag("")
@@ -84,7 +83,8 @@ struct CollectionFieldControl: View {
                 .padding(.vertical, 10)
             } else {
                 HStack {
-                    fieldLabel
+                    Text(field.name)
+                        .font(.subheadline)
                     Spacer()
                     editHintIcon
                     TextField(field.name, text: $value)
@@ -116,37 +116,6 @@ struct CollectionFieldControl: View {
             guard oldValue != newValue else { return }
             if (field.isDropdown || field.isCheckbox) && isDirty && !isSaving {
                 onSave()
-            }
-        }
-    }
-
-    /// Nom du champ, avec en dessous la pastille « Utilisé pour la plus-value » quand il s'applique :
-    /// collée au nom, elle ne peut pas être prise pour celle de la ligne voisine.
-    @ViewBuilder
-    private var fieldLabel: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text(field.name)
-                .font(.subheadline.weight(gainRole == nil ? .regular : .semibold))
-                .foregroundStyle(gainRole?.tint ?? Color.primary)
-            if let onGainFieldTap {
-                Button {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    onGainFieldTap()
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "chart.line.uptrend.xyaxis")
-                        Text("Utilisé pour la plus-value")
-                        Image(systemName: "chevron.right")
-                            .font(.caption2.weight(.bold))
-                    }
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(gainRole?.tint ?? Color.gainFieldPurchase)
-                    .padding(.horizontal, 9)
-                    .padding(.vertical, 4)
-                    .background((gainRole?.tint ?? Color.gainFieldPurchase).opacity(0.16), in: Capsule())
-                }
-                .buttonStyle(.plain)
-                .accessibilityHint("Ouvre ce réglage dans Réglages")
             }
         }
     }

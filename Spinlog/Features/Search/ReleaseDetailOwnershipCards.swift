@@ -25,40 +25,16 @@ struct MyItemCard: View {
         return CollectionPreferencesStore.isAlwaysAsk(for: username)
     }
 
-    /// Champ prix d'achat configuré, pour tous les comptes : la saisie est libre (c'est un champ
-    /// personnalisé Discogs), seul le calcul de la plus-value est Premium.
-    private var purchasePriceFieldId: Int? {
-        guard let username = DiscogsAuthManager.shared.username else { return nil }
-        return CollectionPreferencesStore.purchasePriceFieldId(for: username)
-    }
-
     private var defaultCurrency: String {
         guard let username = DiscogsAuthManager.shared.username else { return "EUR" }
         return CollectionPreferencesStore.defaultCurrency(for: username)
     }
 
-    /// Utilise le champ "état du disque" choisi dans les réglages (auto-détecté ou sélectionné
-    /// manuellement) pour affiner l'estimation de cote (sinon `refreshMarketEstimateIfNeeded`
-    /// retombe sur une moyenne). Si aucun champ n'est configuré, retombe sur une détection par
-    /// mots-clés à la volée. Discogs fournit par défaut deux champs "état" distincts — Media
-    /// Condition (le disque) et Sleeve Condition (la pochette) — on exclut donc explicitement
-    /// toute mention de pochette/sleeve pour ne jamais confondre les deux.
+    /// État du disque de l'exemplaire, pour affiner l'estimation de cote (sans lui,
+    /// `refreshMarketEstimateIfNeeded` retombe sur une moyenne de tous les états).
     private var declaredCondition: String? {
         guard let firstInstance = instances.first else { return nil }
-
-        if let username = DiscogsAuthManager.shared.username,
-           let configuredFieldId = CollectionPreferencesStore.mediaConditionFieldId(for: username) {
-            let value = firstInstance.value(forFieldId: configuredFieldId)
-            return value.isEmpty ? nil : value
-        }
-
-        guard let field = actions.collectionFields.first(where: { field in
-            let normalized = field.name.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
-            guard !normalized.contains("sleeve"), !normalized.contains("pochette") else { return false }
-            return normalized.contains("media condition") || normalized.contains("etat du media") || normalized.contains("etat du disque")
-        }) else { return nil }
-        let value = firstInstance.value(forFieldId: field.id)
-        return value.isEmpty ? nil : value
+        return CopyDetailsStore.shared.mediaCondition(for: firstInstance.instanceId)?.discogsLabel
     }
 
     /// Dossiers où ranger un exemplaire : « All » est une vue agrégée de Discogs, pas un dossier.
@@ -97,7 +73,6 @@ struct MyItemCard: View {
                             totalCount: instances.count,
                             folderName: actions.folderName(for: item.folderId),
                             coverURL: item.basicInformation.thumb ?? item.basicInformation.coverImage ?? release?.images?.first?.uri,
-                            purchasePriceFieldId: purchasePriceFieldId,
                             isPremium: PremiumStore.shared.isPremium,
                             defaultCurrency: defaultCurrency,
                             marketEstimate: marketEstimate,

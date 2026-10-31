@@ -10,19 +10,23 @@ protocol SortableLibraryItem: Identifiable {
     nonisolated var rating: Int { get }
     nonisolated var dateAddedDate: Date? { get }
     nonisolated var libraryItemTags: [String] { get }
-    /// Vrai si le champ personnalisé Discogs est vide ou absent (filtres « Sans prix d'achat » et
-    /// « Sans état du média »). Sans objet pour la wantlist, qui n'a pas de champs : jamais vrai.
-    nonisolated func isFieldEmpty(_ fieldId: Int) -> Bool
+    /// Vrai si l'exemplaire n'a pas cette information (filtres « Sans prix d'achat » et « Sans état
+    /// du disque »). Sans objet pour la wantlist, qui n'a pas d'exemplaires : jamais vrai.
+    nonisolated func isMissing(_ field: LibraryMissingField) -> Bool
 }
 
 extension SortableLibraryItem {
-    nonisolated func isFieldEmpty(_ fieldId: Int) -> Bool { false }
+    nonisolated func isMissing(_ field: LibraryMissingField) -> Bool { false }
 }
 
 extension CollectionItem: SortableLibraryItem {
-    nonisolated func isFieldEmpty(_ fieldId: Int) -> Bool {
-        guard let note = notes.first(where: { $0.fieldId == fieldId }) else { return true }
-        return LibraryMissingField.isBlank(note.value)
+    /// `nonisolated` + `assumeIsolated` : même contrainte que `libraryItemTags` — la valeur vient de
+    /// `CopyDetailsStore` (acteur principal), donc le calcul des sections reste synchrone tant qu'un
+    /// filtre « Sans … » est actif (voir `CollectionDisplayState.recomputeSections`).
+    nonisolated func isMissing(_ field: LibraryMissingField) -> Bool {
+        MainActor.assumeIsolated {
+            field.isMissing(forInstanceId: instanceId)
+        }
     }
 
     /// `nonisolated` + `assumeIsolated` : accédé depuis la tâche détachée de
@@ -372,10 +376,10 @@ func libraryIndexToken<Item: SortableLibraryItem>(for section: (key: String, ite
 
 extension SortableLibraryItem {
     /// `nonisolated` : voir le commentaire sur `libraryItemTags`.
-    /// `missingFieldIds` : l'exemplaire doit avoir vide chacun de ces champs (sémantique ET, comme
+    /// `missingFields` : l'exemplaire doit n'avoir aucune de ces informations (sémantique ET, comme
     /// les tags).
-    nonisolated func matchesLibraryFilters(tags: Set<String> = [], format: String?, searchText: String, missingFieldIds: [Int] = []) -> Bool {
-        guard missingFieldIds.allSatisfy(isFieldEmpty) else { return false }
+    nonisolated func matchesLibraryFilters(tags: Set<String> = [], format: String?, searchText: String, missingFields: Set<LibraryMissingField> = []) -> Bool {
+        guard missingFields.allSatisfy(isMissing) else { return false }
 
         if !tags.isEmpty {
             let itemTags = Set(libraryItemTags.map { $0.folding(options: .diacriticInsensitive, locale: .current).lowercased() })

@@ -30,8 +30,10 @@ final class CollectionDisplayState {
             self?.recomputeSections()
             self?.recomputeTagsIndex()
         }
-        addLibraryObserver(for: .collectionPreferencesChanged) { [weak self] in
-            self?.refreshAvailableMissingFields()
+        // Prix ou état saisi : le filtre « À compléter » doit suivre sans attendre un rechargement.
+        addLibraryObserver(for: .copyDetailsChanged) { [weak self] in
+            guard let self, !missingFields.isEmpty else { return }
+            recomputeSections()
         }
     }
 
@@ -110,20 +112,8 @@ final class CollectionDisplayState {
         }
     }
 
-    /// Identifiant Discogs du champ pour le compte actif, fourni par `CollectionViewModel`.
-    @ObservationIgnored var fieldIdProvider: (LibraryMissingField) -> Int? = { _ in nil }
-
-    /// Champs proposés par le menu de filtres : seulement ceux configurés dans Réglages. Mis en
-    /// cache (lecture de `UserDefaults`), rafraîchi au chargement de la collection et à chaque
-    /// changement de préférences.
-    private(set) var availableMissingFields: [LibraryMissingField] = []
-
-    func refreshAvailableMissingFields() {
-        availableMissingFields = LibraryMissingField.allCases.filter { fieldIdProvider($0) != nil }
-        // Un champ déconfiguré entre-temps ne peut plus filtrer : on le retire de la sélection.
-        let stillAvailable = missingFields.intersection(availableMissingFields)
-        if stillAvailable != missingFields { missingFields = stillAvailable }
-    }
+    /// Informations proposées par le menu de filtres : toutes, sans configuration préalable.
+    var availableMissingFields: [LibraryMissingField] { LibraryMissingField.allCases }
 
     var hasActiveFilters: Bool {
         !selectedTags.isEmpty || !(selectedFormat ?? "").isEmpty || !missingFields.isEmpty
@@ -157,7 +147,6 @@ final class CollectionDisplayState {
         selectedTags = []
         selectedFormat = nil
         missingFields = []
-        availableMissingFields = []
     }
 
     // MARK: - Sections
@@ -199,8 +188,8 @@ final class CollectionDisplayState {
         sectionsEngine.recompute(
             items: currentItems(), sortOption: sortOption, ascending: sortAscending,
             tags: selectedTags, format: selectedFormat, searchText: searchText,
-            missingFieldIds: missingFields.compactMap(fieldIdProvider),
-            synchronous: !selectedTags.isEmpty,
+            missingFields: missingFields,
+            synchronous: !selectedTags.isEmpty || !missingFields.isEmpty,
             willStartAsync: { [weak self] in self?.isComputingSections = true },
             apply: { [weak self] result in
                 guard let self else { return }

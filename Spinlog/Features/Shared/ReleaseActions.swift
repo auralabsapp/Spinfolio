@@ -180,45 +180,11 @@ final class ReleaseActions {
         }
     }
 
-    // MARK: - Suivi de cote (prix d'achat)
-
-    /// Écrit le prix d'achat sur un exemplaire précis. Contrairement à la note (partagée par
-    /// Discogs entre tous les exemplaires d'une release), le prix d'achat est un champ personnalisé
-    /// propre à chaque exemplaire physique : deux copies peuvent avoir été achetées à des prix différents.
-    func updatePurchasePrice(_ canonicalValue: String, for instanceId: Int) async {
-        guard let username = authManager.username,
-              let fieldId = CollectionPreferencesStore.purchasePriceFieldId(for: username) else { return }
-        await updateInstanceField(fieldId, value: canonicalValue, for: instanceId)
-    }
-
-    /// Écrit un champ personnalisé (prix d'achat, état du média…) sur un exemplaire précis, avec
-    /// mise à jour immédiate de l'affichage et du cache, file hors ligne en cas de panne, et
-    /// retour en arrière si Discogs refuse.
-    func updateInstanceField(_ fieldId: Int, value canonicalValue: String, for instanceId: Int) async {
-        if DemoMode.isActive {
-            message = AppMessages.demoModificationBlocked
-            return
-        }
-        guard let username = authManager.username,
-              let index = collectionInstances.firstIndex(where: { $0.instanceId == instanceId }) else { return }
-
-        let instance = collectionInstances[index]
-        collectionInstances[index].notes = instance.notes.settingValue(canonicalValue, forFieldId: fieldId)
-        await localStore.saveCollectionItemInFolderAndAll(collectionInstances[index], username: username)
-
-        // Hors ligne ou panne passagère : le prix reste affiché et part avec la file hors ligne
-        // (champ propre à l'utilisateur, accepté même sur un cache ancien).
-        let outcome = await DiscogsWriteService.updateField(fieldId, value: canonicalValue, of: instance, username: username)
-        guard outcome == .refused,
-              let current = collectionInstances.firstIndex(where: { $0.instanceId == instanceId }) else { return }
-        collectionInstances[current].notes = instance.notes
-        await localStore.saveCollectionItemInFolderAndAll(collectionInstances[current], username: username)
-        message = String(localized: "Impossible d'enregistrer ces informations sur Discogs.")
-    }
+    // MARK: - Champs personnalisés
 
     /// Écrit un champ personnalisé Discogs sur un exemplaire précis, dont l'appelant (ex:
     /// `CollectionItemEditSheet`) a déjà toutes les informations en main (pas besoin de les
-    /// retrouver dans `collectionInstances`, contrairement à `updatePurchasePrice`) — il gère
+    /// retrouver dans `collectionInstances`) — il gère
     /// lui-même l'état optimiste et le mode hors ligne (file d'attente), propres à son écran.
     func updateCollectionField(folderId: Int, releaseId: Int, instanceId: Int, fieldId: Int, value: String) async throws {
         guard let (username, credentials) = authManager.session else { return }
@@ -285,6 +251,7 @@ final class ReleaseActions {
         case .done:
             guard let realInstanceId else { return }
             TagStore.shared.remapInstanceId(from: tempInstanceId, to: realInstanceId)
+            CopyDetailsStore.shared.remapInstanceId(from: tempInstanceId, to: realInstanceId)
             if let release {
                 let realItem = CollectionItem(addedRelease: release, releaseId: releaseId, folderId: folderId, instanceId: realInstanceId)
                 if let index = collectionInstances.firstIndex(where: { $0.instanceId == tempInstanceId }) {
@@ -292,8 +259,8 @@ final class ReleaseActions {
                 }
                 await localStore.saveCollectionItemInFolderAndAll(realItem, username: username)
                 LibraryMembershipStore.shared.notifyCollectionInstanceReplaced(oldInstanceId: tempInstanceId, newInstance: realItem)
-                // Mêmes conditions que le scan par lot : seulement si un champ est configuré dans Réglages.
-                if !BatchCompletion.configuredFields(for: username).isEmpty {
+                // Mêmes conditions que le scan par lot : seulement si le réglage « Proposer après un ajout » est actif.
+                if BatchCompletion.isOffered(for: username) {
                     completionOffer = BatchCompletionRequest(items: [realItem], username: username)
                 }
             }
@@ -317,6 +284,7 @@ final class ReleaseActions {
     /// Annule l'exemplaire temporaire affiché par `addToCollection`.
     private func rollbackOptimisticAdd(tempInstanceId: Int, releaseId: Int) {
         TagStore.shared.removeTags(for: tempInstanceId)
+        CopyDetailsStore.shared.removeDetails(for: tempInstanceId)
         withAnimation(.optimisticToggle) {
             collectionInstances.removeAll { $0.instanceId == tempInstanceId }
             isInCollection = !collectionInstances.isEmpty

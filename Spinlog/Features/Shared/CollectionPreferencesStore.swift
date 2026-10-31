@@ -205,6 +205,16 @@ enum CollectionPreferencesStore {
         CloudSyncEngine.shared.markCollectionPreferencesDirty()
     }
 
+    /// Proposer de renseigner prix et état juste après l'ajout d'un album (activé par défaut).
+    /// Préférence de cet appareil : elle n'est pas envoyée par iCloud.
+    static func offersCompletionAfterAdd(for username: String) -> Bool {
+        UserDefaults.standard.object(forKey: key("offersCompletionAfterAdd", for: username)) as? Bool ?? true
+    }
+
+    static func setOffersCompletionAfterAdd(_ value: Bool, for username: String) {
+        UserDefaults.standard.set(value, forKey: key("offersCompletionAfterAdd", for: username))
+    }
+
     /// Devise principale de la collection, utilisée par défaut à la saisie d'un prix d'achat et
     /// comme cible de conversion pour les comparaisons investi/cote.
     static func defaultCurrency(for username: String) -> String {

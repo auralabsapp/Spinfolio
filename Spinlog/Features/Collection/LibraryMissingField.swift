@@ -1,8 +1,7 @@
 import Foundation
 
-/// Champ personnalisé Discogs que l'utilisateur veut compléter : sert de filtre « Sans … » de la
-/// Collection (voir `CollectionDisplayState.missingFields`). Le champ lui-même (son identifiant
-/// Discogs) est celui choisi pour le compte dans Réglages > Prix d'achat et état.
+/// Information d'un exemplaire que l'utilisateur veut compléter : sert de filtre « Sans … » de la
+/// Collection (voir `CollectionDisplayState.missingFields`). La valeur vient de `CopyDetailsStore`.
 nonisolated enum LibraryMissingField: String, CaseIterable, Hashable, Sendable {
     case purchasePrice
     case mediaCondition
@@ -21,17 +20,12 @@ nonisolated enum LibraryMissingField: String, CaseIterable, Hashable, Sendable {
         }
     }
 
-    /// Identifiant Discogs du champ choisi pour ce compte, `nil` tant qu'il n'est pas configuré.
+    /// Vrai si l'exemplaire n'a pas cette information.
     @MainActor
-    func fieldId(for username: String) -> Int? {
+    func isMissing(forInstanceId instanceId: Int, in store: CopyDetailsStore = .shared) -> Bool {
         switch self {
-        case .purchasePrice: CollectionPreferencesStore.purchasePriceFieldId(for: username)
-        case .mediaCondition: CollectionPreferencesStore.mediaConditionFieldId(for: username)
+        case .purchasePrice: store.purchasePrice(for: instanceId) == nil
+        case .mediaCondition: store.mediaCondition(for: instanceId) == nil
         }
-    }
-
-    /// Une valeur vide ou faite d'espaces compte pour absente (Discogs renvoie parfois « »).
-    static func isBlank(_ value: String) -> Bool {
-        value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }

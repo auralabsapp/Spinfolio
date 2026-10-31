@@ -298,8 +298,7 @@ final class StatsViewModel {
     /// Somme les prix d'achat renseignés sur la collection (déjà chargée en cache), convertis
     /// vers la devise par défaut de l'utilisateur, pour le bilan "Total investi vs Cote actuelle".
     func computeTotalInvestedIfNeeded() async {
-        guard let username = authManager.username,
-              CollectionPreferencesStore.purchasePriceFieldId(for: username) != nil else { return }
+        guard let username = authManager.username else { return }
         isComputingInvested = true
         defer { isComputingInvested = false }
         guard let result = await StatsDataService.totalInvested(of: allCollectionItems, username: username),

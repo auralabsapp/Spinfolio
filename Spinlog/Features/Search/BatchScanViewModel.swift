@@ -276,20 +276,14 @@ final class BatchScanViewModel {
         offerCompletion(for: addedItems)
     }
 
-    /// Propose de renseigner tout de suite prix d'achat et état des disques ajoutés (voir
+    /// Propose de renseigner tout de suite prix d'achat et état des albums ajoutés (voir
     /// `BatchCompletionSheet`) : la question est ajoutée au bilan, dont l'alerte porte alors deux
-    /// boutons. Rien n'est proposé si aucun des deux champs n'est configuré.
+    /// boutons. Rien n'est proposé si le réglage « Proposer après un ajout » est désactivé.
     private func offerCompletion(for added: [CollectionItem]) {
-        guard !added.isEmpty, let username = DiscogsAuthManager.shared.username else { return }
-        let question: String
-        switch BatchCompletion.configuredFields(for: username) {
-        case []: return
-        case [.purchasePrice]: question = String(localized: "Renseigner le prix d'achat maintenant ?")
-        case [.mediaCondition]: question = String(localized: "Renseigner l'état du média maintenant ?")
-        default: question = String(localized: "Renseigner prix et état maintenant ?")
-        }
+        guard !added.isEmpty, let username = DiscogsAuthManager.shared.username,
+              BatchCompletion.isOffered(for: username) else { return }
         completionOffer = BatchCompletionRequest(items: added, username: username)
-        message = ([message].compactMap { $0 } + [question]).joined(separator: "\n\n")
+        message = ([message].compactMap { $0 } + [String(localized: "Renseigner prix et état maintenant ?")]).joined(separator: "\n\n")
     }
 
     /// Prend la proposition en cours (acceptée ou refusée : elle ne se représente pas).

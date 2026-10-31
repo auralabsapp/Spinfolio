@@ -24,15 +24,20 @@ struct StatsCalculationTests {
     }
 
     @Test func purchasePricesAreSummedPerCurrency() throws {
-        let items = [
-            try item(purchasePrice: "20 EUR"),
-            try item(purchasePrice: "12.50"),
-            try item(purchasePrice: "$30.00"),
-            try item(purchasePrice: "   "),
-            try item(purchasePrice: "10 EUR", fieldId: 99),
-            try item()
-        ]
-        let sums = StatsDataService.purchaseAmountsByCurrency(of: items, fieldId: 4, defaultCurrency: "EUR")
+        let suite = "StatsCalculationTests-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { UserDefaults(suiteName: suite)?.removePersistentDomain(forName: suite) }
+        let store = CopyDetailsStore(defaults: defaults)
+        store.setActiveUsername("alice")
+
+        let items = try (0..<5).map { _ in try item() }
+        store.setPurchasePrice((20, "EUR"), for: items[0].instanceId)
+        store.setPurchasePrice((12.5, "EUR"), for: items[1].instanceId)
+        store.setPurchasePrice((30, "USD"), for: items[2].instanceId)
+        store.setMediaCondition(.good, for: items[3].instanceId)
+        // items[4] : aucune donnée.
+
+        let sums = store.purchaseAmountsByCurrency(forInstanceIds: items.map(\.instanceId))
         #expect(sums["EUR"] == 32.5)
         #expect(sums["USD"] == 30)
         #expect(sums.count == 2)

@@ -6,7 +6,6 @@ import SwiftUI
 /// Alimentation ponctuelle du champ personnalisé « Prix d'achat net » (outil développeur).
 enum NetPurchasePriceBackfill {
     enum Outcome {
-        case purchaseFieldNotConfigured
         case fieldsUnavailable
         case discountFieldMissing
         case netFieldMissing
@@ -19,9 +18,6 @@ enum NetPurchasePriceBackfill {
     /// casse/aux accents) plutôt que par un réglage dédié : ce sont deux champs que l'utilisateur
     /// vient de créer sur discogs.com pour cet outil ponctuel.
     static func run(username: String, credentials: DiscogsCredentials) async -> Outcome {
-        guard let purchaseFieldId = CollectionPreferencesStore.purchasePriceFieldId(for: username) else {
-            return .purchaseFieldNotConfigured
-        }
         guard let fieldsResponse = try? await DiscogsAPIClient.shared.collectionFields(username: username, credentials: credentials) else {
             return .fieldsUnavailable
         }
@@ -39,7 +35,10 @@ enum NetPurchasePriceBackfill {
         var failureCount = 0
 
         for item in items {
-            let purchaseRaw = item.value(forFieldId: purchaseFieldId)
+            // Prix d'achat : celui gardé dans l'app (voir `CopyDetailsStore`).
+            let purchaseRaw = CopyDetailsStore.shared.purchasePrice(for: item.instanceId).map {
+                PurchasePriceParser.canonicalString(amount: $0.amount, currency: $0.currency)
+            } ?? ""
             let discountRaw = item.value(forFieldId: discountField.id)
             guard !purchaseRaw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 || !discountRaw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { continue }

@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// Feuille « Prix et état » d'un exemplaire : prix d'achat (montant + devise) et état du média,
-/// les deux informations nécessaires au suivi de la plus-value. Écrit dans les champs personnalisés
-/// configurés dans Réglages (`CollectionPreferencesStore`) : la valeur du prix est la forme
-/// canonique `"<montant> <devise>"` attendue par Discogs. Seuls les champs modifiés sont envoyés.
+/// Feuille « Prix et état » d'un exemplaire : prix d'achat (montant + devise) et état du disque,
+/// les deux informations nécessaires au suivi de la plus-value. Enregistrés dans l'app
+/// (`CopyDetailsStore`), puis envoyés à Discogs seulement si un champ y est associé dans Réglages.
+/// Seuls les champs modifiés sont écrits.
 struct PriceAndConditionSheet: View {
     let item: CollectionItem
     let actions: ReleaseActions
@@ -11,77 +11,49 @@ struct PriceAndConditionSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var amountText: String
     @State private var currency: String
-    @State private var condition: String
+    @State private var condition: RecordGrade?
     @State private var isSaving = false
 
-    private let priceFieldId: Int?
-    private let conditionFieldId: Int?
-    /// Valeurs d'origine, pour n'envoyer que ce qui change.
-    private let initialCanonicalPrice: String?
-    private let initialCondition: String
+    /// Valeurs d'origine, pour n'écrire que ce qui change.
+    private let initialPrice: (amount: Double, currency: String)?
+    private let initialCondition: RecordGrade?
 
     init(item: CollectionItem, actions: ReleaseActions) {
         self.item = item
         self.actions = actions
 
         let username = DiscogsAuthManager.shared.username ?? ""
-        let priceFieldId = CollectionPreferencesStore.purchasePriceFieldId(for: username)
-        let conditionFieldId = CollectionPreferencesStore.mediaConditionFieldId(for: username)
-        self.priceFieldId = priceFieldId
-        self.conditionFieldId = conditionFieldId
-
         let defaultCurrency = CollectionPreferencesStore.defaultCurrency(for: username)
-        let rawPrice = priceFieldId.map { item.value(forFieldId: $0) } ?? ""
-        let rawCondition = conditionFieldId.map { item.value(forFieldId: $0) } ?? ""
-        initialCondition = rawCondition
-
-        if let parsed = PurchasePriceParser.parse(rawPrice, defaultCurrency: defaultCurrency) {
-            _amountText = State(initialValue: PurchasePriceParser.editableAmountString(parsed.amount))
-            _currency = State(initialValue: parsed.currency)
-            initialCanonicalPrice = PurchasePriceParser.canonicalString(amount: parsed.amount, currency: parsed.currency)
-        } else {
-            _amountText = State(initialValue: "")
-            _currency = State(initialValue: defaultCurrency)
-            initialCanonicalPrice = nil
-        }
-        _condition = State(initialValue: rawCondition)
+        let details = CopyDetailsStore.shared.details(for: item.instanceId)
+        initialPrice = details?.purchasePrice
+        initialCondition = details?.mediaCondition
+        _amountText = State(initialValue: initialPrice.map { PurchasePriceParser.editableAmountString($0.amount) } ?? "")
+        _currency = State(initialValue: initialPrice?.currency ?? defaultCurrency)
+        _condition = State(initialValue: initialCondition)
     }
 
-    private var conditionField: CollectionField? {
-        conditionFieldId.flatMap { id in actions.collectionFields.first { $0.id == id } }
+    /// Prix saisi, lisible et différent de l'actuel.
+    private var priceChange: (amount: Double, currency: String)? {
+        guard let parsed = BatchCompletion.parsedPrice(amountText: amountText, currency: currency),
+              parsed.amount != initialPrice?.amount || parsed.currency != initialPrice?.currency else { return nil }
+        return parsed
     }
 
-    /// Champs réellement modifiés : prix saisi, lisible et différent de l'actuel ; état choisi et
-    /// différent de l'actuel (un état vidé n'est pas effacé sur Discogs).
-    private var changes: [(fieldId: Int, value: String)] {
-        var result: [(fieldId: Int, value: String)] = []
-        if let priceFieldId,
-           let canonical = BatchCompletion.canonicalPrice(amountText: amountText, currency: currency),
-           canonical != initialCanonicalPrice {
-            result.append((priceFieldId, canonical))
-        }
-        let trimmed = condition.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let conditionFieldId, !trimmed.isEmpty, trimmed != initialCondition {
-            result.append((conditionFieldId, trimmed))
-        }
-        return result
+    /// État choisi et différent de l'actuel (un état remis à « — » n'est pas effacé sur Discogs).
+    private var conditionChange: RecordGrade? {
+        guard let condition, condition != initialCondition else { return nil }
+        return condition
     }
+
+    private var hasChanges: Bool { priceChange != nil || conditionChange != nil }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    PriceAndConditionFields(
-                        amountText: $amountText,
-                        currency: $currency,
-                        condition: $condition,
-                        showsPrice: priceFieldId != nil,
-                        showsCondition: conditionFieldId != nil,
-                        conditionField: conditionField,
-                        isLoadingConditionField: false
-                    )
+                    PriceAndConditionFields(amountText: $amountText, currency: $currency, condition: $condition)
 
-                    Text("Le prix d'achat et l'état du média servent à calculer la plus-value de cet exemplaire.")
+                    Text("Le prix d'achat et l'état du disque servent à calculer la plus-value de cet exemplaire.")
                         .font(.footnote)
                         .foregroundStyle(Color.appSecondaryText)
                 }
@@ -107,7 +79,7 @@ struct PriceAndConditionSheet: View {
                         .accessibilityLabel("Enregistrer le prix et l'état")
                         .fontWeight(.semibold)
                         .foregroundStyle(Color.spinlogPink)
-                        .disabled(changes.isEmpty)
+                        .disabled(!hasChanges)
                     }
                 }
             }
@@ -117,12 +89,15 @@ struct PriceAndConditionSheet: View {
     }
 
     private func save() {
+        guard let username = DiscogsAuthManager.shared.username else { return }
         isSaving = true
-        let toWrite = changes
-        let instanceId = item.instanceId
+        let price = priceChange
+        let grade = conditionChange
+        let target = item
         Task {
-            for change in toWrite {
-                await actions.updateInstanceField(change.fieldId, value: change.value, for: instanceId)
+            let result = await BatchCompletion.save(price: price, condition: grade, on: target, username: username)
+            if result == .refused {
+                actions.message = String(localized: "Impossible d'enregistrer ces informations sur Discogs.")
             }
             isSaving = false
             dismiss()

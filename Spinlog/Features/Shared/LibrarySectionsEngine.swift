@@ -22,7 +22,7 @@ final class LibrarySectionsEngine<Item: SortableLibraryItem & Sendable> {
     func recompute(
         items: [Item], sortOption: CollectionSortOption, ascending: Bool,
         tags: Set<String>, format: String?, searchText: String,
-        missingFieldIds: [Int] = [],
+        missingFields: Set<LibraryMissingField> = [],
         synchronous: Bool,
         willStartAsync: () -> Void,
         apply: @escaping @MainActor @Sendable ([(key: String, items: [Item])]) -> Void
@@ -38,7 +38,7 @@ final class LibrarySectionsEngine<Item: SortableLibraryItem & Sendable> {
         guard !synchronous else {
             apply(Self.computeSections(
                 items: items, sortOption: sortOption, ascending: ascending,
-                tags: tags, format: format, searchText: searchText, missingFieldIds: missingFieldIds, shelfContext: shelfContext
+                tags: tags, format: format, searchText: searchText, missingFields: missingFields, shelfContext: shelfContext
             ))
             return
         }
@@ -47,7 +47,7 @@ final class LibrarySectionsEngine<Item: SortableLibraryItem & Sendable> {
         Task.detached(priority: .userInitiated) { [weak self] in
             let result = Self.computeSections(
                 items: items, sortOption: sortOption, ascending: ascending,
-                tags: tags, format: format, searchText: searchText, missingFieldIds: missingFieldIds, shelfContext: shelfContext
+                tags: tags, format: format, searchText: searchText, missingFields: missingFields, shelfContext: shelfContext
             )
             guard let self else { return }
             await self.deliverIfCurrent(result, generation: currentGeneration, apply: apply)
@@ -66,11 +66,11 @@ final class LibrarySectionsEngine<Item: SortableLibraryItem & Sendable> {
     /// `nonisolated` : appelée depuis la tâche détachée de `recompute`.
     private nonisolated static func computeSections(
         items: [Item], sortOption: CollectionSortOption, ascending: Bool,
-        tags: Set<String>, format: String?, searchText: String, missingFieldIds: [Int],
+        tags: Set<String>, format: String?, searchText: String, missingFields: Set<LibraryMissingField>,
         shelfContext: ShelfSortContext?
     ) -> [(key: String, items: [Item])] {
         let filtered = items.filter {
-            $0.matchesLibraryFilters(tags: tags, format: format, searchText: searchText, missingFieldIds: missingFieldIds)
+            $0.matchesLibraryFilters(tags: tags, format: format, searchText: searchText, missingFields: missingFields)
         }
         let sorted = filtered.sorted { $0.isOrderedBefore($1, for: sortOption, ascending: ascending, shelfContext: shelfContext) }
         var order: [String] = []

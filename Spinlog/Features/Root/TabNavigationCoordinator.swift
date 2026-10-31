@@ -34,9 +34,6 @@ final class TabNavigationCoordinator {
     /// Demande de positionnement sur « Collection & Rangement » pas encore traitée (voir
     /// `openSettingsAtOrganizationSection` et `consumePendingOrganizationScroll`).
     private(set) var hasPendingOrganizationScroll = false
-    var scrollToPurchasePriceSectionTrigger = 0
-    /// Champ à mettre en évidence à l'arrivée dans Réglages (voir `openSettingsAtPurchaseField`).
-    private(set) var pendingSettingsFieldHighlight: SettingsFieldHighlight?
 
     /// Revient à la racine de Collection et vide les piles de navigation des autres onglets.
     func showCollectionRoot() {
@@ -216,23 +213,6 @@ final class TabNavigationCoordinator {
     func consumePendingOrganizationScroll() -> Bool {
         defer { hasPendingOrganizationScroll = false }
         return hasPendingOrganizationScroll
-    }
-
-    /// Ouvre la page « Suivi de plus-value » de Réglages, avec la ligne du champ demandé mise en
-    /// évidence (depuis la pastille « Utilisé pour la plus-value » de « Mon exemplaire »).
-    func openSettingsAtPurchaseField(_ field: SettingsFieldHighlight) {
-        settingsPath = NavigationPath()
-        settingsPath.append(SettingsDestination.gainTracking)
-        selectedTab = .settings
-        pendingSettingsFieldHighlight = field
-        scrollToPurchasePriceSectionTrigger += 1
-    }
-
-    /// Lit puis efface le champ à mettre en évidence : une demande n'est traitée qu'une fois, que
-    /// Réglages l'ait vue arriver (changement du déclencheur) ou la découvre à son apparition.
-    func consumePendingSettingsFieldHighlight() -> SettingsFieldHighlight? {
-        defer { pendingSettingsFieldHighlight = nil }
-        return pendingSettingsFieldHighlight
     }
 
     /// Navigation profonde vers une release précise (lien `spinlog://release/{id}` ouvert depuis

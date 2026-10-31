@@ -2308,6 +2308,7 @@
       }
     },
     "2. Dans « Champs personnalisés », crée un champ de type texte (ex. nommé « Prix d'achat »)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2317,12 +2318,33 @@
         }
       }
     },
+    "2. Dans « Champs personnalisés », crée un champ de type texte pour le prix d'achat, et un champ de type liste pour l'état du disque" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "2. Under “Custom fields”, create a text field for the purchase price and a list field for the record condition"
+          }
+        }
+      }
+    },
     "3. Reviens dans %@ : le nouveau champ apparaît dans le sélecteur" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "3. Come back to %@: the new field appears in the selector"
+          }
+        }
+      }
+    },
+    "3. Reviens dans %@ : les champs apparaissent dans les sélecteurs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "3. Come back to %@: the fields appear in the pickers"
           }
         }
       }
@@ -2458,6 +2480,7 @@
       }
     },
     "À créer sur Discogs" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3612,12 +3635,33 @@
         }
       }
     },
+    "Associe des champs personnalisés de ton compte Discogs pour reprendre les valeurs qu'ils contiennent et y enregistrer aussi chaque prix et état saisi. Sans champ associé, rien n'est envoyé à Discogs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Link custom fields from your Discogs account to import the values they contain and to save every price and condition you enter there too. Without a linked field, nothing is sent to Discogs."
+          }
+        }
+      }
+    },
     "Associe les champs personnalisés Discogs correspondants à ton prix d'achat et à l'état de conservation pour alimenter le suivi de valeur." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Link the matching Discogs custom fields to your purchase price and media condition to power value tracking."
+          }
+        }
+      }
+    },
+    "Associer des champs Discogs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Link Discogs fields"
           }
         }
       }
@@ -3768,6 +3812,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No artist found"
+          }
+        }
+      }
+    },
+    "Aucun champ associé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "No linked field"
           }
         }
       }
@@ -4352,6 +4406,26 @@
         }
       }
     },
+    "Champ Discogs de l'état du disque" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Discogs field for record condition"
+          }
+        }
+      }
+    },
+    "Champ Discogs du prix d'achat" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Discogs field for purchase price"
+          }
+        }
+      }
+    },
     "Champ état de l'album" : {
       "localizations" : {
         "en" : {
@@ -4368,6 +4442,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Purchase Price Field"
+          }
+        }
+      }
+    },
+    "Champs associés" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Fields linked"
+          }
+        }
+      }
+    },
+    "Champs Discogs (facultatif)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Discogs fields (optional)"
           }
         }
       }
@@ -4555,6 +4649,7 @@
       }
     },
     "Choisir mes champs dans Réglages" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5242,6 +5337,7 @@
       }
     },
     "Créer le champ prix d'achat" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5852,6 +5948,7 @@
       }
     },
     "Détecté" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5952,6 +6049,7 @@
       }
     },
     "Discogs ne crée aucun champ « prix d'achat » par défaut : c'est à toi de le créer une fois, depuis le site discogs.com (pas depuis l'app)." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5967,6 +6065,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Discogs doesn’t provide a “median price” for a specific record, only suggestions by condition. %@ uses the one for the declared condition; with no condition, it averages all suggestions, so the estimate is less precise."
+          }
+        }
+      }
+    },
+    "Discogs ne permet pas de créer un champ depuis l'app : crée-le une fois sur discogs.com." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Discogs doesn’t let apps create fields: create it once on discogs.com."
           }
         }
       }
@@ -6639,6 +6747,16 @@
         }
       }
     },
+    "Envoi vers Discogs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Sending to Discogs"
+          }
+        }
+      }
+    },
     "Erreur" : {
       "localizations" : {
         "en" : {
@@ -6792,12 +6910,34 @@
         }
       }
     },
+    "État du disque" : {
+      "comment" : "En-tête de colonne CSV : état de conservation du disque",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Record condition"
+          }
+        }
+      }
+    },
     "État du média" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Media Condition"
+          }
+        }
+      }
+    },
+    "États du disque renseignés" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Conditions entered"
           }
         }
       }
@@ -6948,6 +7088,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Manufacturing (%lld)"
+          }
+        }
+      }
+    },
+    "Facultatif : le prix d'achat et l'état du disque sont gardés dans l'app. Si tu associes des champs personnalisés de ton compte Discogs (Réglages > Suivi de plus-value), les valeurs qu'ils contiennent sont reprises, et chaque prix ou état saisi y est aussi enregistré." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Optional: the purchase price and record condition are kept in the app. If you link custom fields from your Discogs account (Settings > Gain tracking), the values they contain are imported, and every price or condition you enter is saved there too."
           }
         }
       }
@@ -8039,6 +8189,17 @@
       }
     },
     "L'état de l'album" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The record’s condition"
+          }
+        }
+      }
+    },
+    "L'état du disque" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8269,6 +8430,16 @@
         }
       }
     },
+    "Le champ « Media Condition » fourni par défaut convient. Si tu l'as supprimé, recrée-le en type liste déroulante, avec ces valeurs : Mint (M), Near Mint (NM or M-), Very Good Plus (VG+), Very Good (VG), Good Plus (G+), Good (G), Fair (F), Poor (P)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The default “Media Condition” field works. If you deleted it, recreate it as a dropdown list with these values: Mint (M), Near Mint (NM or M-), Very Good Plus (VG+), Very Good (VG), Good Plus (G+), Good (G), Fair (F), Poor (P)."
+          }
+        }
+      }
+    },
     "Le code n'a pas pu être utilisé. Vérifie-le et réessaie." : {
       "localizations" : {
         "en" : {
@@ -8411,7 +8582,28 @@
         }
       }
     },
+    "Le prix d'achat et l'état du disque se saisissent dans « Mon exemplaire » et sont enregistrés dans l'app, sur cet appareil. « Proposer après un ajout » ouvre leur saisie juste après l'ajout d'un album." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The purchase price and record condition are entered in “My Copy” and saved in the app, on this device. “Offer after adding” opens their entry right after you add an album."
+          }
+        }
+      }
+    },
+    "Le prix d'achat et l'état du disque servent à calculer la plus-value de cet exemplaire." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The purchase price and record condition are used to calculate this copy’s gain."
+          }
+        }
+      }
+    },
     "Le prix d'achat et l'état du média servent à calculer la plus-value de cet exemplaire." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9460,6 +9652,7 @@
       }
     },
     "Non détecté : cote moyenne" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9783,6 +9976,7 @@
       }
     },
     "Ouvre ce réglage dans Réglages" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -10747,6 +10941,7 @@
       }
     },
     "Prix d'achat" : {
+      "comment" : "En-tête de colonne CSV : prix d'achat de l'exemplaire",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -10772,6 +10967,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Purchase Price and Condition"
+          }
+        }
+      }
+    },
+    "Prix d'achat renseignés" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Purchase prices entered"
           }
         }
       }
@@ -10832,6 +11037,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Discogs Profile"
+          }
+        }
+      }
+    },
+    "Proposer après un ajout" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Offer after adding"
           }
         }
       }
@@ -11271,6 +11486,16 @@
         }
       }
     },
+    "Renseigne le prix d'achat d'un album dans « Mon exemplaire » pour suivre sa plus-value." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Enter an album’s purchase price in “My Copy” to track its gain."
+          }
+        }
+      }
+    },
     "Renseigne le prix d'achat de tes exemplaires." : {
       "localizations" : {
         "en" : {
@@ -11281,7 +11506,18 @@
         }
       }
     },
+    "Renseigne ton prix d'achat ci-dessus pour suivre la plus-value de cet exemplaire." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Enter your purchase price above to track this copy’s gain."
+          }
+        }
+      }
+    },
     "Renseigne ton prix d'achat dans les champs personnalisés ci-dessous pour suivre la plus-value de cet exemplaire." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -11302,6 +11538,7 @@
       }
     },
     "Renseigner l'état du média maintenant ?" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -11312,6 +11549,7 @@
       }
     },
     "Renseigner le prix d'achat maintenant ?" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -11437,6 +11675,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remove from Entire Selection"
+          }
+        }
+      }
+    },
+    "Retirer l'état" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Clear condition"
           }
         }
       }
@@ -11792,6 +12040,7 @@
       }
     },
     "Si tu as supprimé le champ « Media Condition » fourni par défaut, recrée-le de la même façon mais en type liste déroulante, avec ces valeurs : Mint (M), Near Mint (NM or M-), Very Good Plus (VG+), Very Good (VG), Good Plus (G+), Good (G), Fair (F), Poor (P)." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -12821,6 +13070,7 @@
       }
     },
     "Ta configuration" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -13264,6 +13514,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Your numbers, breakdowns, gain and listening charts."
+          }
+        }
+      }
+    },
+    "Tes données" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your data"
           }
         }
       }
@@ -14292,6 +14552,7 @@
       }
     },
     "Utilisé pour la plus-value" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
