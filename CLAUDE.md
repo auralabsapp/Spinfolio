@@ -28,9 +28,10 @@ Code dans `Spinlog/`, widget et Live Activity dans `SpinlogWidgets/`, tests dans
 - **Compte rendu honnête** : dire ce qui a été vérifié (build, tests) et ce qui ne l'a pas été
   (rien n'est testé sur appareil tant que l'utilisateur ne l'a pas fait).
 - **Tests manuels** : `QA/manual-tests.md` est la référence unique. Tout nouveau cas à vérifier sur
-  appareil y est ajouté dans sa famille, avec le numéro suivant (lettre + numéro, jamais
-  réattribué), conditions, étapes, résultat attendu et case « Passé » ; tag `AUDIT` si lié à la
-  branche en cours, `AUTO` si couvert par un test automatique.
+  appareil y est ajouté comme une ligne du tableau de sa famille, avec le numéro suivant (lettre +
+  numéro, jamais réattribué) : test, conditions, étapes (séparées par `<br>`), résultat attendu,
+  étiquettes (`AUDIT` si lié à la branche en cours, `AUTO` si couvert par un test automatique) et
+  colonne « Résultat » laissée vide.
 
 ## 1. Architecture
 
