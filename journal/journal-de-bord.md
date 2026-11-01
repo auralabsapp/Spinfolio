@@ -7,7 +7,107 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
+## 2026-11-01 — Site à jour (tags Premium, prix et état), liens dans la vue Safari
+
+### 11:04 — `8752ffe` Liens hors Discogs : vue Safari du système au lieu d'une feuille vide ou de Safari externe
+
+L'« Assistance » de « À propos » ouvrait une feuille vide : `SafariView` (webview isolée) refuse toute page hors discogs.com et la renvoyait vers Safari. Nouvelle `SystemSafariView` (`SFSafariViewController`) pour Assistance, Conditions d'utilisation et Confidentialité du paywall (qui étaient des `Link` sortant de l'app), le site personnel d'un profil Discogs, et les liens externes touchés dans une page Discogs. Les pages discogs.com restent dans la webview de l'app. 5 fichiers, +62 / −22.
+
+### 01:21 — `dc16f77` Site : tags réservés au Premium, prix d'achat et état gardés dans l'app
+
+Cartes « Notes et dossiers » (gratuit) et « Tags » (Premium), ligne « Gestion des tags » dans le tableau comparatif, carte « Valeur » et tableau reprenant l'état du disque, mini-manuel régénéré. 1 fichier, +22 / −16.
+
+### 01:18 — `59510f7` Guide et textes Premium : prix d'achat et état du disque gardés dans l'app
+
+Fiche « Prix d'achat et état du disque » (saisie sans configuration, association Discogs facultative), fiche iCloud et description Premium citant les prix et états, traductions anglaises. 3 fichiers, +84 / −7.
+
+## 2026-10-31 — Tags Premium, prix et état gardés dans l'app (import, envoi, iCloud), site et paywall
+
+Grosse journée : le prix d'achat et l'état du disque quittent la dépendance aux champs Discogs (6 lots : stockage local, interface, import, envoi, iCloud, guide), les tags passent en Premium, refonte de la page web et captures App Store. Nouveau type CloudKit `CopyDetails` : schéma déployé en Production avant tout build.
+
+### 18:15 — `fa5a3cd` Synchro iCloud des prix d'achat et états du disque
+
+Un enregistrement `CopyDetails` par exemplaire (la saisie la plus récente l'emporte, une valeur reprise de Discogs cède à toute saisie), poussée initiale, annulation d'import propagée, réglage « Envoyer vers Discogs » porté par les préférences de collection. Tests `CopyDetailsCloudSyncTests`, cas QA H38. 12 fichiers, +190 / −15.
+
+### 18:01 — `a9913bb` Import depuis Discogs et envoi vers Discogs des prix et états gardés dans l'app
+
+Import : choix des champs, aperçu sans écriture (décomptes, devises, exemples, valeurs illisibles), conflits conservés sauf « Remplacer », annulation du dernier import. Envoi : réglage « Envoyer vers Discogs » (coupé pour un compte neuf, actif pour un compte déjà configuré) et « Envoyer tout vers Discogs » au rythme du limiteur, interruptible. Tests `CopyDetailsImportTests` et `CopyDetailsDiscogsSyncTests`, cas QA H36 et H37. 17 fichiers, +2240 / −18.
+
+### 17:25 — `64e12c0` Build 46 (cible de l'app)
+
+Numéro de build de l'app à 46 (le widget a été aligné ensuite dans Xcode). 1 fichier, +4 / −4.
+
+### 17:23 — `a5b491a` Prix d'achat et état du disque gardés dans l'app, sans champ Discogs
+
+Store local par exemplaire (`CopyDetailsStore`, `RecordGrade` : les 8 grades Discogs) isolé par compte ; reprise unique des valeurs déjà saisies dans les champs Discogs associés ; saisie dans « Plus-value de l'exemplaire » pour tous les comptes ; fenêtre « Compléter les albums » sans configuration ; Stats, exports, cote par état et filtre « À compléter » sur les valeurs de l'app ; Réglages > Suivi de plus-value réorganisé. Cas QA H35 et R8. 46 fichiers, +1694 / −813.
+
+### 15:00 — `77ad978` Tags réservés au Premium : lecture et filtre seuls sans abonnement
+
+Création, attribution, retrait, renommage, suppression et gestion en masse demandent le Premium ; sans abonnement les tags posés restent visibles et filtrables, une carte mène au paywall. Paywall à 10 fonctions, fiche « Tags » du guide (badge Premium), étiquettes en démo. Cas QA J41. 14 fichiers, +274 / −44.
+
+### 10:47 — `1d86303` Assistance : lien dans le paywall et ligne dans « À propos »
+
+Ouvre la page d'assistance du site (`AppInfo.supportURL`) ; entrée de catalogue « Assistance » (anglais « Support »), cas QA J40. 6 fichiers, +36.
+
+### 10:47 — `a1f555f` Paywall : toutes les fonctionnalités affichées, textes non tronqués
+
+Plus de « + N fonctionnalités supplémentaires » à déplier : la liste complète défile, sans limite de lignes. 2 fichiers, +6 / −36.
+
+### 10:42 — `2f13520` Site : trio d'écoute en éventail (vinyle, CD, cassette), titre épinglé, animation pilotée par le CSS, favicon de l'app
+
+7 fichiers, +117 / −57.
+
+### 00:44 — `3b6220c` Confidentialité : l'icône pointe vers app-icon.png (versionné)
+
+L'ancienne adresse `assets/app-icon.png` n'était pas dans le dépôt (404 en ligne). 1 fichier, +1 / −1.
+
+### 00:26 — `e15fd8a` Site : page d'assistance (support.html) reprise de gh-pages, lien « Assistance » dans le pied de page
+
+La source GitHub Pages était la branche `gh-pages` (accueil = page d'assistance) ; l'assistance reste disponible à `/support.html` en passant sur `main` / `docs`. 2 fichiers, +127.
+
+### 00:18 — `454fbaf` Captures App Store : fonds violet Signature par image, commentaires de prise de vue
+
+`.gitignore` : `docs/appstore-screenshots/raw/` et `*.png` (montants et compte réels, dossier publié). `generate.py` reste versionné. 2 fichiers, +90 / −23.
+
+### 00:14 — `6acd67c` Textes : « disque » devient « album », 9 palettes Premium
+
+« Disque » remplacé par « album » dans les textes visibles (catalogues compris) ; le thème Signature est gratuit, les 9 autres palettes sont Premium (paywall, réglages, sélection du thème, guide, cas QA J8). Nouveau libellé « Parcours ». 55 fichiers, +422 / −465.
+
+### 00:14 — `49c572e` Mes grades : sélecteur Collection / Écoute sur platine
+
+Un seul parcours affiché à la fois ; à l'ouverture, celui du grade le plus récent (moins de 3 jours), sinon Collection (`GradeRules.trackToShow`, testé). 3 fichiers, +45 / −9.
+
+### 00:14 — `6ee6152` CD qui tourne : retrait de l'anneau gris près du bord extérieur
+
+1 fichier, +1 / −4.
+
+### 00:08 — `832a17e` Page web : refonte violet Signature, nouvelles captures, sections Grades et Écoute sur platine, effets
+
+Images optimisées dans `docs/assets/site/` ; captures brutes avec données personnelles laissées hors du commit. 19 fichiers, +286 / −79.
+
+## 2026-10-30 — Connexion, couleur des capsules, saisie rapide après un ajout
+
+### 19:38 — `b70b137` Ajout unitaire : saisie rapide du prix d'achat et de l'état
+
+Après un ajout en ligne depuis la fiche (scan unitaire ou bouton Collection, y compris un autre exemplaire), la feuille `BatchCompletionSheet` s'ouvre si un champ est configuré, comme après un scan par lot. Cas QA G30. 4 fichiers, +15.
+
+### 13:12 — `f4f2e47` ITSAppUsesNonExemptEncryption déclarée dans les réglages de build
+
+La clé passe de `Info.plist` à `INFOPLIST_KEY_ITSAppUsesNonExemptEncryption` (même valeur : NO). 2 fichiers, +2 / −2.
+
+### 13:09 — `d985e68` Connexion : l'app arrive toujours sur l'onglet Collection
+
+Première connexion, connexion après un autre compte et démarrage de la démo : `showCollectionRoot()` avant `isAuthenticated = true`. 1 fichier, +4.
+
+### 12:11 — `8d4114c` Texte des boutons et pastilles à dégradé : couleur du fond en thème clair
+
+`Color.onAccentGradientLabel` : en thème clair, texte à la couleur du fond de l'app (choix esthétique assumé, contraste AA non garanti) ; en sombre, choix automatique inchangé. Capsules des barres d'index, boutons « En collection » / « En wantlist », sélection de thème, guide. 7 fichiers, +23 / −9.
+
 ## 2026-10-29 — Synchro iCloud, connexion et titre de Collection
+
+### 19:59 — `f07e553` Catalogue de textes : entrée extraite par Xcode pour le message « forfait indisponible »
+
+Entrée ajoutée automatiquement au catalogue par Xcode. 1 fichier, +3.
 
 ### 19:54 — Écrans vides : pochettes tirées au hasard et textes de recherche/scan précisés
 
