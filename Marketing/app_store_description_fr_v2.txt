@@ -1,0 +1,50 @@
+TEXTE PROMOTIONNEL (170 max, modifiable sans nouvelle version)
+Vinyles, CD et cassettes : ta collection Discogs dans la poche. Scanne, range, écoute sur ta platine et suis la valeur de tes albums.
+
+DESCRIPTION
+Spinfolio est le carnet de collection des passionnés de vinyles, CD et cassettes. Connecte ton compte Discogs : ta collection et ta wantlist apparaissent en quelques secondes, avec les pochettes, les tracklists et toutes les infos de pressage.
+
+TA COLLECTION, COMME TU L'AIMES
+• Trois affichages : liste, mosaïque de pochettes ou carrousel
+• Dix tris dans les deux sens, filtres et barre de navigation pour sauter à une lettre ou une année
+• Recherche et scan du code-barres pour ajouter un album en un instant
+• Fiches détaillées, plusieurs exemplaires d'un même album, notes sur 5 étoiles
+• Prix d'achat, état du disque et cote de chaque exemplaire
+
+CHAQUE ÉCOUTE, SUR LE BON SUPPORT
+• Touche « J'écoute » quand tu poses un disque sur ta platine : l'écran prend la forme de ton vinyle, de ton CD ou de ta cassette
+• Live Activity sur l'écran verrouillé et arrêt automatique
+• Lecture Apple Music depuis la fiche d'un album (extrait de 30 secondes sans abonnement Apple Music)
+• Widget « Album du jour » sur ton écran d'accueil
+
+DES GRADES À ATTEINDRE
+• Des grades et des badges, au fil de tes albums et de tes écoutes sur platine
+
+TES CHIFFRES
+• Statistiques : genres, supports, labels, artistes, années
+• Estimation de la valeur de ta collection, d'après l'historique des ventes Discogs
+
+PREMIUM
+• Suivi de cote : la plus-value de chaque exemplaire et de toute ta collection
+• Gestion des tags : crée, attribue, renomme et gère tes tags en masse
+• Où ranger l'album : sa place dans ton meuble, entre ses deux voisins
+• Palmarès et podiums de tes écoutes sur platine
+• Alertes de prix sur ta wantlist
+• Scan par lot, chez le disquaire ou en brocante
+• Mode hors ligne : toute ta collection et ses pochettes, même sans réseau
+• Synchronisation iCloud entre tes appareils
+• Neuf palettes de couleurs
+• Export CSV complet et déclaration de collection en PDF
+
+Premium : 1,99 € par mois, 17,99 € par an (7 jours d'essai gratuit) ou 39,99 € à vie. Les abonnements se renouvellent automatiquement, sauf résiliation au moins 24 heures avant la fin de la période en cours, depuis les réglages de ton compte Apple.
+
+Spinfolio utilise l'API publique Discogs mais n'est ni affilié à ni approuvé par Discogs.
+
+Conditions d'utilisation (EULA) :
+https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+Politique de confidentialité :
+https://auralabsapp.github.io/Spinfolio/privacy.html
+
+Assistance :
+https://auralabsapp.github.io/Spinfolio/support.html

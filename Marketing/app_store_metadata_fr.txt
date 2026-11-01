@@ -1,0 +1,15 @@
+Fiche App Store — France (validée le 2026-11-01)
+
+Nom (30 max) — 29 caractères
+Spinfolio – Collection Vinyle
+
+Sous-titre (30 max) — 26 caractères
+Disques, CD, K7 & wantlist
+
+Mots-clés (100 max) — 98 caractères
+discogs,platine,discothèque,scanner,code-barres,cassette,cote,rangement,écoute,musique,album,stats
+
+Règles suivies (vidéo « My App Makes $50K/Month: This Is My ASO Playbook ») :
+- aucun mot du nom ou du sous-titre répété dans les mots-clés (Apple les indexe ensemble) ;
+- virgules sans espaces, pas de singulier + pluriel, aucun nom d'app concurrente ;
+- « brocante » retiré pour faire de la place à « discogs » (choix de l'utilisateur : « musique » gardé).
