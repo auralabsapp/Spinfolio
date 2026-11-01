@@ -7,7 +7,21 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
-## 2026-11-01 — Site à jour (tags Premium, prix et état), liens dans la vue Safari
+## 2026-11-01 — Demande d'avis App Store, anglais britannique, fiche App Store française, site à jour
+
+### 16:14 — `83f7454` Marketing et docs : fiche App Store française (nom, sous-titre, mots-clés, description v2), plaquette, captures, images du site
+
+Ajout, par exception à la règle d'exclusion habituelle et à la demande explicite du développeur, de `Marketing/` et des images de `docs/assets/`. Fiche App Store française retenue d'après la transcription d'une vidéo ASO : nom « Spinfolio – Collection Vinyle » (29 caractères), sous-titre « Disques, CD, K7 & wantlist » (26), mots-clés de 98 caractères (dont « discogs »), et nouvelle description alignée sur le comparatif Gratuit / Premium du site (9 palettes, tags Premium, grades, écoute sur platine). Plaquette PDF, captures App Store 6,3 et 6,5 pouces et images brutes. 73 fichiers, uniquement des ajouts (images lourdes : le dossier `Marketing/` pèse environ 98 Mo).
+
+### 16:14 — `60f1d7a` Demande d'avis App Store (compteurs d'actions faites dans l'app) et ligne « Donner mon avis »
+
+Demande d'avis automatique du système, déclenchée uniquement par des actions faites dans l'app : jamais par l'import d'un compte Discogs, les ajouts faits sur le site, la synchro iCloud, l'arrêt automatique d'une écoute, la démo ni les grades. Paliers : première et dixième écoute sur platine arrêtée par l'utilisateur (une minute minimum), dixième et cinquantième album ajouté à la collection (le passage wantlist vers collection compte, la wantlist seule non). Une demande par version de l'app et 60 jours minimum entre deux ; l'appel attend un moment calme (aucune feuille, alerte ni célébration de grade, 30 secondes au plus). Compteurs par compte, locaux, supprimés avec « Supprimer mes données ». `NowPlayingActivityManager` distingue désormais l'arrêt voulu (`EndReason.user`) de l'arrêt automatique. Nouvelle ligne « Donner mon avis » dans Réglages > À propos, qui ouvre la page de l'app avec `action=write-review`. `ReviewPromptTests` (15 tests), cas QA J42 et J43, PDF régénéré. 20 fichiers, +454 / −10.
+
+### 15:27 — `6a86d06` Localisation : anglais britannique (en-GB) pour 36 textes, libellés restés en français traduits
+
+Région `en-GB` ajoutée au projet, avec 36 variantes d'orthographe britannique (colour, customise, organise, neighbour…) ; les autres textes retombent sur l'anglais américain. Libellés qui s'affichaient en français dans l'app en anglais, traduits : menu Affichage (Liste, Mosaïque, Carrousel : `String(localized:)`), titre et message de repli des alertes d'erreur (`errorAlert` en `LocalizedStringKey`), « Dossier n », « Erreur : … » du téléchargement hors ligne, tags d'exemple du guide. 7 fichiers, +360 / −9.
+
+## Avant dans la journée — Site à jour (tags Premium, prix et état), liens dans la vue Safari
 
 ### 11:04 — `8752ffe` Liens hors Discogs : vue Safari du système au lieu d'une feuille vide ou de Safari externe
 
