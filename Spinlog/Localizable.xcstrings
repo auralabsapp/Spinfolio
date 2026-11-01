@@ -93,6 +93,12 @@
             "state" : "machine_translated",
             "value" : "“Theme Color” opens the palettes."
           }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "“Theme Colour” opens the palettes."
+          }
         }
       }
     },
@@ -1029,6 +1035,24 @@
             }
           }
         },
+        "en-GB" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld customised artist"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld customised artists"
+                }
+              }
+            }
+          }
+        },
         "fr" : {
           "variations" : {
             "plural" : {
@@ -1116,6 +1140,24 @@
                 "stringUnit" : {
                   "state" : "machine_translated",
                   "value" : "%lld unrecognized codes removed from the list."
+                }
+              }
+            }
+          }
+        },
+        "en-GB" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld unrecognised code removed from the list."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld unrecognised codes removed from the list."
                 }
               }
             }
@@ -2750,6 +2792,16 @@
         }
       }
     },
+    "À écouter" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "To listen"
+          }
+        }
+      }
+    },
     "À envoyer" : {
       "localizations" : {
         "en" : {
@@ -3027,6 +3079,12 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Help & personalization"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Help & personalisation"
           }
         }
       }
@@ -3550,6 +3608,12 @@
             "state" : "machine_translated",
             "value" : "Analyze"
           }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Analyse"
+          }
         }
       }
     },
@@ -3660,6 +3724,12 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Appearance and Colors"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Appearance and Colours"
           }
         }
       }
@@ -4305,6 +4375,12 @@
             "state" : "machine_translated",
             "value" : "Authorize the app on the Discogs website, then come back to Spinlog."
           }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Authorise the app on the Discogs website, then come back to Spinlog."
+          }
         }
       }
     },
@@ -4364,6 +4440,12 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "With last-name sorting on, “Customize Artist Sorting” fixes a one-off case."
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "With last-name sorting on, “Customise Artist Sorting” fixes a one-off case."
           }
         }
       }
@@ -4468,12 +4550,32 @@
         }
       }
     },
+    "Brocante" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Flea market"
+          }
+        }
+      }
+    },
     "Carmin intense & rock" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Intense crimson & rock"
+          }
+        }
+      }
+    },
+    "Carrousel" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Carousel"
           }
         }
       }
@@ -5078,6 +5180,12 @@
             "state" : "machine_translated",
             "value" : "Organize your albums with your own tags: creation, assignment, bulk management."
           }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Organise your albums with your own tags: creation, assignment, bulk management."
+          }
         }
       }
     },
@@ -5088,6 +5196,12 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Organize your records with your own tags and a rating out of 5."
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Organise your records with your own tags and a rating out of 5."
           }
         }
       }
@@ -5645,6 +5759,12 @@
             "state" : "translated",
             "value" : "Theme Color"
           }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Theme Colour"
+          }
         }
       }
     },
@@ -5877,6 +5997,12 @@
             "state" : "machine_translated",
             "value" : "In Settings > Help & personalization, open “Appearance”: “Display Mode” for light, dark or automatic."
           }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "In Settings > Help & personalisation, open “Appearance”: “Display Mode” for light, dark or automatic."
+          }
         }
       }
     },
@@ -5896,6 +6022,12 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "In Settings > Organization, turn on “Ignore Articles (The...)” or “Sort by Last Name”."
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "In Settings > Organisation, turn on “Ignore Articles (The...)” or “Sort by Last Name”."
           }
         }
       }
@@ -6632,6 +6764,16 @@
         }
       }
     },
+    "Dossier %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Folder %lld"
+          }
+        }
+      }
+    },
     "Dossier d'ajout par défaut" : {
       "localizations" : {
         "en" : {
@@ -7288,6 +7430,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Error"
+          }
+        }
+      }
+    },
+    "Erreur : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Error: %@"
           }
         }
       }
@@ -8125,6 +8277,12 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Swipe left on a customized artist to restore automatic sorting."
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Swipe left on a customised artist to restore automatic sorting."
           }
         }
       }
@@ -9195,6 +9353,12 @@
             "state" : "machine_translated",
             "value" : "The guide gives you its position on the shelf, between its two neighbors."
           }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The guide gives you its position on the shelf, between its two neighbours."
+          }
         }
       }
     },
@@ -9717,6 +9881,16 @@
         }
       }
     },
+    "Liste" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "List"
+          }
+        }
+      }
+    },
     "Liste des pistes" : {
       "localizations" : {
         "en" : {
@@ -9843,6 +10017,12 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Touch and hold a customized artist to restore automatic sorting."
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Touch and hold a customised artist to restore automatic sorting."
           }
         }
       }
@@ -10249,6 +10429,16 @@
         }
       }
     },
+    "Mosaïque" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Mosaic"
+          }
+        }
+      }
+    },
     "moy. %@" : {
       "localizations" : {
         "en" : {
@@ -10386,6 +10576,12 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Not recognized (%lld)"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Not recognised (%lld)"
           }
         }
       }
@@ -10640,6 +10836,12 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Organization"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Organisation"
           }
         }
       }
@@ -11198,6 +11400,12 @@
             "state" : "translated",
             "value" : "Sort Customization"
           }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Sort Customisation"
+          }
         }
       }
     },
@@ -11207,6 +11415,12 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Artist Sort Customization"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Artist Sort Customisation"
           }
         }
       }
@@ -11228,6 +11442,12 @@
             "state" : "machine_translated",
             "value" : "Personalize the app’s look to your taste with 9 exclusive palettes (Cobalt Blue, Emerald Green, Twilight Orange, Ruby Red, Amethyst Purple, Copper & Gold...)."
           }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Personalise the app’s look to your taste with 9 exclusive palettes (Cobalt Blue, Emerald Green, Twilight Orange, Ruby Red, Amethyst Purple, Copper & Gold...)."
+          }
         }
       }
     },
@@ -11237,6 +11457,12 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Customize your tags and Discogs folders, including the default folder for new records."
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Customise your tags and Discogs folders, including the default folder for new records."
           }
         }
       }
@@ -11248,6 +11474,12 @@
             "state" : "machine_translated",
             "value" : "Customize Sorting"
           }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Customise Sorting"
+          }
         }
       }
     },
@@ -11258,6 +11490,12 @@
             "state" : "translated",
             "value" : "Customize Artist Sorting"
           }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Customise Artist Sorting"
+          }
         }
       }
     },
@@ -11267,6 +11505,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Customized"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Customised"
           }
         }
       }
@@ -11891,6 +12135,12 @@
             "state" : "machine_translated",
             "value" : "Organize your collection your way, and choose where new records land."
           }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Organise your collection your way, and choose where new records land."
+          }
         }
       }
     },
@@ -12132,6 +12382,12 @@
             "state" : "translated",
             "value" : "Reset All Customizations"
           }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Reset All Customisations"
+          }
         }
       }
     },
@@ -12141,6 +12397,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reset All Customizations?"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Reset All Customisations?"
           }
         }
       }
@@ -12376,6 +12638,12 @@
             "state" : "machine_translated",
             "value" : "Spot the center record and its two neighbors: that’s where it goes."
           }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Spot the centre record and its two neighbours: that’s where it goes."
+          }
         }
       }
     },
@@ -12505,6 +12773,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Instantly find where to shelve an album, with its immediate neighbors according to your custom sort."
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Instantly find where to shelve an album, with its immediate neighbours according to your custom sort."
           }
         }
       }
@@ -13767,6 +14041,12 @@
             "state" : "translated",
             "value" : "Syncs tags, your turntable listening log, preferences, and sort customizations across all your devices signed in to the same account."
           }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Syncs tags, your turntable listening log, preferences, and sort customisations across all your devices signed in to the same account."
+          }
         }
       }
     },
@@ -13776,6 +14056,12 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Syncs tags, purchase prices and disc conditions, turntable listening log, preferences and sort customizations across all your devices signed in to the same account."
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Syncs tags, purchase prices and disc conditions, turntable listening log, preferences and sort customisations across all your devices signed in to the same account."
           }
         }
       }
@@ -14387,6 +14673,12 @@
             "state" : "machine_translated",
             "value" : "Light or dark theme, and color palettes for the whole app."
           }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Light or dark theme, and colour palettes for the whole app."
+          }
         }
       }
     },
@@ -14396,6 +14688,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Themes and Color Palettes"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Themes and Colour Palettes"
           }
         }
       }
@@ -15060,6 +15358,34 @@
             }
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "You’ve already logged %#@n@. Go premium to reveal your rankings, favourite artists, and podiums!"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "machine_translated",
+                      "value" : "%arg turntable listen"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "machine_translated",
+                      "value" : "%arg turntable listens"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15136,6 +15462,12 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "You have Premium forever. Your subscription isn’t canceled automatically: cancel it to stop being billed."
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "You have Premium forever. Your subscription isn’t cancelled automatically: cancel it to stop being billed."
           }
         }
       }
@@ -15348,6 +15680,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "A spreadsheet for your tools, or a PDF to show an insurer."
+          }
+        }
+      }
+    },
+    "Une erreur est survenue lors de l'enregistrement sur Discogs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "An error occurred while saving to Discogs."
           }
         }
       }

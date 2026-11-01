@@ -8,11 +8,12 @@ enum LibraryDisplayMode: String, CaseIterable, Identifiable, Codable {
 
     var id: String { rawValue }
 
+    // `String(localized:)` : un simple littéral `String` n'est ni extrait ni traduit.
     var title: String {
         switch self {
-        case .list: return "Liste"
-        case .grid: return "Mosaïque"
-        case .carousel: return "Carrousel"
+        case .list: return String(localized: "Liste")
+        case .grid: return String(localized: "Mosaïque")
+        case .carousel: return String(localized: "Carrousel")
         }
     }
 

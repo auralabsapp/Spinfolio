@@ -60,6 +60,6 @@ extension [CollectionFolder] {
         if folderId == DiscogsConstants.uncategorizedFolderId {
             return "Uncategorized"
         }
-        return "Dossier \(folderId)"
+        return String(localized: "Dossier \(folderId)")
     }
 }

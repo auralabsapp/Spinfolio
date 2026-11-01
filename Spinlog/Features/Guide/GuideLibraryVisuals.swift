@@ -277,8 +277,8 @@ struct TagsMock: View {
                 Spacer(minLength: 0)
             }
             HStack(spacing: 8) {
-                tag("Brocante")
-                tag("À écouter")
+                tag(String(localized: "Brocante"))
+                tag(String(localized: "À écouter"))
                 Spacer(minLength: 0)
             }
         }

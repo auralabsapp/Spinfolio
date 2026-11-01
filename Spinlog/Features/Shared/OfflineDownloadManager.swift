@@ -38,7 +38,7 @@ final class OfflineDownloadManager {
             case .completed(_, let count):
                 return String(localized: "Synchronisation terminée avec succès (\(count) albums)")
             case .failed(let error):
-                return "Erreur : \(error)"
+                return String(localized: "Erreur : \(error)")
             }
         }
     }

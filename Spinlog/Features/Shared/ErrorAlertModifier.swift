@@ -6,7 +6,10 @@ extension View {
     /// `viewModel.actionMessage` dans `CollectionView`, qui utilise directement le message comme
     /// titre). Avant ce modifier, plusieurs écrans réinventaient chacun leur propre paire
     /// `Bool`/`String?` pour ce même besoin ("afficher une erreur ponctuelle").
-    func errorAlert(_ title: String = "Erreur", message: Binding<String?>, fallbackMessage: String = "") -> some View {
+    ///
+    /// Titre et message de repli en `LocalizedStringKey` : en `String`, ils ne seraient ni extraits
+    /// dans le catalogue ni traduits.
+    func errorAlert(_ title: LocalizedStringKey = "Erreur", message: Binding<String?>, fallbackMessage: LocalizedStringKey = "") -> some View {
         alert(
             title,
             isPresented: Binding(
@@ -16,7 +19,11 @@ extension View {
         ) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text(message.wrappedValue ?? fallbackMessage)
+            if let text = message.wrappedValue {
+                Text(verbatim: text)
+            } else {
+                Text(fallbackMessage)
+            }
         }
     }
 
