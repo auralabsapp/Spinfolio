@@ -249,6 +249,8 @@ final class ReleaseActions {
         )
         switch outcome {
         case .done:
+            // Ajout fait par l'utilisateur dans l'app : compte pour la demande d'avis (voir `ReviewPromptStore`).
+            ReviewPromptStore.shared.recordCollectionAdd()
             guard let realInstanceId else { return }
             TagStore.shared.remapInstanceId(from: tempInstanceId, to: realInstanceId)
             CopyDetailsStore.shared.remapInstanceId(from: tempInstanceId, to: realInstanceId)
@@ -267,10 +269,12 @@ final class ReleaseActions {
             // Rafraîchir les informations des exemplaires en arrière-plan
             Task { await self.checkIfInCollection(releaseId: releaseId) }
         case .queuedOffline:
+            ReviewPromptStore.shared.recordCollectionAdd()
             // La bulle « Ajouté à la collection » précise que l'ajout n'atteindra Discogs qu'au
             // retour du réseau.
             LibraryMembershipStore.shared.noteQueuedOffline(.collectionAdded)
         case .queuedAfterFailure:
+            ReviewPromptStore.shared.recordCollectionAdd()
             message = AppMessages.discogsUnavailableQueued
         case .refused:
             // Refus définitif (release inexistante, identifiants invalides…) : un nouvel essai

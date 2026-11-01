@@ -332,8 +332,24 @@ final class NowPlayingActivityManager {
         }
     }
 
+    /// Qui met fin à l'écoute : seul l'arrêt voulu par l'utilisateur compte pour la demande d'avis
+    /// (voir `ReviewPromptStore`), pas l'arrêt automatique, l'expiration ni la déconnexion.
+    enum EndReason {
+        case user
+        case automatic
+    }
+
+    /// Consigne une écoute arrêtée par l'utilisateur (durée minimale vérifiée par le store). À appeler
+    /// avant d'effacer `activeStartedAt` ; sans écoute en cours, rien n'est compté (pas de double
+    /// décompte quand la feuille d'écoute rappelle l'arrêt à sa fermeture).
+    private func recordUserStop(reason: EndReason) {
+        guard reason == .user, let startedAt = activeStartedAt else { return }
+        ReviewPromptStore.shared.recordListeningStopped(duration: Date().timeIntervalSince(startedAt))
+    }
+
     /// Termine l'activité en cours d'écoute (lors de l'appui sur "Stop" ou "Annuler" ou expiration).
-    func endCurrentActivity() async {
+    func endCurrentActivity(reason: EndReason = .automatic) async {
+        recordUserStop(reason: reason)
         autoStopTask?.cancel()
         autoStopTask = nil
         // L'interface d'abord (mini-lecteur, feuille) : la fin des Live Activities passe par le
@@ -359,11 +375,12 @@ final class NowPlayingActivityManager {
             logger.warning("Lien d'arrêt d'écoute ignoré : jeton absent ou inconnu")
             return
         }
-        await endActivity(for: releaseId)
+        await endActivity(for: releaseId, reason: .user)
     }
 
     /// Termine une activité spécifique par son releaseId si elle correspond à celle en cours.
-    func endActivity(for releaseId: Int) async {
+    func endActivity(for releaseId: Int, reason: EndReason = .automatic) async {
+        if activeReleaseId == releaseId { recordUserStop(reason: reason) }
         for act in Activity<NowPlayingActivityAttributes>.activities where act.attributes.releaseId == releaseId {
             await act.end(nil, dismissalPolicy: .immediate)
         }

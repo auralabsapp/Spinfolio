@@ -18,6 +18,11 @@ nonisolated enum AppInfo {
     /// Page d'assistance (même site que la confidentialité) : à garder identique à l'« URL d'assistance »
     /// renseignée dans App Store Connect.
     static let supportURL = URL(string: "https://auralabsapp.github.io/Spinfolio/support.html")!
+    /// Identifiant Apple de l'app (App Store Connect › Informations sur l'app).
+    static let appStoreID = "6816731989"
+    /// Ouvre directement l'écran « Écrire un avis » de la fiche App Store (aucun plafond, contrairement
+    /// à la demande d'avis automatique du système).
+    static let writeReviewURL = URL(string: "https://apps.apple.com/app/id\(appStoreID)?action=write-review")!
 }
 
 /// Clés `UserDefaults` du mode d'affichage (Liste, Mosaïque, Carrousel) de chaque onglet.

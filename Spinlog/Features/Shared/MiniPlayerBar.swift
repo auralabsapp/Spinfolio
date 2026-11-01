@@ -232,7 +232,7 @@ struct MiniPlayerBar: View {
             Button {
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                 Task {
-                    await activityManager.endCurrentActivity()
+                    await activityManager.endCurrentActivity(reason: .user)
                 }
             } label: {
                 Image(systemName: "stop.fill")
@@ -460,7 +460,7 @@ struct MiniPlayerBar: View {
                 Button {
                     UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                     Task {
-                        await activityManager.endCurrentActivity()
+                        await activityManager.endCurrentActivity(reason: .user)
                     }
                 } label: {
                     ZStack {

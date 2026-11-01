@@ -52,7 +52,7 @@ struct StopListeningIntent: LiveActivityIntent {
         guard wasListening else {
             return .result(dialog: "Aucune écoute en cours.")
         }
-        await manager.endCurrentActivity()
+        await manager.endCurrentActivity(reason: .user)
         return .result(dialog: "Écoute arrêtée.")
     }
 }

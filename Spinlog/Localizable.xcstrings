@@ -6733,6 +6733,16 @@
         }
       }
     },
+    "Donner mon avis" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Rate Spinfolio"
+          }
+        }
+      }
+    },
     "Dossier" : {
       "comment" : "En-tête de colonne CSV : nom du dossier de la collection",
       "localizations" : {

@@ -22,7 +22,7 @@ struct CollectionItemActions {
     static func stopListening(to item: CollectionItem) {
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         Task {
-            await NowPlayingActivityManager.shared.endActivity(for: item.releaseId)
+            await NowPlayingActivityManager.shared.endActivity(for: item.releaseId, reason: .user)
         }
     }
 

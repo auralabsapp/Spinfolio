@@ -99,7 +99,7 @@ struct NowPlayingTurntableSheet: View {
         .onAppear(perform: rememberCurrentAlbum)
         .onDisappear {
             guard endsListeningOnDisappear else { return }
-            Task { await NowPlayingActivityManager.shared.endCurrentActivity() }
+            Task { await NowPlayingActivityManager.shared.endCurrentActivity(reason: .user) }
         }
         .onChange(of: activityManager.activeAlbumTitle) { rememberCurrentAlbum() }
         .onChange(of: activityManager.activeReleaseId) { _, id in

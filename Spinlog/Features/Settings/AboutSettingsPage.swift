@@ -8,6 +8,7 @@ struct AboutSettingsPage: View {
     @State private var diagnosticUnlock = SubscriptionDiagnosticUnlock()
     @State private var showingDiscogsWebsite = false
     @State private var supportRequest: SafariViewRequest?
+    @Environment(\.openURL) private var openURL
     @State private var showingManageSubscriptions = false
     /// `Bool` plutôt que `sheet(item:)` : feuille système StoreKit, sans donnée associée à présenter.
     @State private var showingRedeemCode = false
@@ -46,6 +47,23 @@ struct AboutSettingsPage: View {
                             .foregroundStyle(Color.appSecondaryText)
                     }
                 }
+
+                // Ouvre l'App Store (pas une vue Safari : l'avis se rédige dans l'app App Store). Lien permanent,
+                // en plus de la demande d'avis automatique qui, elle, est plafonnée par le système.
+                Button {
+                    openURL(AppInfo.writeReviewURL)
+                } label: {
+                    HStack(spacing: 14) {
+                        SettingsIcon(systemName: "star.fill", backgroundColor: .yellow)
+                        Text("Donner mon avis")
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        Image(systemName: "arrow.up.right")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(Color.appSecondaryText)
+                    }
+                }
+                .accessibilityAddTraits(.isLink)
 
                 // Feuille système StoreKit (lecture seule, aucun risque à l'exposer partout,
                 // contrairement aux outils du menu développeur) : état réel de l'abonnement, utile

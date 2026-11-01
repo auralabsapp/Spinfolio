@@ -317,7 +317,7 @@ struct SearchView: View {
     private func stopListening(for result: SearchResult) {
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         Task {
-            await NowPlayingActivityManager.shared.endActivity(for: result.id)
+            await NowPlayingActivityManager.shared.endActivity(for: result.id, reason: .user)
         }
     }
 

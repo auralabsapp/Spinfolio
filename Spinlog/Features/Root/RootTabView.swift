@@ -144,6 +144,8 @@ struct RootTabView: View {
             GradeEvaluator.shared.start()
         }
         .overlay { GradeCelebrationHost() }
+        // Demande d'avis du système après un palier d'actions (voir `ReviewPromptStore`).
+        .background { ReviewPromptPresenter() }
         // Dans une animation : l'accessoire (capsule et contenu figé ensemble) entre et sort en douceur.
         .onChange(of: MiniPlayerBar.isActive) { _, isActive in
             withAnimation(.nowPlayingTransition) { isMiniPlayerAccessoryEnabled = isActive }

@@ -562,11 +562,13 @@ final class WantlistViewModel {
                     object: nil,
                     userInfo: ["item": newItem]
                 )
+                ReviewPromptStore.shared.recordCollectionAdd()
             } catch where error.isTransientNetworkFailure {
                 // `folderId` (et non `targetFolderId`, réservé aux déplacements) : c'est le champ lu
                 // par la file pour un ajout — l'autre envoyait le disque dans "Uncategorized".
                 let action = PendingAction(type: .addToCollection, releaseId: item.id, folderId: folderId)
                 syncQueue.enqueue(action)
+                ReviewPromptStore.shared.recordCollectionAdd()
                 actionMessage = AppMessages.discogsUnavailableQueued
             } catch {
                 // Refus définitif : le disque reste dans la wantlist.
@@ -577,6 +579,7 @@ final class WantlistViewModel {
             // Voir le commentaire sur `folderId` ci-dessus.
             let action = PendingAction(type: .addToCollection, releaseId: item.id, folderId: folderId)
             syncQueue.enqueue(action)
+            ReviewPromptStore.shared.recordCollectionAdd()
             LibraryMembershipStore.shared.noteQueuedOffline(.collectionAdded)
         }
 

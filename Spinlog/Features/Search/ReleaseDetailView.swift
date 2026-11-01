@@ -192,7 +192,7 @@ struct ReleaseDetailView: View {
     private func stopListeningSession() {
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         Task {
-            await NowPlayingActivityManager.shared.endActivity(for: releaseId)
+            await NowPlayingActivityManager.shared.endActivity(for: releaseId, reason: .user)
         }
     }
 
