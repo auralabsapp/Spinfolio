@@ -7,7 +7,11 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
-## 2026-11-01 — Demande d'avis App Store, anglais britannique, fiche App Store française, site à jour
+## 2026-11-01 — Demande d'avis App Store, anglais britannique, fiche App Store française, sauvegarde JSON cachée, site à jour
+
+### 16:25 — `00293a9` Sauvegarde JSON déplacée dans une section cachée de « Export » (7 touchers sur la version)
+
+L'import et l'export JSON quittent les options développeur, réservées au Debug et donc absentes de TestFlight. Le service de sauvegarde sort du bloc `#if DEBUG` et devient `UserDataBackupService` (ex-`DeveloperBackup`) ; `UserDataBackupViewModel` porte l'état et les actions (export vers un fichier, vérification puis restauration), `UserDataBackupSection` affiche la section « Sauvegarde interne (JSON) » dans la page Export. Elle n'apparaît qu'après les 7 touchers sur la version de « À propos », avec le même verrou que les diagnostics (hors App Store : sans effet en production), et ses deux lignes sont fermées en démo et sans compte. Les feuilles et alertes sont posées en arrière-plan de la page, pour ne pas entrer en conflit avec les alertes de l'export CSV et PDF. Textes volontairement non traduits, comme les diagnostics. Retrait de la section et de l'état devenu inutile dans `DeveloperOptionsView`. `UserDataBackupServiceTests` (5 tests : compte identique, autre compte, hors connexion, fichier illisible, nom de fichier), cas QA J44, PDF régénéré. 11 fichiers, +411 / −301.
 
 ### 16:14 — `83f7454` Marketing et docs : fiche App Store française (nom, sous-titre, mots-clés, description v2), plaquette, captures, images du site
 
