@@ -1,6 +1,5 @@
 import SwiftUI
 import WidgetKit
-import UniformTypeIdentifiers
 
 // Exclu des builds Release/App Store : ce type n'existe même pas en dehors du Debug, pour
 // qu'aucun futur point d'entrée ne puisse le rendre accessible par erreur en production.
@@ -13,21 +12,9 @@ struct DeveloperOptionsView: View {
     @State private var premiumStore = PremiumStore.shared
     @State private var authManager = DiscogsAuthManager.shared
 
-    @State private var tagStore = TagStore.shared
-    @State private var themeManager = ThemeManager.shared
-    @State private var appearancePreferences = AppearancePreferencesStore.shared
-
     @State private var showingPaywall = false
     @State private var showingFeaturesSheet = false
     @State private var toastMessage: String? = nil
-
-    // Sauvegarde & Restauration JSON
-    @State private var showingFileExporter = false
-    @State private var showingFileImporter = false
-    @State private var exportDocument: SpinlogBackupDocument?
-    @State private var exportFilename: String = ""
-    @State private var pendingBackupToRestore: SpinlogUserDataBackup?
-    @State private var showingRestoreConfirmation = false
 
     // Alimentation ponctuelle du champ personnalisé "Prix d'achat net"
     @State private var isBackfillingNetPrice = false
@@ -120,57 +107,7 @@ struct DeveloperOptionsView: View {
                 Text("Stockage & Widgets")
             }
 
-            // MARK: - 6. Sauvegarde & Restauration JSON
-            Section {
-                Button {
-                    prepareExport()
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: "square.and.arrow.up")
-                            .foregroundStyle(.blue)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Exporter une sauvegarde JSON")
-                                .font(.body.weight(.medium))
-                                .foregroundStyle(authManager.isAuthenticated ? .primary : .secondary)
-                            Text(exportSubtitle)
-                                .font(.caption2)
-                                .foregroundStyle(Color.appSecondaryText)
-                        }
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(Color.appTertiaryText)
-                    }
-                }
-                .disabled(!authManager.isAuthenticated)
-
-                Button {
-                    showingFileImporter = true
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: "square.and.arrow.down")
-                            .foregroundStyle(.teal)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Restaurer une sauvegarde JSON")
-                                .font(.body.weight(.medium))
-                                .foregroundStyle(.primary)
-                            Text("Restaure tags, réglages et métadonnées locales")
-                                .font(.caption2)
-                                .foregroundStyle(Color.appSecondaryText)
-                        }
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(Color.appTertiaryText)
-                    }
-                }
-            } header: {
-                Text("Sauvegarde interne (JSON)")
-            } footer: {
-                Text("Outil de développement pour exporter et importer l'intégralité des métadonnées locales : tags, sessions d'écoute, préférences et correspondance des années.")
-            }
-
-            // MARK: - 7. Champs personnalisés (backfill ponctuel)
+            // MARK: - 6. Champs personnalisés (backfill ponctuel)
             Section {
                 Button {
                     fillNetPurchasePriceField()
@@ -211,50 +148,6 @@ struct DeveloperOptionsView: View {
             PremiumFeaturesSheet()
         }
         .messageAlert(message: $toastMessage)
-        .fileExporter(
-            isPresented: $showingFileExporter,
-            document: exportDocument,
-            contentType: .json,
-            defaultFilename: exportFilename
-        ) { result in
-            switch result {
-            case .success(let url):
-                showToast("Fichier de sauvegarde exporté avec succès :\n\(url.lastPathComponent)")
-            case .failure(let error):
-                showToast("Échec de l'export : \(error.localizedDescription)")
-            }
-        }
-        .fileImporter(
-            isPresented: $showingFileImporter,
-            allowedContentTypes: [.json]
-        ) { result in
-            switch result {
-            case .success(let url):
-                handleImport(url: url)
-            case .failure(let error):
-                showToast("Échec de l'ouverture : \(error.localizedDescription)")
-            }
-        }
-        .confirmationDialog(
-            "Restaurer la sauvegarde ?",
-            isPresented: $showingRestoreConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Remplacer les données locales", role: .destructive) {
-                if let backup = pendingBackupToRestore {
-                    applyBackup(backup)
-                }
-            }
-            Button("Annuler", role: .cancel) {
-                pendingBackupToRestore = nil
-            }
-        } message: {
-            if let backup = pendingBackupToRestore {
-                Text(restoreConfirmationMessage(for: backup))
-            } else {
-                Text("Tes données locales seront remplacées.")
-            }
-        }
     }
 
     private func simulateStaleCache() {
@@ -306,65 +199,6 @@ struct DeveloperOptionsView: View {
     private func showToast(_ msg: String) {
         toastMessage = msg
     }
-
-    private var exportSubtitle: String {
-        if authManager.isAuthenticated {
-            if let user = authManager.username {
-                return "Exporte tes tags pour le compte \(user)"
-            } else {
-                return "Exporte tes tags associés à ton compte"
-            }
-        } else {
-            return "Connexion à Discogs requise"
-        }
-    }
-
-    private func restoreConfirmationMessage(for backup: SpinlogUserDataBackup) -> String {
-        DeveloperBackup.confirmationMessage(for: backup)
-    }
-
-    private func prepareExport() {
-        guard let username = authManager.username, authManager.isAuthenticated else {
-            showToast("Tu dois être connecté à ton compte Discogs pour générer une sauvegarde de tes données.")
-            return
-        }
-        exportDocument = SpinlogBackupDocument(
-            backup: DeveloperBackup.make(username: username, tagStore: tagStore, appearance: appearancePreferences, themeManager: themeManager)
-        )
-        exportFilename = DeveloperBackup.filename(username: username)
-        showingFileExporter = true
-    }
-
-    private func handleImport(url: URL) {
-        guard url.startAccessingSecurityScopedResource() else {
-            showToast("Impossible d'accéder au fichier sélectionné.")
-            return
-        }
-        defer { url.stopAccessingSecurityScopedResource() }
-
-        guard let data = try? Data(contentsOf: url) else {
-            showToast("Le fichier sélectionné n'est pas une sauvegarde \(AppInfo.name) valide ou est endommagé.")
-            return
-        }
-        switch DeveloperBackup.check(data: data, currentUsername: authManager.username, isAuthenticated: authManager.isAuthenticated) {
-        case .accepted(let backup):
-            pendingBackupToRestore = backup
-            showingRestoreConfirmation = true
-        case .notSignedIn:
-            showToast("Connecte-toi à ton compte Discogs avant de restaurer une sauvegarde.")
-        case .wrongAccount(let backupUser, let currentUser):
-            showToast("Ce fichier de sauvegarde appartient au compte « \(backupUser) », alors que tu es connecté avec le compte « \(currentUser) ».\n\nLa restauration a été refusée pour éviter toute incohérence.")
-        case .invalidFile:
-            showToast("Le fichier sélectionné n'est pas une sauvegarde \(AppInfo.name) valide ou est endommagé.")
-        }
-    }
-
-    private func applyBackup(_ backup: SpinlogUserDataBackup) {
-        DeveloperBackup.restore(backup, tagStore: tagStore, appearance: appearancePreferences, themeManager: themeManager, isPremium: premiumStore.isPremium)
-        showToast(DeveloperBackup.successMessage(for: backup))
-        pendingBackupToRestore = nil
-    }
-
 }
 
 #endif

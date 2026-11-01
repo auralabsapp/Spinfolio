@@ -61,7 +61,8 @@ final class SubscriptionManager {
     /// un examinateur ne doit pas tomber sur cette section de test.
     private(set) var isDiagnosticUnlocked = UserDefaults.standard.bool(forKey: SubscriptionDiagnosticUnlock.defaultsKey)
 
-    /// Le diagnostic d'abonnement est-il affiché dans les Réglages ?
+    /// Les outils cachés des Réglages sont-ils affichés ? Diagnostics d'abonnement et iCloud, et
+    /// sauvegarde JSON de la page « Export » (`UserDataBackupSection`).
     var showsDiagnostic: Bool { isTestEnvironment && isDiagnosticUnlocked }
 
     /// Affiche ou masque le diagnostic ; sans effet en production (App Store).

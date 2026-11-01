@@ -6,12 +6,16 @@ struct ExportSettingsPage: View {
     @State private var authManager = DiscogsAuthManager.shared
     @State private var premiumStore = PremiumStore.shared
     @State private var exportViewModel = CollectionExportViewModel()
+    @State private var backupViewModel = UserDataBackupViewModel()
 
     var body: some View {
         SettingsSubPage(title: "Export") {
             exportSection
+            // Cachée : n'apparaît qu'après les 7 touchers sur la version (voir la section).
+            UserDataBackupSection(viewModel: backupViewModel)
         }
         .messageAlert(Text(exportViewModel.alertTitle), message: $exportViewModel.alertMessage)
+        .background { Color.clear.userDataBackupPresentation(backupViewModel) }
     }
 
     @ViewBuilder

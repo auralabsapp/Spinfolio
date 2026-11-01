@@ -138,8 +138,9 @@ struct AboutSettingsPage: View {
                         .foregroundStyle(Color.appSecondaryText)
                 }
                 .contentShape(Rectangle())
-                // Hors App Store seulement : 7 touchers affichent ou masquent le diagnostic
-                // d'abonnement (voir `SubscriptionDiagnosticUnlock`). Volontairement sans
+                // Hors App Store seulement : 7 touchers affichent ou masquent les outils cachés
+                // (diagnostics d'abonnement et iCloud, sauvegarde JSON de « Export » ; voir
+                // `SubscriptionDiagnosticUnlock`). Volontairement sans
                 // équivalent VoiceOver ni indice visuel : réservé aux tests TestFlight.
                 .onTapGesture {
                     guard diagnosticUnlock.registerTap(),
