@@ -9337,7 +9337,15 @@
       }
     },
     "Le forfait sélectionné n'est pas encore disponible sur l'App Store." : {
-
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The selected plan isn’t available on the App Store yet."
+          }
+        }
+      }
     },
     "Le guide compte chaque support à part : vinyles 12, 10 et 7 pouces, CD, cassettes." : {
       "localizations" : {
