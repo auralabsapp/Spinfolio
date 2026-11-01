@@ -6,7 +6,7 @@ doit être signalée explicitement dans le compte rendu, jamais faite en silence
 
 Application iOS (SwiftUI) de gestion de collection de vinyles/CD/K7 basée sur l'API Discogs.
 Code dans `Spinlog/`, widget et Live Activity dans `SpinlogWidgets/`, tests dans `SpinlogTests/`
-(unitaires) et `SpinlogUITests/` (interface), cahier de recette manuel dans `QA/`.
+(unitaires) et `SpinlogUITests/` (interface), tests manuels dans `QA/manual-tests.md`.
 
 ---
 
@@ -27,9 +27,10 @@ Code dans `Spinlog/`, widget et Live Activity dans `SpinlogWidgets/`, tests dans
   sensibles comme la signature ou les identifiants de bundle) : proposer et demander avant de coder.
 - **Compte rendu honnête** : dire ce qui a été vérifié (build, tests) et ce qui ne l'a pas été
   (rien n'est testé sur appareil tant que l'utilisateur ne l'a pas fait).
-- **Tests manuels** : tout nouveau cas à vérifier sur appareil est ajouté dans `QA/tests.js`
-  (tag `AUDIT` si lié à la branche en cours, `AUTO` si couvert par un test automatique), puis le
-  PDF est régénéré (commande en tête de `QA/print.html`).
+- **Tests manuels** : `QA/manual-tests.md` est la référence unique. Tout nouveau cas à vérifier sur
+  appareil y est ajouté dans sa famille, avec le numéro suivant (lettre + numéro, jamais
+  réattribué), conditions, étapes, résultat attendu et case « Passé » ; tag `AUDIT` si lié à la
+  branche en cours, `AUTO` si couvert par un test automatique.
 
 ## 1. Architecture
 
@@ -221,7 +222,7 @@ Pour toute fonctionnalité qui lit ou écrit des données, se poser ces question
 - **Interface** (`SpinlogUITests`, XCUIAutomation) : seulement les parcours clés, sur le mode démo
   (`-uiTestDemo`, `-uiTestSignedOut`), ciblés par `accessibilityIdentifier`. 5 à 10 parcours max.
 - **Manuels** : ce qui exige un appareil (caméra, iCloud 2 appareils, Live Activity, widget,
-  StoreKit sandbox, OAuth réel, VoiceOver ressenti) va dans `QA/tests.js`.
+  StoreKit sandbox, OAuth réel, VoiceOver ressenti) va dans `QA/manual-tests.md`.
 - Avant de rendre : `BuildProject` sans erreur **ni avertissement nouveau**, et tous les tests
   verts (lancer au minimum les suites touchées).
 
@@ -266,5 +267,5 @@ Pour toute fonctionnalité qui lit ou écrit des données, se poser ces question
 - [ ] Confidentialité : logs `.private`, manifeste à jour si besoin
 - [ ] iOS 26.1 : `#available` + repli, menu contextuel pour les balayages
 - [ ] Tests unitaires ajoutés/ajustés, suites vertes, build sans nouvel avertissement
-- [ ] Cas manuels ajoutés dans `QA/tests.js` si un appareil est nécessaire
+- [ ] Cas manuels ajoutés dans `QA/manual-tests.md` si un appareil est nécessaire
 - [ ] Compte rendu : ce qui est vérifié, ce qui ne l'est pas ; pas de commit sans demande
