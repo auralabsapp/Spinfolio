@@ -7,6 +7,16 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
+## 2026-11-02 — Tests manuels en tableaux, traduction du message « forfait indisponible »
+
+### 00:03 — `c650c35` Traduction anglaise du message « forfait indisponible »
+
+« Le forfait sélectionné n'est pas encore disponible sur l'App Store. » : « The selected plan isn't available on the App Store yet. » (`SubscriptionManager`). 1 fichier, +9 / −1.
+
+### 00:03 — `4e8b13d` Tests manuels : un tableau par famille dans QA/manual-tests.md
+
+Une ligne par test : N°, test, conditions, étapes, résultat attendu, étiquettes et colonne « Résultat » à remplir ; mêmes 575 cas. `CLAUDE.md` décrit le nouveau format d'ajout. 2 fichiers, +666 / −7660.
+
 ## 2026-11-01 — Demande d'avis App Store, anglais britannique, fiche App Store française, sauvegarde JSON cachée, site à jour, tests manuels en Markdown
 
 ### 23:46 — `4df437a` Catalogue de textes : entrée extraite par Xcode pour le message « forfait indisponible »
