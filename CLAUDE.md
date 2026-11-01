@@ -30,8 +30,8 @@ Code dans `Spinlog/`, widget et Live Activity dans `SpinlogWidgets/`, tests dans
 - **Tests manuels** : `QA/manual-tests.md` est la référence unique. Tout nouveau cas à vérifier sur
   appareil y est ajouté comme une ligne du tableau de sa famille, avec le numéro suivant (lettre +
   numéro, jamais réattribué) : test, conditions, étapes (séparées par `<br>`), résultat attendu,
-  étiquettes (`AUDIT` si lié à la branche en cours, `AUTO` si couvert par un test automatique) et
-  colonne « Résultat » laissée vide.
+  étiquettes (`AUDIT` si lié à la branche en cours, `AUTO` si couvert par un test automatique),
+  case « Validé » à `☐` (cochée `☑` par l'utilisateur, `☒` en échec) et colonne « Résultat » vide.
 
 ## 1. Architecture
 
