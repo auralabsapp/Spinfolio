@@ -31,7 +31,7 @@ enum PremiumFeatureCatalog {
             icon: "icloud.fill",
             color: .cyan,
             title: "Synchronisation iCloud",
-            description: "Synchronise tags, journal d'écoute sur platine, préférences et personnalisations de tri entre tous tes appareils connectés au même compte."
+            description: "Synchronise tags, prix d'achat et états des disques, journal d'écoute sur platine, préférences et personnalisations de tri entre tous tes appareils connectés au même compte."
         ),
         PremiumFeatureInfo(
             id: "tags",

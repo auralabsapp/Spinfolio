@@ -7180,6 +7180,7 @@
       }
     },
     "Ensuite, « Modifier » sur un exemplaire pour saisir son prix." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7632,6 +7633,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Manufacturing (%lld)"
+          }
+        }
+      }
+    },
+    "Facultatif : dans Réglages > Suivi de plus-value, associe des champs Discogs pour importer tes valeurs existantes ou les y envoyer." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Optional: in Settings > Gain Tracking, link Discogs fields to import your existing values or send them there."
           }
         }
       }
@@ -8976,6 +8987,7 @@
       }
     },
     "La plus-value (cote moins prix payé) est une fonction Premium, dans Stats." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -10410,11 +10422,22 @@
       }
     },
     "Note ce que tu as payé et compare avec la cote Discogs." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Note what you paid and compare it with the Discogs value."
+          }
+        }
+      }
+    },
+    "Note ce que tu as payé et l'état de chaque disque, sans rien configurer sur Discogs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Record what you paid and each disc's condition, with nothing to set up on Discogs."
           }
         }
       }
@@ -11658,6 +11681,7 @@
       }
     },
     "Prix d'achat et cote" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -11673,6 +11697,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Purchase Price and Condition"
+          }
+        }
+      }
+    },
+    "Prix d'achat et état du disque" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Purchase Price and Disc Condition"
           }
         }
       }
@@ -11703,6 +11737,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Price & Condition"
+          }
+        }
+      }
+    },
+    "Prix et état restent dans l'app (et sur tes appareils avec iCloud, en Premium). La plus-value (cote moins prix payé) est une fonction Premium, dans Stats." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Price and condition stay in the app (and on your devices through iCloud, with Premium). Gain (value minus price paid) is a Premium feature, in Stats."
           }
         }
       }
@@ -13716,11 +13760,22 @@
       }
     },
     "Synchronise tags, journal d'écoute sur platine, préférences et personnalisations de tri entre tous tes appareils connectés au même compte." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Syncs tags, your turntable listening log, preferences, and sort customizations across all your devices signed in to the same account."
+          }
+        }
+      }
+    },
+    "Synchronise tags, prix d'achat et états des disques, journal d'écoute sur platine, préférences et personnalisations de tri entre tous tes appareils connectés au même compte." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Syncs tags, purchase prices and disc conditions, turntable listening log, preferences and sort customizations across all your devices signed in to the same account."
           }
         }
       }
@@ -14305,11 +14360,22 @@
       }
     },
     "Tes tags, écoutes, alertes et préférences suivent ton compte sur tous tes appareils." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Your tags, listens, alerts and preferences follow your account on all your devices."
+          }
+        }
+      }
+    },
+    "Tes tags, écoutes, alertes, prix et états de disque et préférences suivent ton compte sur tous tes appareils." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your tags, listens, alerts, prices, disc conditions and preferences follow your account across all your devices."
           }
         }
       }
@@ -14553,6 +14619,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Tap “Edit” on a copy: folder, tags, Discogs fields."
+          }
+        }
+      }
+    },
+    "Touche « Modifier » sur un exemplaire, puis renseigne le prix et l'état dans « Plus-value de l'exemplaire »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tap “Edit” on a copy, then enter the price and condition in “Copy Gain”."
           }
         }
       }
@@ -15277,6 +15353,7 @@
       }
     },
     "Une seule fois : Réglages > Suivi de plus-value, puis associe tes champs Discogs." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

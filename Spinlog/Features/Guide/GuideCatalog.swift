@@ -180,13 +180,13 @@ enum GuideCatalog {
             id: "price",
             section: .record,
             visual: .price,
-            title: "Prix d'achat et cote",
-            summary: "Note ce que tu as payé et compare avec la cote Discogs.",
+            title: "Prix d'achat et état du disque",
+            summary: "Note ce que tu as payé et l'état de chaque disque, sans rien configurer sur Discogs.",
             steps: [
-                "Une seule fois : Réglages > Suivi de plus-value, puis associe tes champs Discogs.",
-                "Ensuite, « Modifier » sur un exemplaire pour saisir son prix."
+                "Touche « Modifier » sur un exemplaire, puis renseigne le prix et l'état dans « Plus-value de l'exemplaire ».",
+                "Facultatif : dans Réglages > Suivi de plus-value, associe des champs Discogs pour importer tes valeurs existantes ou les y envoyer."
             ],
-            tip: "La plus-value (cote moins prix payé) est une fonction Premium, dans Stats.",
+            tip: "Prix et état restent dans l'app (et sur tes appareils avec iCloud, en Premium). La plus-value (cote moins prix payé) est une fonction Premium, dans Stats.",
             access: .requiresAccount,
             destination: .tab(.settings)
         )
@@ -436,7 +436,7 @@ enum GuideCatalog {
             section: .settings,
             visual: .iCloud,
             title: "Synchronisation iCloud",
-            summary: "Tes tags, écoutes, alertes et préférences suivent ton compte sur tous tes appareils.",
+            summary: "Tes tags, écoutes, alertes, prix et états de disque et préférences suivent ton compte sur tous tes appareils.",
             steps: [
                 "Dans Réglages > Synchronisation, ouvre « Synchronisation iCloud » et active « Synchroniser avec iCloud »."
             ],
