@@ -342,6 +342,7 @@ final class OfflineSyncQueue {
             // on les reporte sur l'identifiant définitif (sinon ils étaient perdus à la synchro).
             if let temporaryInstanceId = action.instanceId, temporaryInstanceId < 0 {
                 TagStore.shared.remapInstanceId(from: temporaryInstanceId, to: instanceId)
+                CopyDetailsStore.shared.remapInstanceId(from: temporaryInstanceId, to: instanceId)
             }
 
         case .removeFromCollection:

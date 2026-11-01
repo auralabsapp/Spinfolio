@@ -71,6 +71,10 @@ struct CollectionItemEditSheet: View {
             if initialValues[field.id] == nil {
                 initialValues[field.id] = item.value(forFieldId: field.id)
             }
+            // Prix d'achat et état du disque : la valeur gardée dans l'app prime sur celle de Discogs.
+            if let local = CopyDetailsStore.shared.fieldValue(forFieldId: field.id, instanceId: item.instanceId) {
+                initialValues[field.id] = local
+            }
         }
         _fieldValues = State(initialValue: initialValues)
         _savedFieldValues = State(initialValue: initialValues)
@@ -129,7 +133,7 @@ struct CollectionItemEditSheet: View {
                     gainSection
 
                     VStack(alignment: .leading, spacing: 10) {
-                        SectionEyebrow(title: "Tags de l'exemplaire", icon: "tag.fill")
+                        SectionEyebrow(title: "Tags de l'exemplaire", icon: "tag.fill", isPremiumFeature: true)
                         TagsEditor(instanceId: item.instanceId, releaseId: item.releaseId)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 12)
@@ -172,10 +176,6 @@ struct CollectionItemEditSheet: View {
                                             Task {
                                                 await saveField(field, value: fieldValues[field.id] ?? "")
                                             }
-                                        },
-                                        gainRole: gainFieldRole(for: field),
-                                        onGainFieldTap: gainFieldRole(for: field).map { role in
-                                            { openGainFieldSetting(role) }
                                         }
                                     )
                                     if index < fields.count - 1 {
@@ -256,6 +256,11 @@ struct CollectionItemEditSheet: View {
                     .tint(Color.spinlogPink)
                 }
             }
+            // Prix ou état modifié dans la section « Plus-value » : les deux champs Discogs associés,
+            // toujours listés plus bas, montrent la même valeur sans attendre une réouverture.
+            .onChange(of: CopyDetailsStore.shared.details(for: item.instanceId)) {
+                syncAssociatedFieldValues()
+            }
             .onChange(of: selectedFolderId) { _, newFolderId in
                 guard newFolderId != item.folderId else { return }
                 onFolderChanged(item, newFolderId)
@@ -312,44 +317,29 @@ struct CollectionItemEditSheet: View {
         }
     }
 
-    /// Valeur brute d'un champ : d'abord l'état local déjà chargé dans la feuille (reflète un
-    /// prix d'achat tout juste modifié plus bas, sans fermer/rouvrir), sinon l'exemplaire tel que
-    /// chargé à l'ouverture.
-    private func rawFieldValue(_ fieldId: Int) -> String {
-        fieldValues[fieldId] ?? item.value(forFieldId: fieldId)
-    }
-
-    private var purchasePriceFieldId: Int? {
-        guard let username = DiscogsAuthManager.shared.username else { return nil }
-        return CollectionPreferencesStore.purchasePriceFieldId(for: username)
-    }
-
-    /// Même logique que `MyItemCard.declaredCondition` sur la fiche release : le champ "état du
-    /// disque" choisi dans les réglages (auto-détecté ou sélectionné manuellement), sinon une
-    /// détection par mots-clés parmi les champs déjà chargés. Affine l'estimation de cote
-    /// (sinon `refreshMarketEstimateIfNeeded` retombe sur une moyenne).
-    private var declaredCondition: String? {
-        if let username = DiscogsAuthManager.shared.username,
-           let configuredFieldId = CollectionPreferencesStore.mediaConditionFieldId(for: username) {
-            let value = rawFieldValue(configuredFieldId)
-            return value.isEmpty ? nil : value
+    /// Aligne sur l'app la valeur affichée des champs Discogs associés, sauf si elle y correspond déjà
+    /// (« 25,5 € » saisi à la main équivaut à « 25.50 EUR » : on ne réécrit pas ce que l'utilisateur a tapé).
+    private func syncAssociatedFieldValues() {
+        guard let username = DiscogsAuthManager.shared.username else { return }
+        let store = CopyDetailsStore.shared
+        for field in fields {
+            guard let local = store.fieldValue(forFieldId: field.id, instanceId: item.instanceId) else { continue }
+            let shown = fieldValues[field.id] ?? ""
+            guard !store.isFieldValue(shown, equivalentToStoredFor: field.id, instanceId: item.instanceId, username: username) else { continue }
+            fieldValues[field.id] = local
+            savedFieldValues[field.id] = local
         }
-        guard let field = fields.first(where: { field in
-            let normalized = field.name.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
-            guard !normalized.contains("sleeve"), !normalized.contains("pochette") else { return false }
-            return normalized.contains("media condition") || normalized.contains("etat du media") || normalized.contains("etat du disque")
-        }) else { return nil }
-        let value = rawFieldValue(field.id)
-        return value.isEmpty ? nil : value
     }
 
-    /// Prix d'achat brut (montant + devise), tel que renseigné dans les champs personnalisés —
-    /// `nil` si le champ n'est pas configuré ou laissé vide.
+    /// État du disque de l'exemplaire, pour affiner l'estimation de cote (sans lui,
+    /// `refreshMarketEstimateIfNeeded` retombe sur une moyenne de tous les états).
+    private var declaredCondition: String? {
+        CopyDetailsStore.shared.mediaCondition(for: item.instanceId)?.discogsLabel
+    }
+
+    /// Prix d'achat de l'exemplaire (montant et devise), `nil` s'il n'est pas renseigné.
     private var purchasePrice: (amount: Double, currency: String)? {
-        guard let fieldId = purchasePriceFieldId, let username = DiscogsAuthManager.shared.username else { return nil }
-        let raw = rawFieldValue(fieldId).trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !raw.isEmpty else { return nil }
-        return PurchasePriceParser.parse(raw, defaultCurrency: CollectionPreferencesStore.defaultCurrency(for: username))
+        CopyDetailsStore.shared.purchasePrice(for: item.instanceId)
     }
 
     /// Devise d'affichage de la plus-value : celle choisie dans Réglages → Suivi de cote (elle
@@ -359,6 +349,14 @@ struct CollectionItemEditSheet: View {
         return CollectionPreferencesStore.defaultCurrency(for: username)
     }
 
+    /// Prix d'achat et état du disque, saisis ici pour tous les comptes (le calcul de la plus-value
+    /// qui en découle est la fonction Premium).
+    private var copyDetailsEditor: some View {
+        CopyDetailsEditor(item: item) { message in
+            errorMessage = message
+        }
+    }
+
     /// Plus/moins-value de l'exemplaire par rapport à son prix d'achat, exprimée dans la devise
     /// d'affichage (prix d'achat et cote marketplace sont chacun dans leur propre devise d'origine).
     @ViewBuilder
@@ -366,6 +364,7 @@ struct CollectionItemEditSheet: View {
         if !PremiumStore.shared.isPremium {
             VStack(alignment: .leading, spacing: 10) {
                 SectionEyebrow(title: "Plus-value de l'exemplaire", icon: "arrow.left.arrow.right")
+                copyDetailsEditor
                 // La cote seule est gratuite (donnée Discogs affichée avec son attribution) ; seule
                 // sa comparaison au prix d'achat est réservée au Premium.
                 if let marketEstimateInDisplayCurrency {
@@ -394,9 +393,10 @@ struct CollectionItemEditSheet: View {
         } else {
             VStack(alignment: .leading, spacing: 10) {
                 SectionEyebrow(title: "Plus-value de l'exemplaire", icon: "arrow.left.arrow.right", isPremiumFeature: true)
+                copyDetailsEditor
 
                 if purchasePrice == nil {
-                    Text("Renseigne ton prix d'achat dans les champs personnalisés ci-dessous pour suivre la plus-value de cet exemplaire.")
+                    Text("Renseigne ton prix d'achat ci-dessus pour suivre la plus-value de cet exemplaire.")
                         .font(.subheadline)
                         .foregroundStyle(Color.appSecondaryText)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -460,21 +460,6 @@ struct CollectionItemEditSheet: View {
         }
         .buttonStyle(.plain)
         .accessibilityHint("Ouvre le Marketplace Discogs pour cette release")
-    }
-
-    /// Rôle du champ dans le calcul de la plus-value, d'après les champs choisis dans Réglages.
-    private func gainFieldRole(for field: CollectionField) -> SettingsFieldHighlight? {
-        guard let username = DiscogsAuthManager.shared.username else { return nil }
-        if field.id == CollectionPreferencesStore.purchasePriceFieldId(for: username) { return .purchasePrice }
-        if field.id == CollectionPreferencesStore.mediaConditionFieldId(for: username) { return .mediaCondition }
-        return nil
-    }
-
-    /// Renvoie vers le réglage du champ, mis en évidence à l'arrivée (même mécanisme que « Modifier »
-    /// dans le guide de rangement).
-    private func openGainFieldSetting(_ role: SettingsFieldHighlight) {
-        dismiss()
-        TabNavigationCoordinator.shared.openSettingsAtPurchaseField(role)
     }
 
     private var discRow: some View {
@@ -566,6 +551,9 @@ struct CollectionItemEditSheet: View {
         }
 
         savedFieldValues[field.id] = newValue
+        if let username = DiscogsAuthManager.shared.username {
+            CopyDetailsStore.shared.mirrorWrite(fieldId: field.id, value: newValue, instanceId: item.instanceId, username: username)
+        }
 
         var updatedNotes = item.notes
         updatedNotes.removeAll { $0.fieldId == field.id }

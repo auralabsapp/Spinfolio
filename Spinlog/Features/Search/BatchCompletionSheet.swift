@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// Saisie rapide, disque par disque, du prix d'achat et de l'état du média des disques qu'un scan
-/// par lot vient d'ajouter. « Passer » laisse un disque tel quel (il reste retrouvable avec le
-/// filtre « À compléter » de la Collection) ; fermer la feuille arrête là sans rien perdre : ce
-/// qui est enregistré l'est déjà.
+/// Saisie rapide, album par album, du prix d'achat et de l'état du disque des albums qu'un ajout
+/// vient de créer. « Passer » laisse un album tel quel (il reste retrouvable avec le filtre
+/// « À compléter » de la Collection) ; fermer la feuille arrête là sans rien perdre : ce qui est
+/// enregistré l'est déjà.
 struct BatchCompletionSheet: View {
     let request: BatchCompletionRequest
 
@@ -11,31 +11,24 @@ struct BatchCompletionSheet: View {
     @State private var index = 0
     @State private var amountText = ""
     @State private var currency: String
-    @State private var condition = ""
-    @State private var conditionField: CollectionField?
-    @State private var isLoadingFields = true
+    @State private var condition: RecordGrade?
     @State private var isSaving = false
     @State private var errorMessage: String?
 
-    private let priceFieldId: Int?
-    private let mediaConditionFieldId: Int?
-
     init(request: BatchCompletionRequest) {
         self.request = request
-        priceFieldId = CollectionPreferencesStore.purchasePriceFieldId(for: request.username)
-        mediaConditionFieldId = CollectionPreferencesStore.mediaConditionFieldId(for: request.username)
         _currency = State(initialValue: CollectionPreferencesStore.defaultCurrency(for: request.username))
     }
 
     private var current: CollectionItem { request.items[index] }
     private var isLast: Bool { index == request.items.count - 1 }
 
-    private var values: [(fieldId: Int, value: String)] {
-        BatchCompletion.values(
-            priceFieldId: priceFieldId, mediaConditionFieldId: mediaConditionFieldId,
-            amountText: amountText, currency: currency, condition: condition
-        )
+    private var price: (amount: Double, currency: String)? {
+        BatchCompletion.parsedPrice(amountText: amountText, currency: currency)
     }
+
+    /// Quelque chose à enregistrer : un prix lisible ou un état choisi.
+    private var hasValues: Bool { price != nil || condition != nil }
 
     var body: some View {
         NavigationStack {
@@ -47,10 +40,6 @@ struct BatchCompletionSheet: View {
                         amountText: $amountText,
                         currency: $currency,
                         condition: $condition,
-                        showsPrice: priceFieldId != nil,
-                        showsCondition: mediaConditionFieldId != nil,
-                        conditionField: conditionField,
-                        isLoadingConditionField: isLoadingFields,
                         focusTrigger: index
                     )
                 }
@@ -70,7 +59,6 @@ struct BatchCompletionSheet: View {
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
-        .task { await loadConditionField() }
     }
 
     // MARK: - Sections
@@ -122,7 +110,7 @@ struct BatchCompletionSheet: View {
             .buttonStyle(.glassProminent)
             .foregroundStyle(Color.onAccent)
             .controlSize(.large)
-            .disabled(isSaving || values.isEmpty)
+            .disabled(isSaving || !hasValues)
         }
         .padding(.horizontal)
         .padding(.vertical, 10)
@@ -131,19 +119,13 @@ struct BatchCompletionSheet: View {
 
     // MARK: - Actions
 
-    private func loadConditionField() async {
-        defer { isLoadingFields = false }
-        guard let mediaConditionFieldId else { return }
-        let fields = await CollectionFieldsService.fields(username: request.username, credentials: DiscogsAuthManager.shared.credentials)
-        conditionField = fields.first { $0.id == mediaConditionFieldId }
-    }
-
     private func save() {
         isSaving = true
-        let toWrite = values
+        let toWritePrice = price
+        let toWriteCondition = condition
         let item = current
         Task {
-            let result = await BatchCompletion.save(toWrite, on: item, username: request.username)
+            let result = await BatchCompletion.save(price: toWritePrice, condition: toWriteCondition, on: item, username: request.username)
             isSaving = false
             switch result {
             case .saved:
@@ -166,7 +148,7 @@ struct BatchCompletionSheet: View {
         withAnimation {
             index += 1
             amountText = ""
-            condition = ""
+            condition = nil
         }
     }
 }

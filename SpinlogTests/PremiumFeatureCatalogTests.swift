@@ -19,8 +19,8 @@ struct PremiumFeatureCatalogTests {
         }
     }
 
-    /// Le paywall garde ses 9 fonctions (la liste dépliable y compte sur ce total).
-    @Test func catalogKeepsTheNineSoldFeatures() {
-        #expect(PremiumFeatureCatalog.all.count == 9)
+    /// Le paywall vend ses 10 fonctions, toutes affichées (plus de liste dépliable).
+    @Test func catalogKeepsTheTenSoldFeatures() {
+        #expect(PremiumFeatureCatalog.all.count == 10)
     }
 }

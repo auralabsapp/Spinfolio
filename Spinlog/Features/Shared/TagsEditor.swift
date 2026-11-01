@@ -7,6 +7,7 @@ struct TagsEditor: View {
     var releaseId: Int? = nil
 
     @State private var store = TagStore.shared
+    @State private var premiumStore = PremiumStore.shared
     @State private var showingManagementSheet = false
 
     init(instanceId: Int, releaseId: Int? = nil) {
@@ -20,8 +21,36 @@ struct TagsEditor: View {
     }
 
     var body: some View {
+        if premiumStore.isPremium {
+            editableTags
+        } else {
+            readOnlyTags
+        }
+    }
+
+    /// Sans Premium (jamais abonné, ou abonnement perdu), les tags déjà posés restent visibles mais
+    /// plus rien ne s'écrit : ni retrait, ni ajout. Le verrou explique pourquoi et mène au paywall.
+    private var readOnlyTags: some View {
         let tags = store.tags(for: instanceId, releaseId: releaseId)
-        FlowLayout(spacing: 8) {
+        return VStack(alignment: .leading, spacing: 12) {
+            if !tags.isEmpty {
+                FlowLayout(spacing: 8) {
+                    ForEach(tags, id: \.self) { tag in
+                        TagPill(tag: tag)
+                    }
+                }
+            }
+            PremiumLockedCard(
+                icon: "tag.fill",
+                title: "Tags",
+                message: "Passe premium pour créer et attribuer des tags à tes albums."
+            )
+        }
+    }
+
+    private var editableTags: some View {
+        let tags = store.tags(for: instanceId, releaseId: releaseId)
+        return FlowLayout(spacing: 8) {
             ForEach(tags, id: \.self) { tag in
                 TagPill(tag: tag) {
                     // Sans `withAnimation`, les pochettes restantes (et le bouton "Ajouter") se

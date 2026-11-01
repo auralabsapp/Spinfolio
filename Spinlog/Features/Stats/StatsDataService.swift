@@ -39,33 +39,18 @@ enum StatsDataService {
         return (cachedCollection.isEmpty ? nil : cachedCollection.count, cachedWantlist.isEmpty ? nil : cachedWantlist.count)
     }
 
-    /// Total des prix d'achat renseignés, converti vers la devise par défaut du compte ; `nil`
-    /// si aucun champ « prix d'achat » n'est configuré. Une seule conversion par devise (et non
-    /// par disque, qui attendait chacun un passage par l'acteur, voire une requête).
+    /// Total des prix d'achat renseignés, converti vers la devise par défaut du compte ; `nil` si
+    /// aucun exemplaire n'a de prix. Une seule conversion par devise (et non par disque, qui
+    /// attendait chacun un passage par l'acteur, voire une requête).
     static func totalInvested(of items: [CollectionItem], username: String) async -> (total: Double, currency: String)? {
-        guard let fieldId = CollectionPreferencesStore.purchasePriceFieldId(for: username) else { return nil }
+        let amounts = CopyDetailsStore.shared.purchaseAmountsByCurrency(forInstanceIds: items.map(\.instanceId))
+        guard !amounts.isEmpty else { return nil }
         let currency = CollectionPreferencesStore.defaultCurrency(for: username)
         var total = 0.0
-        for (sourceCurrency, amount) in purchaseAmountsByCurrency(of: items, fieldId: fieldId, defaultCurrency: currency) {
+        for (sourceCurrency, amount) in amounts {
             total += await CurrencyConversionService.shared.convert(amount, from: sourceCurrency, to: currency)
         }
         return (total, currency)
-    }
-
-    /// Prix d'achat renseignés, additionnés par devise (une devise absente du champ prend celle
-    /// par défaut). Fonction pure, testée dans `StatsCalculationTests`.
-    static func purchaseAmountsByCurrency(
-        of items: [CollectionItem],
-        fieldId: Int,
-        defaultCurrency: String
-    ) -> [String: Double] {
-        var amountsByCurrency: [String: Double] = [:]
-        for item in items {
-            let raw = item.value(forFieldId: fieldId).trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !raw.isEmpty, let parsed = PurchasePriceParser.parse(raw, defaultCurrency: defaultCurrency) else { continue }
-            amountsByCurrency[parsed.currency, default: 0] += parsed.amount
-        }
-        return amountsByCurrency
     }
 
     /// Enregistre un nouveau point d'historique (au plus 1 par jour) à partir de la valeur de

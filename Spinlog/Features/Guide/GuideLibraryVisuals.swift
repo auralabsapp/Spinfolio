@@ -265,28 +265,21 @@ struct CopiesMock: View {
     }
 }
 
-// MARK: - Tags et note
+// MARK: - Tags
 
-struct TagsAndRatingMock: View {
+struct TagsMock: View {
     var body: some View {
-        VStack(spacing: 14) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 tag("Jazz")
                 tag("Live")
+                tag("Original")
                 Spacer(minLength: 0)
             }
-
-            // Mêmes étoiles que `ReleaseRatingCard`.
-            HStack(spacing: 4) {
-                ForEach(1...5, id: \.self) { value in
-                    Image(systemName: value <= 4 ? "star.fill" : "star")
-                        .font(.title3)
-                        .foregroundStyle(value <= 4 ? Color.orange : Color.secondary.opacity(0.3))
-                }
+            HStack(spacing: 8) {
+                tag("Brocante")
+                tag("À écouter")
                 Spacer(minLength: 0)
-                Text(verbatim: "4/5")
-                    .font(.caption)
-                    .foregroundStyle(Color.appSecondaryText)
             }
         }
     }
@@ -303,6 +296,25 @@ struct TagsAndRatingMock: View {
         .background(Color.spinlogPinkBadge, in: Capsule())
         .overlay(Capsule().strokeBorder(Color.spinlogPink.opacity(0.35), lineWidth: 0.8))
         .foregroundStyle(Color.spinlogPink)
+    }
+}
+
+// MARK: - Note
+
+struct RatingMock: View {
+    var body: some View {
+        // Mêmes étoiles que `ReleaseRatingCard`.
+        HStack(spacing: 4) {
+            ForEach(1...5, id: \.self) { value in
+                Image(systemName: value <= 4 ? "star.fill" : "star")
+                    .font(.title3)
+                    .foregroundStyle(value <= 4 ? Color.orange : Color.secondary.opacity(0.3))
+            }
+            Spacer(minLength: 0)
+            Text(verbatim: "4/5")
+                .font(.caption)
+                .foregroundStyle(Color.appSecondaryText)
+        }
     }
 }
 
@@ -340,7 +352,8 @@ struct PriceMock: View {
             GuideVisualView(visual: .rowActions)
             GuideVisualView(visual: .tracklist)
             GuideVisualView(visual: .copies)
-            GuideVisualView(visual: .tagsAndRating)
+            GuideVisualView(visual: .tags)
+            GuideVisualView(visual: .rating)
             GuideVisualView(visual: .price)
         }
         .padding()

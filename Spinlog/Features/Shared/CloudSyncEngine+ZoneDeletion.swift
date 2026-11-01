@@ -76,6 +76,7 @@ extension CloudSyncEngine {
             // Discogs et les réglages d'appareil (rangement, thème, apparence) ne sont pas touchés.
             // Aucune de ces méthodes ne signale de changement à envoyer.
             TagStore.shared.clearAccountData(for: username)
+            CopyDetailsStore.shared.clearAccountData(for: username)
             ListeningLogStore.shared.clearAccountData(for: username)
             WantlistAlertStore.shared.clearAccountData(for: username)
             GradeStore.shared.clearAccountData(for: username)

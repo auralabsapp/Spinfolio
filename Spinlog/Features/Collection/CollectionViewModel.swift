@@ -142,7 +142,6 @@ final class CollectionViewModel {
     /// Relie l'affichage à la liste et aux préférences du compte (appelé depuis `init`).
     private func connectDisplay() {
         display.currentItems = { [unowned self] in items }
-        display.fieldIdProvider = { [unowned self] field in authManager.username.flatMap { field.fieldId(for: $0) } }
         display.onSortChanged = { [unowned self] criterionChanged in
             if let username = authManager.username {
                 if criterionChanged {
@@ -181,7 +180,6 @@ final class CollectionViewModel {
         pagination.cancelBackgroundSync()
 
         restoreSavedSort(username: username)
-        display.refreshAvailableMissingFields()
 
         // Récupération du dernier dossier consulté mémorisé
         let preferredFolderId = selectedFolderId ?? CollectionPreferencesStore.lastConsultedFolderId(for: username) ?? DiscogsConstants.allFolderId
@@ -242,7 +240,6 @@ final class CollectionViewModel {
             self.folders = cachedFolders
         }
         restoreSavedSort(username: username)
-        display.refreshAvailableMissingFields()
 
         let preferredFolderId = folderId ?? selectedFolderId ?? CollectionPreferencesStore.lastConsultedFolderId(for: username)
         let targetFolderId = folderId

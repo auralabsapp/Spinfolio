@@ -504,7 +504,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spinlog/Spinlog.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 46;
 				DEVELOPMENT_TEAM = UUW43WHGUG;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
@@ -556,7 +556,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spinlog/Spinlog.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 46;
 				DEVELOPMENT_TEAM = UUW43WHGUG;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
@@ -701,7 +701,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = SpinlogWidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 46;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SpinlogWidgets/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = SpinlogWidgets;
@@ -732,7 +732,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = SpinlogWidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 46;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SpinlogWidgets/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = SpinlogWidgets;

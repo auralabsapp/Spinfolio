@@ -1,22 +1,5 @@
 import SwiftUI
 
-/// Réglage à mettre en évidence quand on arrive dans Réglages depuis un autre écran : les deux champs
-/// personnalisés Discogs choisis pour le calcul de la plus-value (voir « Mon exemplaire »).
-enum SettingsFieldHighlight: Hashable {
-    case purchasePrice
-    case mediaCondition
-
-    /// Teinte du champ, reprise par son nom, sa pastille « Utilisé pour la plus-value » et sa ligne
-    /// dans Réglages, pour qu'on les relie d'un coup d'œil. Deux oranges soutenus, l'un plus vif
-    /// (prix d'achat), l'autre plus brûlé (état), distinguent les champs sans rompre l'harmonie.
-    var tint: Color {
-        switch self {
-        case .purchasePrice: Color.gainFieldPurchase
-        case .mediaCondition: Color.gainFieldCondition
-        }
-    }
-}
-
 /// Écrans poussés depuis Réglages. Des liens à valeur (et non à vue) : la pile de l'onglet est
 /// alors portée par `TabNavigationCoordinator.settingsPath`, ce qui permet au re-tap sur l'onglet
 /// de revenir à la racine — les liens à vue ne peuvent pas être dépilés par programme.
@@ -35,6 +18,8 @@ enum SettingsDestination: Hashable {
     case organization
     case shelving
     case gainTracking
+    case copyDetailsImport
+    case copyDetailsDiscogsSend
     case export
     case listening
     case iCloud
@@ -74,6 +59,10 @@ enum SettingsDestination: Hashable {
             ShelvingSettingsPage()
         case .gainTracking:
             GainTrackingSettingsPage()
+        case .copyDetailsImport:
+            CopyDetailsImportPage()
+        case .copyDetailsDiscogsSend:
+            CopyDetailsDiscogsSendPage()
         case .export:
             ExportSettingsPage()
         case .listening:

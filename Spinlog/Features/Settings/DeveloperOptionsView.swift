@@ -291,8 +291,6 @@ struct DeveloperOptionsView: View {
 
     private func runNetPurchasePriceBackfill(username: String, credentials: DiscogsCredentials) async {
         switch await NetPurchasePriceBackfill.run(username: username, credentials: credentials) {
-        case .purchaseFieldNotConfigured:
-            showToast("Configure d'abord le champ « Prix d'achat » dans Réglages > Suivi de plus-value.")
         case .fieldsUnavailable:
             showToast("Impossible de récupérer les champs personnalisés Discogs.")
         case .discountFieldMissing:

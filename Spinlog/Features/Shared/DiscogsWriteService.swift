@@ -66,6 +66,7 @@ enum DiscogsWriteService {
         if item.instanceId < 0 {
             syncQueue.cancelPendingAdd(temporaryInstanceId: item.instanceId)
             TagStore.shared.removeTags(for: item.instanceId)
+            CopyDetailsStore.shared.removeDetails(for: item.instanceId)
             return .done
         }
         let action = PendingAction(type: .removeFromCollection, releaseId: item.releaseId, folderId: item.folderId, instanceId: item.instanceId)

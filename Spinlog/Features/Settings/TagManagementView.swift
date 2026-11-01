@@ -163,11 +163,16 @@ struct TagManagementView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var store = TagStore.shared
+    @State private var premiumStore = PremiumStore.shared
     @State private var searchText = ""
     @State private var renameItem: TagRenameItem?
     @State private var tagToDelete: String?
     @State private var duplicateTagError: String?
     @State private var showingMaxLengthAlert = false
+
+    /// Créer, renommer, supprimer : réservé au Premium. Sans abonnement (jamais abonné, ou
+    /// abonnement perdu), la liste reste consultable et filtrable, en lecture seule.
+    private var canEdit: Bool { premiumStore.isPremium }
 
     private var trimmedQuery: String {
         searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -186,6 +191,14 @@ struct TagManagementView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                if !canEdit {
+                    PremiumLockedCard(
+                        icon: "tag.fill",
+                        title: "Gestion des tags",
+                        message: "Passe premium pour créer, attribuer, renommer et supprimer tes tags. Tes tags restent visibles."
+                    )
+                }
+
                 // Bouton de création directe et fluide via la recherche
                 if onApply != nil {
                     Text("Touche un tag pour l'ajouter à la sélection.")
@@ -193,7 +206,7 @@ struct TagManagementView: View {
                         .foregroundStyle(Color.appSecondaryText)
                 }
 
-                if !trimmedQuery.isEmpty && !exactMatchExists {
+                if canEdit && !trimmedQuery.isEmpty && !exactMatchExists {
                     Button {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         store.createTag(trimmedQuery)
@@ -221,7 +234,7 @@ struct TagManagementView: View {
                     }
                     .buttonStyle(.plain)
                     .appleMusicGroupedCard()
-                } else if !trimmedQuery.isEmpty && exactMatchExists {
+                } else if canEdit && !trimmedQuery.isEmpty && exactMatchExists {
                     // Indication sobre que le tag existe déjà
                     HStack(spacing: 12) {
                         Image(systemName: "exclamationmark.circle.fill")
@@ -239,7 +252,7 @@ struct TagManagementView: View {
                     .appleMusicGroupedCard()
                 }
 
-                if store.allTags.isEmpty && trimmedQuery.isEmpty {
+                if canEdit && store.allTags.isEmpty && trimmedQuery.isEmpty {
                     VStack(alignment: .center, spacing: 14) {
                         Image(systemName: "tag")
                             .font(.system(size: 44))
@@ -264,9 +277,11 @@ struct TagManagementView: View {
                             tagRow(tag)
                         }
 
-                        (SwipeActionsSupport.isAvailable ? Text("Glisse vers la gauche pour modifier ou supprimer un tag.") : Text("Maintiens le doigt sur un tag pour le modifier ou le supprimer."))
-                            .font(.footnote)
-                            .foregroundStyle(Color.appSecondaryText)
+                        if canEdit {
+                            (SwipeActionsSupport.isAvailable ? Text("Glisse vers la gauche pour modifier ou supprimer un tag.") : Text("Maintiens le doigt sur un tag pour le modifier ou le supprimer."))
+                                .font(.footnote)
+                                .foregroundStyle(Color.appSecondaryText)
+                        }
                     }
                 }
             }
@@ -283,7 +298,11 @@ struct TagManagementView: View {
                 }
             }
         }
-        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Rechercher ou créer un tag")
+        .searchable(
+            text: $searchText,
+            placement: .navigationBarDrawer(displayMode: .always),
+            prompt: canEdit ? Text("Rechercher ou créer un tag") : Text("Rechercher un tag")
+        )
         .onChange(of: searchText) { _, newValue in
             if newValue.count > TagConstants.maxNameLength {
                 searchText = String(newValue.prefix(TagConstants.maxNameLength))
@@ -292,7 +311,7 @@ struct TagManagementView: View {
         }
         .onSubmit(of: .search) {
             let trimmed = trimmedQuery
-            guard !trimmed.isEmpty else { return }
+            guard canEdit, !trimmed.isEmpty else { return }
             if exactMatchExists {
                 duplicateTagError = trimmed
             } else {
@@ -346,7 +365,7 @@ struct TagManagementView: View {
         }
     }
 
-    private func tagRow(_ tag: String) -> some View {
+    private func tagLabel(_ tag: String) -> some View {
         HStack(spacing: 12) {
             Text(tag)
                 .font(.subheadline.weight(.medium))
@@ -365,6 +384,20 @@ struct TagManagementView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .contentShape(Rectangle())
+    }
+
+    @ViewBuilder
+    private func tagRow(_ tag: String) -> some View {
+        if canEdit {
+            editableTagRow(tag)
+        } else {
+            tagLabel(tag)
+                .accessibilityElement(children: .combine)
+        }
+    }
+
+    private func editableTagRow(_ tag: String) -> some View {
+        tagLabel(tag)
         .onTapGesture {
             if let onApply {
                 onApply(tag)

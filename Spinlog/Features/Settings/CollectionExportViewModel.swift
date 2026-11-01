@@ -138,28 +138,14 @@ final class CollectionExportViewModel {
             return
         }
 
-        let purchasePriceFieldId = CollectionPreferencesStore.purchasePriceFieldId(for: username)
-        let mediaConditionFieldId = CollectionPreferencesStore.mediaConditionFieldId(for: username)
         let currency = CollectionPreferencesStore.defaultCurrency(for: username)
-
-        var totalInvested: Double?
-        if let purchasePriceFieldId {
-            var total = 0.0
-            for item in items {
-                let raw = item.value(forFieldId: purchasePriceFieldId).trimmingCharacters(in: .whitespacesAndNewlines)
-                guard !raw.isEmpty, let parsed = PurchasePriceParser.parse(raw, defaultCurrency: currency) else { continue }
-                total += await CurrencyConversionService.shared.convert(parsed.amount, from: parsed.currency, to: currency)
-            }
-            totalInvested = total
-        }
+        let totalInvested = await StatsDataService.totalInvested(of: items, username: username)?.total
 
         let coverImages = await CollectionPDFExporter.fetchCoverImages(for: items)
         let pdfData = CollectionPDFExporter.generatePDF(
             username: username,
             items: items,
             folders: folders,
-            purchasePriceFieldId: purchasePriceFieldId,
-            mediaConditionFieldId: mediaConditionFieldId,
             defaultCurrency: currency,
             totalInvested: totalInvested,
             marketValue: marketValue,

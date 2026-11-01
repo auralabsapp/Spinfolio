@@ -194,6 +194,25 @@ enum CollectionPreferencesStore {
         CloudSyncEngine.shared.markCollectionPreferencesDirty()
     }
 
+    /// Envoi des prix et états saisis dans l'app vers les champs Discogs associés. Désactivé pour un
+    /// compte neuf ; un compte déjà configuré avant cette option (au moins un champ associé à la
+    /// première lecture) garde l'envoi actif, comme avant. La première lecture fixe la valeur : elle a
+    /// lieu à l'activation du compte (`CopyDetailsStore`), avant que l'utilisateur ait pu associer
+    /// un champ.
+    static func sendsCopyDetailsToDiscogs(for username: String) -> Bool {
+        let storageKey = key("sendsCopyDetailsToDiscogs", for: username)
+        if let stored = UserDefaults.standard.object(forKey: storageKey) as? Bool { return stored }
+        let isAlreadyConfigured = purchasePriceFieldId(for: username) != nil || mediaConditionFieldId(for: username) != nil
+        UserDefaults.standard.set(isAlreadyConfigured, forKey: storageKey)
+        return isAlreadyConfigured
+    }
+
+    static func setSendsCopyDetailsToDiscogs(_ value: Bool, for username: String) {
+        UserDefaults.standard.set(value, forKey: key("sendsCopyDetailsToDiscogs", for: username))
+        NotificationCenter.default.post(name: .collectionPreferencesChanged, object: nil)
+        CloudSyncEngine.shared.markCollectionPreferencesDirty()
+    }
+
     /// Identifiant du champ personnalisé Discogs utilisé comme "état du média" (Media Condition),
     /// pour affiner l'estimation de cote. Détecté automatiquement ou choisi manuellement.
     static func mediaConditionFieldId(for username: String) -> Int? {
@@ -203,6 +222,16 @@ enum CollectionPreferencesStore {
     static func setMediaConditionFieldId(_ fieldId: Int?, for username: String) {
         setValue(fieldId, forKey: key("mediaConditionFieldId", for: username), notify: true)
         CloudSyncEngine.shared.markCollectionPreferencesDirty()
+    }
+
+    /// Proposer de renseigner prix et état juste après l'ajout d'un album (activé par défaut).
+    /// Préférence de cet appareil : elle n'est pas envoyée par iCloud.
+    static func offersCompletionAfterAdd(for username: String) -> Bool {
+        UserDefaults.standard.object(forKey: key("offersCompletionAfterAdd", for: username)) as? Bool ?? true
+    }
+
+    static func setOffersCompletionAfterAdd(_ value: Bool, for username: String) {
+        UserDefaults.standard.set(value, forKey: key("offersCompletionAfterAdd", for: username))
     }
 
     /// Devise principale de la collection, utilisée par défaut à la saisie d'un prix d'achat et
@@ -225,6 +254,7 @@ enum CollectionPreferencesStore {
         purchasePriceFieldId: Int?,
         mediaConditionFieldId: Int?,
         defaultAddFolderId: Int,
+        sendsCopyDetailsToDiscogs: Bool? = nil,
         for username: String
     ) {
         // Une seule notification, et seulement si quelque chose a réellement changé : chaque
@@ -235,6 +265,11 @@ enum CollectionPreferencesStore {
             || purchasePriceFieldId != self.purchasePriceFieldId(for: username)
             || mediaConditionFieldId != self.mediaConditionFieldId(for: username)
             || defaultAddFolderId != self.defaultAddFolderId(for: username)
+        // Réglage purement local (aucun rechargement de collection) : appliqué sans notification.
+        if let sendsCopyDetailsToDiscogs,
+           sendsCopyDetailsToDiscogs != self.sendsCopyDetailsToDiscogs(for: username) {
+            UserDefaults.standard.set(sendsCopyDetailsToDiscogs, forKey: key("sendsCopyDetailsToDiscogs", for: username))
+        }
         guard changed else { return }
         setValue(currency, forKey: key("defaultCurrency", for: username))
         setValue(purchasePriceFieldId, forKey: key("purchasePriceFieldId", for: username))

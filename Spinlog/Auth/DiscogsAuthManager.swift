@@ -65,6 +65,7 @@ final class DiscogsAuthManager: NSObject {
         // Propage le compte déjà connu (relance de l'app) aux stores isolés par compte, pour
         // qu'ils chargent tout de suite les bonnes données plutôt que de démarrer à vide.
         TagStore.shared.setActiveUsername(self.username)
+        CopyDetailsStore.shared.setActiveUsername(self.username)
         ListeningLogStore.shared.setActiveUsername(self.username)
         GradeStore.shared.setActiveUsername(self.username)
         ShelfPreferencesStore.shared.setActiveUsername(self.username)
@@ -118,6 +119,7 @@ final class DiscogsAuthManager: NSObject {
             // Bascule les stores isolés par compte (tags, journal d'écoute) sur ce compte : s'il
             // a déjà été utilisé sur cet appareil, ses données sont restaurées immédiatement.
             TagStore.shared.setActiveUsername(username)
+            CopyDetailsStore.shared.setActiveUsername(username)
             ListeningLogStore.shared.setActiveUsername(username)
             GradeStore.shared.setActiveUsername(username)
             ShelfPreferencesStore.shared.setActiveUsername(username)
@@ -154,6 +156,7 @@ final class DiscogsAuthManager: NSObject {
         TabNavigationCoordinator.shared.showCollectionRoot()
         isAuthenticated = true
         TagStore.shared.setActiveUsername(username)
+        CopyDetailsStore.shared.setActiveUsername(username)
         ListeningLogStore.shared.setActiveUsername(username)
         GradeStore.shared.setActiveUsername(username)
         ShelfPreferencesStore.shared.setActiveUsername(username)
@@ -177,6 +180,7 @@ final class DiscogsAuthManager: NSObject {
         // Vide l'état en mémoire des stores isolés par compte (les données restent sur le
         // disque, prêtes à être restaurées si ce compte se reconnecte plus tard).
         TagStore.shared.setActiveUsername(nil)
+        CopyDetailsStore.shared.setActiveUsername(nil)
         ListeningLogStore.shared.setActiveUsername(nil)
         GradeStore.shared.setActiveUsername(nil)
         ShelfPreferencesStore.shared.setActiveUsername(nil)
@@ -238,6 +242,7 @@ final class DiscogsAuthManager: NSObject {
     private static func clearDemoData() {
         LocalDataStore.shared.clearAllUserData(username: DemoMode.username)
         TagStore.shared.clearAccountData(for: DemoMode.username)
+        CopyDetailsStore.shared.clearAccountData(for: DemoMode.username)
         ListeningLogStore.shared.clearAccountData(for: DemoMode.username)
         // Réglages de rangement de la démo : sinon ils revenaient à la démo suivante.
         ShelfPreferencesStore.shared.clearAccountData(for: DemoMode.username)
@@ -272,6 +277,7 @@ final class DiscogsAuthManager: NSObject {
             CloudSyncEngine.shared.deleteCloudData(for: currentUsername)
             LocalDataStore.shared.clearAllUserData(username: currentUsername)
             TagStore.shared.clearAccountData(for: currentUsername)
+            CopyDetailsStore.shared.clearAccountData(for: currentUsername)
             ListeningLogStore.shared.clearAccountData(for: currentUsername)
             GradeStore.shared.clearAccountData(for: currentUsername)
             ShelfPreferencesStore.shared.clearAccountData(for: currentUsername)

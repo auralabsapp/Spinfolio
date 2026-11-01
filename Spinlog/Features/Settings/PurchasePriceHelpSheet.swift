@@ -1,8 +1,8 @@
 import SwiftUI
 
 /// Page « Comment ça fonctionne ? » du suivi de plus-value : un schéma en trois étapes, un exemple
-/// chiffré, l'état réel de la configuration du compte, puis les détails repliés (créer le champ
-/// sur Discogs, limites). Le calcul de la cote par état est expliqué dans « Limites ».
+/// chiffré, où en sont les données du compte, puis les détails repliés (champs Discogs facultatifs,
+/// limites). Le calcul de la cote par état est expliqué dans « Limites ».
 struct PurchasePriceHelpSheet: View {
     @State private var authManager = DiscogsAuthManager.shared
     @State private var setup = PurchasePriceSetup.load(for: DiscogsAuthManager.shared.username)
@@ -42,7 +42,7 @@ struct PurchasePriceHelpSheet: View {
             VStack(spacing: 8) {
                 HStack(spacing: 10) {
                     sourceCard(symbol: "eurosign.circle.fill", color: .green, title: "Ton prix payé")
-                    sourceCard(symbol: "opticaldisc.fill", color: .purple, title: "L'état de l'album")
+                    sourceCard(symbol: "opticaldisc.fill", color: .purple, title: "L'état du disque")
                 }
                 arrow
                 resultCard(symbol: "chart.line.uptrend.xyaxis", color: .blue, title: "La cote Discogs", subtitle: "pour cet état")
@@ -131,26 +131,16 @@ struct PurchasePriceHelpSheet: View {
         .frame(maxWidth: .infinity)
     }
 
-    // MARK: - 3. État de la configuration
+    // MARK: - 3. Où en sont tes données
 
     private var setupSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionEyebrow(title: "Ta configuration", icon: "checklist")
+            SectionEyebrow(title: "Tes données", icon: "checklist")
 
             VStack(alignment: .leading, spacing: 0) {
-                statusRow(
-                    title: "Champ prix d'achat",
-                    isOK: setup.hasPriceField,
-                    okText: "Détecté",
-                    missingText: "À créer sur Discogs"
-                )
+                countRow(title: "Prix d'achat renseignés", count: setup.pricedCopies)
                 Divider().overlay(Color.appSeparator).opacity(0.15)
-                statusRow(
-                    title: "Champ état de l'album",
-                    isOK: setup.hasConditionField,
-                    okText: "Détecté",
-                    missingText: "Non détecté : cote moyenne"
-                )
+                countRow(title: "États du disque renseignés", count: setup.gradedCopies)
                 Divider().overlay(Color.appSeparator).opacity(0.15)
                 HStack {
                     Text("Devise par défaut")
@@ -162,36 +152,36 @@ struct PurchasePriceHelpSheet: View {
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
+                Divider().overlay(Color.appSeparator).opacity(0.15)
+                HStack {
+                    Text("Envoi vers Discogs")
+                        .font(.subheadline)
+                    Spacer(minLength: 0)
+                    (setup.isLinkedToDiscogs ? Text("Champs associés") : Text("Aucun champ associé"))
+                        .font(.footnote)
+                        .foregroundStyle(Color.appSecondaryText)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
             }
             .appleMusicGroupedCard()
 
-            if !setup.isComplete {
-                Button {
-                    // Les sélecteurs de champs sont dans la page « Suivi de plus-value » de Réglages.
-                    TabNavigationCoordinator.shared.settingsPath = NavigationPath([SettingsDestination.gainTracking])
-                } label: {
-                    Label("Choisir mes champs dans Réglages", systemImage: "gearshape")
-                        .font(.subheadline.weight(.semibold))
-                }
-                .buttonStyle(.bordered)
-                .tint(Color.spinlogPink)
+            if !setup.hasData {
+                Text("Renseigne le prix d'achat d'un album dans « Mon exemplaire » pour suivre sa plus-value.")
+                    .font(.footnote)
+                    .foregroundStyle(Color.appSecondaryText)
             }
         }
     }
 
-    private func statusRow(title: LocalizedStringKey, isOK: Bool, okText: LocalizedStringKey, missingText: LocalizedStringKey) -> some View {
-        HStack(spacing: 10) {
-            // Le texte dit l'état en toutes lettres : pas d'information portée par la seule couleur.
-            Image(systemName: isOK ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                .foregroundStyle(isOK ? Color.gainPositive : Color.appWarning)
-                .accessibilityHidden(true)
+    private func countRow(title: LocalizedStringKey, count: Int) -> some View {
+        HStack {
             Text(title)
                 .font(.subheadline)
             Spacer(minLength: 0)
-            Text(isOK ? okText : missingText)
-                .font(.footnote)
+            Text(count, format: .number)
+                .font(.subheadline.weight(.semibold))
                 .foregroundStyle(Color.appSecondaryText)
-                .multilineTextAlignment(.trailing)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
@@ -202,12 +192,14 @@ struct PurchasePriceHelpSheet: View {
 
     private var detailsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            disclosure(title: "Créer le champ prix d'achat", icon: "plus.square.on.square") {
-                Text("Discogs ne crée aucun champ « prix d'achat » par défaut : c'est à toi de le créer une fois, depuis le site discogs.com (pas depuis l'app).")
+            disclosure(title: "Associer des champs Discogs", icon: "arrow.triangle.2.circlepath") {
+                Text("Facultatif : le prix d'achat et l'état du disque sont gardés dans l'app. Si tu associes des champs personnalisés de ton compte Discogs (Réglages > Suivi de plus-value), les valeurs qu'ils contiennent sont reprises, et chaque prix ou état saisi y est aussi enregistré.")
+                Text("Discogs ne permet pas de créer un champ depuis l'app : crée-le une fois sur discogs.com.")
+                    .foregroundStyle(Color.appSecondaryText)
                 VStack(alignment: .leading, spacing: 6) {
                     Text("1. Va dans Réglages du compte → onglet Collection sur discogs.com")
-                    Text("2. Dans « Champs personnalisés », crée un champ de type texte (ex. nommé « Prix d'achat »)")
-                    Text("3. Reviens dans \(AppInfo.name) : le nouveau champ apparaît dans le sélecteur")
+                    Text("2. Dans « Champs personnalisés », crée un champ de type texte pour le prix d'achat, et un champ de type liste pour l'état du disque")
+                    Text("3. Reviens dans \(AppInfo.name) : les champs apparaissent dans les sélecteurs")
                 }
                 .foregroundStyle(Color.appSecondaryText)
 
@@ -222,7 +214,7 @@ struct PurchasePriceHelpSheet: View {
                     .foregroundStyle(Color.spinlogPink)
                 }
 
-                Text("Si tu as supprimé le champ « Media Condition » fourni par défaut, recrée-le de la même façon mais en type liste déroulante, avec ces valeurs : Mint (M), Near Mint (NM or M-), Very Good Plus (VG+), Very Good (VG), Good Plus (G+), Good (G), Fair (F), Poor (P).")
+                Text("Le champ « Media Condition » fourni par défaut convient. Si tu l'as supprimé, recrée-le en type liste déroulante, avec ces valeurs : Mint (M), Near Mint (NM or M-), Very Good Plus (VG+), Very Good (VG), Good Plus (G+), Good (G), Fair (F), Poor (P).")
                     .foregroundStyle(Color.appSecondaryText)
             }
 

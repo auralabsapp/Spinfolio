@@ -11,6 +11,10 @@ enum CollectionCSVExporter {
         tagStore: TagStore
     ) -> String {
         let folderMap = Dictionary(uniqueKeysWithValues: folders.map { ($0.id, $0.name) })
+        let copyDetails = CopyDetailsStore.shared
+        // Prix d'achat et état du disque ont leurs propres colonnes (valeurs de l'app) : les champs
+        // Discogs qui leur sont associés ne sont pas répétés dans les colonnes personnalisées.
+        let fields = fields.filter { $0.id != copyDetails.mappedPriceFieldId && $0.id != copyDetails.mappedConditionFieldId }
 
         // Tri propre et structuré : par nom de dossier, puis artiste, puis titre
         let sortedItems = items.sorted { a, b in
@@ -39,7 +43,9 @@ enum CollectionCSVExporter {
             String(localized: "Styles", comment: "En-tête de colonne CSV : styles musicaux"),
             String(localized: "Date d'ajout", comment: "En-tête de colonne CSV : date d'ajout à la collection"),
             String(localized: "Note", comment: "En-tête de colonne CSV : note (rating) sur 5 attribuée à l'exemplaire"),
-            String(localized: "Tags \(AppInfo.name)", comment: "En-tête de colonne CSV : tags personnalisés créés dans l'app")
+            String(localized: "Tags \(AppInfo.name)", comment: "En-tête de colonne CSV : tags personnalisés créés dans l'app"),
+            String(localized: "Prix d'achat", comment: "En-tête de colonne CSV : prix d'achat de l'exemplaire"),
+            String(localized: "État du disque", comment: "En-tête de colonne CSV : état de conservation du disque")
         ]
 
         // Colonnes dynamiques pour les champs personnalisés Discogs (ex: État du disque, Pochette...)
@@ -97,7 +103,11 @@ enum CollectionCSVExporter {
                 styles,
                 dateAdded,
                 rating,
-                tags
+                tags,
+                copyDetails.purchasePrice(for: item.instanceId).map {
+                    PurchasePriceParser.canonicalString(amount: $0.amount, currency: $0.currency)
+                } ?? "",
+                copyDetails.mediaCondition(for: item.instanceId)?.discogsLabel ?? ""
             ]
 
             if fields.isEmpty {

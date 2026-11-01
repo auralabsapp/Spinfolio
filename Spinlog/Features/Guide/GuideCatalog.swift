@@ -118,7 +118,7 @@ enum GuideCatalog {
             title: "Agir sur un album",
             summary: "Glisse une ligne, ou maintiens-la, pour écouter, ranger, modifier ou supprimer.",
             steps: [
-                "Touche « ··· » puis « Sélectionner » pour agir sur plusieurs albums à la fois : dossier, tags, suppression."
+                "Touche « ··· » puis « Sélectionner » pour agir sur plusieurs albums à la fois : dossier, tags (Premium), suppression."
             ],
             tip: "« Ranger » est une fonction Premium.",
             destination: .tab(.collection)
@@ -153,29 +153,40 @@ enum GuideCatalog {
             access: .requiresAccount
         ),
         GuideEntry(
-            id: "tagsAndRating",
+            id: "tags",
             section: .record,
-            visual: .tagsAndRating,
-            title: "Tags et note",
-            summary: "Classe tes albums avec tes tags et une note sur 5.",
+            visual: .tags,
+            title: "Tags",
+            summary: "Classe tes albums avec tes propres tags : création, attribution, gestion en masse.",
             steps: [
                 "Dans « Modifier », section « Tags de l'exemplaire » : crée ou choisis des tags.",
+                "Gère-les dans Réglages (« Gestion des tags »), ou avec « Sélectionner » dans la Collection."
+            ],
+            tip: "Sans abonnement, tes tags restent visibles et filtrables, mais ne se modifient plus. Ils sont synchronisés par iCloud, pas envoyés à Discogs.",
+            access: .premium
+        ),
+        GuideEntry(
+            id: "rating",
+            section: .record,
+            visual: .rating,
+            title: "Note",
+            summary: "Note tes albums sur 5 étoiles.",
+            steps: [
                 "Touche les étoiles de « Ma note de la release » pour noter."
             ],
-            tip: "Les tags restent dans Spinlog (synchronisés par iCloud avec Premium), pas sur Discogs.",
             access: .requiresAccount
         ),
         GuideEntry(
             id: "price",
             section: .record,
             visual: .price,
-            title: "Prix d'achat et cote",
-            summary: "Note ce que tu as payé et compare avec la cote Discogs.",
+            title: "Prix d'achat et état du disque",
+            summary: "Note ce que tu as payé et l'état de chaque disque, sans rien configurer sur Discogs.",
             steps: [
-                "Une seule fois : Réglages > Suivi de plus-value, puis associe tes champs Discogs.",
-                "Ensuite, « Modifier » sur un exemplaire pour saisir son prix."
+                "Touche « Modifier » sur un exemplaire, puis renseigne le prix et l'état dans « Plus-value de l'exemplaire ».",
+                "Facultatif : dans Réglages > Suivi de plus-value, associe des champs Discogs pour importer tes valeurs existantes ou les y envoyer."
             ],
-            tip: "La plus-value (cote moins prix payé) est une fonction Premium, dans Stats.",
+            tip: "Prix et état restent dans l'app (et sur tes appareils avec iCloud, en Premium). La plus-value (cote moins prix payé) est une fonction Premium, dans Stats.",
             access: .requiresAccount,
             destination: .tab(.settings)
         )
@@ -425,7 +436,7 @@ enum GuideCatalog {
             section: .settings,
             visual: .iCloud,
             title: "Synchronisation iCloud",
-            summary: "Tes tags, écoutes, alertes et préférences suivent ton compte sur tous tes appareils.",
+            summary: "Tes tags, écoutes, alertes, prix et états de disque et préférences suivent ton compte sur tous tes appareils.",
             steps: [
                 "Dans Réglages > Synchronisation, ouvre « Synchronisation iCloud » et active « Synchroniser avec iCloud »."
             ],

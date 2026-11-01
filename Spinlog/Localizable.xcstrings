@@ -44,6 +44,16 @@
         }
       }
     },
+    "« %@ »" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "“%@”"
+          }
+        }
+      }
+    },
     "« %@ » (%@) est disponible dès %@ sur Discogs !" : {
       "localizations" : {
         "en" : {
@@ -56,6 +66,22 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "« %1$@ » (%2$@) est disponible dès %3$@ sur Discogs !"
+          }
+        }
+      }
+    },
+    "« %@ » → %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "“%@” → %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "« %1$@ » → %2$@"
           }
         }
       }
@@ -1507,6 +1533,110 @@
         }
       }
     },
+    "%lld exemplaires mis à jour. Tu peux annuler cet import depuis cette page." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld copy updated. You can undo this import from this page."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld copies updated. You can undo this import from this page."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld copies updated. You can undo this import from this page."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld exemplaire mis à jour. Tu peux annuler cet import depuis cette page."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld exemplaires mis à jour. Tu peux annuler cet import depuis cette page."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld exemplaire mis à jour. Tu peux annuler cet import depuis cette page."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld exemplaires remis dans leur état d'avant l'import." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld copy restored to its pre-import state."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld copies restored to their pre-import state."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld copies restored to their pre-import state."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld exemplaire remis dans son état d'avant l'import."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld exemplaires remis dans leur état d'avant l'import."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld exemplaire remis dans son état d'avant l'import."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld exemplaires sélectionnés" : {
       "localizations" : {
         "en" : {
@@ -1809,6 +1939,74 @@
         }
       }
     },
+    "%lld prix sans devise comptés en %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "%1$lld price(s) without a currency counted in %2$@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld prix sans devise comptés en %2$@."
+          }
+        }
+      }
+    },
+    "%lld refusées par Discogs." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld rejected by Discogs."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld rejected by Discogs."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld rejected by Discogs."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld refusée par Discogs."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld refusées par Discogs."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld refusée par Discogs."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld restants" : {
       "localizations" : {
         "en" : {
@@ -1978,6 +2176,58 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld tags"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld valeurs envoyées vers Discogs." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld value sent to Discogs."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld values sent to Discogs."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld values sent to Discogs."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld valeur envoyée vers Discogs."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld valeurs envoyées vers Discogs."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "%lld valeur envoyée vers Discogs."
                 }
               }
             }
@@ -2308,6 +2558,7 @@
       }
     },
     "2. Dans « Champs personnalisés », crée un champ de type texte (ex. nommé « Prix d'achat »)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2317,12 +2568,33 @@
         }
       }
     },
+    "2. Dans « Champs personnalisés », crée un champ de type texte pour le prix d'achat, et un champ de type liste pour l'état du disque" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "2. Under “Custom fields”, create a text field for the purchase price and a list field for the record condition"
+          }
+        }
+      }
+    },
     "3. Reviens dans %@ : le nouveau champ apparaît dans le sélecteur" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "3. Come back to %@: the new field appears in the selector"
+          }
+        }
+      }
+    },
+    "3. Reviens dans %@ : les champs apparaissent dans les sélecteurs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "3. Come back to %@: the fields appear in the pickers"
           }
         }
       }
@@ -2458,6 +2730,7 @@
       }
     },
     "À créer sur Discogs" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2477,12 +2750,32 @@
         }
       }
     },
+    "À envoyer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "To send"
+          }
+        }
+      }
+    },
     "À GAUCHE" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "LEFT"
+          }
+        }
+      }
+    },
+    "À importer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "To import"
           }
         }
       }
@@ -3250,6 +3543,16 @@
         }
       }
     },
+    "Analyser" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Analyze"
+          }
+        }
+      }
+    },
     "Année" : {
       "comment" : "En-tête de colonne CSV : année de sortie",
       "localizations" : {
@@ -3297,6 +3600,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancel"
+          }
+        }
+      }
+    },
+    "Annuler l'import" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Undo import"
+          }
+        }
+      }
+    },
+    "Aperçu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Preview"
           }
         }
       }
@@ -3612,12 +3935,55 @@
         }
       }
     },
+    "Associe des champs personnalisés de ton compte Discogs pour reprendre les valeurs qu'ils contiennent et y enregistrer aussi chaque prix et état saisi. Sans champ associé, rien n'est envoyé à Discogs." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Link custom fields from your Discogs account to import the values they contain and to save every price and condition you enter there too. Without a linked field, nothing is sent to Discogs."
+          }
+        }
+      }
+    },
+    "Associe des champs personnalisés de ton compte Discogs pour reprendre les valeurs qu'ils contiennent. Avec « Envoyer vers Discogs », chaque prix ou état que tu saisis ensuite y est aussi écrit ; « Envoyer tout vers Discogs » y renvoie ceux déjà enregistrés dans l'app. Sans cette option, rien n'est envoyé à Discogs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Link custom fields from your Discogs account to bring in the values they contain. With “Send to Discogs”, each price or condition you enter afterwards is also written to them; “Send everything to Discogs” sends back those already saved in the app. Without this option, nothing is sent to Discogs."
+          }
+        }
+      }
+    },
+    "Associe des champs personnalisés de ton compte Discogs pour reprendre les valeurs qu'ils contiennent. Chaque prix ou état que tu saisis ensuite y est aussi écrit ; les valeurs déjà enregistrées dans l'app ne sont pas renvoyées. Sans champ associé, rien n'est envoyé à Discogs." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Link custom fields from your Discogs account to bring in the values they contain. Each price or condition you enter afterwards is also written to them; values already saved in the app are not sent back. With no linked field, nothing is sent to Discogs."
+          }
+        }
+      }
+    },
     "Associe les champs personnalisés Discogs correspondants à ton prix d'achat et à l'état de conservation pour alimenter le suivi de valeur." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Link the matching Discogs custom fields to your purchase price and media condition to power value tracking."
+          }
+        }
+      }
+    },
+    "Associer des champs Discogs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Link Discogs fields"
           }
         }
       }
@@ -3772,6 +4138,16 @@
         }
       }
     },
+    "Aucun champ associé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "No linked field"
+          }
+        }
+      }
+    },
     "Aucun champ personnalisé configuré" : {
       "localizations" : {
         "en" : {
@@ -3888,6 +4264,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Not synced yet"
+          }
+        }
+      }
+    },
+    "Aucune valeur à importer." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "No values to import."
           }
         }
       }
@@ -4252,6 +4638,16 @@
         }
       }
     },
+    "Ces valeurs ne sont pas importées et rien n'est effacé. Ces albums restent dans le filtre « À compléter »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "These values aren't imported and nothing is erased. These albums stay in the “To complete” filter."
+          }
+        }
+      }
+    },
     "Cet album n'est pas dans ta collection : une écoute sur platine ne se démarre que pour un album que tu possèdes." : {
       "localizations" : {
         "en" : {
@@ -4352,6 +4748,46 @@
         }
       }
     },
+    "Champ de l'état du disque" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Disc condition field"
+          }
+        }
+      }
+    },
+    "Champ Discogs de l'état du disque" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Discogs field for record condition"
+          }
+        }
+      }
+    },
+    "Champ Discogs du prix d'achat" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Discogs field for purchase price"
+          }
+        }
+      }
+    },
+    "Champ du prix d'achat" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Purchase price field"
+          }
+        }
+      }
+    },
     "Champ état de l'album" : {
       "localizations" : {
         "en" : {
@@ -4368,6 +4804,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Purchase Price Field"
+          }
+        }
+      }
+    },
+    "Champs à importer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Fields to import"
+          }
+        }
+      }
+    },
+    "Champs associés" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Fields linked"
+          }
+        }
+      }
+    },
+    "Champs Discogs (facultatif)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Discogs fields (optional)"
           }
         }
       }
@@ -4555,6 +5021,7 @@
       }
     },
     "Choisir mes champs dans Réglages" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4604,7 +5071,18 @@
         }
       }
     },
+    "Classe tes albums avec tes propres tags : création, attribution, gestion en masse." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Organize your albums with your own tags: creation, assignment, bulk management."
+          }
+        }
+      }
+    },
     "Classe tes albums avec tes tags et une note sur 5." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4780,6 +5258,16 @@
         }
       }
     },
+    "Compare les prix et états de l'app aux champs Discogs associés. Rien n'est écrit avant ta confirmation, et une valeur absente de l'app n'efface jamais rien sur Discogs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Compares the app's prices and conditions with the linked Discogs fields. Nothing is written until you confirm, and a value missing in the app never erases anything on Discogs."
+          }
+        }
+      }
+    },
     "Compilations" : {
       "localizations" : {
         "en" : {
@@ -4826,6 +5314,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Account and Data"
+          }
+        }
+      }
+    },
+    "Compter en…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Count in…"
           }
         }
       }
@@ -5190,6 +5688,16 @@
         }
       }
     },
+    "Crée tes propres tags, attribue-les à tes albums, gère-les en masse, renomme-les ou fusionne-les. Sans abonnement, tu gardes la lecture et le filtre." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Create your own tags, assign them to your albums, manage them in bulk, rename or merge them. Without a subscription, you keep read access and filtering."
+          }
+        }
+      }
+    },
     "Créer" : {
       "localizations" : {
         "en" : {
@@ -5221,6 +5729,7 @@
       }
     },
     "Créer le champ prix d'achat" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5306,6 +5815,17 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "In “Edit”, under “Copy Tags”: create or pick tags."
+          }
+        }
+      }
+    },
+    "Dans « Modifier », section « Tags de l'exemplaire » (Premium) : crée ou choisis des tags." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "In “Edit”, under “Copy Tags” (Premium): create or pick tags."
           }
         }
       }
@@ -5617,6 +6137,16 @@
         }
       }
     },
+    "Déjà identiques" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Already identical"
+          }
+        }
+      }
+    },
     "Démarrer l'écoute de ${record}" : {
       "localizations" : {
         "en" : {
@@ -5715,6 +6245,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Last album"
+          }
+        }
+      }
+    },
+    "Dernier import le %@. Les exemplaires modifiés depuis gardent leur saisie." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Last import on %@. Copies edited since keep their changes."
           }
         }
       }
@@ -5820,6 +6360,7 @@
       }
     },
     "Détecté" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5865,6 +6406,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Preferred Currency"
+          }
+        }
+      }
+    },
+    "Devises lues" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Currencies found"
+          }
+        }
+      }
+    },
+    "Différents de l'app" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Different from the app"
           }
         }
       }
@@ -5919,7 +6480,18 @@
         }
       }
     },
+    "Discogs limite le rythme des écritures : l'envoi de nombreuses valeurs peut prendre plusieurs minutes. Garde l'app ouverte." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Discogs limits how fast you can write: sending many values can take several minutes. Keep the app open."
+          }
+        }
+      }
+    },
     "Discogs ne crée aucun champ « prix d'achat » par défaut : c'est à toi de le créer une fois, depuis le site discogs.com (pas depuis l'app)." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5935,6 +6507,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Discogs doesn’t provide a “median price” for a specific record, only suggestions by condition. %@ uses the one for the declared condition; with no condition, it averages all suggestions, so the estimate is less precise."
+          }
+        }
+      }
+    },
+    "Discogs ne permet pas de créer un champ depuis l'app : crée-le une fois sur discogs.com." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Discogs doesn’t let apps create fields: create it once on discogs.com."
           }
         }
       }
@@ -6598,11 +7180,104 @@
       }
     },
     "Ensuite, « Modifier » sur un exemplaire pour saisir son prix." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Then use “Edit” on a copy to enter its price."
+          }
+        }
+      }
+    },
+    "Envoi en cours" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Sending"
+          }
+        }
+      }
+    },
+    "Envoi vers Discogs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Sending to Discogs"
+          }
+        }
+      }
+    },
+    "Envoyer %lld valeurs" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "Send %lld value"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "Send %lld values"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "Send %lld values"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "Envoyer %lld valeur"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "Envoyer %lld valeurs"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "Envoyer %lld valeur"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Envoyer tout vers Discogs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Send everything to Discogs"
+          }
+        }
+      }
+    },
+    "Envoyer vers Discogs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Send to Discogs"
           }
         }
       }
@@ -6697,6 +7372,16 @@
         }
       }
     },
+    "Et %lld autres." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "And %lld more."
+          }
+        }
+      }
+    },
     "et %lld fonctionnalités supplémentaires" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -6760,12 +7445,34 @@
         }
       }
     },
+    "État du disque" : {
+      "comment" : "En-tête de colonne CSV : état de conservation du disque",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Record condition"
+          }
+        }
+      }
+    },
     "État du média" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Media Condition"
+          }
+        }
+      }
+    },
+    "États du disque renseignés" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Conditions entered"
           }
         }
       }
@@ -6826,6 +7533,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copies Added by Year"
+          }
+        }
+      }
+    },
+    "Exemples lus" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Sample values"
           }
         }
       }
@@ -6916,6 +7633,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Manufacturing (%lld)"
+          }
+        }
+      }
+    },
+    "Facultatif : dans Réglages > Suivi de plus-value, associe des champs Discogs pour importer tes valeurs existantes ou les y envoyer." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Optional: in Settings > Gain Tracking, link Discogs fields to import your existing values or send them there."
+          }
+        }
+      }
+    },
+    "Facultatif : le prix d'achat et l'état du disque sont gardés dans l'app. Si tu associes des champs personnalisés de ton compte Discogs (Réglages > Suivi de plus-value), les valeurs qu'ils contiennent sont reprises, et chaque prix ou état saisi y est aussi enregistré." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Optional: the purchase price and record condition are kept in the app. If you link custom fields from your Discogs account (Settings > Gain tracking), the values they contain are imported, and every price or condition you enter is saved there too."
           }
         }
       }
@@ -7282,6 +8019,16 @@
         }
       }
     },
+    "Gère-les dans Réglages (« Gestion des tags »), ou avec « Sélectionner » dans la Collection." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Manage them in Settings (“Tag Management”), or with “Select” in the Collection."
+          }
+        }
+      }
+    },
     "Gérer les champs sur discogs.com" : {
       "localizations" : {
         "en" : {
@@ -7592,6 +8339,16 @@
         }
       }
     },
+    "Ignorées (valeur Discogs illisible)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Skipped (unreadable Discogs value)"
+          }
+        }
+      }
+    },
     "Ignorer les articles (The...)" : {
       "localizations" : {
         "en" : {
@@ -7638,12 +8395,94 @@
         }
       }
     },
+    "Illisibles" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Unreadable"
+          }
+        }
+      }
+    },
     "Images" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Images"
+          }
+        }
+      }
+    },
+    "Importer %lld exemplaires" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "Import %lld copy"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "Import %lld copies"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "Import %lld copies"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "Importer %lld exemplaire"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "Importer %lld exemplaires"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "machine_translated",
+                  "value" : "Importer %lld exemplaire"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Importer depuis Discogs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Import from Discogs"
+          }
+        }
+      }
+    },
+    "Importer et remplacer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Import and replace"
           }
         }
       }
@@ -7876,6 +8715,16 @@
         }
       }
     },
+    "Interrompre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Stop"
+          }
+        }
+      }
+    },
     "Inversé (Nom, Prénom)" : {
       "localizations" : {
         "en" : {
@@ -7996,7 +8845,38 @@
         }
       }
     },
+    "L'envoi relit puis écrit ta collection sur Discogs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Sending reads, then writes to your collection on Discogs."
+          }
+        }
+      }
+    },
+    "L'envoi s'est arrêté avant la fin : relance « Envoyer tout vers Discogs » pour envoyer le reste." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Sending stopped before the end: run “Send everything to Discogs” again to send the rest."
+          }
+        }
+      }
+    },
     "L'état de l'album" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The record’s condition"
+          }
+        }
+      }
+    },
+    "L'état du disque" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8012,6 +8892,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The CSV export includes all your albums (across all folders) with their metadata, tags, and notes for your spreadsheets (Excel, Numbers). The PDF declaration lists your collection with condition and purchase price, handy to show an insurer, for example."
+          }
+        }
+      }
+    },
+    "L'import relit ta collection sur Discogs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The import reads your collection from Discogs."
           }
         }
       }
@@ -8097,6 +8987,7 @@
       }
     },
     "La plus-value (cote moins prix payé) est une fonction Premium, dans Stats." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8223,6 +9114,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Automatically calculating the exact placement of each album on your shelf is a feature reserved for Premium members."
+          }
+        }
+      }
+    },
+    "Le champ « Media Condition » fourni par défaut convient. Si tu l'as supprimé, recrée-le en type liste déroulante, avec ces valeurs : Mint (M), Near Mint (NM or M-), Very Good Plus (VG+), Very Good (VG), Good Plus (G+), Good (G), Fair (F), Poor (P)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The default “Media Condition” field works. If you deleted it, recreate it as a dropdown list with these values: Mint (M), Near Mint (NM or M-), Very Good Plus (VG+), Very Good (VG), Good Plus (G+), Good (G), Fair (F), Poor (P)."
           }
         }
       }
@@ -8369,7 +9270,28 @@
         }
       }
     },
+    "Le prix d'achat et l'état du disque se saisissent dans « Mon exemplaire » et sont enregistrés dans l'app, sur cet appareil. « Proposer après un ajout » ouvre leur saisie juste après l'ajout d'un album." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The purchase price and record condition are entered in “My Copy” and saved in the app, on this device. “Offer after adding” opens their entry right after you add an album."
+          }
+        }
+      }
+    },
+    "Le prix d'achat et l'état du disque servent à calculer la plus-value de cet exemplaire." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "The purchase price and record condition are used to calculate this copy’s gain."
+          }
+        }
+      }
+    },
     "Le prix d'achat et l'état du média servent à calculer la plus-value de cet exemplaire." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8445,6 +9367,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "The “Shelf” sort follows your shelving rule (Settings > Shelving)."
+          }
+        }
+      }
+    },
+    "Lecture de ta collection…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Reading your collection…"
           }
         }
       }
@@ -8673,7 +9605,18 @@
         }
       }
     },
+    "Les prix et états déjà saisis dans l'app seront remplacés par ceux de Discogs. Tu pourras annuler cet import." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Prices and conditions already entered in the app will be replaced by the ones from Discogs. You can undo this import."
+          }
+        }
+      }
+    },
     "Les tags restent dans Spinlog (synchronisés par iCloud avec Premium), pas sur Discogs." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8689,6 +9632,27 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tags are local to the app and are not saved to Discogs."
+          }
+        }
+      }
+    },
+    "Les tags sont une fonction Premium : sans abonnement, ils restent visibles et filtrables, mais ne se modifient plus. Ils restent dans Spinlog (synchronisés par iCloud), pas sur Discogs." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tags are a Premium feature: without a subscription they stay visible and filterable, but can no longer be edited. They stay in Spinlog (synced through iCloud), not on Discogs."
+          }
+        }
+      }
+    },
+    "Les valeurs illisibles sur Discogs sont laissées telles quelles, pour ne pas écraser une information que l'app ne comprend pas." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Values the app can't read on Discogs are left untouched, so information it doesn't understand isn't overwritten."
           }
         }
       }
@@ -9406,6 +10370,7 @@
       }
     },
     "Non détecté : cote moyenne" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9457,11 +10422,32 @@
       }
     },
     "Note ce que tu as payé et compare avec la cote Discogs." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Note what you paid and compare it with the Discogs value."
+          }
+        }
+      }
+    },
+    "Note ce que tu as payé et l'état de chaque disque, sans rien configurer sur Discogs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Record what you paid and each disc's condition, with nothing to set up on Discogs."
+          }
+        }
+      }
+    },
+    "Note tes albums sur 5 étoiles." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Rate your albums out of 5 stars."
           }
         }
       }
@@ -9719,6 +10705,7 @@
       }
     },
     "Ouvre ce réglage dans Réglages" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -10090,6 +11077,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Go Premium to browse your entire collection and covers offline at a flea market."
+          }
+        }
+      }
+    },
+    "Passe premium pour créer et attribuer des tags à tes albums." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Go Premium to create tags and assign them to your albums."
+          }
+        }
+      }
+    },
+    "Passe premium pour créer, attribuer, renommer et supprimer tes tags. Tes tags restent visibles." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Go Premium to create, assign, rename and delete your tags. Your tags stay visible."
           }
         }
       }
@@ -10663,6 +11670,7 @@
       }
     },
     "Prix d'achat" : {
+      "comment" : "En-tête de colonne CSV : prix d'achat de l'exemplaire",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -10673,6 +11681,7 @@
       }
     },
     "Prix d'achat et cote" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -10688,6 +11697,26 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Purchase Price and Condition"
+          }
+        }
+      }
+    },
+    "Prix d'achat et état du disque" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Purchase Price and Disc Condition"
+          }
+        }
+      }
+    },
+    "Prix d'achat renseignés" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Purchase prices entered"
           }
         }
       }
@@ -10708,6 +11737,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Price & Condition"
+          }
+        }
+      }
+    },
+    "Prix et état restent dans l'app (et sur tes appareils avec iCloud, en Premium). La plus-value (cote moins prix payé) est une fonction Premium, dans Stats." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Price and condition stay in the app (and on your devices through iCloud, with Premium). Gain (value minus price paid) is a Premium feature, in Stats."
           }
         }
       }
@@ -10748,6 +11787,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Discogs Profile"
+          }
+        }
+      }
+    },
+    "Proposer après un ajout" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Offer after adding"
           }
         }
       }
@@ -10996,6 +12045,16 @@
         }
       }
     },
+    "Rechercher un tag" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Search for a tag"
+          }
+        }
+      }
+    },
     "Récupère tous tes albums, tes dossiers, ta wantlist et les pochettes" : {
       "localizations" : {
         "en" : {
@@ -11117,6 +12176,26 @@
         }
       }
     },
+    "Remplacer les valeurs de l'app ?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Replace the app's values?"
+          }
+        }
+      }
+    },
+    "Remplacer les valeurs existantes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Replace existing values"
+          }
+        }
+      }
+    },
     "Renommer" : {
       "localizations" : {
         "en" : {
@@ -11177,6 +12256,16 @@
         }
       }
     },
+    "Renseigne le prix d'achat d'un album dans « Mon exemplaire » pour suivre sa plus-value." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Enter an album’s purchase price in “My Copy” to track its gain."
+          }
+        }
+      }
+    },
     "Renseigne le prix d'achat de tes exemplaires." : {
       "localizations" : {
         "en" : {
@@ -11187,7 +12276,18 @@
         }
       }
     },
+    "Renseigne ton prix d'achat ci-dessus pour suivre la plus-value de cet exemplaire." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Enter your purchase price above to track this copy’s gain."
+          }
+        }
+      }
+    },
     "Renseigne ton prix d'achat dans les champs personnalisés ci-dessous pour suivre la plus-value de cet exemplaire." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -11208,6 +12308,7 @@
       }
     },
     "Renseigner l'état du média maintenant ?" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -11218,6 +12319,7 @@
       }
     },
     "Renseigner le prix d'achat maintenant ?" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -11347,6 +12449,16 @@
         }
       }
     },
+    "Retirer l'état" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Clear condition"
+          }
+        }
+      }
+    },
     "Retirer le tag %@" : {
       "localizations" : {
         "en" : {
@@ -11427,6 +12539,16 @@
         }
       }
     },
+    "Rien n'est modifié avant ta confirmation. « Compter en… » s'applique aux prix écrits sans devise ; un prix en dollars ou en livres garde sa devise." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Nothing changes until you confirm. “Count in…” applies to prices written without a currency; a price in dollars or pounds keeps its currency."
+          }
+        }
+      }
+    },
     "Rose néon vibrant & iconique" : {
       "localizations" : {
         "en" : {
@@ -11473,6 +12595,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Enter the “Maximum price” then tap “Save”."
+          }
+        }
+      }
+    },
+    "Sans abonnement, tes tags restent visibles et filtrables, mais ne se modifient plus. Ils sont synchronisés par iCloud, pas envoyés à Discogs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Without a subscription, your tags stay visible and filterable, but can no longer be edited. They are synced through iCloud, not sent to Discogs."
           }
         }
       }
@@ -11688,6 +12820,7 @@
       }
     },
     "Si tu as supprimé le champ « Media Condition » fourni par défaut, recrée-le de la même façon mais en type liste déroulante, avec ces valeurs : Mint (M), Near Mint (NM or M-), Very Good Plus (VG+), Very Good (VG), Good Plus (G+), Good (G), Fair (F), Poor (P)." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -12627,11 +13760,22 @@
       }
     },
     "Synchronise tags, journal d'écoute sur platine, préférences et personnalisations de tri entre tous tes appareils connectés au même compte." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Syncs tags, your turntable listening log, preferences, and sort customizations across all your devices signed in to the same account."
+          }
+        }
+      }
+    },
+    "Synchronise tags, prix d'achat et états des disques, journal d'écoute sur platine, préférences et personnalisations de tri entre tous tes appareils connectés au même compte." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Syncs tags, purchase prices and disc conditions, turntable listening log, preferences and sort customizations across all your devices signed in to the same account."
           }
         }
       }
@@ -12696,6 +13840,16 @@
         }
       }
     },
+    "Ta collection n'a pas pu être relue et les données gardées sur l'appareil datent de plus de 6 heures. Reconnecte-toi à Internet puis réessaie." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your collection couldn't be reloaded, and the data kept on this device is more than 6 hours old. Reconnect to the internet and try again."
+          }
+        }
+      }
+    },
     "Ta collection vit sur Discogs : Spinlog en est une belle vitrine." : {
       "localizations" : {
         "en" : {
@@ -12717,6 +13871,7 @@
       }
     },
     "Ta configuration" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -12782,6 +13937,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tag Already Exists"
+          }
+        }
+      }
+    },
+    "Tags" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tags"
           }
         }
       }
@@ -12858,6 +14023,7 @@
       }
     },
     "Tags et note" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -13153,6 +14319,16 @@
         }
       }
     },
+    "Tes données" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your data"
+          }
+        }
+      }
+    },
     "Tes écoutes, au rythme du sillon" : {
       "localizations" : {
         "en" : {
@@ -13184,11 +14360,22 @@
       }
     },
     "Tes tags, écoutes, alertes et préférences suivent ton compte sur tous tes appareils." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Your tags, listens, alerts and preferences follow your account on all your devices."
+          }
+        }
+      }
+    },
+    "Tes tags, écoutes, alertes, prix et états de disque et préférences suivent ton compte sur tous tes appareils." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your tags, listens, alerts, prices, disc conditions and preferences follow your account across all your devices."
           }
         }
       }
@@ -13375,7 +14562,18 @@
         }
       }
     },
+    "Touche « ··· » puis « Sélectionner » pour agir sur plusieurs albums à la fois : dossier, tags (Premium), suppression." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tap “···” then “Select” to act on several records at once: folder, tags (Premium), deletion."
+          }
+        }
+      }
+    },
     "Touche « ··· » puis « Sélectionner » pour agir sur plusieurs albums à la fois : dossier, tags, suppression." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -13421,6 +14619,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Tap “Edit” on a copy: folder, tags, Discogs fields."
+          }
+        }
+      }
+    },
+    "Touche « Modifier » sur un exemplaire, puis renseigne le prix et l'état dans « Plus-value de l'exemplaire »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Tap “Edit” on a copy, then enter the price and condition in “Copy Gain”."
           }
         }
       }
@@ -14022,6 +15230,16 @@
         }
       }
     },
+    "Un des champs choisis n'existe plus sur Discogs. Choisis-le de nouveau." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "One of the chosen fields no longer exists on Discogs. Choose it again."
+          }
+        }
+      }
+    },
     "Un dossier porte déjà ce nom." : {
       "localizations" : {
         "en" : {
@@ -14135,11 +15353,22 @@
       }
     },
     "Une seule fois : Réglages > Suivi de plus-value, puis associe tes champs Discogs." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Just once: Settings > Gain Tracking, then link your Discogs fields."
+          }
+        }
+      }
+    },
+    "Une valeur vide ou illisible sur Discogs n'efface jamais celle de l'app." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "An empty or unreadable value on Discogs never erases the one in the app."
           }
         }
       }
@@ -14166,6 +15395,7 @@
       }
     },
     "Utilisé pour la plus-value" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -14181,6 +15411,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Redeem Code"
+          }
+        }
+      }
+    },
+    "Valeurs illisibles" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Unreadable values"
           }
         }
       }
@@ -14211,6 +15451,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Check the exact condition of the record and the shipping costs on the Discogs listing."
+          }
+        }
+      }
+    },
+    "Vérifie que ces valeurs correspondent bien au champ choisi." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Check that these values match the field you chose."
           }
         }
       }
@@ -14451,6 +15701,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Clear Image Cache?"
+          }
+        }
+      }
+    },
+    "Vides sur Discogs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Empty on Discogs"
           }
         }
       }

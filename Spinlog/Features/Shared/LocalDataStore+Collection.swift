@@ -28,6 +28,9 @@ extension LocalDataStore {
     }
 
     func saveCollectionItems(_ items: [CollectionItem], username: String, folderId: Int) async {
+        // Les valeurs de prix et d'état venues de Discogs entrent dans le store local (une seule
+        // fois par exemplaire, sans écraser une saisie).
+        CopyDetailsStore.shared.adoptLegacyValues(from: items, username: username)
         let now = Date()
         let encoder = JSONEncoder()
 
@@ -94,6 +97,7 @@ extension LocalDataStore {
     }
 
     func syncCollectionFolder(username: String, folderId: Int, fullItems: [CollectionItem]) async {
+        CopyDetailsStore.shared.adoptLegacyValues(from: fullItems, username: username)
         let now = Date()
         let encoder = JSONEncoder()
 

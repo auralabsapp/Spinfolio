@@ -15,6 +15,15 @@ enum CloudMergeRules {
         allowMerge ? TagMergeLogic.merge(local: local, remote: remote) : remote
     }
 
+    /// Prix et état d'un exemplaire : la version la plus récemment saisie l'emporte, quel que soit le
+    /// mode de réception. Une valeur reprise de Discogs (`modifiedAt` à `.distantPast`) cède donc à
+    /// toute saisie réelle, et une saisie locale plus récente que la version distante est gardée.
+    /// `nil` : garder la version locale.
+    static func copyDetails(local: CopyDetails?, remote: CopyDetails) -> CopyDetails? {
+        guard let local else { return remote }
+        return remote.modifiedAt >= local.modifiedAt ? remote : nil
+    }
+
     /// Tags autonomes : union pure, sans conflit possible (un ensemble de chaînes).
     static func standaloneTags(local: Set<String>, remote: Set<String>, allowMerge: Bool) -> Set<String> {
         allowMerge ? remote.union(local) : remote

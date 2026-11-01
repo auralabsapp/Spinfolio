@@ -76,6 +76,7 @@ extension CloudSyncEngine {
 
             let existingInstanceIds = TagStore.shared.allTaggedInstanceIds()
             let existingSessionIds = ListeningLogStore.shared.allSessionIds()
+            let existingCopyDetailsIds = CopyDetailsStore.shared.allInstanceIds()
             let existingDayStamps = LocalDataStore.shared.collectionSnapshotDayStamps(username: activeUsername)
             let existingAlertReleaseIds = WantlistAlertStore.shared.allAlertReleaseIds()
             cloudSyncLogger.log("Poussée initiale de \(existingInstanceIds.count) exemplaire(s) tagué(s), \(existingSessionIds.count) session(s) d'écoute, \(existingDayStamps.count) point(s) d'historique de valeur et \(existingAlertReleaseIds.count) alerte(s) wantlist, ainsi que des préférences")
@@ -86,6 +87,13 @@ extension CloudSyncEngine {
             // comme un blocage au moment même de la poussée initiale.
             for (index, instanceId) in existingInstanceIds.enumerated() {
                 markTagsDirty(instanceId: instanceId)
+                if index % 25 == 24 {
+                    await Task.yield()
+                    guard self.activeUsername == activeUsername else { return }
+                }
+            }
+            for (index, instanceId) in existingCopyDetailsIds.enumerated() {
+                markCopyDetailsDirty(instanceId: instanceId)
                 if index % 25 == 24 {
                     await Task.yield()
                     guard self.activeUsername == activeUsername else { return }
@@ -240,6 +248,14 @@ extension CloudSyncEngine {
             cloudSyncLogger.log("apply(remoteRecord:) tag instance \(instanceId) — remote=\(remoteTags.count) allowMerge=\(allowMerge) résultat=\(resolved.count)")
             TagStore.shared.applyRemoteTags(instanceId: instanceId, tags: resolved)
 
+        case .copyDetails(let instanceId):
+            guard let remote = try? JSONDecoder().decode(CopyDetails.self, from: payload) else {
+                cloudSyncLogger.error("apply(remoteRecord:) — payload illisible pour le prix et l'état de l'instance \(instanceId)")
+                return
+            }
+            cloudSyncLogger.log("apply(remoteRecord:) prix et état de l'instance \(instanceId)")
+            CopyDetailsStore.shared.applyRemote(remote, for: instanceId)
+
         case .listeningSession:
             guard let session = try? JSONDecoder().decode(ListeningSession.self, from: payload) else {
                 cloudSyncLogger.error("apply(remoteRecord:) — payload illisible pour une session d'écoute")
@@ -259,9 +275,11 @@ extension CloudSyncEngine {
                 purchasePriceFieldId: prefs.purchasePriceFieldId,
                 mediaConditionFieldId: prefs.mediaConditionFieldId,
                 defaultAddFolderId: prefs.defaultAddFolderId,
+                sendsCopyDetailsToDiscogs: prefs.sendsCopyDetailsToDiscogs,
                 for: activeUsername
             )
             CollectionPreferencesStore.applyRemoteViewPreferences(prefs, for: activeUsername)
+            CopyDetailsStore.shared.applySending(CollectionPreferencesStore.sendsCopyDetailsToDiscogs(for: activeUsername))
 
         case .shelfPreferences:
             guard let remotePrefs = try? JSONDecoder().decode(SyncedShelfPreferences.self, from: payload) else {
@@ -394,6 +412,10 @@ extension CloudSyncEngine {
         case .tag(let instanceId):
             return try? JSONEncoder().encode(TagStore.shared.syncSnapshot(for: instanceId))
 
+        case .copyDetails(let instanceId):
+            guard let details = CopyDetailsStore.shared.details(for: instanceId) else { return nil }
+            return try? JSONEncoder().encode(details)
+
         case .listeningSession(let id):
             guard let session = ListeningLogStore.shared.session(id: id) else { return nil }
             return try? JSONEncoder().encode(session)
@@ -410,7 +432,8 @@ extension CloudSyncEngine {
                 collectionSortAscending: CollectionPreferencesStore.sortAscending(for: activeUsername),
                 wantlistDisplayMode: CollectionPreferencesStore.displayModeRawValue(forKey: DisplayPreferenceKeys.wantlist),
                 wantlistSortOption: CollectionPreferencesStore.wantlistSortOption(for: activeUsername)?.rawValue,
-                wantlistSortAscending: CollectionPreferencesStore.wantlistSortAscending(for: activeUsername)
+                wantlistSortAscending: CollectionPreferencesStore.wantlistSortAscending(for: activeUsername),
+                sendsCopyDetailsToDiscogs: CollectionPreferencesStore.sendsCopyDetailsToDiscogs(for: activeUsername)
             )
             CollectionPreferencesStore.noteDisplayModesSynced()
             return try? JSONEncoder().encode(prefs)

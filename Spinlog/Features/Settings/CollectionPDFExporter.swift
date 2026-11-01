@@ -67,8 +67,6 @@ enum CollectionPDFExporter {
         username: String,
         items: [CollectionItem],
         folders: [CollectionFolder],
-        purchasePriceFieldId: Int?,
-        mediaConditionFieldId: Int?,
         defaultCurrency: String,
         totalInvested: Double?,
         marketValue: CollectionValueResponse?,
@@ -124,8 +122,6 @@ enum CollectionPDFExporter {
                         items: pageItems,
                         folderMap: folderMap,
                         coverImages: coverImages,
-                        purchasePriceFieldId: purchasePriceFieldId,
-                        mediaConditionFieldId: mediaConditionFieldId,
                         defaultCurrency: defaultCurrency,
                         pageNumber: index + 1,
                         totalPages: totalPages
@@ -226,8 +222,6 @@ private struct PDFInventoryPageView: View {
     let items: [CollectionItem]
     let folderMap: [Int: String]
     let coverImages: [Int: UIImage]
-    let purchasePriceFieldId: Int?
-    let mediaConditionFieldId: Int?
     let defaultCurrency: String
     let pageNumber: Int
     let totalPages: Int
@@ -338,15 +332,11 @@ private struct PDFInventoryPageView: View {
     }
 
     private func condition(_ item: CollectionItem) -> String {
-        guard let mediaConditionFieldId else { return "—" }
-        let value = item.value(forFieldId: mediaConditionFieldId).trimmingCharacters(in: .whitespacesAndNewlines)
-        return value.isEmpty ? "—" : value
+        CopyDetailsStore.shared.mediaCondition(for: item.instanceId)?.discogsLabel ?? "—"
     }
 
     private func purchasePrice(_ item: CollectionItem) -> String {
-        guard let purchasePriceFieldId else { return "—" }
-        let raw = item.value(forFieldId: purchasePriceFieldId).trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !raw.isEmpty, let parsed = PurchasePriceParser.parse(raw, defaultCurrency: defaultCurrency) else { return "—" }
-        return parsed.amount.formatted(.currency(code: parsed.currency))
+        guard let price = CopyDetailsStore.shared.purchasePrice(for: item.instanceId) else { return "—" }
+        return price.amount.formatted(.currency(code: price.currency))
     }
 }

@@ -173,18 +173,20 @@ extension CloudSyncEngine {
         // pour que chaque store n'écrive sur disque et ne notifie l'UI qu'une fois par lot.
         TagStore.shared.performBatchUpdate {
             ListeningLogStore.shared.performBatchUpdate {
-                for record in records {
-                    rememberSystemFields(of: record)
-                    guard shouldApplyRemote(record) else {
-                        skippedAsStale += 1
-                        cloudSyncLogger.log("applyFetchedChanges — \(record.recordID.recordName, privacy: .private(mask: .hash)) ignoré : modification locale plus récente en attente d'envoi")
-                        continue
+                CopyDetailsStore.shared.performBatchUpdate {
+                    for record in records {
+                        rememberSystemFields(of: record)
+                        guard shouldApplyRemote(record) else {
+                            skippedAsStale += 1
+                            cloudSyncLogger.log("applyFetchedChanges — \(record.recordID.recordName, privacy: .private(mask: .hash)) ignoré : modification locale plus récente en attente d'envoi")
+                            continue
+                        }
+                        apply(remoteRecord: record, allowMerge: allowMerge)
                     }
-                    apply(remoteRecord: record, allowMerge: allowMerge)
-                }
-                for recordID in deletedRecordIDs {
-                    serverSystemFields[recordID] = nil
-                    applyDeletion(recordID: recordID)
+                    for recordID in deletedRecordIDs {
+                        serverSystemFields[recordID] = nil
+                        applyDeletion(recordID: recordID)
+                    }
                 }
             }
         }
