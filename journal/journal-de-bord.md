@@ -9,6 +9,10 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-11-02 — Tests manuels en tableaux, traduction du message « forfait indisponible »
 
+### 00:06 — `55fdc2d` Tests manuels : colonne « Validé » à cocher (☐ / ☑ / ☒)
+
+Première colonne de chaque tableau de `QA/manual-tests.md` : ☐ à remplacer par ☑ (validé) ou ☒ (échec), les cases Markdown ne s'affichant pas dans un tableau ; `CLAUDE.md` §0 aligné. 2 fichiers, +620 / −620.
+
 ### 00:03 — `c650c35` Traduction anglaise du message « forfait indisponible »
 
 « Le forfait sélectionné n'est pas encore disponible sur l'App Store. » : « The selected plan isn't available on the App Store yet. » (`SubscriptionManager`). 1 fichier, +9 / −1.
