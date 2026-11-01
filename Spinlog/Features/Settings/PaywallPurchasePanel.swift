@@ -21,6 +21,9 @@ struct PaywallPurchasePanel: View {
     let onRedeemCode: () -> Void
     let onRetry: () -> Void
 
+    /// Page légale ou d'assistance ouverte dans la vue Safari du système (jamais `Link`, qui quitte l'app).
+    @State private var legalRequest: SafariViewRequest?
+
     private var selectedPlan: PaywallPlan? {
         plans.first { $0.kind == selectedKind } ?? plans.first
     }
@@ -103,11 +106,19 @@ struct PaywallPurchasePanel: View {
         .frame(maxWidth: .infinity, minHeight: 120)
     }
 
+    private func legalLink(_ title: LocalizedStringKey, url: URL) -> some View {
+        Button(title) { legalRequest = SafariViewRequest(url: url) }
+    }
+
     private var legalLinks: some View {
         HStack(spacing: 16) {
-            Link("Conditions d'utilisation", destination: AppInfo.termsURL)
-            Link("Confidentialité", destination: AppInfo.privacyURL)
-            Link("Assistance", destination: AppInfo.supportURL)
+            legalLink("Conditions d'utilisation", url: AppInfo.termsURL)
+            legalLink("Confidentialité", url: AppInfo.privacyURL)
+            legalLink("Assistance", url: AppInfo.supportURL)
+        }
+        .fullScreenCover(item: $legalRequest) { request in
+            SystemSafariView(url: request.url)
+                .ignoresSafeArea()
         }
         .font(.caption)
         .foregroundStyle(Color.appSecondaryText)

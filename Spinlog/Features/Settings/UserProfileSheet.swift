@@ -15,7 +15,6 @@ struct UserProfileSheet: View {
     let username: String
 
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.openURL) private var openURL
     @State private var viewModel = UserProfileViewModel()
     @State private var safariTarget: SafariTarget?
     @State private var showingDeleteAccountConfirmation = false
@@ -29,7 +28,13 @@ struct UserProfileSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .task { await viewModel.loadIfNeeded(username: username) }
             .sheet(item: $safariTarget) { target in
-                SafariView(url: target.url)
+                // Discogs : webview isolée de l'app ; site personnel du profil : vue Safari du système.
+                if DiscogsWebPolicy.isDiscogs(target.url) {
+                    SafariView(url: target.url)
+                } else {
+                    SystemSafariView(url: target.url)
+                        .ignoresSafeArea()
+                }
             }
             .eraseAccountDataSheet(isPresented: $showingEraseDataSheet) {
                 DiscogsAuthManager.shared.deleteLocalAccountData()
@@ -263,13 +268,9 @@ struct UserProfileSheet: View {
             Spacer()
             if let url = item.url {
                 Button {
-                    // Site personnel indiqué dans le profil : ouvert dans Safari, pas dans la
-                    // webview qui garde la session discogs.com (voir `DiscogsWebPolicy`).
-                    if DiscogsWebPolicy.isDiscogs(url) {
-                        safariTarget = SafariTarget(url: url)
-                    } else {
-                        openURL(url)
-                    }
+                    // Un site personnel ne passe pas par la webview qui garde la session discogs.com
+                    // (voir `DiscogsWebPolicy`) : la feuille choisit la vue selon l'adresse.
+                    safariTarget = SafariTarget(url: url)
                 } label: {
                     HStack(spacing: 4) {
                         Text(item.value)

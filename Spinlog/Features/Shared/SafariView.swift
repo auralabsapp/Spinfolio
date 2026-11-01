@@ -80,14 +80,20 @@ struct SafariView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var isLoading = true
+    /// Lien hors Discogs touché dans la page : ouvert dans la vue Safari du système, sans quitter l'app.
+    @State private var externalRequest: SafariViewRequest?
 
     var body: some View {
         NavigationStack {
             ZStack {
-                EphemeralWebView(url: url, isLoading: $isLoading)
+                EphemeralWebView(url: url, isLoading: $isLoading) { externalRequest = SafariViewRequest(url: $0) }
                 if isLoading {
                     ProgressView()
                 }
+            }
+            .fullScreenCover(item: $externalRequest) { request in
+                SystemSafariView(url: request.url)
+                    .ignoresSafeArea()
             }
             .navigationTitle(url.host ?? "")
             .navigationBarTitleDisplayMode(.inline)
@@ -113,9 +119,10 @@ struct SafariView: View {
 private struct EphemeralWebView: UIViewRepresentable {
     let url: URL
     @Binding var isLoading: Bool
+    let onExternalLink: (URL) -> Void
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(isLoading: $isLoading)
+        Coordinator(isLoading: $isLoading, onExternalLink: onExternalLink)
     }
 
     func makeUIView(context: Context) -> WKWebView {
@@ -135,19 +142,21 @@ private struct EphemeralWebView: UIViewRepresentable {
 
     final class Coordinator: NSObject, WKNavigationDelegate {
         @Binding var isLoading: Bool
+        private let onExternalLink: (URL) -> Void
 
-        init(isLoading: Binding<Bool>) {
+        init(isLoading: Binding<Bool>, onExternalLink: @escaping (URL) -> Void) {
             _isLoading = isLoading
+            self.onExternalLink = onExternalLink
         }
 
         /// Hors de Discogs, la page principale ne change plus dans la webview : le lien s'ouvre
-        /// dans Safari. Les cadres intégrés (vérification anti-robot, lecteurs) restent autorisés.
+        /// dans la vue Safari du système (`SystemSafariView`). Les cadres intégrés (vérification anti-robot, lecteurs) restent autorisés.
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {
             let url = navigationAction.request.url
             let isMainFrame = navigationAction.targetFrame?.isMainFrame ?? true
             guard isMainFrame, !DiscogsWebPolicy.allowsInAppNavigation(to: url) else { return .allow }
             if let url, ["http", "https"].contains(url.scheme?.lowercased() ?? "") {
-                await UIApplication.shared.open(url)
+                onExternalLink(url)
             }
             return .cancel
         }

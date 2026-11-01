@@ -7,7 +7,7 @@ struct AboutSettingsPage: View {
     /// Décompte des touchers sur la version (déverrouillage du diagnostic d'abonnement).
     @State private var diagnosticUnlock = SubscriptionDiagnosticUnlock()
     @State private var showingDiscogsWebsite = false
-    @State private var showingSupport = false
+    @State private var supportRequest: SafariViewRequest?
     @State private var showingManageSubscriptions = false
     /// `Bool` plutôt que `sheet(item:)` : feuille système StoreKit, sans donnée associée à présenter.
     @State private var showingRedeemCode = false
@@ -32,9 +32,9 @@ struct AboutSettingsPage: View {
                 }
 
                 // Seul accès à l'assistance dans l'app (le paywall n'en avait pas) : page web du site,
-                // dans la même feuille Safari que le site Discogs.
+                // dans la vue Safari du système (`SafariView` n'affiche que discogs.com).
                 Button {
-                    showingSupport = true
+                    supportRequest = SafariViewRequest(url: AppInfo.supportURL)
                 } label: {
                     HStack(spacing: 14) {
                         SettingsIcon(systemName: "lifepreserver.fill", backgroundColor: .orange)
@@ -137,8 +137,9 @@ struct AboutSettingsPage: View {
         .sheet(isPresented: $showingDiscogsWebsite) {
             SafariView(url: DiscogsConstants.websiteURL)
         }
-        .sheet(isPresented: $showingSupport) {
-            SafariView(url: AppInfo.supportURL)
+        .fullScreenCover(item: $supportRequest) { request in
+            SystemSafariView(url: request.url)
+                .ignoresSafeArea()
         }
         .manageSubscriptionsSheet(isPresented: $showingManageSubscriptions)
         .offerCodeSheet(isPresented: $showingRedeemCode, message: $redeemMessage)
