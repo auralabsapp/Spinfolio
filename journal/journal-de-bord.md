@@ -9,6 +9,10 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-11-01 — Demande d'avis App Store, anglais britannique, fiche App Store française, sauvegarde JSON cachée, site à jour, tests manuels en Markdown
 
+### 23:46 — `4df437a` Catalogue de textes : entrée extraite par Xcode pour le message « forfait indisponible »
+
+Entrée ajoutée automatiquement au catalogue par Xcode, sans traduction anglaise. 1 fichier, +3.
+
 ### 23:45 — `0a6fba2` Tests manuels : QA/manual-tests.md devient la référence
 
 Les 575 cas de `QA/tests.js` sont repris dans `QA/manual-tests.md`, rangé par famille (A à U) et numéroté, avec une case « Passé » par cas. `tests.js`, `print.html`, `index.html` et le PDF sont supprimés ; `CLAUDE.md` (§0, §10, §13) pointe vers le nouveau fichier. 6 fichiers, +7768 / −1196.
