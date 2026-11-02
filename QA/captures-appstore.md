@@ -50,6 +50,16 @@ Hors série App Store, rangées dans `docs/appstore-screenshots/raw/` et convert
 feuille « Écoute sur platine » : CD *No Need To Argue*, cassette *Born In The U.S.A.*, vinyle *From Zero*),
 détourées avec coins arrondis transparents (voir l'historique de la session : recadrage x 24-1182, rayon 190).
 
+## Image de réserve : écoute sur platine (2 novembre 2026)
+
+`docs/appstore-screenshots/reserve-ecoute-platine.png` (1206 × 2622), hors des 10 images et de la planche, gardée pour un
+test A/B de la première image (« Optimisation de la page produit »). Générée par `generate.py` (`RESERVE_SLIDES`) :
+accroche « Chaque écoute, sur le bon support ». Il n'existe pas de capture plein écran de la feuille d'écoute : la feuille
+réelle du vinyle (*From Zero*, Linkin Park, photo de l'iPhone détourée : `docs/assets/site/ecoute-vinyle.webp`) est posée sur
+la liste de la Collection (`raw/10_light_list.png`) assombrie, ce qui reproduit la présentation du système
+(`compose_listening_screen`, écrit `raw/18_listen_screen.png`). Image **recomposée**, à signaler comme telle si l'App Store
+la questionne ; pour une capture authentique, refaire l'image au simulateur (feuille ouverte depuis le mini-lecteur).
+
 ## Données personnelles visibles
 
 Montants investis et cote de la collection (images 4 et 8), écoutes et classement (8), grade et taille de la

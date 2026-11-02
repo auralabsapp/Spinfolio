@@ -111,6 +111,19 @@ SLIDES = [
 ]
 
 
+# Image de réserve (hors des 10 et de la planche), pour un test A/B de la première image dans « Optimisation de
+# la page produit » : l'écoute sur platine, ce qui distingue l'app des autres clients Discogs. Aucune capture
+# plein écran de cette feuille n'existe : `compose_listening_screen` pose la feuille d'écoute réelle (détourée,
+# prise sur l'iPhone, voir `docs/assets/site/ecoute-vinyle.webp`) sur la liste de la Collection assombrie,
+# comme le système présente une feuille.
+SITE_DIR = os.path.join(HERE, "..", "assets", "site")
+RESERVE_SLIDES = [
+    {"raw": "18_listen_screen.png", "out": "reserve-ecoute-platine.png", "palette": "orchidee",
+     "title": ["Chaque écoute,", "sur le bon support"],
+     "subtitle": "Vinyle, CD ou cassette : l'écran prend la forme de ton disque"},
+]
+
+
 def font(path, size, variation):
     f = ImageFont.truetype(path, size)
     f.set_variation_by_name(variation)
@@ -298,6 +311,24 @@ def phone(canvas, raw_path):
     canvas.alpha_composite(layer)
 
 
+def compose_listening_screen():
+    """Capture plein écran (1206 x 2622) recomposée : feuille « Écoute sur platine » du vinyle sur la liste de la
+    Collection assombrie. Écrit `raw/18_listen_screen.png` (dossier ignoré par git)."""
+    backdrop = Image.open(os.path.join(RAW_DIR, "10_light_list.png")).convert("RGBA")
+    assert backdrop.size == (W, H), f"10_light_list.png : {backdrop.size}"
+    backdrop = Image.alpha_composite(backdrop, Image.new("RGBA", (W, H), (0, 0, 0, 92)))
+    sheet = Image.open(os.path.join(SITE_DIR, "ecoute-vinyle.webp")).convert("RGBA")
+    margin = 24
+    sheet_w = W - 2 * margin
+    sheet = sheet.resize((sheet_w, round(sheet.size[1] * sheet_w / sheet.size[0])), Image.LANCZOS)
+    y = H - sheet.size[1] - 34
+    shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    shadow.paste((0, 0, 0, 140), (margin, y + 10), sheet.getchannel("A"))
+    backdrop = Image.alpha_composite(backdrop, shadow.filter(ImageFilter.GaussianBlur(30)))
+    backdrop.alpha_composite(sheet, (margin, y))
+    backdrop.convert("RGB").save(os.path.join(RAW_DIR, "18_listen_screen.png"))
+
+
 def make_slide(slide):
     canvas = background(PALETTES[slide["palette"]])
     ratio = contrast_check(canvas)
@@ -347,3 +378,6 @@ def make_board(paths):
 
 if __name__ == "__main__":
     make_board([make_slide(s) for s in SLIDES])
+    compose_listening_screen()
+    for reserve in RESERVE_SLIDES:
+        make_slide(reserve)
