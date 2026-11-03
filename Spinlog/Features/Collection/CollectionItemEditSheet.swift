@@ -71,10 +71,6 @@ struct CollectionItemEditSheet: View {
             if initialValues[field.id] == nil {
                 initialValues[field.id] = item.value(forFieldId: field.id)
             }
-            // Prix d'achat et état du disque : la valeur gardée dans l'app prime sur celle de Discogs.
-            if let local = CopyDetailsStore.shared.fieldValue(forFieldId: field.id, instanceId: item.instanceId) {
-                initialValues[field.id] = local
-            }
         }
         _fieldValues = State(initialValue: initialValues)
         _savedFieldValues = State(initialValue: initialValues)
@@ -256,11 +252,6 @@ struct CollectionItemEditSheet: View {
                     .tint(Color.spinlogPink)
                 }
             }
-            // Prix ou état modifié dans la section « Plus-value » : les deux champs Discogs associés,
-            // toujours listés plus bas, montrent la même valeur sans attendre une réouverture.
-            .onChange(of: CopyDetailsStore.shared.details(for: item.instanceId)) {
-                syncAssociatedFieldValues()
-            }
             .onChange(of: selectedFolderId) { _, newFolderId in
                 guard newFolderId != item.folderId else { return }
                 onFolderChanged(item, newFolderId)
@@ -317,18 +308,28 @@ struct CollectionItemEditSheet: View {
         }
     }
 
-    /// Aligne sur l'app la valeur affichée des champs Discogs associés, sauf si elle y correspond déjà
-    /// (« 25,5 € » saisi à la main équivaut à « 25.50 EUR » : on ne réécrit pas ce que l'utilisateur a tapé).
-    private func syncAssociatedFieldValues() {
+    /// Les champs Discogs montrent toujours la valeur présente sur Discogs, jamais celle de l'app. Seul un
+    /// envoi confirmé (`.done`) depuis la section « Plus-value » la change : la liste reprend alors ce qui
+    /// vient d'y être écrit (sauf si elle y correspond déjà : « 25,5 € » saisi à la main équivaut à
+    /// « 25.50 EUR »), et la valeur est reportée sur l'exemplaire pour la prochaine ouverture.
+    private func showSentValuesInAssociatedFields() {
         guard let username = DiscogsAuthManager.shared.username else { return }
         let store = CopyDetailsStore.shared
+        var updatedNotes = item.notes
+        var changed = false
         for field in fields {
             guard let local = store.fieldValue(forFieldId: field.id, instanceId: item.instanceId) else { continue }
             let shown = fieldValues[field.id] ?? ""
             guard !store.isFieldValue(shown, equivalentToStoredFor: field.id, instanceId: item.instanceId, username: username) else { continue }
             fieldValues[field.id] = local
             savedFieldValues[field.id] = local
+            updatedNotes.removeAll { $0.fieldId == field.id }
+            if !local.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                updatedNotes.append(CollectionFieldValue(fieldId: field.id, value: local))
+            }
+            changed = true
         }
+        if changed { onSaved(item.rating, updatedNotes) }
     }
 
     /// État du disque de l'exemplaire, pour affiner l'estimation de cote (sans lui,
@@ -352,9 +353,11 @@ struct CollectionItemEditSheet: View {
     /// Prix d'achat et état du disque, saisis ici pour tous les comptes (le calcul de la plus-value
     /// qui en découle est la fonction Premium).
     private var copyDetailsEditor: some View {
-        CopyDetailsEditor(item: item) { message in
+        CopyDetailsEditor(item: item, onDiscogsRefusal: { message in
             errorMessage = message
-        }
+        }, onSentToDiscogs: {
+            showSentValuesInAssociatedFields()
+        })
     }
 
     /// Plus/moins-value de l'exemplaire par rapport à son prix d'achat, exprimée dans la devise

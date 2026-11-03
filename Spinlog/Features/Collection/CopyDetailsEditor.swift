@@ -8,6 +8,8 @@ struct CopyDetailsEditor: View {
     let item: CollectionItem
     /// Message à afficher quand Discogs refuse l'envoi (la valeur reste enregistrée dans l'app).
     let onDiscogsRefusal: (String) -> Void
+    /// Appelé quand une valeur vient d'être écrite sur Discogs (envoi confirmé).
+    let onSentToDiscogs: () -> Void
 
     @State private var store = CopyDetailsStore.shared
     @State private var amountText: String
@@ -17,9 +19,10 @@ struct CopyDetailsEditor: View {
     /// Hauteur commune des deux lignes (le menu de devise, plus haut qu'un simple texte, en dictait une).
     private static let rowHeight: CGFloat = 48
 
-    init(item: CollectionItem, onDiscogsRefusal: @escaping (String) -> Void) {
+    init(item: CollectionItem, onDiscogsRefusal: @escaping (String) -> Void, onSentToDiscogs: @escaping () -> Void = {}) {
         self.item = item
         self.onDiscogsRefusal = onDiscogsRefusal
+        self.onSentToDiscogs = onSentToDiscogs
         let username = DiscogsAuthManager.shared.username ?? ""
         let stored = CopyDetailsStore.shared.purchasePrice(for: item.instanceId)
         _amountText = State(initialValue: stored.map { PurchasePriceParser.editableAmountString($0.amount) } ?? "")
@@ -96,8 +99,13 @@ struct CopyDetailsEditor: View {
     private func write(_ operation: @escaping (String) async -> DiscogsWriteOutcome?) {
         guard let username = DiscogsAuthManager.shared.username else { return }
         Task {
-            if await operation(username) == .refused {
+            switch await operation(username) {
+            case .refused:
                 onDiscogsRefusal(String(localized: "Impossible d'enregistrer ces informations sur Discogs."))
+            case .done:
+                onSentToDiscogs()
+            default:
+                break
             }
         }
     }
