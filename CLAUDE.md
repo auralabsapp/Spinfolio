@@ -31,7 +31,7 @@ Code dans `Spinlog/`, widget et Live Activity dans `SpinlogWidgets/`, tests dans
   appareil y est ajouté comme une ligne du tableau de sa famille, avec le numéro suivant (lettre +
   numéro, jamais réattribué) : test, conditions, étapes (séparées par `<br>`), résultat attendu,
   étiquettes (`AUDIT` si lié à la branche en cours, `AUTO` si couvert par un test automatique),
-  case « Validé » à `☐` (cochée `☑` par l'utilisateur, `☒` en échec) et colonne « Résultat » vide.
+  case « Validé » à `☐` (remplacée par `✅` par l'utilisateur, `❌` en échec) et colonne « Résultat » vide.
 
 ## 1. Architecture
 
