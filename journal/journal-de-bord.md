@@ -7,7 +7,15 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
-## 2026-11-03 — Premiers tests manuels (famille A), correctif de la feuille « Effacer mes données »
+## 2026-11-03 — Premiers tests manuels (famille A), correctifs, revue des tests obsolètes
+
+### 23:25 — `720e11b` Tests manuels : revue des tests obsolètes (recherche centralisée, widget, Siri), B1 à B20 validés
+
+Remarque sur B5 : la recherche des onglets Collection et Wantlist a été retirée au profit de l'onglet Recherche. Quatre tests retirés (B5, B22, E5, H27) dans une section « Tests retirés (obsolètes) », environ 85 lignes réécrites (libellés du catalogue, widget « Album du jour », phrases Siri, sections de réglages), total ramené à 574 tests ; B1 à B20 cochés. 1 fichier, +652 / −642 (réalignement des colonnes).
+
+### 23:25 — `b869518` Bandeau de filtres actifs dans le contenu défilant (liste, mosaïque, carrousel)
+
+Relevé sur appareil : en liste, le bandeau (dans un en-tête de `List`) était décalé et trop espacé ; accroché sous le grand titre (`safeAreaInset`), il était recouvert au tirage. Il devient la première ligne du contenu qui défile dans les trois modes (`LibraryListView`, `LibraryMosaicView`, carrousel), avec le même espacement, pour Collection et Wantlist. Il n'est plus épinglé. 4 fichiers, +36 / −42.
 
 ### 19:10 — `f44db09` Session Discogs révoquée : alerte de reconnexion, modifications en attente conservées
 
