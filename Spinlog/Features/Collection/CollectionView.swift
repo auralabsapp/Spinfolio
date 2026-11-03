@@ -51,6 +51,12 @@ struct CollectionView: View {
             .navigationBarTitleDisplayMode(.large)
             .serifNavigationTitle()
             .searchDestinations(coverZoom: coverZoom)
+            // Premier chargement terminé (connexion, première ouverture) : la barre d'onglets rétablit sa
+            // taille normale. Pendant le chargement, la liste du squelette est remplacée par la vraie liste ;
+            // iOS peut y voir un défilement vers le bas et laisser la barre réduite sur une liste encore au sommet.
+            .onChange(of: viewModel.isAwaitingFirstLoad) { _, isAwaiting in
+                if !isAwaiting { TabNavigationCoordinator.shared.expandTabBar() }
+            }
             .scrollDismissesKeyboard(.immediately)
             .toolbar {
                 if isSelecting {
