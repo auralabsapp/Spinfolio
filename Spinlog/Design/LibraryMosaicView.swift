@@ -18,6 +18,9 @@ struct LibraryMosaicView<Item: SortableLibraryItem>: View {
     let displayTitle: ((key: String, items: [Item])) -> String
     let headerArtists: ((key: String, items: [Item])) -> [ReleaseArtist]
     let hasVerticalIndexBar: Bool
+    /// Bandeau des filtres actifs (nil = aucun), placé en tête du contenu qui défile : il suit le
+    /// tirage vers le bas au lieu de rester accroché sous le grand titre, qui le recouvrait.
+    var filtersBar: (() -> AnyView)? = nil
     /// Nom de la zone de défilement dans laquelle les en-têtes de section rapportent leur
     /// position (voir `reportingSectionOffset`, pour la pastille de position de
     /// `SectionIndexBar` côté appelant).
@@ -46,6 +49,9 @@ struct LibraryMosaicView<Item: SortableLibraryItem>: View {
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
+            if let filtersBar {
+                filtersBar()
+            }
             LazyVGrid(columns: columns, spacing: 6, pinnedViews: [.sectionHeaders]) {
                 if isLoading {
                     Section {

@@ -324,6 +324,7 @@ struct WantlistView: View {
             displayTitle: { viewModel.displayTitle(for: $0) },
             headerArtists: { viewModel.headerArtists(for: $0) },
             hasVerticalIndexBar: viewModel.indexEntries.count > 1,
+            filtersBar: viewModel.hasActiveFilters ? { AnyView(LibraryActiveFiltersBar(selectedFormat: $viewModel.selectedFormat, onClearAll: viewModel.clearFilters)) } : nil,
             sectionsCoordinateSpace: Self.sectionsCoordinateSpace,
             isSelecting: isSelecting,
             selectedItemIds: selectedItemIds,
@@ -373,17 +374,9 @@ struct WantlistView: View {
             indexToken: { viewModel.indexToken(for: $0) },
             displayTitle: { viewModel.displayTitle(for: $0) },
             headerArtists: { viewModel.headerArtists(for: $0) },
-            hasActiveFilters: viewModel.hasActiveFilters,
-            activeFiltersBar: {
-                AnyView(
-                    LibraryActiveFiltersBar(
-                        selectedFormat: $viewModel.selectedFormat,
-                        onClearAll: viewModel.clearFilters
-                    )
-                )
-            },
             sectionsCoordinateSpace: Self.sectionsCoordinateSpace,
             hasVerticalIndexBar: viewModel.indexEntries.count > 1,
+            filtersBar: viewModel.hasActiveFilters ? { AnyView(LibraryActiveFiltersBar(selectedFormat: $viewModel.selectedFormat, onClearAll: viewModel.clearFilters)) } : nil,
             isSelecting: isSelecting,
             selectedItemIds: selectedItemIds,
             onToggleSelection: { toggleSelection($0) },
@@ -471,6 +464,13 @@ struct WantlistView: View {
                         // `LibraryCarouselView` ne défile lui-même qu'à l'horizontale.
                         GeometryReader { geo in
                             ScrollView(.vertical, showsIndicators: false) {
+                                // Bandeau en tête du contenu, comme en liste et en mosaïque.
+                                if viewModel.hasActiveFilters {
+                                    LibraryActiveFiltersBar(
+                                        selectedFormat: $viewModel.selectedFormat,
+                                        onClearAll: viewModel.clearFilters
+                                    )
+                                }
                                 Group {
                                     if isShowingSkeleton {
                                         LibraryCarouselSkeletonContent(containerSize: geo.size, actionButtonCount: 1)
@@ -501,16 +501,6 @@ struct WantlistView: View {
                 // réellement, pas à chaque image du défilement (voir `LibraryCurrentSectionTracker`).
                 .onPreferenceChange(SectionHeaderOffsetKey.self) { candidate in
                     sectionTracker.update(to: candidate?.key)
-                }
-                .safeAreaInset(edge: .top) {
-                    // Mode liste exclu : sa propre `List` intègre déjà la barre de filtres
-                    // comme ligne (voir `wantlistViewList`).
-                    if displayMode != .list, viewModel.hasActiveFilters {
-                        LibraryActiveFiltersBar(
-                            selectedFormat: $viewModel.selectedFormat,
-                            onClearAll: viewModel.clearFilters
-                        )
-                    }
                 }
                 .onChange(of: viewModel.sortOption) {
                     withAnimation { proxy.scrollTo(viewModel.sections.first?.key, anchor: .top) }

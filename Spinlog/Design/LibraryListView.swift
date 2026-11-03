@@ -19,13 +19,11 @@ struct LibraryListView<Item: SortableLibraryItem>: View {
     let indexToken: ((key: String, items: [Item])) -> String
     let displayTitle: ((key: String, items: [Item])) -> String
     let headerArtists: ((key: String, items: [Item])) -> [ReleaseArtist]
-    var hasActiveFilters: Bool = false
-    /// Bandeau affiché en en-tête de section épinglé quand `hasActiveFilters` — voir
-    /// `CollectionView.collectionViewList` pour l'intérêt de cette intégration plutôt qu'un
-    /// sibling externe ou un `.safeAreaInset` (ne décroche jamais `.searchable()`).
-    var activeFiltersBar: () -> AnyView = { AnyView(EmptyView()) }
     let sectionsCoordinateSpace: String
     let hasVerticalIndexBar: Bool
+    /// Bandeau des filtres actifs (nil = aucun), placé en tête du contenu qui défile : il suit le
+    /// tirage vers le bas au lieu de rester accroché sous le grand titre, qui le recouvrait.
+    var filtersBar: (() -> AnyView)? = nil
     var isSelecting: Bool = false
     var selectedItemIds: Set<Int> = []
     var onToggleSelection: ((Item) -> Void)? = nil
@@ -48,13 +46,17 @@ struct LibraryListView<Item: SortableLibraryItem>: View {
 
     var body: some View {
         List {
-            if hasActiveFilters {
+            if let filtersBar {
+                // Ligne sans marge ni fond : le bandeau porte déjà ses propres marges. Section à
+                // part dont l'espacement est nul, sinon l'espacement entre sections (~10 pt) le
+                // sépare du premier en-tête plus qu'en Mosaïque.
                 Section {
-                    EmptyView()
-                } header: {
-                    activeFiltersBar()
-                        .textCase(nil)
+                    filtersBar()
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
                 }
+                .listSectionSpacing(.custom(0))
             }
             if isLoading {
                 ForEach(0..<2, id: \.self) { _ in
@@ -124,6 +126,9 @@ struct LibraryListView<Item: SortableLibraryItem>: View {
         .listRowSeparatorTint(Color.appSeparator)
         .listSectionSpacing(.compact)
         .environment(\.defaultMinListHeaderHeight, 0)
+        // Sans plancher de hauteur, la rangée du bandeau de filtres (voir `filtersBar`) restait plus
+        // haute que son contenu.
+        .environment(\.defaultMinListRowHeight, 0)
         // Rebond toujours actif, même quand la liste est courte et tient entièrement à l'écran :
         // la barre d'onglets réduite par un défilement (voir `tabBarMinimizeBehavior`) ne revient
         // à sa taille normale que par un geste vers le bas, impossible sinon sur une liste courte.

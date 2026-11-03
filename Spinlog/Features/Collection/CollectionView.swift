@@ -297,14 +297,9 @@ struct CollectionView: View {
             indexToken: { viewModel.display.indexToken(for: $0) },
             displayTitle: { viewModel.display.displayTitle(for: $0) },
             headerArtists: { viewModel.display.headerArtists(for: $0) },
-            hasActiveFilters: viewModel.display.hasActiveFilters,
-            activeFiltersBar: {
-                AnyView(
-                    CollectionActiveFiltersBar(display: viewModel.display)
-                )
-            },
             sectionsCoordinateSpace: Self.sectionsCoordinateSpace,
             hasVerticalIndexBar: viewModel.display.indexEntries.count > 1,
+            filtersBar: viewModel.display.hasActiveFilters ? { AnyView(CollectionActiveFiltersBar(display: viewModel.display)) } : nil,
             isSelecting: isSelecting,
             selectedItemIds: selectedItemIds,
             onToggleSelection: { toggleSelection($0) },
@@ -392,6 +387,10 @@ struct CollectionView: View {
                         // infinie à son enfant, le rendant démesurément grand.
                         GeometryReader { geo in
                             ScrollView(.vertical, showsIndicators: false) {
+                                // Bandeau en tête du contenu, comme en liste et en mosaïque.
+                                if viewModel.display.hasActiveFilters {
+                                    CollectionActiveFiltersBar(display: viewModel.display)
+                                }
                                 Group {
                                     if isShowingSkeleton {
                                         LibraryCarouselSkeletonContent(containerSize: geo.size, actionButtonCount: 3)
@@ -419,6 +418,7 @@ struct CollectionView: View {
                             displayTitle: { viewModel.display.displayTitle(for: $0) },
                             headerArtists: { viewModel.display.headerArtists(for: $0) },
                             hasVerticalIndexBar: viewModel.display.indexEntries.count > 1,
+                            filtersBar: viewModel.display.hasActiveFilters ? { AnyView(CollectionActiveFiltersBar(display: viewModel.display)) } : nil,
                             sectionsCoordinateSpace: Self.sectionsCoordinateSpace,
                             isSelecting: isSelecting,
                             selectedItemIds: selectedItemIds,
@@ -452,13 +452,6 @@ struct CollectionView: View {
                 // réellement, pas à chaque image du défilement (voir `LibraryCurrentSectionTracker`).
                 .onPreferenceChange(SectionHeaderOffsetKey.self) { candidate in
                     sectionTracker.update(to: candidate?.key)
-                }
-                .safeAreaInset(edge: .top) {
-                    // Mode liste exclu : sa propre `List` intègre déjà la barre de filtres
-                    // comme ligne (voir `collectionViewList`).
-                    if displayMode != .list, viewModel.display.hasActiveFilters {
-                        CollectionActiveFiltersBar(display: viewModel.display)
-                    }
                 }
                 // Changer de critère de tri réordonne la liste : on remonte en haut plutôt que de
                 // laisser le scroll à une position qui n'a plus de sens.
