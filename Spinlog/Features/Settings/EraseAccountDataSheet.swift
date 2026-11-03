@@ -43,8 +43,13 @@ struct EraseAccountDataSheet: View {
                         .contentShape(Rectangle())
                         .onTapGesture { isFieldFocused = false }
 
-                        confirmationField
-                            .id(Self.fieldAnchor)
+                        // Le bouton défile avec le champ, juste dessous : posé en bas de la feuille, il montait avec
+                        // le clavier mais ne le suivait pas pendant sa fermeture par balayage.
+                        VStack(alignment: .leading, spacing: 16) {
+                            confirmationField
+                            eraseButton
+                        }
+                        .id(Self.fieldAnchor)
                     }
                     .padding()
                 }
@@ -76,10 +81,10 @@ struct EraseAccountDataSheet: View {
                             .fontWeight(.semibold)
                     }
                 }
-                .safeAreaInset(edge: .bottom) { eraseButton }
             }
         }
-        // Toujours en grand : texte, quantités, champ et bouton rouge doivent tenir sans défiler.
+        // Toujours en grand : texte, quantités, champ et bouton rouge doivent tenir sans défiler (le bouton
+        // suit le champ dans le contenu).
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
     }
@@ -191,9 +196,6 @@ struct EraseAccountDataSheet: View {
         .buttonStyle(.borderedProminent)
         .tint(Color.red)
         .disabled(!isConfirmed)
-        .padding(.horizontal)
-        .padding(.vertical, 10)
-        .background(.bar)
     }
 }
 
