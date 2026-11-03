@@ -9,6 +9,10 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-11-03 — Premiers tests manuels (famille A), correctif de la feuille « Effacer mes données »
 
+### 18:35 — `7302f8b` Disques qui tournent : l'arrêt suit « Réduire les animations » en direct
+
+Relevé au test A27 : le disque de l'écran d'accueil continuait de tourner si le réglage était activé pendant que l'app tournait (animation `repeatForever` jamais retirée). `ContinuousRotationModifier` calcule l'angle avec une `TimelineView` mise en pause avec le réglage ; concerne aussi les disques des grades et de la fiche en cours d'écoute. 2 fichiers.
+
 ### 18:28 — `c4bcdd2` Collection : la barre d'onglets reprend sa taille normale à la fin du premier chargement
 
 Relevé après la connexion : la barre restait réduite à l'arrivée en Collection. `expandTabBar()` est appelé quand `isAwaitingFirstLoad` passe à faux (`CollectionView`). Non reproduit, correctif préventif ; cas manuel A32. 2 fichiers.
