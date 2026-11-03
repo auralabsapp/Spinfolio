@@ -7,6 +7,16 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
+## 2026-11-03 — Premiers tests manuels (famille A), correctif de la feuille « Effacer mes données »
+
+### 17:59 — `19e3954` Effacer mes données : le bouton rouge suit le champ de saisie sous le clavier
+
+Relevé au test A26 : le bouton « Effacer définitivement mes données », posé en bas de la feuille (`safeAreaInset`), montait avec le clavier mais ne le suivait pas quand on le fermait par balayage. Il est maintenant dans le contenu, juste sous le champ du nom d'utilisateur (`EraseAccountDataSheet`). 1 fichier, +9 / −7.
+
+### 17:59 — `26fd22e` Tests manuels : résultats de la famille A (✅ validés, « Non fait »), symbole ✅/❌
+
+Résultats des tests A1 à A31 : 20 validés (✅), 6 « Non fait » dans la colonne Résultat ; le symbole de validation passe de ☑/☒ à ✅/❌ (`QA/manual-tests.md`, `CLAUDE.md` §0). 2 fichiers, +29 / −29.
+
 ## 2026-11-02 — Tests manuels en tableaux, traduction du message « forfait indisponible »
 
 ### 00:06 — `55fdc2d` Tests manuels : colonne « Validé » à cocher (☐ / ☑ / ☒)
