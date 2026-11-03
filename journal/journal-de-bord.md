@@ -9,6 +9,14 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-11-03 — Premiers tests manuels (famille A), correctif de la feuille « Effacer mes données »
 
+### 18:28 — `c4bcdd2` Collection : la barre d'onglets reprend sa taille normale à la fin du premier chargement
+
+Relevé après la connexion : la barre restait réduite à l'arrivée en Collection. `expandTabBar()` est appelé quand `isAwaitingFirstLoad` passe à faux (`CollectionView`). Non reproduit, correctif préventif ; cas manuel A32. 2 fichiers.
+
+### 18:26 — `451db85` Mon exemplaire : les champs Discogs montrent toujours la valeur présente sur Discogs
+
+Avec « Envoyer vers Discogs » décoché, la liste « Champs personnalisés Discogs » ne reprend plus la valeur de l'app (prix, état) ; elle ne la reflète qu'après un envoi confirmé (`CopyDetailsEditor.onSentToDiscogs`). Cas manuel H39. 3 fichiers.
+
 ### 17:59 — `19e3954` Effacer mes données : le bouton rouge suit le champ de saisie sous le clavier
 
 Relevé au test A26 : le bouton « Effacer définitivement mes données », posé en bas de la feuille (`safeAreaInset`), montait avec le clavier mais ne le suivait pas quand on le fermait par balayage. Il est maintenant dans le contenu, juste sous le champ du nom d'utilisateur (`EraseAccountDataSheet`). 1 fichier, +9 / −7.
