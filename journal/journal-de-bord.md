@@ -9,6 +9,10 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-11-03 — Premiers tests manuels (famille A), correctifs, revue des tests obsolètes
 
+### 23:40 — `64bb69e` Tests manuels : cas B54 et E27 (bandeau de filtres), B54 validé
+
+Deux cas ajoutés (bandeau de filtres actifs en liste, mosaïque et carrousel ; équivalent Wantlist), total 576 tests. B54 validé sur appareil après le dernier réglage de l'espacement en liste. 1 fichier.
+
 ### 23:25 — `720e11b` Tests manuels : revue des tests obsolètes (recherche centralisée, widget, Siri), B1 à B20 validés
 
 Remarque sur B5 : la recherche des onglets Collection et Wantlist a été retirée au profit de l'onglet Recherche. Quatre tests retirés (B5, B22, E5, H27) dans une section « Tests retirés (obsolètes) », environ 85 lignes réécrites (libellés du catalogue, widget « Album du jour », phrases Siri, sections de réglages), total ramené à 574 tests ; B1 à B20 cochés. 1 fichier, +652 / −642 (réalignement des colonnes).
