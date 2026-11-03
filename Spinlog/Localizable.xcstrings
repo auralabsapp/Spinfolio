@@ -6653,6 +6653,16 @@
         }
       }
     },
+    "Discogs ne reconnaît plus l'autorisation de l'app (elle a peut-être été révoquée sur discogs.com). Reconnecte-toi pour reprendre la synchronisation : tes tags, écoutes et modifications en attente sont conservés." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Discogs no longer recognizes the app’s authorization (it may have been revoked on discogs.com). Sign in again to resume syncing: your tags, listens and pending changes are kept."
+          }
+        }
+      }
+    },
     "Discogs ne répond pas : la modification sera synchronisée automatiquement." : {
       "localizations" : {
         "en" : {
@@ -13064,6 +13074,16 @@
         }
       }
     },
+    "Se reconnecter" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Sign In Again"
+          }
+        }
+      }
+    },
     "Section" : {
       "localizations" : {
         "en" : {
@@ -14194,6 +14214,16 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Your Sorting Method"
+          }
+        }
+      }
+    },
+    "Ta session Discogs a expiré" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Your Discogs session has expired"
           }
         }
       }

@@ -218,6 +218,17 @@ final class DiscogsAPIClient {
             guard let http = response as? HTTPURLResponse else { throw APIError.invalidResponse }
             await rateLimiter.recordResponse(http)
 
+            // Session du compte connecté : Discogs refuse son jeton (révoqué ou expiré), ou une écriture ou
+            // l'identité réussit et prouve qu'il est valide (voir `SessionRejectionTracker`). Hors démo et
+            // hors requêtes publiques.
+            if let token = credentials?.token {
+                if SessionRejectionTracker.isRejection(status: http.statusCode, path: path, username: DiscogsAuthManager.shared.username) {
+                    DiscogsAuthManager.shared.noteSessionRejected(usingToken: token)
+                } else if (200..<300).contains(http.statusCode), SessionRejectionTracker.provesSession(method: method, path: path) {
+                    DiscogsAuthManager.shared.noteSessionAccepted(usingToken: token)
+                }
+            }
+
             if http.statusCode == 429, attempt < 2 {
                 let delay = await rateLimiter.retryDelay(after: http)
                 // `try` (et non `try?`) : une tâche annulée pendant l'attente (changement de

@@ -2,8 +2,8 @@ import SwiftUI
 
 /// Remplace `.refreshable` sur les listes : même geste de tirage, mais une fois la synchronisation
 /// finie, une pastille « À jour » apparaît brièvement en haut avec un léger retour haptique — le
-/// tirage reste sinon muet quand il n'y a rien de nouveau. Rien n'est affiché sans réseau : la
-/// synchronisation n'a alors pas eu lieu et ne doit pas se prétendre à jour.
+/// tirage reste sinon muet quand il n'y a rien de nouveau. Rien n'est affiché sans réseau, ni quand Discogs
+/// refuse la session : la synchronisation n'a alors pas eu lieu et ne doit pas se prétendre à jour.
 private struct LibraryRefreshConfirmationModifier: ViewModifier {
     let action: () async -> Void
 
@@ -15,7 +15,10 @@ private struct LibraryRefreshConfirmationModifier: ViewModifier {
         content
             .refreshable {
                 await action()
-                guard !Task.isCancelled, NetworkMonitor.shared.isConnected else { return }
+                await DiscogsAuthManager.shared.validateSession()
+                // Pas de « À jour » si Discogs a refusé la session : la synchronisation n'a pas eu lieu.
+                guard !Task.isCancelled, NetworkMonitor.shared.isConnected,
+                      !DiscogsAuthManager.shared.isSessionRejected else { return }
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
                 showConfirmation()
             }

@@ -127,9 +127,17 @@ nonisolated enum AppMessages {
 
 
     static var discogsUnavailableQueued: String { String(localized: "Discogs ne répond pas : la modification sera synchronisée automatiquement.") }
-    static var addFailed: String { String(localized: "Impossible d'ajouter cet album sur Discogs.") }
-    static var removalFailed: String { String(localized: "Impossible de supprimer cet album sur Discogs.") }
-    static var moveFailed: String { String(localized: "Impossible de changer cet album de dossier sur Discogs.") }
+    /// Discogs a refusé la session du compte : message commun aux échecs d'écriture (voir `SessionRejectionTracker`).
+    @MainActor static var sessionExpired: String { String(localized: "Ta session Discogs a expiré : reconnecte-toi dans Réglages.") }
+    @MainActor static var addFailed: String {
+        DiscogsAuthManager.shared.isSessionRejected ? sessionExpired : String(localized: "Impossible d'ajouter cet album sur Discogs.")
+    }
+    @MainActor static var removalFailed: String {
+        DiscogsAuthManager.shared.isSessionRejected ? sessionExpired : String(localized: "Impossible de supprimer cet album sur Discogs.")
+    }
+    @MainActor static var moveFailed: String {
+        DiscogsAuthManager.shared.isSessionRejected ? sessionExpired : String(localized: "Impossible de changer cet album de dossier sur Discogs.")
+    }
 
     // Mode démo (voir `DemoMode`) : la collection et la wantlist d'exemple sont en lecture seule.
     static var demoAddBlocked: String { String(localized: "En mode démo, il n'est pas possible d'ajouter des albums à la collection ou à la wantlist. Connecte ton compte Discogs dans Réglages pour gérer ta propre collection.") }

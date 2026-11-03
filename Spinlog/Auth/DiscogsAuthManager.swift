@@ -36,6 +36,13 @@ final class DiscogsAuthManager: NSObject {
     /// saccades observées dans Instruments.
     private(set) var credentials: DiscogsCredentials?
 
+    /// Discogs a refusé le jeton du compte connecté (révoqué sur discogs.com ou expiré) : les messages
+    /// d'échec le disent, et la pastille « À jour » ne ment plus (voir `SessionRejectionTracker`).
+    var isSessionRejected: Bool { rejectionTracker.isRejected }
+    /// Alerte « Ta session Discogs a expiré » à montrer (une seule fois par refus, voir `RootTabView`).
+    var showsSessionExpiredAlert = false
+    private var rejectionTracker = SessionRejectionTracker()
+
     /// Regroupe `username`/`credentials` en une seule valeur optionnelle, pour remplacer le
     /// `guard let username = ..., let credentials = ...` répété à l'identique dans une douzaine
     /// d'endroits de l'app par un unique `guard let session = authManager.session`.
@@ -113,6 +120,7 @@ final class DiscogsAuthManager: NSObject {
             keychain.set(identity.username, forKey: Keys.username)
             username = identity.username
             credentials = DiscogsCredentials(token: accessToken.token, tokenSecret: accessToken.secret)
+            rejectionTracker.reset()
             // Toute connexion (première, ou après la déconnexion d'un autre compte) arrive sur Collection,
             // jamais sur l'onglet laissé ouvert par la session précédente.
             TabNavigationCoordinator.shared.showCollectionRoot()
@@ -167,7 +175,41 @@ final class DiscogsAuthManager: NSObject {
         WantlistAlertStore.shared.setActiveUsername(username)
     }
 
+    /// Dernière vérification de la session auprès de Discogs, pour ne pas la refaire à chaque tirage.
+    private var lastSessionCheck: Date?
+
+    /// Vérifie que Discogs accepte encore le jeton, avec l'identité du compte : une lecture de collection peut
+    /// réussir avec un jeton révoqué (collections publiques), seule une requête qui exige le compte le révèle.
+    /// Espacée de 2 minutes ; le résultat passe par `DiscogsAPIClient` (voir `noteSessionRejected`).
+    func validateSession() async {
+        guard let credentials, !isDemoMode, !isAuthenticating, NetworkMonitor.shared.isConnected else { return }
+        if let lastSessionCheck, Date().timeIntervalSince(lastSessionCheck) < 120 { return }
+        lastSessionCheck = Date()
+        let _: Identity? = try? await DiscogsAPIClient.shared.request(path: "oauth/identity", credentials: credentials)
+    }
+
+    /// Appelé par `DiscogsAPIClient` quand Discogs répond 401 à une requête signée avec le jeton `token`.
+    func noteSessionRejected(usingToken token: String) {
+        if rejectionTracker.noteRejected(usedToken: token, currentToken: credentials?.token, isDemo: isDemoMode) {
+            showsSessionExpiredAlert = true
+        }
+    }
+
+    /// Appelé par `DiscogsAPIClient` quand une requête signée avec `token` réussit.
+    func noteSessionAccepted(usingToken token: String) {
+        rejectionTracker.noteAccepted(usedToken: token, currentToken: credentials?.token)
+    }
+
+    /// « Se reconnecter » de l'alerte de session expirée : même déconnexion que dans Réglages (les données
+    /// du compte restent sur l'appareil et reviennent à la reconnexion avec le même compte).
+    func reconnectAfterSessionExpired() {
+        showsSessionExpiredAlert = false
+        logout()
+    }
+
     func logout() {
+        rejectionTracker.reset()
+        showsSessionExpiredAlert = false
         let wasDemo = isDemoMode
         keychain.remove(Keys.accessToken)
         keychain.remove(Keys.accessTokenSecret)

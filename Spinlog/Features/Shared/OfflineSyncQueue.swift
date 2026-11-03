@@ -126,6 +126,13 @@ final class OfflineSyncQueue {
                 // ce 404 était retenté trois fois puis signalé comme un échec définitif.
                 removeAction(id: action.id)
             } catch {
+                if Self.isSessionRejected(error) {
+                    // Jeton refusé (révoqué ou expiré) : l'action reste en file, intacte, et la file s'arrête.
+                    // Sans cela, elle était retentée puis abandonnée comme un refus définitif, alors qu'elle
+                    // repart très bien après la reconnexion (`DiscogsAuthManager.login` relance la file).
+                    break
+                }
+
                 if Self.isRateLimited(error) {
                     // Quota Discogs dépassé : même nouvel essai espacé qu'une panne passagère.
                     // Auparavant la boucle réessayait toutes les 5 s, sans plafond ni annulation.
@@ -178,6 +185,14 @@ final class OfflineSyncQueue {
     /// Action jamais partie depuis plus de `maxPendingAge` : abandonnée plutôt que rejouée.
     nonisolated static func hasExpired(_ action: PendingAction, now: Date = Date()) -> Bool {
         now.timeIntervalSince(action.date) > maxPendingAge
+    }
+
+    /// Refus 401/403 alors que la session du compte est marquée refusée (voir `SessionRejectionTracker`, qui ne
+    /// retient qu'un 403 sur l'espace du compte) : le jeton est en cause, pas l'action.
+    private static func isSessionRejected(_ error: Error) -> Bool {
+        guard DiscogsAuthManager.shared.isSessionRejected,
+              let apiError = error as? DiscogsAPIClient.APIError, case .http(let status, _) = apiError else { return false }
+        return status == 401 || status == 403
     }
 
     private static func isRateLimited(_ error: Error) -> Bool {

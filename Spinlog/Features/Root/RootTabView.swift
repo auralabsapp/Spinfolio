@@ -113,6 +113,8 @@ struct RootTabView: View {
         }
         // Pochette qui part vers l'onglet de l'ajout.
         .overlay { LibraryAddFlightOverlay(flight: membershipStore.activeFlight) }
+        // Discogs a refusé la session (jeton révoqué ou expiré) : voir `SessionExpiredAlertModifier`.
+        .modifier(SessionExpiredAlertModifier())
         .fullScreenCover(isPresented: $showingLaunchPaywall) {
             SpinlogPaywallView()
         }
@@ -185,6 +187,7 @@ struct RootTabView: View {
                 }
                 autoSyncOfflineIfNeeded()
                 GradeEvaluator.shared.evaluateIfDue()
+                Task { await authManager.validateSession() }
             }
         }
     }
