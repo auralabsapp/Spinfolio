@@ -9,6 +9,10 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-11-03 — Premiers tests manuels (famille A), correctif de la feuille « Effacer mes données »
 
+### 19:10 — `f44db09` Session Discogs révoquée : alerte de reconnexion, modifications en attente conservées
+
+Relevé au test A5 : après révocation, l'app ne le disait pas (écriture « Impossible d'ajouter », pastille « À jour » au tirage) et la file hors ligne abandonnait les modifications en attente. Discogs répond 403 aux écritures du compte avec un jeton révoqué (401 ailleurs) et sert encore les collections publiques : `SessionRejectionTracker` classe les réponses, `DiscogsAuthManager` porte l'état, `validateSession()` vérifie l'identité au tirage et au retour au premier plan (2 min), alerte « Se reconnecter » / « Plus tard » (`SessionExpiredAlert`), messages d'échec et pastille adaptés, `OfflineSyncQueue` garde ses actions. Tests `SessionRejectionTrackerTests`, cas A5 et A33. 11 fichiers.
+
 ### 18:35 — `7302f8b` Disques qui tournent : l'arrêt suit « Réduire les animations » en direct
 
 Relevé au test A27 : le disque de l'écran d'accueil continuait de tourner si le réglage était activé pendant que l'app tournait (animation `repeatForever` jamais retirée). `ContinuousRotationModifier` calcule l'angle avec une `TimelineView` mise en pause avec le réglage ; concerne aussi les disques des grades et de la fiche en cours d'écoute. 2 fichiers.
