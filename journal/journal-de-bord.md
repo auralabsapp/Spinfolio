@@ -7,6 +7,18 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
+## 2026-11-04 — Compteurs de dossiers après un déplacement
+
+### 11:04 — `84008e9` Tests manuels : cas B55 (déplacement et compteurs de dossiers), B21 non fait
+
+Cas B55 ajouté (déplacement depuis la fiche et depuis la Collection, compteurs, champ personnalisé dans la même ouverture) ; B21 marqué « Non fait » faute de compte assez volumineux. Total 577 tests. 1 fichier.
+
+### 11:04 — `37aae64` Compteurs de dossiers : déplacement depuis la fiche pris en compte, correction gardée en cache
+
+Relevé sur appareil : après un déplacement fait dans « Mon exemplaire » depuis la fiche d'un disque, le menu des dossiers gardait les anciens compteurs jusqu'au tirage de la liste. `ReleaseActions.moveInstance` ne prévenait pas la Collection : nouvelle notification `collectionInstanceMoved` (envoyée aussi pour annuler un déplacement refusé), traitée par `CollectionViewModel`. Les corrections locales de compteurs sont enregistrées dans le cache (changer de dossier relisait des compteurs périmés) et confirmées par une relecture Discogs 6 s plus tard. `CollectionItemEditSheet` suit le dossier actuel de l'exemplaire (déplacements successifs, enregistrement d'un champ personnalisé après un déplacement). 5 fichiers, +86 / −7.
+
+---
+
 ## 2026-11-03 — Premiers tests manuels (famille A), correctifs, revue des tests obsolètes
 
 ### 23:40 — `64bb69e` Tests manuels : cas B54 et E27 (bandeau de filtres), B54 validé
