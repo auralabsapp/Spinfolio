@@ -69,7 +69,7 @@ struct CollectionItemContextMenu: View {
             Button {
                 actions.edit(item)
             } label: {
-                Label("Modifier la note et les commentaires", systemImage: "pencil")
+                Label("Modifier mon exemplaire", systemImage: "pencil")
             }
 
             Button(role: .destructive) {

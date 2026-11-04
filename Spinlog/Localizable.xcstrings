@@ -10411,11 +10411,22 @@
       }
     },
     "Modifier la note et les commentaires" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Edit Rating and Comments"
+          }
+        }
+      }
+    },
+    "Modifier mon exemplaire" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Edit My Copy"
           }
         }
       }

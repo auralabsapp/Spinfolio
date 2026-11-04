@@ -129,7 +129,9 @@ extension DiscogsAPIClient {
     // MARK: - Collection
 
     func collectionFolders(username: String, credentials: DiscogsCredentials?) async throws -> CollectionFoldersResponse {
-        try await request(path: "users/\(username)/collection/folders", credentials: credentials)
+        // Jamais servie par le cache HTTP : un dossier supprimé ou des compteurs modifiés ailleurs
+        // (site Discogs, autre appareil) doivent apparaître au rafraîchissement suivant.
+        try await request(path: "users/\(username)/collection/folders", credentials: credentials, cachePolicy: .reloadIgnoringLocalCacheData)
     }
 
     private struct FolderNamePayload: Encodable {

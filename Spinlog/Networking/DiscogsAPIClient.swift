@@ -127,9 +127,12 @@ final class DiscogsAPIClient {
         method: String = "GET",
         queryItems: [URLQueryItem] = [],
         body: Data? = nil,
-        credentials: DiscogsCredentials? = nil
+        credentials: DiscogsCredentials? = nil,
+        cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
     ) async throws -> T {
-        let (data, _) = try await perform(path: path, method: method, queryItems: queryItems, body: body, credentials: credentials)
+        let (data, _) = try await perform(
+            path: path, method: method, queryItems: queryItems, body: body, credentials: credentials, cachePolicy: cachePolicy
+        )
         return try decoder.decode(T.self, from: data)
     }
 
@@ -168,7 +171,8 @@ final class DiscogsAPIClient {
         method: String,
         queryItems: [URLQueryItem],
         body: Data? = nil,
-        credentials: DiscogsCredentials?
+        credentials: DiscogsCredentials?,
+        cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
     ) async throws -> (Data, HTTPURLResponse) {
         var credentials = credentials
         if DemoMode.isActive {
@@ -192,6 +196,7 @@ final class DiscogsAPIClient {
         guard let url = components.url else { throw APIError.invalidURL }
 
         var urlRequest = URLRequest(url: url)
+        urlRequest.cachePolicy = cachePolicy
         urlRequest.httpMethod = method
         urlRequest.setValue(DiscogsSecrets.userAgent, forHTTPHeaderField: "User-Agent")
         if let body {

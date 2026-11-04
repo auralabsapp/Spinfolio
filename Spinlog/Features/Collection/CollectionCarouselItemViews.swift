@@ -76,7 +76,7 @@ struct CollectionCarouselQuickActions: View {
                     .background(Color.primary.opacity(0.06), in: Circle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Modifier la note et les commentaires")
+            .accessibilityLabel("Modifier mon exemplaire")
         }
     }
 }

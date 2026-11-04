@@ -18,7 +18,7 @@ extension StatsView {
             SectionEyebrow(title: "Classement des artistes", icon: "person.2.fill")
                 .id("topArtistsTitle")
 
-            if viewModel.topArtistsByCollectionCount.count > 10 {
+            if viewModel.topArtistsByCollectionCount.count > 5 {
                 Text("Faire défiler verticalement pour afficher les autres artistes")
                     .font(.caption2)
                     .foregroundStyle(Color.appSecondaryText)

@@ -376,6 +376,15 @@ final class ReleaseActions {
         }
         guard let username = authManager.username, instance.folderId != toFolderId else { return }
 
+        // Comme le retrait et l'ajout : hors ligne avec des données de plus de 6 h, la
+        // modification est bloquée avec un message (l'exemplaire n'est pas déplacé). Un exemplaire
+        // ajouté hors ligne et pas encore envoyé reste modifiable (son ajout est simplement redirigé).
+        if instance.instanceId > 0, !networkMonitor.isConnected,
+           localStore.isCollectionStale(username: username, folderId: DiscogsConstants.allFolderId) {
+            message = AppMessages.offlineStaleModificationBlocked
+            return
+        }
+
         let movedItem = instance.moved(toFolderId: toFolderId)
         replaceInstance(instance.instanceId, with: movedItem)
         LibraryMembershipStore.shared.notifyCollectionInstanceMoved(from: instance, to: movedItem)

@@ -6,8 +6,8 @@ struct ArtistCount: Equatable {
     let count: Int
 }
 
-/// Classement des artistes par nombre de disques : barres horizontales, défilant verticalement
-/// au-delà de 10 lignes. Toucher une barre met l'artiste en avant (les autres s'estompent) et
+/// Classement des artistes par nombre de disques : barres horizontales fines avec le nom de l'artiste
+/// au-dessus de chacune, défilant verticalement au-delà de 5 lignes. Toucher une barre met l'artiste en avant (les autres s'estompent) et
 /// ouvre sa feuille de disques ; la retoucher referme tout.
 ///
 /// Composant séparé, qui lit lui-même la sélection (voir `StatsChartSelection`) : lue dans le
@@ -28,19 +28,31 @@ struct TopArtistsChart: View {
         // `Chart` est évalué par Charts, hors de ce suivi.
         let selectedArtist = selection.topArtist
         let maxCount = entries.map(\.count).max() ?? 1
-        let rowHeight: CGFloat = 34
+        // Assez haute pour loger le nom au-dessus de la barre, sans empiéter sur la ligne précédente.
+        let rowHeight: CGFloat = 50
         let fullHeight = CGFloat(entries.count) * rowHeight + 6
-        let visibleHeight = min(fullHeight, rowHeight * 10 + 6)
+        let visibleHeight = min(fullHeight, rowHeight * 5 + 6)
 
         ScrollView(.vertical, showsIndicators: true) {
             Chart(entries, id: \.name) { entry in
                 BarMark(
                     x: .value("Albums", revealed ? entry.count : 0),
-                    y: .value("Artiste", entry.name)
+                    y: .value("Artiste", entry.name),
+                    height: .fixed(14)
                 )
                 .foregroundStyle(barStyle(isDimmed: selectedArtist != nil && selectedArtist != entry.name))
                 .cornerRadius(4)
                 .accessibilityHidden(true)
+                // Nom posé explicitement au-dessus de la barre : l'axe Y automatique de Charts
+                // place ses étiquettes au bord de la bande, et sa position change d'une version
+                // d'iOS à l'autre (étiquettes décalées d'une demi-ligne).
+                .annotation(position: .top, alignment: .leading, spacing: 2) {
+                    Text(entry.name)
+                        .font(.caption)
+                        .foregroundStyle(Color.appSecondaryText)
+                        .lineLimit(1)
+                        .fixedSize()
+                }
                 .annotation(position: .trailing) {
                     Text("\(entry.count)")
                         .font(.caption2.weight(.bold))
@@ -49,13 +61,7 @@ struct TopArtistsChart: View {
             }
             .chartXScale(domain: 0...(max(1, Int(Double(maxCount) * 1.2))))
             .chartXAxis(.hidden)
-            .chartYAxis {
-                AxisMarks { _ in
-                    AxisValueLabel()
-                        .font(.caption)
-                        .foregroundStyle(Color.appSecondaryText)
-                }
-            }
+            .chartYAxis(.hidden)
             .frame(height: fullHeight)
             .animation(.easeOut(duration: 0.8), value: revealed)
             .chartOverlay { proxy in

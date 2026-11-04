@@ -312,7 +312,11 @@ final class CollectionViewModel {
 
     /// Rafraîchissement manuel déclenché par l'utilisateur via le pull-down (pull-to-refresh).
     func refresh() async {
-        await loadFoldersAndItems(isSilent: true)
+        // Chargement lancé dans sa propre tâche : le `.refreshable` annule la sienne dès que la
+        // vue qui la porte est reconstruite (ex: l'état « Collection vide » quand le dossier
+        // affiché a été supprimé sur Discogs). La requête était alors annulée sans bruit et
+        // l'écran restait sur le dossier disparu.
+        await Task { await loadFoldersAndItems(isSilent: true) }.value
     }
 
     func selectFolder(_ folderId: Int) async {

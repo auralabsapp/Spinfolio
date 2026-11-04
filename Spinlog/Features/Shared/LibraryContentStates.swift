@@ -63,12 +63,18 @@ struct LibraryNoResultsState<FiltersBar: View>: View {
     @ViewBuilder let filtersBar: () -> FiltersBar
 
     var body: some View {
-        VStack(spacing: 0) {
-            if isOfflineAndStale {
-                LibraryOfflineBanner()
+        // Dans un `ScrollView` : sans vue de défilement verticale, le grand titre de navigation
+        // n'est pas affiché (écran vide au-dessus du bandeau quand plusieurs filtres ne laissent
+        // aucun résultat).
+        ScrollView {
+            VStack(spacing: 0) {
+                if isOfflineAndStale {
+                    LibraryOfflineBanner()
+                }
+                filtersBar()
+                ContentUnavailableView.search(text: searchText)
+                    .frame(maxWidth: .infinity, minHeight: 400)
             }
-            filtersBar()
-            ContentUnavailableView.search(text: searchText)
         }
     }
 }
