@@ -9,6 +9,14 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ## 2026-11-04 — Compteurs de dossiers, classement des artistes, famille B, grosses collections
 
+### 20:05 — `3474d33` Tests manuels : B21, B31 et B40 validés (grosse collection)
+
+Les trois cas de fluidité avec une très grande collection sont validés sur appareil. 1 fichier.
+
+### 20:05 — `dfd7feb` Fluidité : chargement d'une grosse collection et classement des artistes
+
+Relevé avec 2 013 albums : saccades pendant le chargement de la Collection, défilement peu fluide dans Stats. Les pages de la synchro de fond sont regroupées (la liste se met à jour toutes les 3 s, plus d'écriture dans le cache page par page), les badges « Ex. n/total » et l'index des tags sont calculés hors du fil principal (`TagLookup`, copie figée du `TagStore`). Le classement des artistes passe d'un `Chart` qui dessinait 1 405 barres d'un bloc à une liste paresseuse limitée aux 10 premiers artistes (5 lignes visibles). Test `LibraryCachesTests`. 7 fichiers, +172 / −74.
+
 ### 16:44 — `55ad580` Tests manuels : cas B56 (grosse collection chargée en entier), validé
 
 Cas B56 ajouté et validé avec un compte de 2 013 albums (bilan du parcours lu dans la console). Total 578 tests. 1 fichier.
