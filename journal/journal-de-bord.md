@@ -7,7 +7,15 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
-## 2026-11-04 — Compteurs de dossiers, classement des artistes, famille B des tests manuels
+## 2026-11-04 — Compteurs de dossiers, classement des artistes, famille B, grosses collections
+
+### 16:44 — `55ad580` Tests manuels : cas B56 (grosse collection chargée en entier), validé
+
+Cas B56 ajouté et validé avec un compte de 2 013 albums (bilan du parcours lu dans la console). Total 578 tests. 1 fichier.
+
+### 16:44 — `63c7b11` Grosses collections : chargement complet et prioritaire de la Collection
+
+Relevé avec un compte de 2 013 albums : la liste et les Stats s'arrêtaient vers 300 exemplaires alors que le compteur affichait le total. Causes cumulées : chaque page marquait le cache « frais » pour 6 h (une liste partielle passait pour complète, Stats ne rechargeait plus), un parcours annulé gardait le verrou de synchro et le suivant renonçait, le widget prenait ce verrou au lancement, et en priorité basse le parcours partageait le quota de fond avec la résolution des années originales. Correctifs : nouvelles tentatives sur panne passagère, fraîcheur posée en fin de parcours seulement, attente du verrou (`LocalDataStore.waitForFullCollectionSyncSlot`) partagée par Collection, Stats, widget et données hors ligne, Collection d'abord (widget et hors ligne décalés, années originales en pause), parcours en priorité normale (2 013 albums en une quinzaine de secondes). Lecture tolérante des exemplaires atypiques (le 2 013e était écarté) et diagnostic dans la console. Test `CollectionPageDecodingTests`. 13 fichiers, +335 / −47.
 
 ### 14:28 — `68c65df` Tests manuels : famille B (B24 à B55) renseignée
 
