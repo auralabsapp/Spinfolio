@@ -1,5 +1,4 @@
 import SwiftUI
-import Charts
 
 struct ArtistCount: Equatable {
     let name: String
@@ -7,7 +6,7 @@ struct ArtistCount: Equatable {
 }
 
 /// Classement des artistes par nombre de disques : barres horizontales fines avec le nom de l'artiste
-/// au-dessus de chacune, défilant verticalement au-delà de 5 lignes. Toucher une barre met l'artiste en avant (les autres s'estompent) et
+/// au-dessus de chacune, en liste défilant verticalement au-delà de 5 lignes, limité aux 10 premiers artistes. Toucher une barre met l'artiste en avant (les autres s'estompent) et
 /// ouvre sa feuille de disques ; la retoucher referme tout.
 ///
 /// Composant séparé, qui lit lui-même la sélection (voir `StatsChartSelection`) : lue dans le
@@ -20,87 +19,86 @@ struct TopArtistsChart: View {
 
     /// Les barres s'allongent depuis zéro la première fois que le graphique est visible à l'écran.
     @State private var isRevealed = false
+    /// Largeur disponible pour les barres, mesurée une fois pour toute la liste (pas de
+    /// `GeometryReader` par ligne).
+    @State private var availableWidth: CGFloat = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// Hauteur d'une ligne : le nom au-dessus de la barre, sans empiéter sur la ligne précédente.
+    /// Nombre maximal d'artistes proposés : le haut du classement, pas les 1 000 suivants.
+    static let maxEntries = 10
+    private static let rowHeight: CGFloat = 50
+    private static let barHeight: CGFloat = 14
+    /// Place réservée à droite de la barre la plus longue pour son nombre d'albums.
+    private static let countLabelWidth: CGFloat = 36
 
     var body: some View {
         let revealed = isRevealed || reduceMotion
-        // Lue ici, dans le corps (suivi d'observation), puis passée aux marques : le contenu du
-        // `Chart` est évalué par Charts, hors de ce suivi.
         let selectedArtist = selection.topArtist
-        let maxCount = entries.map(\.count).max() ?? 1
-        // Assez haute pour loger le nom au-dessus de la barre, sans empiéter sur la ligne précédente.
-        let rowHeight: CGFloat = 50
-        let fullHeight = CGFloat(entries.count) * rowHeight + 6
-        let visibleHeight = min(fullHeight, rowHeight * 5 + 6)
+        let shown = Array(entries.prefix(Self.maxEntries))
+        let maxCount = max(1, shown.map(\.count).max() ?? 1)
+        let visibleHeight = min(CGFloat(shown.count), 5) * Self.rowHeight + 6
+        let maxBarWidth = max(0, availableWidth - Self.countLabelWidth)
 
+        // Liste paresseuse plutôt qu'un `Chart` : sur une grosse collection (plus de 1 000
+        // artistes), le graphique dessinait toutes les barres et leurs étiquettes d'un bloc, sur
+        // des dizaines de milliers de points de haut, et le défilement de l'onglet saccadait.
         ScrollView(.vertical, showsIndicators: true) {
-            Chart(entries, id: \.name) { entry in
-                BarMark(
-                    x: .value("Albums", revealed ? entry.count : 0),
-                    y: .value("Artiste", entry.name),
-                    height: .fixed(14)
-                )
-                .foregroundStyle(barStyle(isDimmed: selectedArtist != nil && selectedArtist != entry.name))
-                .cornerRadius(4)
-                .accessibilityHidden(true)
-                // Nom posé explicitement au-dessus de la barre : l'axe Y automatique de Charts
-                // place ses étiquettes au bord de la bande, et sa position change d'une version
-                // d'iOS à l'autre (étiquettes décalées d'une demi-ligne).
-                .annotation(position: .top, alignment: .leading, spacing: 2) {
-                    Text(entry.name)
-                        .font(.caption)
-                        .foregroundStyle(Color.appSecondaryText)
-                        .lineLimit(1)
-                        .fixedSize()
-                }
-                .annotation(position: .trailing) {
-                    Text("\(entry.count)")
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(Color.appSecondaryText)
+            LazyVStack(alignment: .leading, spacing: 0) {
+                ForEach(shown, id: \.name) { entry in
+                    row(
+                        entry,
+                        barWidth: revealed ? maxBarWidth * CGFloat(entry.count) / CGFloat(maxCount) : 0,
+                        isDimmed: selectedArtist != nil && selectedArtist != entry.name,
+                        selectedArtist: selectedArtist
+                    )
                 }
             }
-            .chartXScale(domain: 0...(max(1, Int(Double(maxCount) * 1.2))))
-            .chartXAxis(.hidden)
-            .chartYAxis(.hidden)
-            .frame(height: fullHeight)
+            .padding(.vertical, 3)
             .animation(.easeOut(duration: 0.8), value: revealed)
-            .chartOverlay { proxy in
-                GeometryReader { geo in
-                    Rectangle()
-                        .fill(Color.clear)
-                        .contentShape(Rectangle())
-                        .onTapGesture { location in
-                            guard let plotFrame = proxy.plotFrame else { return }
-                            let relativeY = location.y - geo[plotFrame].origin.y
-                            guard let artistName: String = proxy.value(atY: relativeY) else { return }
-                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-
-                            // Second toucher sur la barre déjà ouverte : on referme tout.
-                            if selectedArtist == artistName && selection.artistData != nil {
-                                selection.deselectArtist()
-                            } else {
-                                onSelect(artistName)
-                            }
-                        }
-                        .chartSelectionAccessibility(
-                            label: Text("Classement des artistes"),
-                            entries: entries.map {
-                                ChartAccessibilityEntry(id: $0.name, name: $0.name, valueText: String(localized: "\($0.count) albums"))
-                            }
-                        ) { artistName in
-                            onSelect(artistName)
-                        }
-                }
-            }
         }
         .frame(height: visibleHeight)
         .scrollBounceBehavior(.basedOnSize, axes: .vertical)
+        .onGeometryChange(for: CGFloat.self) { @Sendable proxy in proxy.size.width } action: { availableWidth = $0 }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
         .appleMusicGroupedCard()
         .onScrollVisibilityChange(threshold: 0.3) { visible in
             if visible { isRevealed = true }
         }
+    }
+
+    private func row(_ entry: ArtistCount, barWidth: CGFloat, isDimmed: Bool, selectedArtist: String?) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(entry.name)
+                .font(.caption)
+                .foregroundStyle(Color.appSecondaryText)
+                .lineLimit(1)
+            HStack(spacing: 6) {
+                RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    .fill(barStyle(isDimmed: isDimmed))
+                    .frame(width: barWidth, height: Self.barHeight)
+                Text("\(entry.count)")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(Color.appSecondaryText)
+            }
+        }
+        .frame(maxWidth: .infinity, minHeight: Self.rowHeight, maxHeight: Self.rowHeight, alignment: .leading)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            // Second toucher sur la barre déjà ouverte : on referme tout.
+            if selectedArtist == entry.name && selection.artistData != nil {
+                selection.deselectArtist()
+            } else {
+                onSelect(entry.name)
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(entry.name))
+        .accessibilityValue(Text("\(entry.count) albums"))
+        .accessibilityAddTraits(selectedArtist == entry.name ? [.isButton, .isSelected] : .isButton)
+        .accessibilityHint(Text("Affiche les albums de cet artiste."))
     }
 
     /// Les barres sont horizontales : le dégradé suit le sens gauche→droite, donc la longueur

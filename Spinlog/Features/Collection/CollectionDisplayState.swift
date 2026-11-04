@@ -174,6 +174,8 @@ final class CollectionDisplayState {
     /// SwiftUI soit bien invalidé à chaque mise à jour — voir le commentaire sur
     /// `LibrarySectionsEngine`.
     @ObservationIgnored private let sectionsEngine = LibrarySectionsEngine<CollectionItem>()
+    /// Calcul en cours des badges et des tags des lignes (voir `recomputeRowCaches`).
+    @ObservationIgnored private var rowCachesTask: Task<Void, Never>?
 
     /// Tri + regroupement de la collection, délégués à `LibrarySectionsEngine` (partagé avec
     /// `WantlistViewModel`). Pendant la synchro de pages en arrière-plan juste après le lancement
@@ -238,19 +240,41 @@ final class CollectionDisplayState {
     /// À appeler à chaque changement de la liste : sections, badges et tags.
     func itemsChanged() {
         recomputeSections()
-        copyBadgesByItemId = Self.copyBadges(for: currentItems())
-        recomputeTagsIndex()
+        recomputeRowCaches()
     }
 
     func recomputeTagsIndex() {
+        recomputeRowCaches()
+    }
+
+    /// Badges « Ex. n/total » et index des tags, calculés hors du fil principal : sur une grosse
+    /// collection, ces deux parcours de tous les exemplaires, refaits à chaque mise à jour de la
+    /// liste pendant la synchro de fond, faisaient saccader l'interface. Un nouveau calcul annule
+    /// le précédent ; seul le dernier est appliqué.
+    private func recomputeRowCaches() {
+        rowCachesTask?.cancel()
+        let items = currentItems()
+        let tagLookup = TagStore.shared.lookupSnapshot()
+        rowCachesTask = Task { [weak self] in
+            let result = await Task.detached(priority: .userInitiated) {
+                (Self.copyBadges(for: items), Self.tagsIndex(for: items, lookup: tagLookup))
+            }.value
+            guard !Task.isCancelled, let self else { return }
+            copyBadgesByItemId = result.0
+            tagsByInstanceId = result.1
+        }
+    }
+
+    /// Tags de chaque exemplaire qui en a, par `instanceId`. Fonction pure.
+    nonisolated static func tagsIndex(for items: [CollectionItem], lookup: TagLookup) -> [Int: [String]] {
         var result: [Int: [String]] = [:]
-        for item in currentItems() {
-            let tags = TagStore.shared.tags(for: item.instanceId, releaseId: item.releaseId)
+        for item in items {
+            let tags = lookup.tags(for: item.instanceId, releaseId: item.releaseId)
             if !tags.isEmpty {
                 result[item.instanceId] = tags
             }
         }
-        tagsByInstanceId = result
+        return result
     }
 
     /// Badge « Ex. n/total » des disques possédés en plusieurs exemplaires, dans l'ordre de la

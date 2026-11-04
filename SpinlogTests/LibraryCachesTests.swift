@@ -33,6 +33,22 @@ struct LibraryCachesTests {
         #expect(badges[items[1].id] == nil)
     }
 
+    @Test func tagsIndexPrefersCopyTagsThenLegacyReleaseTags() throws {
+        let items = [
+            try item(instanceId: 1, releaseId: 100),
+            try item(instanceId: 2, releaseId: 200),
+            try item(instanceId: 3, releaseId: 300)
+        ]
+        // Exemplaire 1 : ses propres tags. Exemplaire 2 : liste vide explicite, qui l'emporte sur les
+        // anciens tags de sa release. Exemplaire 3 : rien à lui, anciens tags de la release.
+        let lookup = TagLookup(
+            byInstance: ["1": ["Jazz"], "2": []],
+            legacyByRelease: ["200": ["Ancien"], "300": ["Rock"]]
+        )
+        let index = CollectionDisplayState.tagsIndex(for: items, lookup: lookup)
+        #expect(index == [1: ["Jazz"], 3: ["Rock"]])
+    }
+
     @Test func indexEntriesKeepFirstSectionOfEachToken() throws {
         let sections: [(key: String, items: [CollectionItem])] = [
             (key: "Abba", items: [try item(instanceId: 1, releaseId: 1, artist: "Abba")]),

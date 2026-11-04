@@ -18,7 +18,7 @@ extension StatsView {
             SectionEyebrow(title: "Classement des artistes", icon: "person.2.fill")
                 .id("topArtistsTitle")
 
-            if viewModel.topArtistsByCollectionCount.count > 5 {
+            if viewModel.topArtistsByCollectionCount.count > 5 { // 10 artistes affichés au plus, voir `TopArtistsChart.maxEntries`
                 Text("Faire défiler verticalement pour afficher les autres artistes")
                     .font(.caption2)
                     .foregroundStyle(Color.appSecondaryText)
@@ -36,7 +36,7 @@ extension StatsView {
                     .appleMusicGroupedCard()
             } else {
                 TopArtistsChart(
-                    entries: viewModel.topArtistsByCollectionCount.map { ArtistCount(name: $0.name, count: $0.count) },
+                    entries: viewModel.topArtistsByCollectionCount.prefix(TopArtistsChart.maxEntries).map { ArtistCount(name: $0.name, count: $0.count) },
                     selection: chartSelection,
                     onSelect: { selectArtist($0, scrollProxy: scrollProxy) }
                 )

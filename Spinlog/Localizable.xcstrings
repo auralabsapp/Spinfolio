@@ -3043,6 +3043,16 @@
         }
       }
     },
+    "Affiche les albums de cet artiste." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "Shows this artist’s albums."
+          }
+        }
+      }
+    },
     "Afficher moins" : {
       "localizations" : {
         "en" : {

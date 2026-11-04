@@ -33,6 +33,12 @@ final class CollectionPagination {
     private var serverInstanceIds: Set<Int> = []
     /// Diagnostic d'un parcours : total annoncé par Discogs, exemplaires reçus (doublons compris)
     /// et écartés comme « fantômes » (voir `fetchPage`).
+    /// Pages reçues par la synchro de fond, pas encore appliquées à la liste affichée (voir
+    /// `fetchPage(coalesced:)`).
+    private var pendingPageItems: [CollectionItem] = []
+    private var lastDisplayUpdate = Date.distantPast
+    /// Intervalle minimal entre deux mises à jour de la liste pendant la synchro de fond.
+    private static let displayUpdateInterval: TimeInterval = 3
     private var announcedTotal = 0
     private var receivedCount = 0
     private var phantomCount = 0
@@ -51,7 +57,17 @@ final class CollectionPagination {
     var isSyncingInBackground: Bool { backgroundSyncTask != nil }
     var hasMorePages: Bool { currentPage < totalPages }
 
+    /// Applique à la liste affichée les pages reçues en attente.
+    func flushPendingPages() {
+        guard !pendingPageItems.isEmpty else { return }
+        let pending = pendingPageItems
+        pendingPageItems = []
+        lastDisplayUpdate = Date()
+        applyItems(CollectionLocalChanges.merging(page: pending, into: currentItems(), append: true))
+    }
+
     func cancelBackgroundSync() {
+        pendingPageItems = []
         if let backgroundSyncTask {
             backgroundSyncTask.cancel()
             cancelledSyncTask = backgroundSyncTask
@@ -73,7 +89,11 @@ final class CollectionPagination {
     }
 
     /// Charge une page et la fusionne à la liste (`append`, voir `CollectionLocalChanges.merging`).
-    func fetchPage(_ page: Int, context: Context, append: Bool) async throws {
+    /// `coalesced` : pour les pages de la synchro de fond. Chaque mise à jour de la liste recalcule
+    /// sections, badges et tags sur tous les exemplaires puis redessine l'écran ; à une page toutes
+    /// les secondes sur une collection de 2 000 albums, l'interface saccadait pendant tout le
+    /// chargement. Les pages sont donc regroupées et appliquées toutes les 3 s environ (et à la fin).
+    func fetchPage(_ page: Int, context: Context, append: Bool, coalesced: Bool = false) async throws {
         guard isCurrent(context) else { return }
         let sort = sortParameters()
         let response = try await DiscogsAPIClient.shared.collectionItems(
@@ -99,7 +119,12 @@ final class CollectionPagination {
         announcedTotal = response.pagination.items
         receivedCount += response.releases.count
         phantomCount += response.releases.count - validReleases.count
-        applyItems(CollectionLocalChanges.merging(page: validReleases, into: currentItems(), append: append))
+        if coalesced {
+            pendingPageItems += validReleases
+            if Date().timeIntervalSince(lastDisplayUpdate) >= Self.displayUpdateInterval { flushPendingPages() }
+        } else {
+            applyItems(CollectionLocalChanges.merging(page: validReleases, into: currentItems(), append: append))
+        }
         currentPage = page
         totalPages = response.pagination.pages
 
@@ -109,6 +134,11 @@ final class CollectionPagination {
         // complet du dossier est réécrit une fois, en fin de synchro (`syncCollectionFolder`).
         // Sans horodatage de fraîcheur : le dossier n'est « complet » qu'à la fin du parcours
         // (`syncCollectionFolder`), pas après chaque page.
+        // Pages de la synchro de fond : pas d'écriture page par page. Chaque écriture (encodage
+        // et enregistrement SwiftData) se fait sur le fil principal et saccadait l'interface ;
+        // la fin du parcours réécrit de toute façon tout le dossier. Un parcours interrompu
+        // laisse le cache non frais, il sera repris au prochain passage.
+        guard !coalesced else { return }
         await LocalDataStore.shared.saveCollectionItems(
             validReleases, username: context.username, folderId: context.folderId, stampsFreshness: false
         )
@@ -172,7 +202,7 @@ final class CollectionPagination {
                     var succeeded = false
                     for attempt in 0..<4 {
                         do {
-                            try await self.fetchPage(nextPage, context: context, append: true)
+                            try await self.fetchPage(nextPage, context: context, append: true, coalesced: true)
                             succeeded = true
                             break
                         } catch {
@@ -187,6 +217,7 @@ final class CollectionPagination {
                     }
                 }
                 guard !Task.isCancelled else { return }
+                self.flushPendingPages()
                 self.backgroundSyncTask = nil
                 // Élagage seulement après un parcours complet et réussi : après une erreur ou un
                 // changement de dossier, la liste des exemplaires renvoyés serait incomplète.

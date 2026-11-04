@@ -177,6 +177,12 @@ final class TagStore {
     /// Tags associés à un exemplaire physique précis (`instanceId`).
     /// Si aucun tag n'est encore enregistré pour cet exemplaire mais qu'un `releaseId` est fourni,
     /// effectue une migration transparente depuis les anciens tags de la release.
+    /// Copie figée des tags, lisible hors du fil principal (index des tags d'une grosse
+    /// collection calculé en arrière-plan, voir `CollectionDisplayState.recomputeRowCaches`).
+    func lookupSnapshot() -> TagLookup {
+        TagLookup(byInstance: tagsByInstance, legacyByRelease: legacyTagsByRelease)
+    }
+
     func tags(for instanceId: Int, releaseId: Int? = nil) -> [String] {
         let instanceKey = String(instanceId)
         if let existing = timestampedTagsByInstance[instanceKey] {
@@ -501,4 +507,17 @@ final class TagStore {
 
 extension Notification.Name {
     static let tagsChanged = Notification.Name("com.spinlog.tagsChanged")
+}
+
+/// Tags figés à un instant donné (voir `TagStore.lookupSnapshot`), mêmes règles que
+/// `TagStore.tags(for:releaseId:)` : tags de l'exemplaire, sinon anciens tags de la release.
+nonisolated struct TagLookup: Sendable {
+    let byInstance: [String: [String]]
+    let legacyByRelease: [String: [String]]
+
+    func tags(for instanceId: Int, releaseId: Int) -> [String] {
+        if let existing = byInstance[String(instanceId)] { return existing }
+        if let legacy = legacyByRelease[String(releaseId)], !legacy.isEmpty { return legacy }
+        return []
+    }
 }
