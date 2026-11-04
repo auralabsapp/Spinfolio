@@ -16,6 +16,7 @@ final class CollectionViewModel {
     static let shared = CollectionViewModel()
 
     private(set) var folders: [CollectionFolder] = []
+    private var folderCountsRefreshTask: Task<Void, Never>?
     private(set) var selectedFolderId: Int?
     private(set) var fields: [CollectionField] = []
     /// Le tri/regroupement (`localizedStandardCompare` sur toute la liste) est coûteux à refaire
@@ -98,6 +99,9 @@ final class CollectionViewModel {
         addCollectionReplacementObserver { [weak self] oldInstanceId, newItem in
             self?.handleCollectionInstanceReplaced(oldInstanceId: oldInstanceId, newItem: newItem)
         }
+        addCollectionMoveObserver { [weak self] original, moved in
+            self?.handleCollectionInstanceMoved(from: original, to: moved)
+        }
 
         // Action hors ligne refusée par Discogs : l'affichage optimiste est faux, on recharge.
         addOfflineActionDroppedObserver { [weak self] type in
@@ -114,6 +118,16 @@ final class CollectionViewModel {
         }
     }
 
+    /// Déplacement fait depuis la fiche d'un disque (le déplacement fait depuis la Collection passe
+    /// par `moveInstance`) : même mise à jour de la liste et des compteurs. Dans le dossier de
+    /// destination, l'exemplaire n'est pas encore dans la liste : on l'y ajoute.
+    private func handleCollectionInstanceMoved(from original: CollectionItem, to moved: CollectionItem) {
+        applyMove(from: original, to: moved)
+        if selectedFolderId == moved.folderId, !items.contains(where: { $0.id == moved.id }) {
+            withAnimation(.optimisticToggle) { items = [moved] + items }
+        }
+    }
+
     private func handleCollectionItemAdded(_ item: CollectionItem) {
         collectionDebugLogger.debug("RECV collectionItemAdded release=\(item.releaseId, privacy: .private(mask: .hash)) instance=\(item.instanceId, privacy: .private(mask: .hash)) folder=\(item.folderId) selectedFolderId=\(self.selectedFolderId ?? -999) itemsCountBefore=\(self.items.count)")
         // Ajouté localement pendant un parcours des pages : Discogs peut ne pas le renvoyer dans
@@ -123,7 +137,7 @@ final class CollectionViewModel {
         if let newItems = change.items {
             withAnimation(.optimisticToggle) { items = newItems }
         }
-        folders = change.folders
+        updateFoldersLocally(change.folders)
     }
 
     private func handleCollectionItemRemoved(releaseId: Int, instanceId: Int?) {
@@ -133,7 +147,39 @@ final class CollectionViewModel {
             releaseId: releaseId, instanceId: instanceId, items: items, folders: folders, selectedFolderId: selectedFolderId
         )
         withAnimation(.optimisticToggle) { items = change.items }
-        folders = change.folders
+        updateFoldersLocally(change.folders)
+    }
+
+    /// Compteurs de dossiers corrigés localement (ajout, retrait, déplacement), gardés aussi dans
+    /// le cache : sans cela, changer de dossier relit les compteurs du cache (`loadFromLocalStore`)
+    /// et efface la correction jusqu'au prochain rechargement depuis Discogs.
+    private func updateFoldersLocally(_ updated: [CollectionFolder]) {
+        folders = updated
+        if let username = authManager.username {
+            localStore.saveFolders(updated, username: username)
+        }
+        scheduleFolderCountsRefresh()
+    }
+
+    /// Relit les compteurs de dossiers sur Discogs quelques secondes après une correction locale.
+    /// Un rechargement qui tombe pendant que l'écriture est encore en cours (ou avant que Discogs
+    /// l'ait prise en compte) renvoie des compteurs en retard et écrase la correction ; cette
+    /// relecture différée remet la valeur réelle sans attendre un tirage manuel. Relancée à chaque
+    /// correction, pour ne lire qu'une fois après une série de changements.
+    private func scheduleFolderCountsRefresh() {
+        folderCountsRefreshTask?.cancel()
+        guard !DemoMode.isActive, let username = authManager.username else { return }
+        folderCountsRefreshTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(6))
+            guard !Task.isCancelled, let self,
+                  networkMonitor.isConnected,
+                  authManager.username == username,
+                  let credentials = authManager.credentials,
+                  let response = try? await DiscogsAPIClient.shared.collectionFolders(username: username, credentials: credentials),
+                  !Task.isCancelled, authManager.username == username else { return }
+            folders = response.folders
+            localStore.saveFolders(response.folders, username: username)
+        }
     }
 
     /// Pagination paresseuse et synchro de fond des pages (voir `CollectionPagination`).
@@ -483,7 +529,7 @@ final class CollectionViewModel {
             items = reverting
                 ? CollectionLocalChanges.itemsAfterRevertingMove(items, original: destination, moved: source, selectedFolderId: selectedFolderId)
                 : CollectionLocalChanges.itemsAfterMove(items, original: source, moved: destination, selectedFolderId: selectedFolderId)
-            folders = CollectionLocalChanges.adjustingCounts(of: folders, by: [source.folderId: -1, destination.folderId: 1])
+            updateFoldersLocally(CollectionLocalChanges.adjustingCounts(of: folders, by: [source.folderId: -1, destination.folderId: 1]))
         }
     }
 

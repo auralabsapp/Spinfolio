@@ -378,6 +378,7 @@ final class ReleaseActions {
 
         let movedItem = instance.moved(toFolderId: toFolderId)
         replaceInstance(instance.instanceId, with: movedItem)
+        LibraryMembershipStore.shared.notifyCollectionInstanceMoved(from: instance, to: movedItem)
         await localStore.replaceCollectionItemInCache(instance, with: movedItem, username: username)
 
         let outcome = await DiscogsWriteService.moveInstance(instance, toFolderId: toFolderId, username: username)
@@ -388,6 +389,7 @@ final class ReleaseActions {
             // l'exemplaire dans son dossier d'origine plutôt que de laisser la file échouer trois
             // fois pendant que l'UI le montre déplacé.
             replaceInstance(instance.instanceId, with: instance)
+            LibraryMembershipStore.shared.notifyCollectionInstanceMoved(from: movedItem, to: instance)
             await localStore.replaceCollectionItemInCache(movedItem, with: instance, username: username)
             message = AppMessages.moveFailed
         }

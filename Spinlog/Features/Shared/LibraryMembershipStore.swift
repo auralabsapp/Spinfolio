@@ -8,6 +8,7 @@ extension Notification.Name {
     static let collectionItemAdded = Notification.Name("com.spinlog.collectionItemAdded")
     static let collectionItemRemoved = Notification.Name("com.spinlog.collectionItemRemoved")
     static let collectionInstanceReplaced = Notification.Name("com.spinlog.collectionInstanceReplaced")
+    static let collectionInstanceMoved = Notification.Name("com.spinlog.collectionInstanceMoved")
     static let wantlistItemAdded = Notification.Name("com.spinlog.wantlistItemAdded")
     static let wantlistItemRemoved = Notification.Name("com.spinlog.wantlistItemRemoved")
 }
@@ -220,6 +221,16 @@ final class LibraryMembershipStore {
                 "oldInstanceId": oldInstanceId,
                 "newItem": newInstance
             ]
+        )
+    }
+
+    /// Exemplaire déplacé dans un autre dossier depuis la fiche d'un disque : la Collection met à
+    /// jour sa liste et les compteurs de dossiers (aussi utilisé pour annuler un déplacement refusé).
+    func notifyCollectionInstanceMoved(from original: CollectionItem, to moved: CollectionItem) {
+        NotificationCenter.default.post(
+            name: .collectionInstanceMoved,
+            object: nil,
+            userInfo: ["original": original, "moved": moved]
         )
     }
 

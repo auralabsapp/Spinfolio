@@ -27,6 +27,8 @@ struct CollectionItemEditSheet: View {
     @State private var savingFieldIds: Set<Int> = []
     @State private var justSavedFieldIds: Set<Int> = []
     @State private var selectedFolderId: Int
+    /// Dossier réel de l'exemplaire, mis à jour à chaque déplacement fait depuis cette feuille.
+    @State private var currentFolderId: Int
     /// Couleur moyenne de la pochette, pour teinter le fond (voir `releaseTintedBackground`).
     @State private var coverTint: UIColor?
     @State private var isDeleting = false
@@ -63,6 +65,7 @@ struct CollectionItemEditSheet: View {
         self.onDelete = onDelete
         self.onSaveFailedAfterDismiss = onSaveFailedAfterDismiss
         _selectedFolderId = State(initialValue: item.folderId)
+        _currentFolderId = State(initialValue: item.folderId)
         var initialValues: [Int: String] = [:]
         for note in item.notes {
             initialValues[note.fieldId] = note.value
@@ -253,8 +256,12 @@ struct CollectionItemEditSheet: View {
                 }
             }
             .onChange(of: selectedFolderId) { _, newFolderId in
-                guard newFolderId != item.folderId else { return }
-                onFolderChanged(item, newFolderId)
+                // `item` garde le dossier d'origine tant que la feuille est ouverte : après un
+                // premier déplacement, le suivant doit partir du dossier actuel, sinon les
+                // compteurs (et la requête Discogs) visent un dossier que l'exemplaire a quitté.
+                guard newFolderId != currentFolderId else { return }
+                onFolderChanged(item.moved(toFolderId: currentFolderId), newFolderId)
+                currentFolderId = newFolderId
             }
             .onDisappear {
                 for field in fields {
@@ -515,13 +522,16 @@ struct CollectionItemEditSheet: View {
             _ = savingFieldIds.insert(field.id)
         }
         let newValue = value
+        // Dossier actuel, pas celui d'origine : l'exemplaire a pu être déplacé depuis cette feuille,
+        // et Discogs retrouve le champ par son dossier.
+        let folderId = currentFolderId
         let isOffline = !networkMonitor.isConnected
 
         func enqueueOffline() {
             OfflineSyncQueue.shared.enqueue(PendingAction(
                 type: .updateCollectionField,
                 releaseId: item.releaseId,
-                folderId: item.folderId,
+                folderId: folderId,
                 instanceId: item.instanceId,
                 fieldId: field.id,
                 value: newValue
@@ -533,7 +543,7 @@ struct CollectionItemEditSheet: View {
         } else {
             do {
                 try await actions.updateCollectionField(
-                    folderId: item.folderId,
+                    folderId: folderId,
                     releaseId: item.releaseId,
                     instanceId: item.instanceId,
                     fieldId: field.id,

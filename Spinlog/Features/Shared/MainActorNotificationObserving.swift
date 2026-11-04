@@ -68,6 +68,16 @@ func addCollectionReplacementObserver(perform action: @escaping @MainActor (_ ol
     }
 }
 
+/// Exemplaire déplacé dans un autre dossier depuis la fiche d'un disque.
+@discardableResult
+func addCollectionMoveObserver(perform action: @escaping @MainActor (_ original: CollectionItem, _ moved: CollectionItem) -> Void) -> NSObjectProtocol {
+    addLibraryObserver(for: .collectionInstanceMoved) { notification in
+        guard let original = notification.userInfo?["original"] as? CollectionItem,
+              let moved = notification.userInfo?["moved"] as? CollectionItem else { return }
+        action(original, moved)
+    }
+}
+
 /// Action hors ligne abandonnée après refus de Discogs (`OfflineSyncQueue`), avec son type.
 @discardableResult
 func addOfflineActionDroppedObserver(perform action: @escaping @MainActor (ActionType) -> Void) -> NSObjectProtocol {
