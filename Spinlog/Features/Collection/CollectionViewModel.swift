@@ -210,6 +210,9 @@ final class CollectionViewModel {
         pagination.isCurrent = { [unowned self] context in
             selectedFolderId == context.folderId && authManager.username == context.username
         }
+        pagination.reloadFromCache = { [unowned self] context in
+            await loadFromLocalStore(username: context.username, folderId: context.folderId)
+        }
         pagination.sortParameters = { [unowned self] in
             (display.sortOption.apiSortValue, display.sortOption.apiSortOrder(ascending: display.sortAscending))
         }

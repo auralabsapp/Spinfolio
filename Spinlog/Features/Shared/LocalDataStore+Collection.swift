@@ -27,7 +27,10 @@ extension LocalDataStore {
         await Task.yield()
     }
 
-    func saveCollectionItems(_ items: [CollectionItem], username: String, folderId: Int) async {
+    /// - Parameter stampsFreshness: `false` pour une page d'un parcours en cours : l'horodatage du
+    ///   dossier dit « complet et frais » (voir `isCollectionStale`) et ne doit être posé que par
+    ///   `syncCollectionFolder`, sinon une collection chargée à moitié passait pour à jour pendant 6 h.
+    func saveCollectionItems(_ items: [CollectionItem], username: String, folderId: Int, stampsFreshness: Bool = true) async {
         // Les valeurs de prix et d'état venues de Discogs entrent dans le store local (une seule
         // fois par exemplaire, sans écraser une saisie).
         CopyDetailsStore.shared.adoptLegacyValues(from: items, username: username)
@@ -49,9 +52,11 @@ extension LocalDataStore {
         }
 
         // Met à jour l'horodatage global pour ce dossier
-        let metaId = CacheMetaKey.collection(username: username, folderId: folderId)
-        let meta = CachedFetchMetadata(id: metaId, lastFetchedAt: now)
-        context.insert(meta)
+        if stampsFreshness {
+            let metaId = CacheMetaKey.collection(username: username, folderId: folderId)
+            let meta = CachedFetchMetadata(id: metaId, lastFetchedAt: now)
+            context.insert(meta)
+        }
 
         try? context.save()
 

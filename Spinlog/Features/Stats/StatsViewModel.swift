@@ -328,14 +328,29 @@ final class StatsViewModel {
         }
 
         guard let credentials = authManager.credentials else { return }
-        // Renonce si une autre synchronisation complète du même dossier est déjà en cours
-        // (lancement à froid : `WidgetSnapshotSyncService`/`CollectionViewModel`/
-        // `OfflineDownloadManager` peuvent aussi vouloir tout recharger en même temps) — le cache
-        // sera de toute façon à jour une fois celle-ci terminée.
-        guard localStore.beginFullCollectionSync(username: username, folderId: DiscogsConstants.allFolderId) else { return }
         isLoadingHistogram = true
         histogramTask = Task { [weak self] in
             guard let self else { return }
+            // Une autre synchronisation complète (souvent la Collection, prioritaire au premier
+            // chargement) peut déjà tourner : on attend sa fin et on reprend son cache s'il est
+            // complet, plutôt que de renoncer et de garder des répartitions calculées sur une
+            // collection incomplète.
+            let slot = await self.localStore.waitForFullCollectionSyncSlot(
+                username: username, folderId: DiscogsConstants.allFolderId
+            ) { [weak self] in self?.authManager.username == username }
+            guard let slot else {
+                self.isLoadingHistogram = false
+                return
+            }
+            if slot == .cacheRefreshed {
+                let cached = await self.localStore.getCollectionItems(username: username, folderId: DiscogsConstants.allFolderId)
+                if self.authManager.username == username, !cached.isEmpty {
+                    self.applyCollectionItems(cached)
+                    await self.computeTotalInvestedIfNeeded()
+                }
+                self.isLoadingHistogram = false
+                return
+            }
             defer { self.localStore.endFullCollectionSync(username: username, folderId: DiscogsConstants.allFolderId) }
             // Jamais déclenché par un geste explicite de l'utilisateur (ouverture de l'onglet
             // Stats avec un cache périmé) — priorité basse pour le quota Discogs, même principe

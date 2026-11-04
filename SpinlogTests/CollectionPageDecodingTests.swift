@@ -34,6 +34,26 @@ struct CollectionPageDecodingTests {
         #expect(item.folderId == DiscogsConstants.allFolderId)
     }
 
+    @Test func atypicalReleaseSummaryIsStillRead() throws {
+        // Titre et lien absents, année en texte, artiste sans identifiant, label au numéro de
+        // catalogue numérique, quantité de format en nombre, format illisible au milieu.
+        let atypical = #"""
+        {"id":12,"instance_id":7,"basic_information":{"id":12,"year":"1998",
+        "artists":[{"name":"Artiste"}],"labels":[{"id":3,"name":"Label","catno":1234}],
+        "formats":[{"name":"Cassette","qty":1},42,{"name":"CD","qty":"2"}]}}
+        """#
+        let response = try decode(#"{"pagination":\#(Self.pagination),"releases":[\#(atypical)]}"#)
+        let info = try #require(response.releases.first?.basicInformation)
+        #expect(info.title.isEmpty)
+        #expect(info.resourceURL.isEmpty)
+        #expect(info.year == 1998)
+        #expect(info.artists?.first?.name == "Artiste")
+        #expect(info.artists?.first?.id == 0)
+        #expect(info.labels?.first?.catno == "1234")
+        #expect(info.formats?.map(\.name) == ["Cassette", "CD"])
+        #expect(info.formats?.first?.qty == "1")
+    }
+
     @Test func missingReleasesKeyGivesEmptyPage() throws {
         let response = try decode(#"{"pagination":\#(Self.pagination)}"#)
         #expect(response.releases.isEmpty)

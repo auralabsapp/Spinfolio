@@ -296,6 +296,43 @@ final class LocalDataStore {
         activeFullCollectionSyncKeys.remove("\(username)_\(folderId)")
     }
 
+    /// Vrai pendant toute synchro complète d'un dossier, quel qu'il soit : les tâches de fond moins
+    /// utiles (résolution des années originales) lui cèdent le quota Discogs.
+    var isAnyFullCollectionSyncActive: Bool { !activeFullCollectionSyncKeys.isEmpty }
+
+    /// Issue de `waitForFullCollectionSyncSlot`.
+    enum FullCollectionSyncSlot {
+        /// Verrou réservé : l'appelant charge lui-même, puis appelle `endFullCollectionSync`.
+        case acquired
+        /// Une autre synchro vient de laisser un cache complet et frais : rien à recharger.
+        case cacheRefreshed
+    }
+
+    /// Comme `beginFullCollectionSync`, mais attend (vérification toutes les 3 s) que la synchro
+    /// en cours se termine au lieu de renoncer : renoncer laissait l'écran sur un cache incomplet
+    /// quand la synchro qui tenait le verrou échouait ou ne rafraîchissait pas cet écran.
+    /// `acceptsFreshCache: false` pour un appelant qui doit charger quoi qu'il arrive (données hors
+    /// ligne, qui télécharge aussi la wantlist et les pochettes). `nil` si la tâche est annulée ou
+    /// que `isStillWanted` renvoie faux (compte changé, dossier quitté).
+    func waitForFullCollectionSyncSlot(
+        username: String,
+        folderId: Int,
+        acceptsFreshCache: Bool = true,
+        isStillWanted: () -> Bool
+    ) async -> FullCollectionSyncSlot? {
+        if beginFullCollectionSync(username: username, folderId: folderId) { return .acquired }
+        while true {
+            try? await Task.sleep(for: .seconds(3))
+            guard !Task.isCancelled, isStillWanted() else { return nil }
+            guard beginFullCollectionSync(username: username, folderId: folderId) else { continue }
+            if acceptsFreshCache, !isCollectionStale(username: username, folderId: folderId) {
+                endFullCollectionSync(username: username, folderId: folderId)
+                return .cacheRefreshed
+            }
+            return .acquired
+        }
+    }
+
     // MARK: - Outils Développeur / Simulation
 
     /// Simule un cache plus vieux que 6 heures (7h en arrière) pour tester l'apparition

@@ -24,6 +24,21 @@ struct ReleaseArtist: Codable, Sendable, Identifiable {
 }
 
 extension ReleaseArtist {
+    /// Lecture tolérante (voir `BasicInformation.init(from:)`) : un artiste sans identifiant ou
+    /// au nom manquant reste lisible.
+    nonisolated init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            id: container.lenientInt(forKey: .id) ?? 0,
+            name: container.lenientString(forKey: .name) ?? "",
+            anv: container.lenientString(forKey: .anv),
+            join: container.lenientString(forKey: .join),
+            role: container.lenientString(forKey: .role),
+            tracks: container.lenientString(forKey: .tracks),
+            resourceURL: container.lenientString(forKey: .resourceURL)
+        )
+    }
+
     init(name: String, id: Int = 0) {
         self.init(id: id, name: name, anv: nil, join: nil, role: nil, tracks: nil, resourceURL: nil)
     }
@@ -38,6 +53,19 @@ struct ReleaseLabel: Codable, Sendable, Identifiable {
     private enum CodingKeys: String, CodingKey {
         case id, name, catno
         case resourceURL = "resource_url"
+    }
+}
+
+extension ReleaseLabel {
+    /// Lecture tolérante : une référence de catalogue reçue en nombre, un label sans identifiant.
+    nonisolated init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            id: container.lenientInt(forKey: .id) ?? 0,
+            name: container.lenientString(forKey: .name) ?? "",
+            catno: container.lenientString(forKey: .catno),
+            resourceURL: container.lenientString(forKey: .resourceURL)
+        )
     }
 }
 
@@ -72,6 +100,23 @@ struct ReleaseFormat: Codable, Sendable {
     /// Précision libre en plus de `descriptions` (ex: "Gatefold", "Clear Vinyl").
     let text: String?
     let descriptions: [String]?
+}
+
+extension ReleaseFormat {
+    private enum CodingKeys: String, CodingKey {
+        case name, qty, text, descriptions
+    }
+
+    /// Lecture tolérante : la quantité arrive parfois en nombre plutôt qu'en texte.
+    nonisolated init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            name: container.lenientString(forKey: .name) ?? "",
+            qty: container.lenientString(forKey: .qty),
+            text: container.lenientString(forKey: .text),
+            descriptions: try? container.decodeIfPresent([String].self, forKey: .descriptions)
+        )
+    }
 }
 
 struct Track: Decodable, Sendable, Identifiable {

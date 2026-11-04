@@ -184,7 +184,7 @@ nonisolated struct CollectionReleasesResponse: Decodable, Sendable {
         let lossy = try container.decodeIfPresent(LossyArray<CollectionItem>.self, forKey: .releases)
         releases = lossy?.elements ?? []
         if let dropped = lossy?.droppedCount, dropped > 0 {
-            collectionDecodingLogger.error("Page de collection : \(dropped, privacy: .public) exemplaire(s) illisible(s) ignoré(s).")
+            collectionDecodingLogger.error("Page de collection : \(dropped, privacy: .public) exemplaire(s) illisible(s) ignoré(s) — \(lossy?.firstFailureReason ?? "cause inconnue", privacy: .public)")
         }
     }
 }

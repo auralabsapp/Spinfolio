@@ -81,6 +81,8 @@ final class OfflineDownloadManager {
 
     private var prefetcher: ImagePrefetcher?
     private var downloadTask: Task<Void, Never>?
+    /// Synchro automatique en attente de son tour (voir `autoSyncIfNeeded`).
+    private var autoSyncTask: Task<Void, Never>?
     private var prefetchCompletedCount: Int = 0
 
     private init() {}
@@ -99,18 +101,30 @@ final class OfflineDownloadManager {
         if let lastSyncDate, Date().timeIntervalSince(lastSyncDate) < DiscogsConstants.sixHoursTTL {
             return
         }
-        // Renonce si une autre synchronisation complète du dossier "All" est déjà en cours
-        // (lancement à froid : `StatsViewModel`/`WidgetSnapshotSyncService`/
-        // `CollectionViewModel` peuvent aussi vouloir tout recharger en même temps) — uniquement
-        // sur ce déclenchement automatique, jamais sur le bouton "Synchroniser maintenant"
-        // (`startDownload` direct, doit toujours s'exécuter).
-        guard LocalDataStore.shared.beginFullCollectionSync(username: username, folderId: DiscogsConstants.allFolderId) else { return }
-        // Déclenché automatiquement (lancement/retour au premier plan), jamais par le bouton
-        // "Synchroniser maintenant" (qui appelle `startDownload` directement et doit rester en
-        // priorité normale) — `Task` hérite des valeurs `@TaskLocal` de son contexte de création,
-        // donc cette liaison couvre tout le téléchargement lancé par `startDownload` ci-dessous.
-        DiscogsRateLimiter.$priority.withValue(.background) {
-            startDownload(username: username, credentials: credentials, releasesCollectionSyncLockOnCompletion: true)
+        // Passe après la Collection (chargée en premier à l'ouverture) : on lui laisse le temps de
+        // réserver la synchro complète, puis on attend qu'elle se termine — uniquement sur ce
+        // déclenchement automatique, jamais sur le bouton "Synchroniser maintenant" (`startDownload`
+        // direct, doit toujours s'exécuter). La wantlist et les pochettes suivent dans ce
+        // téléchargement, donc après la collection.
+        autoSyncTask?.cancel()
+        autoSyncTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(10))
+            guard !Task.isCancelled, DiscogsAuthManager.shared.username == username else { return }
+            guard await LocalDataStore.shared.waitForFullCollectionSyncSlot(
+                username: username, folderId: DiscogsConstants.allFolderId, acceptsFreshCache: false,
+                isStillWanted: { DiscogsAuthManager.shared.username == username }
+            ) != nil else { return }
+            guard let self else {
+                LocalDataStore.shared.endFullCollectionSync(username: username, folderId: DiscogsConstants.allFolderId)
+                return
+            }
+            // Déclenché automatiquement (lancement/retour au premier plan), jamais par le bouton
+            // "Synchroniser maintenant" (qui appelle `startDownload` directement et doit rester en
+            // priorité normale) — `Task` hérite des valeurs `@TaskLocal` de son contexte de création,
+            // donc cette liaison couvre tout le téléchargement lancé par `startDownload` ci-dessous.
+            DiscogsRateLimiter.$priority.withValue(.background) {
+                self.startDownload(username: username, credentials: credentials, releasesCollectionSyncLockOnCompletion: true)
+            }
         }
     }
 

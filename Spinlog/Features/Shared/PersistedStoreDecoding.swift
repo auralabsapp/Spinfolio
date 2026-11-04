@@ -68,6 +68,9 @@ enum PersistedStoreDecoding {
 nonisolated struct LossyArray<Element: Decodable>: Decodable {
     let elements: [Element]
     let droppedCount: Int
+    /// Cause technique du premier élément ignoré (chemin des clés et nature de l'erreur, jamais
+    /// les valeurs) : pour diagnostiquer un enregistrement Discogs atypique depuis les logs.
+    let firstFailureReason: String?
 
     /// Consomme un élément sans le lire, pour avancer après un élément illisible (quel que soit
     /// son type JSON : objet, chaîne, nombre…).
@@ -79,11 +82,13 @@ nonisolated struct LossyArray<Element: Decodable>: Decodable {
         var container = try decoder.unkeyedContainer()
         var elements: [Element] = []
         var dropped = 0
+        var firstFailureReason: String?
         while !container.isAtEnd {
-            if let element = try? container.decode(Element.self) {
-                elements.append(element)
-            } else {
+            do {
+                elements.append(try container.decode(Element.self))
+            } catch {
                 dropped += 1
+                if firstFailureReason == nil { firstFailureReason = Self.describe(error) }
                 // Sans cette lecture, le conteneur resterait bloqué sur l'élément illisible.
                 if (try? container.decode(Skipped.self)) == nil {
                     break
@@ -92,5 +97,25 @@ nonisolated struct LossyArray<Element: Decodable>: Decodable {
         }
         self.elements = elements
         self.droppedCount = dropped
+        self.firstFailureReason = firstFailureReason
+    }
+
+    private nonisolated static func describe(_ error: Error) -> String {
+        func path(_ codingPath: [CodingKey]) -> String {
+            codingPath.map { $0.intValue.map(String.init) ?? $0.stringValue }.joined(separator: ".")
+        }
+        guard let decodingError = error as? DecodingError else { return String(describing: type(of: error)) }
+        switch decodingError {
+        case .keyNotFound(let key, let context):
+            return "clé absente « \(key.stringValue) » sous \(path(context.codingPath))"
+        case .valueNotFound(_, let context):
+            return "valeur nulle à \(path(context.codingPath))"
+        case .typeMismatch(let type, let context):
+            return "type inattendu (\(type) attendu) à \(path(context.codingPath))"
+        case .dataCorrupted(let context):
+            return "donnée invalide à \(path(context.codingPath))"
+        @unknown default:
+            return "erreur de décodage"
+        }
     }
 }

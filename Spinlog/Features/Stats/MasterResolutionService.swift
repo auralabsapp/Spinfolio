@@ -74,6 +74,13 @@ actor MasterResolutionService {
 
             var year = 0
             do {
+                // La collection passe d'abord : pendant qu'elle se charge, la résolution des années
+                // (des centaines de requêtes pour une grosse collection) se met en pause. Elle se
+                // partageait sinon le même quota de fond, et les pages de la collection
+                // n'avançaient presque plus.
+                while await MainActor.run(body: { LocalDataStore.shared.isAnyFullCollectionSyncActive }) {
+                    try await Task.sleep(for: .seconds(3))
+                }
                 // Cadencement de 1,5 seconde entre chaque requête pour respecter la limite
                 try await Task.sleep(for: .seconds(1.5))
                 let credentials = await MainActor.run { DiscogsAuthManager.shared.credentials }
