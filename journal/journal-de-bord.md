@@ -7,7 +7,15 @@ Les commits qui ne font que mettre à jour ce journal n'y sont pas repris.
 
 ---
 
-## 2026-11-04 — Compteurs de dossiers après un déplacement
+## 2026-11-04 — Compteurs de dossiers, classement des artistes, famille B des tests manuels
+
+### 14:28 — `68c65df` Tests manuels : famille B (B24 à B55) renseignée
+
+Résultats du passage sur appareil : validés, « Non fait » (pas de compte de plus de 1 000 exemplaires, cas improbables ou impossibles à provoquer) ; B24, B35, B49, B52 validés après les correctifs ci-dessous. 1 fichier.
+
+### 14:28 — `0692de3` Collection, Stats, Wantlist : compteurs de dossiers, classement des artistes, états vides, corrections de relevés B
+
+Relevés des tests B : après un dossier supprimé sur Discogs, le tirage laissait l'écran sur le dossier disparu (le `.refreshable` annulait le chargement : `refresh()` lance maintenant sa propre tâche, et la liste des dossiers ignore le cache HTTP) ; un déplacement fait depuis la fiche d'un disque ne mettait pas à jour les compteurs (notification `collectionInstanceMoved`, corrections gardées en cache et relues 6 s plus tard) et n'était pas bloqué hors ligne avec des données de plus de 6 h ; la feuille « Mon exemplaire » suit le dossier actuel de l'exemplaire (déplacements successifs, champs personnalisés). Classement des artistes : étiquettes de l'axe décalées d'une demi-ligne avec le SDK d'iOS 27, le nom est posé au-dessus de chaque barre (annotation), 5 lignes visibles, barres plus épaisses. État « Aucun résultat » dans un `ScrollView` pour garder le grand titre avec plusieurs filtres. Menu « Modifier mon exemplaire » (EN : Edit My Copy). 10 fichiers, +68 / −25.
 
 ### 11:04 — `84008e9` Tests manuels : cas B55 (déplacement et compteurs de dossiers), B21 non fait
 
