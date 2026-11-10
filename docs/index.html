@@ -161,7 +161,7 @@
     .media-trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; margin-bottom: 90px; }
     .media-trio figure { text-align: center; width: 100%; max-width: 300px; justify-self: center; /* même largeur que les téléphones des autres sections */ }
     /* Ombre en box-shadow (calquée sur les coins arrondis de l'image) et non en `filter: drop-shadow` : le filtre est très coûteux à repeindre sur iPhone */
-    .media-trio img { width: 100%; height: auto; border-radius: 16.4% / 15.2%; box-shadow: 0 26px 34px -14px rgba(60, 20, 100, .36); }
+    .media-trio img, .media-trio video { display: block; width: 100%; height: auto; border-radius: 16.4% / 21.2%; box-shadow: 0 26px 34px -14px rgba(60, 20, 100, .36); }   /* coins : 118 px sur une vignette de 720 x 556 */
     .media-trio figcaption { margin-top: 18px; font-family: var(--serif); font-weight: 700; font-size: 1.3rem; }
     .media-trio figcaption small { display: block; font-family: var(--sans); font-weight: 400; font-size: .92rem; color: var(--ink-2); margin-top: 2px; }
     @media (max-width: 860px) { .media-trio { grid-template-columns: 1fr; max-width: 420px; margin-inline: auto; } }
@@ -435,9 +435,9 @@
       <p class="lead">Vinyle, CD ou cassette&nbsp;: l'écran d'écoute prend la forme de ton disque. Touche « J'écoute » quand tu le poses, « Arrêter l'écoute » quand tu as fini.</p>
     </div></div>
     <div class="media-trio pin-track">
-      <figure class="reveal"><img src="assets/ecoute-vinyle.webp" alt="Écran d'écoute d'un vinyle : pochette, platine avec bras de lecture et bouton Arrêter l'écoute" width="720" height="776" decoding="async"><figcaption>Vinyle<small>La platine et son bras de lecture</small></figcaption></figure>
-      <figure class="reveal"><img src="assets/ecoute-cd.webp" alt="Écran d'écoute d'un CD : pochette, disque argenté et bouton Arrêter l'écoute" width="720" height="775" decoding="async"><figcaption>CD<small>Le disque qui sort de son boîtier</small></figcaption></figure>
-      <figure class="reveal"><img src="assets/ecoute-k7.webp" alt="Écran d'écoute d'une cassette : pochette, cassette et bouton Arrêter l'écoute" width="720" height="776" decoding="async"><figcaption>Cassette<small>Chaque face, à sa place</small></figcaption></figure>
+      <figure class="reveal"><video src="assets/ecoute-vinyle.mp4" poster="assets/ecoute-vinyle.webp" role="img" aria-label="Écran d'écoute d'un vinyle : pochette, platine avec bras de lecture, titre et artiste ; le disque tourne" width="720" height="556" muted loop playsinline preload="none" data-play></video><figcaption>Vinyle<small>La platine et son bras de lecture</small></figcaption></figure>
+      <figure class="reveal"><video src="assets/ecoute-cd.mp4" poster="assets/ecoute-cd.webp" role="img" aria-label="Écran d'écoute d'un CD : pochette, disque argenté, titre et artiste ; le disque tourne" width="720" height="556" muted loop playsinline preload="none" data-play></video><figcaption>CD<small>Le disque qui sort de son boîtier</small></figcaption></figure>
+      <figure class="reveal"><video src="assets/ecoute-k7.mp4" poster="assets/ecoute-k7.webp" role="img" aria-label="Écran d'écoute d'une cassette : pochette, cassette, titre et artiste ; les bobines tournent" width="720" height="556" muted loop playsinline preload="none" data-play></video><figcaption>Cassette<small>Chaque face, à sa place</small></figcaption></figure>
     </div>
     </div></div>
     <div class="split">
@@ -870,6 +870,19 @@
     }, { threshold: .12 });
     reveals.forEach(function (el) { io.observe(el); });
   } else { reveals.forEach(function (el) { el.classList.add('in'); }); }
+
+  // Vignettes animées (écoute sur platine) : lues seulement à l'écran, jamais en mouvement réduit ; sans JavaScript, l'image fixe
+  // (poster) reste affichée
+  var clips = [].slice.call(document.querySelectorAll('video[data-play]'));
+  if (clips.length && 'IntersectionObserver' in window && !reduced) {
+    var vio = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        var v = e.target;
+        if (e.isIntersecting) { v.muted = true; var p = v.play(); if (p && p.catch) p.catch(function () {}); } else { v.pause(); }
+      });
+    }, { threshold: .25 });
+    clips.forEach(function (v) { vio.observe(v); });
+  }
 
   // Héros visible ? Hors écran, ni parallaxe ni vinyle ne travaillent : moins de calculs pendant le défilement ailleurs
   var heroVisible = true;
