@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spinfolio — Le carnet de collection des passionnés de vinyles, CD et cassettes</title>
+  <meta name="description" content="Spinfolio : scanne, classe et retrouve chaque album de ta discothèque. Collection et wantlist synchronisées avec Discogs, quatre affichages, écoute sur platine, et un Premium pour aller plus loin.">
+  <meta name="color-scheme" content="light dark">
+  <meta property="og:title" content="Spinfolio — Ta discothèque, en un coup d'œil">
+  <meta property="og:description" content="Le carnet de collection des passionnés de vinyles, CD et cassettes, synchronisé avec Discogs.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="assets/icone.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <style>
+    /* Jetons repris de l'app (AppColors.swift / AppTheme.swift) : fond crème en clair, anthracite en sombre,
+       accent = palette Signature, or Premium. La page suit le réglage « Système » comme l'app. */
+    :root {
+      --bg: #F7F5F0;
+      --surface: #FFFFFF;
+      --surface-2: #EFECE6;
+      --ink: #1B1A1E;
+      --ink-2: #5E5B66;
+      --line: rgba(27, 26, 30, .10);
+      --a-light: #9E3DCF;
+      --a-dark: #C96BF7;
+      --accent: var(--a-light);
+      --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+      --gold-1: #FAC747;
+      --gold-2: #E0851F;
+      --gold-ink: #7A4A06;
+      --serif: "New York", ui-serif, "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+      --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, sans-serif;
+      --shadow: 0 30px 80px -30px rgba(40, 20, 60, .45);
+      /* Nuances de violet dérivées de l'accent (Signature par défaut, change avec le nuancier de thèmes) :
+         du plus lumineux (v1) au plus profond (v3). Mélangées à un noir violacé pour que le texte blanc
+         reste lisible quelle que soit la palette choisie. */
+      --v1: color-mix(in srgb, var(--accent) 84%, #2a0d4a);
+      --v2: color-mix(in srgb, var(--accent) 60%, #2a0d4a);
+      --v3: color-mix(in srgb, var(--accent) 34%, #1f0840);
+      --v4: color-mix(in srgb, var(--accent) 14%, #160632);
+      --tint-1: color-mix(in srgb, var(--accent) 7%, var(--bg));
+      --tint-2: color-mix(in srgb, var(--accent) 16%, var(--bg));
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #141316;
+        --surface: #1E1C22;
+        --surface-2: #26232C;
+        --ink: #F3F1F6;
+        --ink-2: #A9A5B3;
+        --line: rgba(255, 255, 255, .10);
+        --accent: var(--a-dark);
+        --gold-ink: #F2BD52;
+        --shadow: 0 30px 80px -30px rgba(0, 0, 0, .8);
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+    body { font-family: var(--sans); background: var(--bg); color: var(--ink); line-height: 1.6; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+    img { max-width: 100%; display: block; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+    .wrap { width: min(1120px, 100% - 40px); margin-inline: auto; }
+    h1, h2, h3 { font-family: var(--serif); font-weight: 700; line-height: 1.12; letter-spacing: -.01em; }
+    h1 { font-size: clamp(2.5rem, 6vw, 4.4rem); }
+    h2 { font-size: clamp(2rem, 4.2vw, 3.1rem); }
+    h3 { font-size: clamp(1.4rem, 2.4vw, 1.8rem); }
+    .lead { font-size: clamp(1.05rem, 1.6vw, 1.25rem); color: var(--ink-2); max-width: 36em; }
+    /* Même écriture que SectionEyebrow dans l'app : petites capitales, accent. */
+    .eyebrow { display: inline-block; font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+    .pill { display: inline-flex; align-items: center; gap: 6px; font-size: .74rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #4A2604; background: linear-gradient(135deg, var(--gold-1), var(--gold-2)); padding: 6px 14px; border-radius: 999px; box-shadow: 0 8px 24px -10px var(--gold-2); }
+    .btn { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; padding: 15px 28px; border-radius: 999px; background: var(--accent); color: #fff; box-shadow: 0 14px 34px -14px var(--accent); transition: transform .2s; }
+    .btn:hover { transform: translateY(-2px); text-decoration: none; }
+    .btn.ghost { background: transparent; color: var(--ink); box-shadow: none; border: 1px solid var(--line); }
+
+    /* Sections sur fond violet : texte blanc, cartes en verre dépoli, bouton clair. Chaque section a son
+       propre dégradé (angle et halos différents), comme les images de la fiche App Store. */
+    .on-violet { --ink: #fff; --ink-2: rgba(255, 255, 255, .86); --line: rgba(255, 255, 255, .22); --surface: rgba(255, 255, 255, .10); --surface-2: rgba(255, 255, 255, .14); --accent: #EDC9FF; --accent-soft: rgba(255, 255, 255, .16); --gold-ink: #FFD27A; --shadow: 0 30px 80px -26px rgba(8, 2, 18, .75); color: var(--ink); position: relative; isolation: isolate; }
+    .on-violet .btn { background: #fff; color: #4A1D78; box-shadow: 0 14px 34px -14px rgba(0, 0, 0, .5); }
+    .on-violet .btn.ghost { background: transparent; color: #fff; border: 1px solid rgba(255, 255, 255, .45); box-shadow: none; }
+    .on-violet .card, .on-violet .step + .step { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+    .g-orchid { background: radial-gradient(900px 600px at 88% 8%, rgba(236, 160, 255, .38), transparent 62%), radial-gradient(800px 600px at 4% 96%, rgba(120, 60, 210, .5), transparent 60%), linear-gradient(162deg, var(--v1) 0%, var(--v2) 52%, var(--v3) 100%); }
+    .g-rose { background: radial-gradient(800px 560px at 12% 12%, rgba(255, 160, 222, .34), transparent 62%), radial-gradient(900px 600px at 92% 92%, rgba(130, 64, 220, .45), transparent 60%), linear-gradient(-152deg, var(--v1) 0%, var(--v2) 50%, var(--v3) 100%); }
+    .g-prune { background: radial-gradient(1100px 520px at 50% -8%, rgba(214, 120, 250, .34), transparent 64%), radial-gradient(800px 560px at 100% 64%, rgba(196, 110, 255, .22), transparent 62%), linear-gradient(180deg, var(--v2) 0%, var(--v3) 55%, color-mix(in srgb, var(--accent) 40%, #1f0840) 100%); }
+    .g-aube { background: radial-gradient(800px 600px at 96% 4%, rgba(255, 190, 232, .32), transparent 60%), linear-gradient(48deg, var(--v3) 0%, var(--v2) 46%, var(--v1) 100%); }
+    .t-lilas { background: linear-gradient(180deg, var(--tint-1), var(--tint-2)); }
+    .t-brume { background: radial-gradient(900px 500px at 90% 0%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 65%), linear-gradient(200deg, var(--tint-2), var(--tint-1) 70%); }
+
+    /* Navigation */
+    nav.top { position: sticky; top: 0; z-index: 50; backdrop-filter: saturate(1.6) blur(16px); -webkit-backdrop-filter: saturate(1.6) blur(16px); background: color-mix(in srgb, var(--bg) 78%, transparent); border-bottom: 1px solid var(--line); }
+    nav.top .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 16px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-family: var(--serif); font-weight: 700; font-size: 1.25rem; color: var(--ink); }
+    .brand img { width: 32px; height: 32px; border-radius: 8px; }
+    .brand:hover { text-decoration: none; }
+    nav.top ul { display: flex; gap: 22px; list-style: none; font-size: .92rem; }
+    nav.top ul a { color: var(--ink-2); }
+    nav.top ul a:hover { color: var(--ink); text-decoration: none; }
+    nav.top .btn { padding: 9px 18px; font-size: .9rem; }
+    @media (max-width: 860px) { nav.top ul { display: none; } }
+
+    /* Téléphone */
+    .phone { position: relative; width: var(--w, 300px); aspect-ratio: 1 / 2.1037; /* ratio du cadre = capture + marges de 3 % : l'écran garde exactement celui de l'image, sans rognage */ border-radius: calc(var(--w, 300px) * .15); background: #0b0a0d; padding: calc(var(--w, 300px) * .03); box-shadow: var(--shadow), inset 0 0 0 2px #2a2830; }
+    .phone::before { content: ""; position: absolute; z-index: 3; top: calc(var(--w, 300px) * .05); left: 50%; width: 31%; height: 3.4%; background: #000; border-radius: 99px; transform: translateX(-50%); }
+    .phone .screen { position: relative; width: 100%; height: 100%; border-radius: calc(var(--w, 300px) * .12); overflow: hidden; background: var(--surface-2); }
+    .phone .screen img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .55s ease; }
+    .phone .screen img.on, .phone.single .screen img { opacity: 1; }
+
+    /* Héros */
+    .hero { position: relative; padding: 70px 0 110px; overflow: hidden; }
+    .hero .wrap { z-index: 1; }
+    .hero .wrap > div:first-child { position: relative; z-index: 2; } /* le texte passe devant le vinyle */
+    .hero .glow { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .55; pointer-events: none; }
+    .hero .g1 { width: 520px; height: 520px; background: #E7A8FF; opacity: .42; top: -160px; right: -120px; }
+    .hero .g2 { width: 380px; height: 380px; background: #FF9BDD; opacity: .26; bottom: -120px; left: -80px; }
+    .hero .wrap { position: relative; display: grid; grid-template-columns: 1.05fr 1fr; gap: 40px; align-items: center; }
+    .hero h1 em { font-style: italic; color: var(--accent); }
+    .hero .lead { margin: 22px 0 32px; }
+    .hero .cta { display: flex; flex-wrap: wrap; gap: 14px; }
+    .hero .meta { margin-top: 20px; font-size: .88rem; color: var(--ink-2); }
+    .stage { position: relative; height: 640px; }
+    .stage .phone { position: absolute; left: 50%; top: 0; }
+    .stage .p-main { --w: 290px; transform: translateX(-50%); z-index: 2; }
+    .stage .p-left { --w: 240px; left: 4%; top: 70px; transform: rotate(-7deg); opacity: .96; }
+    .stage .p-right { --w: 240px; left: auto; right: 0; top: 90px; transform: rotate(7deg); opacity: .96; }
+    @media (max-width: 920px) {
+      .hero .wrap { grid-template-columns: 1fr; text-align: center; }
+      .hero .lead { margin-inline: auto; }
+      .hero .cta { justify-content: center; }
+      .stage { height: 560px; }
+      .stage .p-left, .stage .p-right { display: none; }
+    }
+
+    /* Sections */
+    section.block { padding: 110px 0; }
+    section.block.alt { background: var(--surface-2); }
+    .head { text-align: center; margin-bottom: 56px; }
+    .head .lead { margin: 18px auto 0; }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 70px; align-items: center; }
+    .split.rev .text { order: 2; }
+    .split .shot { display: flex; justify-content: center; }
+    .split .text p { margin-top: 16px; color: var(--ink-2); font-size: 1.05rem; }
+    .ticks { list-style: none; margin-top: 22px; display: grid; gap: 12px; }
+    .ticks li { position: relative; padding-left: 30px; }
+    .ticks li::before { content: ""; position: absolute; left: 0; top: .45em; width: 16px; height: 16px; border-radius: 50%; background: var(--accent-soft); box-shadow: inset 0 0 0 2px var(--accent); }
+    .ticks li::after { content: ""; position: absolute; left: 5px; top: calc(.45em + 4px); width: 6px; height: 3px; border-left: 2px solid var(--accent); border-bottom: 2px solid var(--accent); transform: rotate(-45deg); }
+    @media (max-width: 860px) { .split { grid-template-columns: 1fr; gap: 40px; } .split.rev .text { order: 0; } }
+
+    /* Sélecteur de mode d'affichage */
+    .tabs { display: inline-flex; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 4px; margin-top: 28px; }
+    .tabs button { font: inherit; font-weight: 600; font-size: .92rem; border: 0; background: transparent; color: var(--ink-2); padding: 9px 20px; border-radius: 999px; cursor: pointer; transition: .2s; }
+    .tabs button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+    /* Quatre boutons : sur un petit téléphone, ils ne tiendraient pas sur une ligne avec le rembourrage large */
+    @media (max-width: 480px) { .tabs button { padding: 9px 13px; font-size: .88rem; } }
+
+
+    /* Écoute sur platine : trois supports, trois écrans */
+    .media-trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; margin-bottom: 90px; }
+    .media-trio figure { text-align: center; width: 100%; max-width: 300px; justify-self: center; /* même largeur que les téléphones des autres sections */ }
+    /* Ombre en box-shadow (calquée sur les coins arrondis de l'image) et non en `filter: drop-shadow` : le filtre est très coûteux à repeindre sur iPhone */
+    .media-trio img { width: 100%; height: auto; border-radius: 16.4% / 15.2%; box-shadow: 0 26px 34px -14px rgba(60, 20, 100, .36); }
+    .media-trio figcaption { margin-top: 18px; font-family: var(--serif); font-weight: 700; font-size: 1.3rem; }
+    .media-trio figcaption small { display: block; font-family: var(--sans); font-weight: 400; font-size: .92rem; color: var(--ink-2); margin-top: 2px; }
+    @media (max-width: 860px) { .media-trio { grid-template-columns: 1fr; max-width: 420px; margin-inline: auto; } }
+
+    /* « Et aussi » : cinq cartes, trois sur la première ligne puis deux plus larges */
+    .more .grid { grid-template-columns: repeat(6, 1fr); }
+    .more .grid .card { grid-column: span 2; }
+    .more .grid .card:nth-child(n+4) { grid-column: span 3; }
+    @media (max-width: 900px) { .more .grid { grid-template-columns: repeat(2, 1fr); } .more .grid .card, .more .grid .card:nth-child(n+4) { grid-column: auto; } .more .grid .card:last-child { grid-column: 1 / -1; } }
+    @media (max-width: 560px) { .more .grid { grid-template-columns: 1fr; } }
+    /* Scan : deux téléphones côte à côte, chacun avec sa légende */
+    .scan-duo { display: flex; gap: 28px; justify-content: center; align-items: flex-start; }
+    .scan-duo figure { text-align: center; }
+    .scan-duo figcaption { margin-top: 18px; font-family: var(--serif); font-weight: 700; font-size: 1.15rem; }
+    .scan-duo figcaption small { display: block; font-family: var(--sans); font-weight: 400; font-size: .9rem; color: var(--ink-2); margin-top: 2px; }
+    .scan-duo figcaption .badge { margin: 0 0 0 4px; }
+    /* La photo du scan montre déjà la pastille de la caméra : on ne redessine pas celle du cadre */
+    .phone.native-island::before { display: none; }
+    @media (max-width: 560px) { .scan-duo { gap: 14px; } .scan-duo figure { width: 160px; } .scan-duo .phone { --w: 150px !important; } .scan-duo figcaption { font-size: 1rem; } .scan-duo figcaption .badge { display: block; width: max-content; margin: 6px auto 0; } }
+    .shot.duo { gap: 22px; align-items: flex-start; }
+    .shot.duo .phone:nth-child(2) { margin-top: 56px; }
+    @media (max-width: 560px) { .shot.duo .phone { --w: 150px !important; } .shot.duo .phone:nth-child(2) { margin-top: 30px; } }
+
+
+    /* Effets de profondeur et de mouvement (tous coupés si « Réduire les animations » est actif) */
+    .stage, .shot, .sticky, .theme-stage, .inline-shot { perspective: 1100px; }
+    .phone { transition: rotate .3s ease-out; }
+    .phone::after { content: ""; position: absolute; z-index: 4; pointer-events: none; inset: calc(var(--w, 300px) * .03); border-radius: calc(var(--w, 300px) * .12); background: radial-gradient(circle at var(--mx, 50%) var(--my, 30%), rgba(255, 255, 255, .26), transparent 52%); opacity: 0; transition: opacity .3s; }
+    .phone.tilting::after { opacity: 1; }
+    .vinyl { position: absolute; z-index: 0; left: 50%; top: -48px; width: 720px; margin-left: -330px; pointer-events: none; opacity: .95; filter: saturate(1.15) brightness(1.08) drop-shadow(0 40px 50px rgba(20, 4, 40, .45)); }
+    .vinyl img { width: 100%; height: auto; will-change: transform; }
+    @media (max-width: 920px) { .vinyl { width: 520px; margin-left: -260px; top: 10px; opacity: .6; } }
+
+    /* Trio d'écoute : la page s'arrête, les trois écrans défilent d'un côté à l'autre (activé par le script) */
+    /* --pin-dist (px) est posé une seule fois par le script ; la hauteur en dépend en CSS pur. `svh` = hauteur de l'écran barre
+       d'adresse dépliée : stable quand Safari replie sa barre en défilant (contrairement à `innerHeight`). */
+    .pin.on { width: 100vw; margin-left: calc(50% - 50vw); height: calc(100vh + var(--pin-dist, 0px)); height: calc(100svh + var(--pin-dist, 0px)); }
+    .pin.on .pin-sticky { position: sticky; top: 0; height: 100vh; height: 100svh; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding-top: 72px; box-sizing: border-box; overflow: hidden; contain: layout paint; }
+    /* Titre resserré contre les images, centré (la piste, plus large que l'écran en mode glissement, reste calée à gauche) */
+    #platine .head { margin-bottom: 30px; }
+    .pin.on .pin-head { width: min(1120px, 100% - 40px); margin: 0 auto; flex: none; }
+    .pin.on .head { margin-bottom: 26px; }
+    @media (max-height: 760px) { .pin.on .head .lead { display: none; } }
+    .pin.on .media-trio { display: flex; gap: 44px; width: max-content; margin: 0; padding: 0 max(20px, calc((100vw - 1120px) / 2)); transform: translate3d(0, 0, 0); will-change: transform; }
+    /* Même largeur que les téléphones des autres sections (300 px, 240 px sur mobile) */
+    .pin.on .media-trio figure { flex: none; width: 300px; }
+    @media (max-width: 860px) { .pin.on .media-trio figure { width: 240px; } }
+    /* Les trois écrans sont déjà là : pas d'apparition animée pendant qu'ils glissent (elle ajoutait des sauts) */
+    .pin.on .media-trio figure.reveal { opacity: 1; transform: none; transition: none; }
+    /* Navigateurs récents (Safari 26+, Chrome 115+) : le glissement suit le défilement par une animation pilotée par la page, sans JavaScript.
+       `contain` = tant que le bloc couvre l'écran, c'est-à-dire pendant qu'il reste épinglé. */
+    @supports (animation-timeline: view()) {
+      /* inset 0 : sinon la chronologie reprend le scroll-padding-top (72 px) de la page et démarre avec de l'avance */
+      .pin.on { view-timeline: --pin block; view-timeline-inset: 0; }
+      .pin.on:not(.spread) .pin-track { animation: pin-slide linear both; animation-timeline: --pin; animation-range: contain 0% contain 100%; }
+    }
+    @keyframes pin-slide { to { transform: translate3d(calc(var(--pin-dist, 0px) * -1), 0, 0); } }
+
+    /* Grands écrans : les trois supports tiennent côte à côte. Ils démarrent empilés (vinyle au-dessus, CD et cassette derrière,
+       légèrement inclinés) puis s'écartent pendant que la page reste épinglée : vinyle à gauche, cassette à droite. */
+    .pin.spread .media-trio { display: flex; justify-content: center; gap: 44px; width: 100%; padding: 0; margin: 0; transform: none; will-change: auto; --spread: 344px; }
+    .pin.spread .media-trio figure { position: relative; will-change: transform; }
+    .pin.spread .media-trio figure:nth-child(1) { z-index: 3; transform: translate3d(var(--spread), 0, 0); }
+    .pin.spread .media-trio figure:nth-child(2) { z-index: 1; transform: rotate(-6deg) scale(.95); }
+    .pin.spread .media-trio figure:nth-child(3) { z-index: 2; transform: translate3d(calc(var(--spread) * -1), 0, 0) rotate(6deg); }
+    .pin.spread .media-trio figcaption { opacity: 0; }
+    @supports (animation-timeline: view()) {
+      .pin.spread .media-trio figure { animation: 1s ease-in-out both; animation-timeline: --pin; animation-range: contain 0% contain 100%; }
+      .pin.spread .media-trio figure:nth-child(1) { animation-name: spread-left; }
+      .pin.spread .media-trio figure:nth-child(3) { animation-name: spread-right; }
+      .pin.spread .media-trio figure:nth-child(2) { animation-name: spread-center; }
+      .pin.spread .media-trio figcaption { animation: spread-caption linear both; animation-timeline: --pin; animation-range: contain 0% contain 100%; }
+    }
+    @keyframes spread-left { to { transform: none; } }
+    @keyframes spread-right { to { transform: none; } }
+    @keyframes spread-center { to { transform: none; } }
+    @keyframes spread-caption { 0%, 60% { opacity: 0; } 100% { opacity: 1; } }
+
+    /* Grille gratuite */
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 26px; }
+    .card h3 { font-family: var(--sans); font-size: 1.08rem; font-weight: 700; letter-spacing: 0; margin-bottom: 8px; }
+    .card p { color: var(--ink-2); font-size: .96rem; }
+    .card .eyebrow { margin-bottom: 10px; }
+    .note { margin-top: 18px; font-size: .9rem; color: var(--ink-2); background: var(--accent-soft); border-radius: 14px; padding: 12px 16px; }
+
+    /* Premium : le téléphone reste en place, l'écran change pendant le défilement */
+    .steps { display: grid; grid-template-columns: 1fr minmax(260px, 340px); gap: 80px; align-items: start; }
+    .steps .col { order: 1; }
+    .sticky { order: 2; position: sticky; top: 90px; display: flex; justify-content: center; padding-top: 10px; }
+    .sticky .phone { --w: 300px; }
+    .step { min-height: 78vh; display: flex; flex-direction: column; justify-content: center; opacity: .35; transition: opacity .5s; }
+    .step.active { opacity: 1; }
+    .step p { margin-top: 14px; color: var(--ink-2); font-size: 1.05rem; max-width: 32em; }
+    .step .inline-shot { display: none; }
+    .step .eyebrow { color: var(--gold-ink); }
+    @media (max-width: 860px) {
+      .steps { grid-template-columns: 1fr; }
+      .sticky { display: none; }
+      .step { min-height: 0; opacity: 1; padding: 34px 0; }
+      .step .inline-shot { display: flex; justify-content: center; margin-top: 26px; }
+      .step .inline-shot .phone { --w: 240px; }
+    }
+    .more { margin-top: 70px; }
+    .more > h3 { text-align: center; margin-bottom: 28px; }
+    .more .card .eyebrow { color: var(--gold-ink); }
+
+    /* Thèmes */
+    .swatches { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 18px; }
+    .swatches button { display: flex; align-items: center; gap: 8px; font: inherit; font-size: .9rem; font-weight: 600; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px 8px 10px; cursor: pointer; transition: .2s; }
+    .swatches button i { width: 20px; height: 20px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .12); }
+    .swatches button[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .theme-name { text-align: center; color: var(--ink-2); min-height: 1.6em; margin-bottom: 40px; }
+    .theme-stage { display: flex; justify-content: center; }
+
+    /* Comparatif */
+    .compare { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; }
+    .compare th, .compare td { padding: 15px 20px; text-align: center; border-bottom: 1px solid var(--line); font-size: .98rem; }
+    .compare th:first-child, .compare td:first-child { text-align: left; }
+    .compare thead th { background: var(--surface); font-family: var(--serif); font-size: 1.15rem; }
+    .compare thead th.pr { color: var(--gold-ink); }
+    .compare tbody th { font-weight: 500; text-align: left; }
+    .compare tbody th small { display: block; color: var(--ink-2); font-weight: 400; font-size: .84rem; }
+    .compare tr.sep td { background: var(--surface-2); font-weight: 700; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); text-align: left; }
+    .compare tr:last-child td, .compare tr:last-child th { border-bottom: 0; }
+    .yes { color: var(--accent); font-weight: 800; }
+    .no { color: var(--ink-2); opacity: .5; }
+    .yes.gold { color: var(--gold-ink); }
+    .prices { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-top: 46px; }
+    .price { background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 30px 26px; text-align: center; position: relative; }
+    .price.best { border: 2px solid var(--gold-2); box-shadow: 0 24px 60px -30px var(--gold-2); }
+    .price .tag { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); }
+    .price h3 { font-family: var(--sans); font-size: 1rem; letter-spacing: .02em; color: var(--ink-2); font-weight: 600; }
+    .price .amt { font-family: var(--serif); font-size: 2.8rem; font-weight: 700; margin: 10px 0 2px; }
+    .price .amt small { font-size: 1rem; font-family: var(--sans); font-weight: 500; color: var(--ink-2); }
+    .price p { color: var(--ink-2); font-size: .92rem; }
+    .fine { text-align: center; font-size: .84rem; color: var(--ink-2); margin-top: 22px; max-width: 46em; margin-inline: auto; }
+
+    /* Mini-manuel */
+    .manual-group { margin-top: 38px; }
+    .manual-group h3 { font-size: 1.5rem; margin-bottom: 14px; }
+    details { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; margin-bottom: 10px; }
+    details summary { cursor: pointer; list-style: none; padding: 16px 52px 16px 20px; font-weight: 600; position: relative; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::after { content: "+"; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 1.5rem; font-weight: 300; color: var(--accent); transition: transform .25s; }
+    details[open] summary::after { transform: translateY(-50%) rotate(45deg); }
+    details .body { padding: 0 20px 20px; color: var(--ink-2); }
+    details .body ol { margin: 10px 0 0 20px; }
+    details .body li { margin-bottom: 4px; }
+    details .body .tip { margin-top: 12px; background: var(--accent-soft); border-radius: 12px; padding: 10px 14px; color: var(--ink); font-size: .94rem; }
+    .badge { display: inline-block; vertical-align: middle; margin-left: 8px; font-size: .64rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #4A2604; background: linear-gradient(135deg, var(--gold-1), var(--gold-2)); padding: 3px 9px; border-radius: 99px; }
+    .badge.acc { color: var(--ink-2); background: var(--surface-2); }
+
+    /* Pied de page */
+    footer { padding: 60px 0 70px; color: var(--ink-2); font-size: .9rem; text-align: center; }
+    footer .links { display: flex; flex-wrap: wrap; justify-content: center; gap: 22px; margin-bottom: 20px; }
+    footer p { max-width: 52em; margin: 8px auto 0; }
+
+    /* Apparition douce + mouvement : coupés si l'utilisateur demande moins d'animations */
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity .8s ease, transform .8s ease; }
+    .reveal.in { opacity: 1; transform: none; }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .reveal { opacity: 1; transform: none; transition: none; }
+      .phone .screen img, .step { transition: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="top" aria-label="Navigation principale">
+  <div class="wrap">
+    <a class="brand" href="#decouvrir"><img src="assets/icone.png" alt="" width="32" height="32">Spinfolio</a>
+    <ul>
+      <li><a href="#collection">Collection</a></li>
+      <li><a href="#platine">Écoute</a></li>
+      <li><a href="#gratuit">Gratuit</a></li>
+      <li><a href="#premium">Premium</a></li>
+      <li><a href="#themes">Thèmes</a></li>
+      <li><a href="#comparatif">Tarifs</a></li>
+      <li><a href="#guide">Guide</a></li>
+    </ul>
+    <a class="btn" href="https://apps.apple.com">App Store</a>
+  </div>
+</nav>
+
+<header class="hero on-violet g-orchid" id="decouvrir">
+  <div class="glow g1"></div><div class="glow g2"></div>
+  <div class="wrap">
+    <div>
+      <span class="eyebrow">Vinyles · CD · Cassettes</span>
+      <h1>Ta discothèque, <em>en un coup d'œil.</em></h1>
+      <p class="lead">Spinfolio est le carnet de collection des passionnés. Scanne, classe et retrouve chaque album en quelques secondes, avec ta collection et ta wantlist synchronisées avec Discogs.</p>
+      <div class="cta">
+        <a class="btn" href="https://apps.apple.com">Télécharger sur l'App Store</a>
+        <a class="btn ghost" href="#premium">Découvrir le Premium</a>
+      </div>
+      <p class="meta">Pour iPhone · Gratuit, avec un Premium optionnel · Un compte Discogs gratuit suffit</p>
+    </div>
+    <div class="stage" aria-hidden="true">
+      <div class="vinyl" data-speed="0.02"><img id="vinyl-img" src="assets/vinyle.webp" alt="" width="640" height="640"></div>
+      <div class="phone p-left single" data-speed="-0.06"><div class="screen"><img src="assets/mosaique.webp" alt="" width="720" height="1565"></div></div>
+      <div class="phone p-main single" data-speed="0.03"><div class="screen"><img src="assets/bac.webp" alt="" width="720" height="1565" fetchpriority="high"></div></div>
+      <div class="phone p-right single" data-speed="0.07"><div class="screen"><img src="assets/carrousel.webp" alt="" width="720" height="1565"></div></div>
+    </div>
+  </div>
+</header>
+
+
+<section class="block t-lilas" id="collection">
+  <div class="wrap split">
+    <div class="text reveal">
+      <span class="eyebrow">Collection &amp; wantlist</span>
+      <h2>Quatre façons de feuilleter tes albums.</h2>
+      <p>Ta collection et ta wantlist Discogs, partout dans ta poche. Choisis l'affichage qui te parle : le choix est retenu séparément pour chacune.</p>
+      <div class="tabs" role="group" aria-label="Mode d'affichage">
+        <button type="button" data-shot="liste-claire" aria-pressed="true">Liste</button>
+        <button type="button" data-shot="mosaique" aria-pressed="false">Mosaïque</button>
+        <button type="button" data-shot="carrousel" aria-pressed="false">Carrousel</button>
+        <button type="button" data-shot="bac" aria-pressed="false">Bac</button>
+      </div>
+      <ul class="ticks">
+        <li>Le bac : tes disques rangés comme chez le disquaire, tu glisses pour faire basculer celui de devant et découvrir le suivant</li>
+        <li>Jusqu'à dix tris, dans les deux sens, et une barre pour sauter à une lettre ou à une année</li>
+        <li>Recherche, filtres par dossier, tag ou support, qui se cumulent</li>
+        <li>Plusieurs exemplaires d'un même album, avec tes tags, ta note et tes champs personnalisés</li>
+        <li>Un bouton « Album au hasard » pour ne plus jamais hésiter</li>
+      </ul>
+    </div>
+    <div class="shot reveal">
+      <div class="phone" id="modes" style="--w:310px" role="img" aria-label="Aperçu de la collection dans l'affichage choisi">
+        <div class="screen">
+          <img class="on" data-id="liste-claire" src="assets/liste-claire.webp" alt="" width="720" height="1565" loading="lazy">
+          <img data-id="mosaique" src="assets/mosaique.webp" alt="" width="720" height="1565" loading="lazy">
+          <img data-id="carrousel" src="assets/carrousel.webp" alt="" width="720" height="1565" loading="lazy">
+          <img data-id="bac" src="assets/bac.webp" alt="" width="720" height="1565" loading="lazy">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block on-violet g-rose" id="ecoute">
+  <div class="wrap split rev">
+    <div class="text reveal">
+      <span class="eyebrow">Fiche &amp; écoute</span>
+      <h2>Chaque album a sa fiche. Et sa platine.</h2>
+      <p>Toutes les informations de l'édition viennent de Discogs : titres, crédits, label, pays, année, format et infos de pressage, avec les photos et les vidéos. En haut de la fiche, un résumé de ton exemplaire. Quand tu poses l'album sur ta platine, note l'écoute : elle reste visible sur l'écran verrouillé, et s'arrête toute seule à la fin.</p>
+      <ul class="ticks">
+        <li>L'édition exacte que tu possèdes, avec ses données Discogs, pas une fiche générique</li>
+        <li>Ton exemplaire en résumé : dossier, tags, prix payé, cote et plus-value</li>
+        <li>Journal d'écoute, Live Activity et widget « Album du jour » sur ton écran d'accueil</li>
+      </ul>
+    </div>
+    <div class="shot duo reveal">
+      <div class="phone single" style="--w:236px"><div class="screen"><img src="assets/fiche.webp" alt="Fiche d'un album dans Spinfolio : pochette, exemplaire possédé et emplacement de rangement" width="720" height="1565" loading="lazy"></div></div>
+      <div class="phone single" style="--w:236px"><div class="screen"><img src="assets/fiche-edition.webp" alt="Fiche d'un album, informations Discogs de l'édition : note, possesseurs, genres, format, pays, date, labels, photos, vidéos et Marketplace" width="720" height="1565" loading="lazy"></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="block t-lilas" id="platine">
+  <div class="wrap">
+    <div class="pin" id="pin"><div class="pin-sticky">
+    <!-- Le titre est dans la zone épinglée : il reste à l'écran pendant que les supports s'écartent -->
+    <div class="wrap pin-head"><div class="head reveal">
+      <span class="eyebrow">Écoute sur platine</span>
+      <h2>Chaque écoute, sur le bon support.</h2>
+      <p class="lead">Vinyle, CD ou cassette&nbsp;: l'écran d'écoute prend la forme de ton disque. Touche « J'écoute » quand tu le poses, « Arrêter l'écoute » quand tu as fini.</p>
+    </div></div>
+    <div class="media-trio pin-track">
+      <figure class="reveal"><img src="assets/ecoute-vinyle.webp" alt="Écran d'écoute d'un vinyle : pochette, platine avec bras de lecture et bouton Arrêter l'écoute" width="720" height="776" decoding="async"><figcaption>Vinyle<small>La platine et son bras de lecture</small></figcaption></figure>
+      <figure class="reveal"><img src="assets/ecoute-cd.webp" alt="Écran d'écoute d'un CD : pochette, disque argenté et bouton Arrêter l'écoute" width="720" height="775" decoding="async"><figcaption>CD<small>Le disque qui sort de son boîtier</small></figcaption></figure>
+      <figure class="reveal"><img src="assets/ecoute-k7.webp" alt="Écran d'écoute d'une cassette : pochette, cassette et bouton Arrêter l'écoute" width="720" height="776" decoding="async"><figcaption>Cassette<small>Chaque face, à sa place</small></figcaption></figure>
+    </div>
+    </div></div>
+    <div class="split">
+      <div class="shot reveal">
+        <div class="phone single" style="--w:310px"><div class="screen"><img src="assets/apple-music.webp" alt="Lecteur Apple Music dans Spinfolio : pochette d'Absolution de Muse, titre en cours, barre de progression et commandes" width="720" height="1565" loading="lazy"></div></div>
+      </div>
+      <div class="text reveal">
+        <span class="eyebrow">Lecture Apple Music</span>
+        <h2>Ou écoute-le tout de suite.</h2>
+        <p>Depuis la fiche d'un album, lance un titre dans Apple Music&nbsp;: pochette en grand, progression et commandes, sans quitter l'app.</p>
+        <ul class="ticks">
+          <li>Avec un abonnement Apple Music actif, les titres se lisent <strong>en entier</strong></li>
+          <li>Sans abonnement actif, tu entends <strong>un extrait de 30 secondes</strong></li>
+          <li>Une lecture Apple Music n'est pas une écoute sur platine : seules tes écoutes sur platine alimentent tes grades et ton palmarès</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block t-brume" id="scan">
+  <div class="wrap split">
+    <div class="text reveal">
+      <span class="eyebrow">Scan</span>
+      <h2>Un code-barres, et l'album est à toi.</h2>
+      <p>Vise le code-barres au dos d'un disque : Spinfolio l'identifie sur Discogs et te propose de l'ajouter à ta collection ou à ta wantlist. Chez le disquaire comme en brocante.</p>
+      <ul class="ticks">
+        <li><strong>Un album à la fois</strong>, gratuit et sans limite : la caméra repère le code, tu choisis où l'ajouter</li>
+        <li><strong>Plusieurs albums à la suite</strong> avec le scan par lot : tu enchaînes les codes-barres, tu relis la revue, tu choisis le dossier, puis tu envoies tout d'un coup</li>
+      </ul>
+    </div>
+    <div class="shot reveal">
+      <div class="scan-duo">
+        <figure>
+          <div class="phone native-island single" style="--w:236px"><div class="screen"><img src="assets/scan-code.webp" alt="Scan d'un code-barres : la caméra vise le dos d'un disque et lit le code" width="720" height="1565" loading="lazy"></div></div>
+          <figcaption>Scan d'un album<small>Gratuit</small></figcaption>
+        </figure>
+        <figure>
+          <div class="phone single" style="--w:236px"><div class="screen"><img src="assets/scan.webp" alt="Revue du scan par lot : quatre albums scannés, choix du dossier et boutons Collection et Wantlist" width="720" height="1565" loading="lazy"></div></div>
+          <figcaption>Scan par lot<span class="badge">Premium</span><small>Relis la revue avant d'ajouter</small></figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="grades">
+  <div class="wrap split">
+    <div class="shot duo reveal">
+      <div class="phone single" style="--w:250px"><div class="screen"><img src="assets/grades.webp" alt="Page « Mes grades », piste Collection : grade Disquaire, progression vers le palier suivant et grades déjà obtenus" width="720" height="1565" loading="lazy"></div></div>
+      <div class="phone single" style="--w:250px"><div class="screen"><img src="assets/grades-ecoute.webp" alt="Page « Mes grades », piste Écoute sur platine : grade Mélomane, progression vers le palier suivant et grades déjà obtenus" width="720" height="1565" loading="lazy"></div></div>
+    </div>
+    <div class="text reveal">
+      <span class="eyebrow">Grades &amp; badges</span>
+      <h2>Deviens un vrai collectionneur.</h2>
+      <p>Des grades à atteindre, au fil de tes albums et de tes écoutes. De « Premier sillon » jusqu'aux plus hauts paliers, chaque étape se célèbre.</p>
+      <ul class="ticks">
+        <li>Deux pistes : la taille de ta collection (albums distincts) et tes écoutes sur platine</li>
+        <li>Des paliers de 1 à 1&nbsp;000, avec la date d'obtention de chaque grade</li>
+        <li>Un grade obtenu ne se perd jamais, même si tu supprimes des albums</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="block t-brume" id="gratuit">
+  <div class="wrap">
+    <div class="head reveal">
+      <span class="eyebrow">Gratuit</span>
+      <h2>Déjà beaucoup, sans payer.</h2>
+      <p class="lead">Tout ce qu'il faut pour tenir ta discothèque à jour est gratuit, sans limite d'albums.</p>
+    </div>
+    <div class="grid">
+      <div class="card reveal"><span class="eyebrow">Discogs</span><h3>Collection et wantlist</h3><p>Ajouts illimités. Les ajouts, retraits et notes sont répercutés sur ton compte Discogs.</p></div>
+      <div class="card reveal"><span class="eyebrow">Scan</span><h3>Scanner un code-barres</h3><p>Identifie un album par son code-barres et ajoute-le à ta collection ou à ta wantlist.</p></div>
+      <div class="card reveal"><span class="eyebrow">Affichage</span><h3>Liste, mosaïque, carrousel, bac</h3><p>Quatre affichages, dix tris, filtres et barre de navigation alphabétique.</p></div>
+      <div class="card reveal"><span class="eyebrow">Classement</span><h3>Notes et dossiers</h3><p>Classe à ta façon, avec une note sur 5 et tes dossiers Discogs. Tes tags restent visibles et filtrables.</p></div>
+      <div class="card reveal"><span class="eyebrow">Valeur</span><h3>Prix d'achat, état et cote</h3><p>Note ce que tu as payé et l'état de chaque disque, sans rien configurer sur Discogs, puis compare avec la cote album par album.</p></div>
+      <div class="card reveal"><span class="eyebrow">Statistiques</span><h3>Ta collection en chiffres</h3><p>Compteurs, derniers ajouts, graphiques par genre, support, label et année, et estimation de la valeur.</p></div>
+      <div class="card reveal"><span class="eyebrow">Platine</span><h3>Écoutes et Live Activity</h3><p>Note chaque écoute, retrouve ton album en cours sur l'écran verrouillé.</p></div>
+      <div class="card reveal"><span class="eyebrow">Apple Music</span><h3>Lecture depuis la fiche</h3><p>Titres en entier avec un abonnement actif, extrait de 30 secondes sinon.</p></div>
+      <div class="card reveal"><span class="eyebrow">Apparence</span><h3>Clair, sombre, Signature</h3><p>Thème clair ou sombre, et la palette Signature, aux couleurs de l'app.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="block premium on-violet g-prune" id="premium">
+  <div class="wrap">
+    <div class="head reveal">
+      <span class="pill">✦ Premium</span>
+      <h2 style="margin-top:18px">Pour aller beaucoup plus loin.</h2>
+      <p class="lead">Suivi de la valeur, rangement, alertes de prix, hors ligne, iCloud&nbsp;: le Premium transforme Spinfolio en vrai outil de collectionneur.</p>
+    </div>
+
+    <div class="steps">
+      <div class="col">
+        <article class="step" data-shot="cote">
+          <span class="eyebrow">Suivi de cote</span>
+          <h3>Suis la valeur de tes albums.</h3>
+          <p>Renseigne le prix payé et l'état de chaque exemplaire, directement dans l'app, sans champ Discogs à configurer, puis compare-le à la cote Discogs : plus-value de chaque album, et pour toute ta collection avec « Investi vs cote actuelle ». Tes valeurs déjà saisies sur Discogs s'importent en un geste.</p>
+          <div class="inline-shot"><div class="phone single"><div class="screen"><img src="assets/cote.webp" alt="Exemplaire d'un album : dossier, prix d'achat, état, cote actuelle, plus-value et tags" width="720" height="1565" loading="lazy"></div></div></div>
+        </article>
+        <article class="step" data-shot="rangement">
+          <span class="eyebrow">Où ranger l'album</span>
+          <h3>Retrouve la place exacte de chaque album.</h3>
+          <p>Le guide te donne la position de l'album dans ton meuble, entre ses deux voisins, selon ta méthode de classement. Il s'ouvre aussi juste après l'ajout d'un album.</p>
+          <div class="inline-shot"><div class="phone single"><div class="screen"><img src="assets/rangement.webp" alt="Guide de rangement : position dans le meuble entre les deux albums voisins" width="720" height="1565" loading="lazy"></div></div></div>
+        </article>
+        <article class="step" data-shot="scan">
+          <span class="eyebrow">Scan par lot</span>
+          <h3>Scanne toute ta pile, ajoute-la d'un coup.</h3>
+          <p>Enchaîne les codes-barres chez le disquaire ou en brocante, relis la revue, puis envoie le lot en collection ou en wantlist.</p>
+          <div class="inline-shot"><div class="phone single"><div class="screen"><img src="assets/scan.webp" alt="Revue du scan par lot : quatre albums scannés, choix du dossier et boutons Collection et Wantlist" width="720" height="1565" loading="lazy"></div></div></div>
+        </article>
+        <article class="step" data-shot="palmares">
+          <span class="eyebrow">Palmarès d'écoute</span>
+          <h3>Tes albums et artistes les plus écoutés.</h3>
+          <p>Chaque écoute sur ta platine alimente tes palmarès et tes podiums du mois et de l'année, à côté de l'estimation de ta collection.</p>
+          <div class="inline-shot"><div class="phone single"><div class="screen"><img src="assets/palmares.webp" alt="Statistiques, « Tops &amp; Palmarès » : les albums les plus écoutés sur ta platine et le podium de l'année" width="720" height="1565" loading="lazy"></div></div></div>
+        </article>
+        <article class="step" data-shot="wantlist">
+          <span class="eyebrow">Alertes de prix</span>
+          <h3>Ta wantlist, sous surveillance.</h3>
+          <p>Fixe le prix maximum que tu veux payer pour un album de ta wantlist : tu es prévenu dès qu'une annonce du Marketplace Discogs est à ton prix ou moins.</p>
+          <div class="inline-shot"><div class="phone single"><div class="screen"><img src="assets/alerte.webp" alt="Feuille d'alerte de prix : seuil maximum, jauge et raccourcis de réduction" width="720" height="1565" loading="lazy"></div></div></div>
+        </article>
+      </div>
+      <div class="sticky" aria-hidden="true">
+        <div class="phone" id="premium-phone">
+          <div class="screen">
+            <img class="on" data-id="cote" src="assets/cote.webp" alt="" width="720" height="1565" loading="lazy">
+            <img data-id="rangement" src="assets/rangement.webp" alt="" width="720" height="1565" loading="lazy">
+            <img data-id="scan" src="assets/scan.webp" alt="" width="720" height="1565" loading="lazy">
+            <img data-id="palmares" src="assets/palmares.webp" alt="" width="720" height="1565" loading="lazy">
+            <img data-id="wantlist" src="assets/alerte.webp" alt="" width="720" height="1565" loading="lazy">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="more">
+      <h3 class="reveal">Et aussi, pour les collectionneurs exigeants.</h3>
+      <div class="grid">
+        <div class="card reveal"><span class="eyebrow">Mode hors ligne</span><h3>Toute ta collection, sans réseau</h3><p>Emporte ta collection et ses pochettes haute résolution pour fouiner en brocante. La synchro automatique ne se lance jamais en 4G/5G.</p></div>
+        <div class="card reveal"><span class="eyebrow">Tags</span><h3>Gère tes tags sans limite</h3><p>Création, affectation, renommage et gestion en masse. Sans abonnement, tes tags restent visibles et filtrables, en lecture seule.</p></div>
+        <div class="card reveal"><span class="eyebrow">Synchro iCloud</span><h3>Sur tous tes appareils</h3><p>Tes tags, écoutes, alertes, prix d'achat, états de disque et préférences suivent ton compte. Couper la synchro n'efface rien.</p></div>
+        <div class="card reveal"><span class="eyebrow">Export CSV</span><h3>Ta discothèque dans un tableur</h3><p>Excel, Numbers ou Sheets : tous tes albums avec métadonnées, tags et notes.</p></div>
+        <div class="card reveal"><span class="eyebrow">Déclaration de collection</span><h3>Un PDF pour ton assureur</h3><p>La liste de tes albums avec pochette, état et prix d'achat, à présenter comme justificatif.</p></div>
+        <div class="card reveal"><span class="eyebrow">Thèmes de couleur</span><h3>Neuf palettes exclusives</h3><p>Donne à ton app l'ambiance qui te ressemble, du bleu électrique au marron espresso.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block t-lilas" id="themes">
+  <div class="wrap">
+    <div class="head reveal">
+      <span class="pill">✦ Premium</span>
+      <h2 style="margin-top:18px">Dix couleurs, une seule app.</h2>
+      <p class="lead">La palette Signature est offerte. Les neuf autres sont réservées au Premium. Essaie-les : cette page change de couleur avec toi.</p>
+    </div>
+    <div class="swatches" id="swatches" role="group" aria-label="Palettes de couleurs"></div>
+    <p class="theme-name" id="theme-name" aria-live="polite"></p>
+    <div class="theme-stage reveal">
+      <div class="phone single" style="--w:310px"><div class="screen"><img src="assets/themes.webp" alt="Écran de choix de la couleur du thème dans Spinfolio" width="720" height="1565" loading="lazy"></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="comparatif">
+  <div class="wrap">
+    <div class="head reveal">
+      <span class="eyebrow">Gratuit ou Premium</span>
+      <h2>Choisis ta formule.</h2>
+      <p class="lead">Commence gratuitement. Passe en Premium quand tu veux, avec 7 jours d'essai sur l'abonnement annuel.</p>
+    </div>
+    <div class="reveal" style="overflow-x:auto">
+      <table class="compare">
+        <thead><tr><th scope="col"><span style="position:absolute;left:-9999px">Fonctionnalité</span></th><th scope="col">Gratuit</th><th scope="col" class="pr">Premium</th></tr></thead>
+        <tbody>
+          <tr class="sep"><td colspan="3">Collection</td></tr>
+          <tr><th scope="row">Collection et wantlist Discogs, sans limite</th><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><th scope="row">Quatre affichages, dix tris, filtres et notes</th><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><th scope="row">Recherche et scan d'un code-barres</th><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><th scope="row">Fiches détaillées, plusieurs exemplaires</th><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><th scope="row">Statistiques et estimation de la collection</th><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><th scope="row">Prix d'achat, état du disque et cote par exemplaire<small>Saisie dans l'app, import et envoi facultatifs vers les champs Discogs</small></th><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><th scope="row">Écoutes sur platine, Live Activity, widget</th><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><th scope="row">Lecture Apple Music<small>Extrait de 30 s sans abonnement Apple Music actif</small></th><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><th scope="row">Grades et badges</th><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><th scope="row">Thème clair ou sombre, palette Signature</th><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr class="sep"><td colspan="3">Réservé au Premium</td></tr>
+          <tr><th scope="row">Suivi de cote<small>Plus-value par exemplaire et pour toute la collection</small></th><td class="no">—</td><td class="yes gold">✓</td></tr>
+          <tr><th scope="row">Gestion des tags<small>Création, affectation, renommage, gestion en masse. Sans abonnement : lecture et filtre seuls</small></th><td class="no">—</td><td class="yes gold">✓</td></tr>
+          <tr><th scope="row">Où ranger l'album<small>Position dans le meuble, entre ses deux voisins</small></th><td class="no">—</td><td class="yes gold">✓</td></tr>
+          <tr><th scope="row">Palmarès et podiums d'écoute sur platine</th><td class="no">—</td><td class="yes gold">✓</td></tr>
+          <tr><th scope="row">Alertes de prix sur la wantlist</th><td class="no">—</td><td class="yes gold">✓</td></tr>
+          <tr><th scope="row">Mode hors ligne</th><td class="no">—</td><td class="yes gold">✓</td></tr>
+          <tr><th scope="row">Synchronisation iCloud</th><td class="no">—</td><td class="yes gold">✓</td></tr>
+          <tr><th scope="row">Scan par lot</th><td class="no">—</td><td class="yes gold">✓</td></tr>
+          <tr><th scope="row">Neuf palettes de couleurs</th><td class="no">—</td><td class="yes gold">✓</td></tr>
+          <tr><th scope="row">Export CSV complet</th><td class="no">—</td><td class="yes gold">✓</td></tr>
+          <tr><th scope="row">Déclaration de collection (PDF)</th><td class="no">—</td><td class="yes gold">✓</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prices reveal">
+      <div class="price"><h3>Mensuel</h3><div class="amt">1,99&nbsp;€<small> / mois</small></div><p>Sans engagement, résiliable à tout moment.</p></div>
+      <div class="price best"><span class="pill tag">Le plus choisi</span><h3>Annuel</h3><div class="amt">17,99&nbsp;€<small> / an</small></div><p><strong>7 jours d'essai gratuit</strong>, puis 1,50&nbsp;€ par mois.</p></div>
+      <div class="price"><h3>À vie</h3><div class="amt">39,99&nbsp;€</div><p>Un seul paiement, le Premium pour toujours.</p></div>
+    </div>
+    <p class="fine">Les abonnements se renouvellent automatiquement, sauf résiliation au moins 24 h avant la fin de la période en cours, depuis les réglages de ton compte Apple. Prix TTC, susceptibles de varier selon le pays.</p>
+  </div>
+</section>
+
+<section class="block t-brume" id="guide">
+  <div class="wrap" style="max-width:820px">
+    <div class="head reveal">
+      <span class="eyebrow">Mini-manuel</span>
+      <h2>Prendre Spinfolio en main.</h2>
+      <p class="lead">Les réponses aux questions courantes, dans l'ordre où tu en auras besoin. Le même guide est disponible dans l'app.</p>
+    </div>
+<!-- MANUEL:DEBUT (généré par docs/update_manual.py à partir de GuideCatalog.swift, ne pas éditer à la main) -->
+    <div class="manual-group reveal"><h3>Premiers pas</h3>
+      <details><summary>Se connecter à Discogs</summary><div class="body">
+        <p>Ta collection vit sur Discogs : Spinfolio en est une belle vitrine.</p>
+        <ol><li>Autorise l'app sur le site Discogs, puis reviens dans Spinfolio.</li><li>Ta collection et ta wantlist se chargent.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Les ajouts, les retraits et les notes sont répercutés sur ton compte Discogs. Les tags, eux, restent propres à Spinfolio.</p>
+      </div></details>
+      <details><summary>Ajouter un album<span class="badge acc">Compte Discogs</span></summary><div class="body">
+        <p>Cherche par nom ou scanne le code-barres.</p>
+        <ol><li>Onglet Recherche : tape un nom ou touche l'icône de scan.</li><li>Sur la fiche, touche « Collection » ou « Wantlist ».</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Maintiens « Collection » pour choisir un autre dossier.</p>
+      </div></details>
+      <details><summary>Collection ou wantlist ?</summary><div class="body">
+        <p>La collection, ce sont les albums que tu possèdes ; la wantlist, ceux que tu cherches.</p>
+        <ol><li>Le bouton affiche ensuite « En collection » ou « En wantlist ».</li><li>Retrouve tes albums dans les onglets Collection et Wantlist.</li></ol>
+      </div></details>
+      <details><summary>Scan par lot<span class="badge">Premium</span></summary><div class="body">
+        <p>Scanne plusieurs albums à la suite, chez un disquaire ou en brocante.</p>
+        <ol><li>Dans l'onglet Recherche, touche l'icône de scan par lot, à côté de celle du scan.</li><li>Ajoute-les d'un coup à ta collection ou à ta wantlist.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Un lot en cours est conservé : une confirmation te protège si tu fermes l'écran par erreur.</p>
+      </div></details>
+    </div>
+    <div class="manual-group reveal"><h3>Collection et Wantlist</h3>
+      <details><summary>Quatre affichages</summary><div class="body">
+        <p>Liste, mosaïque, carrousel ou bac : choisis ce qui te parle.</p>
+        <ol><li>Touche « ··· » en haut à droite, puis « Affichage » : ton choix est retenu, séparément pour la Collection et la Wantlist.</li><li>Dans le bac, glisse vers le bas pour faire basculer le disque de devant et découvrir le suivant, vers le haut pour revenir en arrière.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Le bouton « Album au hasard », en haut de la Collection, t'en propose un.</p>
+      </div></details>
+      <details><summary>Trier et naviguer</summary><div class="body">
+        <p>Jusqu'à dix tris, dans les deux sens, et une barre pour sauter à une lettre.</p>
+        <ol><li>Touche « ··· », puis « Tri » : choisis un critère et le sens.</li><li>Glisse le doigt sur la barre à droite pour sauter à une lettre ou à une année.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Le tri « Meuble » suit ta règle de rangement (Réglages &gt; Rangement).</p>
+      </div></details>
+      <details><summary>Chercher et filtrer</summary><div class="body">
+        <p>Par texte, dossier, tag ou support. Les filtres se cumulent.</p>
+        <ol><li>Tape dans la barre de recherche, ou touche « ··· » puis « Filtres » pour le tag et le support.</li><li>Le menu « Dossier », dans « ··· », change de dossier.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Avec plusieurs tags, seuls les albums qui les portent tous restent affichés.</p>
+      </div></details>
+      <details><summary>Agir sur un album</summary><div class="body">
+        <p>Glisse une ligne, ou maintiens-la, pour écouter, ranger, modifier ou supprimer.</p>
+        <ol><li>Touche « ··· » puis « Sélectionner » pour agir sur plusieurs albums à la fois : dossier, tags (Premium), suppression.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> « Ranger » est une fonction Premium.</p>
+      </div></details>
+    </div>
+    <div class="manual-group reveal"><h3>Fiche d'un album</h3>
+      <details><summary>Lire une fiche</summary><div class="body">
+        <p>Titres, crédits, photos, vidéos et infos de pressage, au même endroit.</p>
+        <ol><li>Touche un album pour ouvrir sa fiche.</li><li>Fais défiler : titres, « Photos et vidéos », « Autres informations ».</li></ol>
+      </div></details>
+      <details><summary>Plusieurs exemplaires<span class="badge acc">Compte Discogs</span></summary><div class="body">
+        <p>Un même album peut exister en plusieurs exemplaires, chacun avec son dossier.</p>
+        <ol><li>Maintiens « En collection » pour ajouter un exemplaire.</li><li>Touche « Modifier » sur un exemplaire : dossier, tags, champs Discogs.</li></ol>
+      </div></details>
+      <details><summary>Tags<span class="badge">Premium</span></summary><div class="body">
+        <p>Classe tes albums avec tes propres tags : création, attribution, gestion en masse.</p>
+        <ol><li>Dans « Modifier », section « Tags de l'exemplaire » : crée ou choisis des tags.</li><li>Gère-les dans Réglages (« Gestion des tags »), ou avec « Sélectionner » dans la Collection.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Sans abonnement, tes tags restent visibles et filtrables, mais ne se modifient plus. Ils sont synchronisés par iCloud, pas envoyés à Discogs.</p>
+      </div></details>
+      <details><summary>Note<span class="badge acc">Compte Discogs</span></summary><div class="body">
+        <p>Note tes albums sur 5 étoiles.</p>
+        <ol><li>Touche les étoiles de « Ma note de la release » pour noter.</li></ol>
+      </div></details>
+      <details><summary>Prix d'achat et état du disque<span class="badge acc">Compte Discogs</span></summary><div class="body">
+        <p>Note ce que tu as payé et l'état de chaque disque, sans rien configurer sur Discogs.</p>
+        <ol><li>Touche « Modifier » sur un exemplaire, puis renseigne le prix et l'état dans « Plus-value de l'exemplaire ».</li><li>Facultatif : dans Réglages &gt; Suivi de plus-value, associe des champs Discogs pour importer tes valeurs existantes ou les y envoyer.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Prix et état restent dans l'app (et sur tes appareils avec iCloud, en Premium). La plus-value (cote moins prix payé) est une fonction Premium, dans Stats.</p>
+      </div></details>
+    </div>
+    <div class="manual-group reveal"><h3>Statistiques</h3>
+      <details><summary>Ta collection en chiffres<span class="badge acc">Compte Discogs</span></summary><div class="body">
+        <p>Compteurs, derniers ajouts et estimation de la valeur de ta collection.</p>
+        <ol><li>Dans l'onglet Stats, touche « Collection » ou « Wantlist » pour aller à la liste.</li><li>« Estimation de la collection » s'appuie sur l'historique des ventes Discogs.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Les compteurs et la cote demandent une connexion réseau ; le reste fonctionne aussi hors ligne.</p>
+      </div></details>
+      <details><summary>Graphiques et répartitions<span class="badge acc">Compte Discogs</span></summary><div class="body">
+        <p>Genres, supports, labels, artistes et années, en graphiques.</p>
+        <ol><li>Touche une portion ou une barre : la liste des albums correspondants s'ouvre.</li><li>Dans « Sorties originales », bascule entre années et décennies.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> L'année de sortie originale est retrouvée album par album : sur une grande collection, le calcul prend un moment.</p>
+      </div></details>
+      <details><summary>Plus-value<span class="badge">Premium</span></summary><div class="body">
+        <p>Compare ce que tu as payé à la cote actuelle de ta collection.</p>
+        <ol><li>Renseigne le prix d'achat de tes exemplaires.</li><li>Dans Stats, ouvre « Investi vs Cote actuelle ».</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Le total investi ne compte que les exemplaires dont le prix d'achat est renseigné.</p>
+      </div></details>
+      <details><summary>Palmarès d'écoute<span class="badge">Premium</span></summary><div class="body">
+        <p>Tes albums et artistes les plus écoutés sur ta platine.</p>
+        <ol><li>Touche « J'écoute » sur un album quand tu le poses sur ta platine.</li><li>Dans Stats, « Tops &amp; Palmarès » montre le classement et le podium par période.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Les lectures Apple Music ne sont pas comptées.</p>
+      </div></details>
+    </div>
+    <div class="manual-group reveal"><h3>Écoute sur platine</h3>
+      <details><summary>Noter une écoute</summary><div class="body">
+        <p>Touche « J'écoute » quand tu poses un album sur ta platine.</p>
+        <ol><li>Sur la fiche d'un album, ou en glissant une ligne de la Collection : « J'écoute ».</li><li>Un mini-lecteur apparaît ; touche-le pour ouvrir « Écoute sur platine » et arrêter.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Lancer une nouvelle écoute interrompt celle en cours. La fiche compte tes écoutes et garde la date de la dernière.</p>
+      </div></details>
+      <details><summary>Live Activity et arrêt automatique</summary><div class="body">
+        <p>Ton album en cours reste visible, et l'écoute s'arrête toute seule.</p>
+        <ol><li>Dans Réglages, ouvre « Écoute et Apple Music » et choisis la durée maximale.</li><li>À la fin de cette durée, l'écoute s'arrête sans que tu aies rien à faire.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Chaque écoute alimente le palmarès de Stats (Premium).</p>
+      </div></details>
+      <details><summary>Écouter avec Apple Music</summary><div class="body">
+        <p>Lis les titres en entier depuis une fiche, avec un abonnement Apple Music.</p>
+        <ol><li>Dans Réglages, ouvre « Écoute et Apple Music » et active « Connecter mon compte Apple Music ».</li><li>Sans connexion, un extrait de 30 s reste disponible.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Ces lectures ne comptent pas comme des écoutes sur platine.</p>
+      </div></details>
+      <details><summary>Widget « Album du jour »</summary><div class="body">
+        <p>Un album de ta collection tiré au hasard chaque jour, sur ton écran d'accueil.</p>
+        <ol><li>Maintiens l'écran d'accueil, touche « + » et cherche Spinfolio.</li><li>Choisis « Album du jour », en petit, moyen ou grand format.</li></ol>
+      </div></details>
+    </div>
+    <div class="manual-group reveal"><h3>Rangement</h3>
+      <details><summary>Où ranger un album<span class="badge">Premium</span></summary><div class="body">
+        <p>Le guide te donne sa position dans le meuble, entre ses deux voisins.</p>
+        <ol><li>Glisse une ligne de la Collection et touche « Ranger », ou ouvre « Rangement physique » sur la fiche.</li><li>Repère l'album central et ses deux voisins : c'est entre eux qu'il va.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Fonction Premium. Le guide s'ouvre aussi juste après l'ajout d'un album à la collection.</p>
+      </div></details>
+      <details><summary>Ta méthode de classement</summary><div class="body">
+        <p>Quatre règles, pour classer comme dans ton meuble.</p>
+        <ol><li>Dans Réglages, ouvre « Rangement », puis touche « Règle de rangement dans le meuble ».</li><li>Choisis : artiste puis année originale, artiste puis titre, année seule, ou artiste puis année du pressage.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> L'année originale vient du master Discogs ; le pressage peut être une réédition plus récente.</p>
+      </div></details>
+      <details><summary>Noms d'artistes</summary><div class="body">
+        <p>Articles, noms de famille, cas particuliers : tu règles l'ordre artiste par artiste.</p>
+        <ol><li>Dans Réglages &gt; Organisation, active « Ignorer les articles (The...) » ou « Trier par nom de famille ».</li><li>Avec le nom de famille, « Personnaliser le tri des artistes » corrige un cas isolé.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Ces réglages valent pour le meuble, la Collection et la Wantlist.</p>
+      </div></details>
+      <details><summary>Supports et dossiers</summary><div class="body">
+        <p>Vinyles, CD et cassettes se rangent séparément ; les dossiers Discogs, au choix.</p>
+        <ol><li>Le guide compte chaque support à part : vinyles 12, 10 et 7 pouces, CD, cassettes.</li><li>Active « Limiter au dossier Discogs » si tes dossiers correspondent à des meubles distincts.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Par défaut, le guide compare avec toute ta collection, tous dossiers confondus.</p>
+      </div></details>
+    </div>
+    <div class="manual-group reveal"><h3>Alertes de prix</h3>
+      <details><summary>Définir une alerte<span class="badge">Premium</span></summary><div class="body">
+        <p>Fixe le prix maximum que tu veux payer pour un album de ta wantlist.</p>
+        <ol><li>Dans la Wantlist, glisse une ligne ou maintiens-la : « Définir une alerte prix ».</li><li>Saisis le « Prix maximum » puis touche « Enregistrer ».</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Fonction Premium. Une pastille « ≤ prix » s'affiche ensuite sur la ligne.</p>
+      </div></details>
+      <details><summary>Choisir le bon seuil<span class="badge">Premium</span></summary><div class="body">
+        <p>La feuille montre la cote récente par état, pour viser juste.</p>
+        <ol><li>Touche un état dans « Cote moyenne récente par état » : sa cote devient ton prix cible.</li><li>Ajuste avec les raccourcis \((-0.1).formatted(.percent)), \((-0.2).formatted(.percent)) ou \((-0.3).formatted(.percent)).</li></ol>
+      </div></details>
+      <details><summary>Quand l'alerte se déclenche<span class="badge">Premium</span></summary><div class="body">
+        <p>Tu es prévenu dès qu'une annonce est à ton prix ou moins.</p>
+        <ol><li>La vérification se fait à l'ouverture de l'app et parfois en arrière-plan, pas en temps réel.</li><li>Autorise les notifications pour être prévenu app fermée.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Vérifie l'état exact de l'album et les frais de port sur l'annonce Discogs.</p>
+      </div></details>
+    </div>
+    <div class="manual-group reveal"><h3>Réglages</h3>
+      <details><summary>Mode hors ligne<span class="badge">Premium</span></summary><div class="body">
+        <p>Emporte toute ta collection et ses pochettes, même sans réseau.</p>
+        <ol><li>Dans Réglages &gt; Synchronisation, ouvre « Données hors ligne » puis « Télécharger toute ma collection ».</li><li>Active « Synchro auto en Wi-Fi » pour la tenir à jour.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> La synchro auto ne se lance jamais en 4G/5G, et au plus une fois toutes les 6 heures.</p>
+      </div></details>
+      <details><summary>Synchronisation iCloud<span class="badge">Premium</span></summary><div class="body">
+        <p>Tes tags, écoutes, alertes, prix et états de disque et préférences suivent ton compte sur tous tes appareils.</p>
+        <ol><li>Dans Réglages &gt; Synchronisation, ouvre « Synchronisation iCloud » et active « Synchroniser avec iCloud ».</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Couper la synchro n'efface rien : à la réactivation, tout est fusionné. Elle est coupée pendant la démo.</p>
+      </div></details>
+      <details><summary>Apparence et couleurs</summary><div class="body">
+        <p>Thème clair ou sombre, et palettes de couleurs pour toute l'app.</p>
+        <ol><li>Dans Réglages &gt; Aide &amp; personnalisation, ouvre « Apparence » : « Mode d'affichage » pour clair, sombre ou automatique.</li><li>« Couleur du thème » ouvre les palettes.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Le thème Signature est inclus pour tous ; les 9 autres palettes sont Premium.</p>
+      </div></details>
+      <details><summary>Exporter ta collection<span class="badge">Premium</span></summary><div class="body">
+        <p>Un tableur pour tes outils, ou un PDF à présenter à un assureur.</p>
+        <ol><li>Dans Réglages &gt; Ma collection, ouvre « Export » : « Exporter la collection en CSV » ou « Déclaration de collection (PDF) ».</li></ol>
+        <p class="tip"><strong>Astuce.</strong> Le CSV inclut métadonnées, tags et notes ; le PDF, l'état et le prix d'achat.</p>
+      </div></details>
+      <details><summary>Tags et dossiers</summary><div class="body">
+        <p>Range ta collection à ta façon, et choisis où atterrissent les nouveaux albums.</p>
+        <ol><li>« Gestion des tags » : glisse ou maintiens un tag pour le renommer, le fusionner ou le supprimer.</li><li>« Gestion des dossiers » : touche un dossier pour en faire le dossier d'ajout par défaut.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> « Toujours demander » te propose le dossier à chaque ajout.</p>
+      </div></details>
+      <details><summary>Compte et données<span class="badge acc">Compte Discogs</span></summary><div class="body">
+        <p>Consulte ton profil, déconnecte-toi ou efface tes données.</p>
+        <ol><li>Touche ton nom en haut de Réglages pour ouvrir ton profil Discogs.</li><li>« Se déconnecter » est en bas de Réglages.</li></ol>
+        <p class="tip"><strong>Astuce.</strong> « Supprimer mon compte… » propose d'effacer les données locales et iCloud, ou de supprimer le compte sur Discogs.com.</p>
+      </div></details>
+    </div>
+<!-- MANUEL:FIN -->
+  </div>
+</section>
+
+<footer class="on-violet g-aube">
+  <div class="wrap">
+    <div class="links">
+      <a href="privacy.html">Politique de confidentialité</a>
+      <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/">Conditions d'utilisation (EULA)</a>
+      <a href="support.html">Assistance</a>
+      <a href="mailto:auralabs.apps@gmail.com">Contact</a>
+    </div>
+    <p>Spinfolio utilise l'API publique de Discogs mais n'est ni affilié à ni approuvé par Discogs. Discogs est une marque de Zink Media, LLC. Apple Music est une marque d'Apple Inc.</p>
+    <p>© 2026 Spinfolio. Tous droits réservés.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Apparition douce au défilement
+  var reveals = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window && !reduced) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { threshold: .12 });
+    reveals.forEach(function (el) { io.observe(el); });
+  } else { reveals.forEach(function (el) { el.classList.add('in'); }); }
+
+  // Héros visible ? Hors écran, ni parallaxe ni vinyle ne travaillent : moins de calculs pendant le défilement ailleurs
+  var heroVisible = true;
+  // Parallaxe du héros : chaque téléphone se décale à sa vitesse
+  var layers = [].slice.call(document.querySelectorAll('[data-speed]'));
+  if (layers.length && !reduced) {
+    var ticking = false;
+    // `translate` (propriété indépendante de `transform`) : n'interfère pas avec les rotations en CSS
+    function frame() {
+      if (!heroVisible) { ticking = false; return; }
+      var y = Math.min(window.scrollY, 900);
+      layers.forEach(function (el) {
+        el.style.translate = '0 ' + (y * parseFloat(el.dataset.speed) * -1) + 'px';
+      });
+      ticking = false;
+    }
+    window.addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(frame); } }, { passive: true });
+  }
+
+
+  // 1. Vinyle du héros : tourne lentement, accélère quand on fait défiler puis ralentit
+  var vinyl = document.getElementById('vinyl-img');
+  if (vinyl && !reduced && vinyl.animate) {
+    var spin = vinyl.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], { duration: 34000, iterations: Infinity });
+    var lastY = window.scrollY, rate = 1, ticking2 = false;
+    function eased() {
+      if (!heroVisible) { spin.playbackRate = 1; ticking2 = false; return; }
+      var dy = Math.abs(window.scrollY - lastY); lastY = window.scrollY;
+      var target = 1 + Math.min(dy * 0.35, 7);
+      rate += (target - rate) * 0.18;
+      spin.playbackRate = rate;
+      if (rate > 1.02 || dy > 0) requestAnimationFrame(eased); else { spin.playbackRate = 1; ticking2 = false; }
+    }
+    window.addEventListener('scroll', function () { if (!ticking2) { ticking2 = true; requestAnimationFrame(eased); } }, { passive: true });
+  }
+
+  var heroEl = document.querySelector('.hero');
+  if (heroEl && 'IntersectionObserver' in window) {
+    new IntersectionObserver(function (e) {
+      heroVisible = e[0].isIntersecting;
+      if (typeof spin !== 'undefined' && spin) { if (heroVisible) spin.play(); else spin.pause(); }
+    }).observe(heroEl);
+  }
+
+  // 3. Inclinaison 3D des téléphones au survol (souris seulement) + reflet qui suit le pointeur
+  if (!reduced && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    document.querySelectorAll('.phone').forEach(function (ph) {
+      ph.addEventListener('pointermove', function (e) {
+        var r = ph.getBoundingClientRect();
+        var px = (e.clientX - r.left) / r.width * 2 - 1, py = (e.clientY - r.top) / r.height * 2 - 1;
+        var rx = -py * 7, ry = px * 9, a = Math.hypot(rx, ry);
+        ph.style.rotate = a < .05 ? 'none' : rx.toFixed(3) + ' ' + ry.toFixed(3) + ' 0 ' + a.toFixed(2) + 'deg';
+        ph.style.setProperty('--mx', ((px + 1) * 50) + '%');
+        ph.style.setProperty('--my', ((py + 1) * 50) + '%');
+        ph.classList.add('tilting');
+      });
+      ph.addEventListener('pointerleave', function () { ph.style.rotate = 'none'; ph.classList.remove('tilting'); });
+    });
+  }
+
+  // 8. Trio d'écoute épinglé : la page reste en place et les trois écrans défilent horizontalement.
+  //    Navigateur récent : le CSS pilote tout (voir `animation-timeline`), le script ne fait que mesurer la distance.
+  //    Sinon : repli en JavaScript, un seul calcul par image (aucune lecture de géométrie pendant le défilement).
+  var pin = document.getElementById('pin');
+  if (pin && !reduced) {
+    var track = pin.querySelector('.pin-track');
+    var cssDriven = !!(window.CSS && CSS.supports && CSS.supports('animation-timeline: view()'));
+    var figs = Array.prototype.slice.call(track.querySelectorAll('figure')), spread = false;
+    var pinDist = 0, pinTop = 0, pinFrame = 0, lastWidth = 0;
+    var measure = function () {
+      lastWidth = window.innerWidth;
+      // Remise à zéro (changement de largeur : on peut passer d'un mode à l'autre)
+      pin.classList.remove('spread'); track.style.transform = '';
+      figs.forEach(function (f) { f.style.transform = ''; f.querySelector('figcaption').style.opacity = ''; });
+      pin.classList.add('on'); pin.style.removeProperty('--pin-dist');
+      spread = window.innerWidth >= 1100;
+      if (spread) {
+        // Assez large pour les trois côte à côte : l'écart se fait sur une distance de défilement fixe
+        pin.classList.add('spread'); pinDist = 600;
+      } else {
+        pinDist = track.scrollWidth - window.innerWidth;
+        if (pinDist < 40) { pin.classList.remove('on'); pinDist = 0; return; }
+      }
+      pin.style.setProperty('--pin-dist', pinDist + 'px');
+      pinTop = pin.getBoundingClientRect().top + window.scrollY;
+      if (!cssDriven) slide();
+    };
+    var slide = function () {
+      pinFrame = 0;
+      if (!pinDist) return;
+      var p = Math.min(1, Math.max(0, (window.scrollY - pinTop) / pinDist));
+      if (spread) {
+        // Même courbe que le CSS (ease-in-out), appliquée par figure
+        var e = p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2, d = 344 * (1 - e);
+        figs[0].style.transform = 'translate3d(' + d + 'px,0,0)';
+        figs[1].style.transform = 'rotate(' + (-6 * (1 - e)) + 'deg) scale(' + (.95 + .05 * e) + ')';
+        figs[2].style.transform = 'translate3d(' + (-d) + 'px,0,0) rotate(' + (6 * (1 - e)) + 'deg)';
+        var c = Math.min(1, Math.max(0, (p - .6) / .4));
+        figs.forEach(function (f) { f.querySelector('figcaption').style.opacity = c; });
+        return;
+      }
+      track.style.transform = 'translate3d(' + (-p * pinDist) + 'px,0,0)';
+    };
+    if (!cssDriven) {
+      window.addEventListener('scroll', function () { if (!pinFrame) pinFrame = requestAnimationFrame(slide); }, { passive: true });
+    }
+    // Seule la largeur compte : la barre d'adresse de Safari qui se replie ne change que la hauteur
+    window.addEventListener('resize', function () { if (window.innerWidth !== lastWidth) measure(); });
+    // Les images au-dessus peuvent changer la position du bloc en se chargeant
+    window.addEventListener('load', measure);
+    measure();
+  }
+
+  // Sélecteur de mode d'affichage
+  function swapTo(container, id) {
+    container.querySelectorAll('img').forEach(function (img) { img.classList.toggle('on', img.dataset.id === id); });
+  }
+  var modes = document.getElementById('modes');
+  document.querySelectorAll('.tabs button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.tabs button').forEach(function (b) { b.setAttribute('aria-pressed', String(b === btn)); });
+      swapTo(modes, btn.dataset.shot);
+    });
+  });
+
+  // Premium : l'écran du téléphone suit l'étape visible
+  var phone = document.getElementById('premium-phone');
+  var steps = document.querySelectorAll('.step');
+  if (phone && 'IntersectionObserver' in window) {
+    var so = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          steps.forEach(function (s) { s.classList.toggle('active', s === e.target); });
+          swapTo(phone, e.target.dataset.shot);
+        }
+      });
+    }, { rootMargin: '-45% 0px -45% 0px' });
+    steps.forEach(function (s) { so.observe(s); });
+    if (steps[0]) steps[0].classList.add('active');
+  } else { steps.forEach(function (s) { s.classList.add('active'); }); }
+
+  // Thèmes : couleurs primaires de l'app (AppTheme.swift), variantes claire et sombre
+  var themes = [
+    ['Spinfolio Signature', 'Rose néon vibrant & iconique', '#9E3DCF', '#C96BF7'],
+    ['Bleu Électrique', 'Bleu cobalt moderne & universel', '#0A5CD1', '#3D94FF'],
+    ['Vert Émeraude', 'Sauge & forêt apaisant', '#0F7547', '#47D18A'],
+    ['Orange Crépuscule', 'Tangerine chaleureuse & coucher de soleil', '#B85205', '#FF8F33'],
+    ['Rouge Rubis', 'Carmin intense & rock', '#D6293D', '#F25266'],
+    ['Violet Améthyste', 'Pourpre feutré & jazz lounge', '#7A4DE6', '#A37AFF'],
+    ['Cuivre & Or Hifi', 'Ambre doré & esprit audiophile', '#94660A', '#F2BD52'],
+    ['Turquoise Pacifique', 'Lagon aéré, frais & estival', '#056B80', '#38C7DB'],
+    ['Ardoise Titane', 'Monochrome chic & intemporel', '#59667A', '#C2CCDB'],
+    ['Marron Espresso', 'Beige vinyle & pochette vintage', '#734D2E', '#C7996B']
+  ];
+  var box = document.getElementById('swatches'), label = document.getElementById('theme-name');
+  var root = document.documentElement;
+  function pick(i, btn) {
+    root.style.setProperty('--a-light', themes[i][2]);
+    root.style.setProperty('--a-dark', themes[i][3]);
+    label.textContent = themes[i][0] + ' — ' + themes[i][1] + (i === 0 ? ' (offerte)' : ' (Premium)');
+    box.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String(b === btn)); });
+  }
+  themes.forEach(function (t, i) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.innerHTML = '<i style="--c:' + t[2] + '"></i>' + t[0].replace('Spinfolio ', '');
+    b.addEventListener('click', function () { pick(i, b); });
+    box.appendChild(b);
+    if (i === 0) pick(0, b);
+  });
+})();
+</script>
+</body>
+</html>
