@@ -181,6 +181,9 @@
     /* La photo du scan montre déjà la pastille de la caméra : on ne redessine pas celle du cadre */
     .phone.native-island::before { display: none; }
     @media (max-width: 560px) { .scan-duo { gap: 14px; } .scan-duo figure { width: 160px; } .scan-duo .phone { --w: 150px !important; } .scan-duo figcaption { font-size: 1rem; } .scan-duo figcaption .badge { display: block; width: max-content; margin: 6px auto 0; } }
+    .shot.trio { display: flex; justify-content: center; gap: 26px; align-items: flex-start; margin-top: 8px; }
+    .shot.trio .phone:nth-child(2) { margin-top: 56px; }
+    @media (max-width: 760px) { .shot.trio { gap: 12px; } .shot.trio .phone { --w: 31vw !important; } .shot.trio .phone:nth-child(2) { margin-top: 30px; } }
     .shot.duo { gap: 22px; align-items: flex-start; }
     .shot.duo .phone:nth-child(2) { margin-top: 56px; }
     @media (max-width: 560px) { .shot.duo .phone { --w: 150px !important; } .shot.duo .phone:nth-child(2) { margin-top: 30px; } }
@@ -202,6 +205,7 @@
     .pin.on .pin-sticky { position: sticky; top: 0; height: 100vh; height: 100svh; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding-top: 72px; box-sizing: border-box; overflow: hidden; contain: layout paint; }
     /* Titre resserré contre les images, centré (la piste, plus large que l'écran en mode glissement, reste calée à gauche) */
     #platine .head { margin-bottom: 30px; }
+    #platine .pin-extra { max-width: 36em; margin: 0 auto 80px; }   /* journal, Live Activity, widget : sous les trois vignettes */
     .pin.on .pin-head { width: min(1120px, 100% - 40px); margin: 0 auto; flex: none; }
     .pin.on .head { margin-bottom: 26px; }
     @media (max-height: 760px) { .pin.on .head .lead { display: none; } }
@@ -271,13 +275,18 @@
     .more > h3 { text-align: center; margin-bottom: 28px; }
     .more .card .eyebrow { color: var(--gold-ink); }
 
-    /* Thèmes */
-    .swatches { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 18px; }
-    .swatches button { display: flex; align-items: center; gap: 8px; font: inherit; font-size: .9rem; font-weight: 600; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px 8px 10px; cursor: pointer; transition: .2s; }
-    .swatches button i { width: 20px; height: 20px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .12); }
-    .swatches button[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-    .theme-name { text-align: center; color: var(--ink-2); min-height: 1.6em; margin-bottom: 40px; }
-    .theme-stage { display: flex; justify-content: center; }
+    /* Thèmes : éventail de captures (bande défilante sur petit écran) */
+    .theme-name { text-align: center; color: var(--ink-2); min-height: 1.6em; margin-bottom: 8px; }
+    .fan { display: flex; gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 14px 20px 26px; margin-inline: -20px; }
+    .fan .phone { --w: 170px; flex: none; scroll-snap-align: center; cursor: pointer; outline: none; }
+    .fan .phone:focus-visible { box-shadow: var(--shadow), 0 0 0 3px var(--accent); }
+    @media (min-width: 761px) {
+      .fan { display: block; position: relative; height: 570px; overflow: visible; padding: 0; margin: 0; }
+      /* Chaque écran pivote autour d'un point bas commun : l'angle suit son rang (--i de 0 à 9) */
+      .fan .phone { --w: 200px; --a: calc((var(--i) - 4.5) * 6.2deg); position: absolute; left: 50%; top: 14px; margin-left: -100px; z-index: var(--i); transform-origin: 50% 200%; transform: rotate(var(--a)); transition: transform .35s cubic-bezier(.2, .8, .2, 1), box-shadow .3s; }
+      .fan .phone.sel, .fan .phone:focus-visible { z-index: 20; transform: rotate(var(--a)) translateY(-30px); }
+    }
+    @media (prefers-reduced-motion: reduce) { .fan .phone { transition: none; } }
 
     /* Comparatif */
     .compare { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; }
@@ -410,12 +419,11 @@
   <div class="wrap split rev">
     <div class="text reveal">
       <span class="eyebrow">Fiche &amp; écoute</span>
-      <h2>Chaque album a sa fiche. Et sa platine.</h2>
-      <p>Toutes les informations de l'édition viennent de Discogs : titres, crédits, label, pays, année, format et infos de pressage, avec les photos et les vidéos. En haut de la fiche, un résumé de ton exemplaire. Quand tu poses l'album sur ta platine, note l'écoute : elle reste visible sur l'écran verrouillé, et s'arrête toute seule à la fin.</p>
+      <h2>Chaque album a sa fiche.</h2>
+      <p>Toutes les informations de l'édition viennent de Discogs : titres, crédits, label, pays, année, format et infos de pressage, avec les photos et les vidéos. En haut de la fiche, un résumé de ton exemplaire.</p>
       <ul class="ticks">
         <li>L'édition exacte que tu possèdes, avec ses données Discogs, pas une fiche générique</li>
-        <li>Ton exemplaire en résumé : dossier, tags, prix payé, cote et plus-value</li>
-        <li>Journal d'écoute, Live Activity et widget « Album du jour » sur ton écran d'accueil</li>
+        <li>Ton exemplaire en résumé : dossier, tags et plus-value</li>
       </ul>
     </div>
     <div class="shot duo reveal">
@@ -432,7 +440,7 @@
     <div class="wrap pin-head"><div class="head reveal">
       <span class="eyebrow">Écoute sur platine</span>
       <h2>Chaque écoute, sur le bon support.</h2>
-      <p class="lead">Vinyle, CD ou cassette&nbsp;: l'écran d'écoute prend la forme de ton disque. Touche « J'écoute » quand tu le poses, « Arrêter l'écoute » quand tu as fini.</p>
+      <p class="lead">Vinyle, CD ou cassette&nbsp;: l'écran d'écoute prend la forme de ton disque.<br>Touche « J'écoute » quand tu le poses, « Arrêter l'écoute » quand tu as fini.</p>
     </div></div>
     <div class="media-trio pin-track">
       <figure class="reveal"><video src="assets/ecoute-vinyle.mp4" poster="assets/ecoute-vinyle.webp" role="img" aria-label="Écran d'écoute d'un vinyle : pochette, platine avec bras de lecture, titre et artiste ; le disque tourne" width="720" height="556" muted loop playsinline preload="none" data-play></video><figcaption>Vinyle<small>La platine et son bras de lecture</small></figcaption></figure>
@@ -440,6 +448,12 @@
       <figure class="reveal"><video src="assets/ecoute-k7.mp4" poster="assets/ecoute-k7.webp" role="img" aria-label="Écran d'écoute d'une cassette : pochette, cassette, titre et artiste ; les bobines tournent" width="720" height="556" muted loop playsinline preload="none" data-play></video><figcaption>Cassette<small>Chaque face, à sa place</small></figcaption></figure>
     </div>
     </div></div>
+    <div class="pin-extra reveal">
+      <ul class="ticks">
+        <li>Journal d'écoute, Live Activity et widget « Album du jour » sur ton écran d'accueil</li>
+        <li>Pendant l'écoute, l'album reste visible sur l'écran verrouillé, et l'écoute s'arrête toute seule à la fin</li>
+      </ul>
+    </div>
     <div class="split">
       <div class="shot reveal">
         <div class="phone single" style="--w:310px"><div class="screen"><img src="assets/apple-music.webp" alt="Lecteur Apple Music dans Spinfolio : pochette d'Absolution de Muse, titre en cours, barre de progression et commandes" width="720" height="1565" loading="lazy"></div></div>
@@ -503,6 +517,27 @@
   </div>
 </section>
 
+<section class="block t-lilas" id="stats">
+  <div class="wrap">
+    <div class="head reveal">
+      <span class="eyebrow">Statistiques &middot; gratuit</span>
+      <h2>Ta collection en chiffres.</h2>
+      <p class="lead">Combien d'albums, d'artistes, d'arrivages par année&nbsp;: ta discothèque se lit d'un coup d'œil, sans rien payer.</p>
+    </div>
+    <div class="shot trio reveal">
+      <div class="phone single" style="--w:250px"><div class="screen"><img src="assets/stats.webp" alt="Onglet Stats : compteurs d'albums, de wantlist et d'artistes, derniers ajouts et nombre d'arrivages par année" width="720" height="1565" loading="lazy"></div></div>
+      <div class="phone single" style="--w:250px"><div class="screen"><img src="assets/stats-graphiques.webp" alt="Stats : sorties originales par décennie et classement des artistes les plus présents dans la collection" width="720" height="1565" loading="lazy"></div></div>
+      <div class="phone single" style="--w:250px"><div class="screen"><img src="assets/stats-formats.webp" alt="Stats : répartition par genre musical et par format, vinyles, CD, cassettes et autres supports" width="720" height="1565" loading="lazy"></div></div>
+    </div>
+    <ul class="ticks" style="max-width:36em;margin:34px auto 0">
+      <li>Tes derniers ajouts et le rythme d'arrivée de tes albums, par année</li>
+      <li>Des graphiques par décennie, par genre, par format et par label, et le top 10 de tes artistes</li>
+      <li>L'estimation de ta collection, d'après l'historique réel des ventes Discogs</li>
+      <li>Le suivi de cote et les palmarès d'écoute sont, eux, réservés au Premium</li>
+    </ul>
+  </div>
+</section>
+
 <section class="block t-brume" id="gratuit">
   <div class="wrap">
     <div class="head reveal">
@@ -537,8 +572,14 @@
         <article class="step" data-shot="cote">
           <span class="eyebrow">Suivi de cote</span>
           <h3>Suis la valeur de tes albums.</h3>
-          <p>Renseigne le prix payé et l'état de chaque exemplaire, directement dans l'app, sans champ Discogs à configurer, puis compare-le à la cote Discogs : plus-value de chaque album, et pour toute ta collection avec « Investi vs cote actuelle ». Tes valeurs déjà saisies sur Discogs s'importent en un geste.</p>
+          <p>Renseigne le prix payé et l'état de chaque exemplaire, directement dans l'app, sans champ Discogs à configurer, puis compare-le à la cote Discogs : tu vois la plus-value de chaque album. Tes valeurs déjà saisies sur Discogs s'importent en un geste.</p>
           <div class="inline-shot"><div class="phone single"><div class="screen"><img src="assets/cote.webp" alt="Exemplaire d'un album : dossier, prix d'achat, état, cote actuelle, plus-value et tags" width="720" height="1565" loading="lazy"></div></div></div>
+        </article>
+        <article class="step" data-shot="valeur">
+          <span class="eyebrow">Valeur de la collection</span>
+          <h3>Ce que vaut ta collection, et ce qu'elle t'a coûté.</h3>
+          <p>« Estimation de la collection » s'appuie sur l'historique réel des ventes Discogs. « Investi vs cote actuelle » met face à face le total de ce que tu as payé et la cote de tes albums : ta plus-value latente, en euros et en pourcentage.</p>
+          <div class="inline-shot"><div class="phone single"><div class="screen"><img src="assets/cote-collection.webp" alt="Statistiques : estimation de la collection (minimum, médiane, maximum) et « Investi vs cote actuelle » avec le total investi, la cote actuelle et la plus-value latente" width="720" height="1565" loading="lazy"></div></div></div>
         </article>
         <article class="step" data-shot="rangement">
           <span class="eyebrow">Où ranger l'album</span>
@@ -569,6 +610,7 @@
         <div class="phone" id="premium-phone">
           <div class="screen">
             <img class="on" data-id="cote" src="assets/cote.webp" alt="" width="720" height="1565" loading="lazy">
+            <img data-id="valeur" src="assets/cote-collection.webp" alt="" width="720" height="1565" loading="lazy">
             <img data-id="rangement" src="assets/rangement.webp" alt="" width="720" height="1565" loading="lazy">
             <img data-id="scan" src="assets/scan.webp" alt="" width="720" height="1565" loading="lazy">
             <img data-id="palmares" src="assets/palmares.webp" alt="" width="720" height="1565" loading="lazy">
@@ -597,12 +639,20 @@
     <div class="head reveal">
       <span class="pill">✦ Premium</span>
       <h2 style="margin-top:18px">Dix couleurs, une seule app.</h2>
-      <p class="lead">La palette Signature est offerte. Les neuf autres sont réservées au Premium. Essaie-les : cette page change de couleur avec toi.</p>
+      <p class="lead">La palette Signature est offerte. Les neuf autres sont réservées au Premium. Voici le même écran dans chacune d'elles.</p>
     </div>
-    <div class="swatches" id="swatches" role="group" aria-label="Palettes de couleurs"></div>
-    <p class="theme-name" id="theme-name" aria-live="polite"></p>
-    <div class="theme-stage reveal">
-      <div class="phone single" style="--w:310px"><div class="screen"><img src="assets/themes.webp" alt="Écran de choix de la couleur du thème dans Spinfolio" width="720" height="1565" loading="lazy"></div></div>
+    <p class="theme-name" id="theme-name" aria-live="polite">Survole ou touche un écran pour découvrir sa palette.</p>
+    <div class="fan reveal" id="fan">
+      <div class="phone single" style="--i:0" tabindex="0" role="button" data-label="Spinfolio Signature — Rose néon vibrant &amp; iconique (offerte)" aria-label="Spinfolio Signature"><div class="screen"><img src="assets/theme-01-signature.webp" alt="Écran Statistiques de Spinfolio avec la palette Spinfolio Signature" width="720" height="1565" loading="lazy"></div></div>
+      <div class="phone single" style="--i:1" tabindex="0" role="button" data-label="Bleu Électrique — Bleu cobalt moderne &amp; universel (Premium)" aria-label="Bleu Électrique"><div class="screen"><img src="assets/theme-02-bleu-electrique.webp" alt="Écran Statistiques de Spinfolio avec la palette Bleu Électrique" width="720" height="1565" loading="lazy"></div></div>
+      <div class="phone single" style="--i:2" tabindex="0" role="button" data-label="Vert Émeraude — Sauge &amp; forêt apaisant (Premium)" aria-label="Vert Émeraude"><div class="screen"><img src="assets/theme-03-vert-emeraude.webp" alt="Écran Statistiques de Spinfolio avec la palette Vert Émeraude" width="720" height="1565" loading="lazy"></div></div>
+      <div class="phone single" style="--i:3" tabindex="0" role="button" data-label="Orange Crépuscule — Tangerine chaleureuse &amp; coucher de soleil (Premium)" aria-label="Orange Crépuscule"><div class="screen"><img src="assets/theme-04-orange-crepuscule.webp" alt="Écran Statistiques de Spinfolio avec la palette Orange Crépuscule" width="720" height="1565" loading="lazy"></div></div>
+      <div class="phone single" style="--i:4" tabindex="0" role="button" data-label="Rouge Rubis — Carmin intense &amp; rock (Premium)" aria-label="Rouge Rubis"><div class="screen"><img src="assets/theme-05-rouge-rubis.webp" alt="Écran Statistiques de Spinfolio avec la palette Rouge Rubis" width="720" height="1565" loading="lazy"></div></div>
+      <div class="phone single" style="--i:5" tabindex="0" role="button" data-label="Violet Améthyste — Pourpre feutré &amp; jazz lounge (Premium)" aria-label="Violet Améthyste"><div class="screen"><img src="assets/theme-06-violet-amethyste.webp" alt="Écran Statistiques de Spinfolio avec la palette Violet Améthyste" width="720" height="1565" loading="lazy"></div></div>
+      <div class="phone single" style="--i:6" tabindex="0" role="button" data-label="Cuivre &amp; Or Hifi — Ambre doré &amp; esprit audiophile (Premium)" aria-label="Cuivre &amp; Or Hifi"><div class="screen"><img src="assets/theme-07-cuivre-or-hifi.webp" alt="Écran Statistiques de Spinfolio avec la palette Cuivre &amp; Or Hifi" width="720" height="1565" loading="lazy"></div></div>
+      <div class="phone single" style="--i:7" tabindex="0" role="button" data-label="Turquoise Pacifique — Lagon aéré, frais &amp; estival (Premium)" aria-label="Turquoise Pacifique"><div class="screen"><img src="assets/theme-08-turquoise-pacifique.webp" alt="Écran Statistiques de Spinfolio avec la palette Turquoise Pacifique" width="720" height="1565" loading="lazy"></div></div>
+      <div class="phone single" style="--i:8" tabindex="0" role="button" data-label="Ardoise Titane — Monochrome chic &amp; intemporel (Premium)" aria-label="Ardoise Titane"><div class="screen"><img src="assets/theme-09-ardoise-titane.webp" alt="Écran Statistiques de Spinfolio avec la palette Ardoise Titane" width="720" height="1565" loading="lazy"></div></div>
+      <div class="phone single" style="--i:9" tabindex="0" role="button" data-label="Marron Espresso — Beige vinyle &amp; pochette vintage (Premium)" aria-label="Marron Espresso"><div class="screen"><img src="assets/theme-10-marron-espresso.webp" alt="Écran Statistiques de Spinfolio avec la palette Marron Espresso" width="720" height="1565" loading="lazy"></div></div>
     </div>
   </div>
 </section>
@@ -1024,34 +1074,18 @@
     if (steps[0]) steps[0].classList.add('active');
   } else { steps.forEach(function (s) { s.classList.add('active'); }); }
 
-  // Thèmes : couleurs primaires de l'app (AppTheme.swift), variantes claire et sombre
-  var themes = [
-    ['Spinfolio Signature', 'Rose néon vibrant & iconique', '#9E3DCF', '#C96BF7'],
-    ['Bleu Électrique', 'Bleu cobalt moderne & universel', '#0A5CD1', '#3D94FF'],
-    ['Vert Émeraude', 'Sauge & forêt apaisant', '#0F7547', '#47D18A'],
-    ['Orange Crépuscule', 'Tangerine chaleureuse & coucher de soleil', '#B85205', '#FF8F33'],
-    ['Rouge Rubis', 'Carmin intense & rock', '#D6293D', '#F25266'],
-    ['Violet Améthyste', 'Pourpre feutré & jazz lounge', '#7A4DE6', '#A37AFF'],
-    ['Cuivre & Or Hifi', 'Ambre doré & esprit audiophile', '#94660A', '#F2BD52'],
-    ['Turquoise Pacifique', 'Lagon aéré, frais & estival', '#056B80', '#38C7DB'],
-    ['Ardoise Titane', 'Monochrome chic & intemporel', '#59667A', '#C2CCDB'],
-    ['Marron Espresso', 'Beige vinyle & pochette vintage', '#734D2E', '#C7996B']
-  ];
-  var box = document.getElementById('swatches'), label = document.getElementById('theme-name');
-  var root = document.documentElement;
-  function pick(i, btn) {
-    root.style.setProperty('--a-light', themes[i][2]);
-    root.style.setProperty('--a-dark', themes[i][3]);
-    label.textContent = themes[i][0] + ' — ' + themes[i][1] + (i === 0 ? ' (offerte)' : ' (Premium)');
-    box.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String(b === btn)); });
+  // Thèmes : l'écran touché ou survolé passe devant et son nom s'affiche
+  var fan = document.getElementById('fan'), label = document.getElementById('theme-name');
+  var cards = fan.querySelectorAll('.phone');
+  function pick(card) {
+    cards.forEach(function (c) { c.classList.toggle('sel', c === card); });
+    label.textContent = card.dataset.label;
   }
-  themes.forEach(function (t, i) {
-    var b = document.createElement('button');
-    b.type = 'button';
-    b.innerHTML = '<i style="--c:' + t[2] + '"></i>' + t[0].replace('Spinfolio ', '');
-    b.addEventListener('click', function () { pick(i, b); });
-    box.appendChild(b);
-    if (i === 0) pick(0, b);
+  cards.forEach(function (c) {
+    c.addEventListener('pointerenter', function () { pick(c); });
+    c.addEventListener('focus', function () { pick(c); });
+    c.addEventListener('click', function () { pick(c); });
+    c.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(c); } });
   });
 })();
 </script>
